@@ -1,0 +1,101 @@
+using System.ComponentModel.DataAnnotations;
+using App.Application.AuthenticationSchemes.Queries;
+using App.Web.Areas.Public.Pages.Shared;
+using Microsoft.AspNetCore.Mvc;
+
+namespace App.Web.Areas.Public.Pages.Login;
+
+public class LoginWithEmailAndPassword : BasePublicLoginPageModel
+{
+    [BindProperty]
+    public FormModel Form { get; set; }
+
+    public async Task<IActionResult> OnGet(string returnUrl = null)
+    {
+        Form = new FormModel();
+        var response = await Mediator.Send(
+            new GetAuthenticationSchemes.Query { IsEnabledForUsers = true, PageSize = int.MaxValue }
+        );
+
+        AuthenticationSchemes = response.Result.Items.Select(
+            p => new LoginAuthenticationSchemeChoiceItemViewModel
+            {
+                DeveloperName = p.DeveloperName,
+                AuthenticationSchemeType = p.AuthenticationSchemeType,
+                LoginButtonText = p.LoginButtonText,
+            }
+        );
+
+        if (OnlyHasSingleSignOnEnabled(response.Result))
+        {
+            var singleSignOnScheme = response.Result.Items.First();
+            return RedirectToPage(
+                RouteNames.Login.LoginWithSso,
+                new { developerName = singleSignOnScheme.DeveloperName, returnUrl }
+            );
+        }
+
+        ViewData["returnUrl"] = returnUrl;
+        if (BuiltInAuthIsMagicLinkOnly(response.Result))
+            return RedirectToPage(RouteNames.Login.LoginWithMagicLink, new { returnUrl });
+
+        return Page();
+    }
+
+    public async Task<IActionResult> OnPost(string returnUrl = null)
+    {
+        var input = new App.Application.Login.Commands.LoginWithEmailAndPassword.Command
+        {
+            EmailAddress = Form.EmailAddress,
+            Password = Form.Password,
+        };
+
+        var response = await Mediator.Send(input);
+        if (response.Success)
+        {
+            await LoginWithClaims(response.Result, Form.RememberMe);
+            if (HasLocalRedirect(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            else
+            {
+                return RedirectToPage(RouteNames.Dashboard.Index);
+            }
+        }
+        else
+        {
+            var authSchemes = await Mediator.Send(
+                new GetAuthenticationSchemes.Query
+                {
+                    IsEnabledForUsers = true,
+                    PageSize = int.MaxValue,
+                }
+            );
+
+            AuthenticationSchemes = authSchemes.Result.Items.Select(
+                p => new LoginAuthenticationSchemeChoiceItemViewModel
+                {
+                    DeveloperName = p.DeveloperName,
+                    AuthenticationSchemeType = p.AuthenticationSchemeType,
+                    LoginButtonText = p.LoginButtonText,
+                }
+            );
+
+            SetErrorMessage(response.GetErrors());
+            return Page();
+        }
+    }
+
+    public record FormModel
+    {
+        [Display(Name = "Your email address")]
+        public string EmailAddress { get; set; }
+
+        [Display(Name = "Your password")]
+        public string Password { get; set; }
+
+        [Display(Name = "Keep me logged in")]
+        public bool RememberMe { get; set; } = false;
+    }
+}

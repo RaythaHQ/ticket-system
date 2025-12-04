@@ -1,0 +1,48 @@
+@page "/"
+@model App.Web.Areas.Public.Pages.Dashboard.Index
+@inject App.Application.Common.Interfaces.ICurrentUser CurrentUser
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="mb-4">Welcome, @CurrentUser.FullName!</h1>
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-person-circle"></i> Profile
+                        </h5>
+                        <p class="card-text">Update your name and view your account information.</p>
+                        <a asp-page="@RouteNames.Profile.Index" class="btn btn-primary">Manage Profile</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="bi bi-key"></i> Security
+                        </h5>
+                        <p class="card-text">Change your password to keep your account secure.</p>
+                        <a asp-page="@RouteNames.Profile.ChangePassword" class="btn btn-primary">Change Password</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card border-0 shadow mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Account Information</h5>
+                <dl class="row">
+                    <dt class="col-sm-3">Name</dt>
+                    <dd class="col-sm-9">@CurrentUser.FullName</dd>
+                    <dt class="col-sm-3">Email</dt>
+                    <dd class="col-sm-9">@CurrentUser.EmailAddress</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>

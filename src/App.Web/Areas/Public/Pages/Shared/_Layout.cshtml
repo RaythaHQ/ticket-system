@@ -1,10 +1,12 @@
+@inject App.Application.Common.Interfaces.ICurrentOrganization CurrentOrganization
+@inject App.Application.Common.Interfaces.ICurrentUser CurrentUser
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - @(CurrentOrganization?.Name ?? "App")</title>
+    <title>@ViewData["Title"] - @(CurrentOrganization?.OrganizationName ?? "App")</title>
     <link rel="stylesheet" href="~/admin/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/admin/lib/bootstrap-icons/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/admin/css/volt.css" asp-append-version="true" />
@@ -18,7 +20,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold" asp-area="Public" asp-page="/Dashboard/Index">
-                @(CurrentOrganization?.Name ?? "App")
+                @(CurrentOrganization?.OrganizationName ?? "App")
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -80,7 +82,7 @@
 
     <footer class="bg-light border-top mt-5 py-4">
         <div class="container text-center text-muted">
-            <small>&copy; @DateTime.Now.Year @(CurrentOrganization?.Name ?? "App"). All rights reserved.</small>
+            <small>&copy; @DateTime.Now.Year @(CurrentOrganization?.OrganizationName ?? "App"). All rights reserved.</small>
         </div>
     </footer>
 
