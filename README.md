@@ -1,7 +1,7 @@
 # .NET 10 Clean Architecture Boilerplate
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![Build Status](https://github.com/raythahq/raytha-core/actions/workflows/tests.yml/badge.svg?branch=dev)](https://github.com/raythahq/raytha-core/actions)
+[![Build Status](https://github.com/raythahq/raytha-core/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/raythahq/raytha-core/actions)
 
 A production-ready .NET 10 boilerplate built with Clean Architecture principles, designed to enable solo full-stack developers to build large systems and iterate extremely quickly. This repository is "Cursor-ready" and optimized for AI-assisted development.
 
