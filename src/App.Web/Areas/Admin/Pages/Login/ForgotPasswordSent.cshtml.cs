@@ -1,0 +1,6 @@
+namespace App.Web.Areas.Admin.Pages.Login;
+
+public class ForgotPasswordSent : BaseAdminLoginPageModel
+{
+    public void OnGet() { }
+}

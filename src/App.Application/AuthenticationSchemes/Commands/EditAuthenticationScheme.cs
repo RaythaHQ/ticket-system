@@ -1,0 +1,150 @@
+using System.Text.Json.Serialization;
+using CSharpVitamins;
+using FluentValidation;
+using Mediator;
+using App.Application.Common.Exceptions;
+using App.Application.Common.Interfaces;
+using App.Application.Common.Models;
+using App.Application.Common.Utils;
+using App.Domain.ValueObjects;
+
+namespace App.Application.AuthenticationSchemes.Commands;
+
+public class EditAuthenticationScheme
+{
+    public record Command : LoggableEntityRequest<CommandResponseDto<ShortGuid>>
+    {
+        public string Label { get; init; } = null!;
+
+        [JsonIgnore]
+        public string JwtSecretKey { get; init; } = null!;
+
+        [JsonIgnore]
+        public string SamlCertificate { get; init; } = null!;
+        public string SignInUrl { get; init; } = null!;
+        public string SignOutUrl { get; init; } = null!;
+        public string LoginButtonText { get; init; } = null!;
+        public bool IsEnabledForUsers { get; init; }
+        public bool IsEnabledForAdmins { get; init; }
+        public int MagicLinkExpiresInSeconds { get; init; }
+        public bool JwtUseHighSecurity { get; init; }
+
+        [JsonIgnore]
+        public string SamlIdpEntityId { get; init; } = null!;
+        public string AuthenticationSchemeType { get; init; } = null!;
+        public int BruteForceProtectionMaxFailedAttempts { get; init; }
+        public int BruteForceProtectionWindowInSeconds { get; init; }
+    }
+
+    public class Validator : AbstractValidator<Command>
+    {
+        public Validator(IAppDbContext db)
+        {
+            RuleFor(x => x.Label).NotEmpty();
+            RuleFor(x => x.LoginButtonText).NotEmpty();
+            RuleFor(x => x.SignInUrl)
+                .NotEmpty()
+                .Must(StringExtensions.IsValidUriFormat)
+                .When(p =>
+                    p.AuthenticationSchemeType == AuthenticationSchemeType.Jwt.DeveloperName
+                    || p.AuthenticationSchemeType == AuthenticationSchemeType.Saml.DeveloperName
+                )
+                .WithMessage("Sign in url is not a valid url.");
+            RuleFor(x => x.SignOutUrl)
+                .Must(StringExtensions.IsValidUriFormat)
+                .When(p => !string.IsNullOrEmpty(p.SignOutUrl))
+                .WithMessage("Sign out url is not a valid url.");
+            RuleFor(x => x.JwtSecretKey)
+                .NotEmpty()
+                .When(p =>
+                    p.AuthenticationSchemeType == AuthenticationSchemeType.Jwt.DeveloperName
+                );
+            RuleFor(x => x.SamlCertificate)
+                .NotEmpty()
+                .When(p =>
+                    p.AuthenticationSchemeType == AuthenticationSchemeType.Saml.DeveloperName
+                );
+            RuleFor(x => x.MagicLinkExpiresInSeconds)
+                .NotEmpty()
+                .GreaterThanOrEqualTo(30)
+                .LessThanOrEqualTo(604800)
+                .When(p =>
+                    p.AuthenticationSchemeType == AuthenticationSchemeType.MagicLink.DeveloperName
+                );
+            RuleFor(x => x.BruteForceProtectionMaxFailedAttempts)
+                .GreaterThanOrEqualTo(1)
+                .WithMessage("Max failed attempts must be at least 1.")
+                .When(p =>
+                    p.AuthenticationSchemeType == AuthenticationSchemeType.EmailAndPassword.DeveloperName
+                );
+            RuleFor(x => x.BruteForceProtectionWindowInSeconds)
+                .GreaterThanOrEqualTo(60)
+                .WithMessage("Window must be at least 60 seconds.")
+                .When(p =>
+                    p.AuthenticationSchemeType == AuthenticationSchemeType.EmailAndPassword.DeveloperName
+                );
+            RuleFor(x => x)
+                .Custom(
+                    (request, context) =>
+                    {
+                        var entity = db.AuthenticationSchemes.FirstOrDefault(p =>
+                            p.Id == request.Id.Guid
+                        );
+                        if (entity == null)
+                            throw new NotFoundException("Authentication Scheme", request.Id);
+
+                        var onlyOneAdminAuthLeft =
+                            db.AuthenticationSchemes.Count(p => p.IsEnabledForAdmins) == 1;
+                        if (
+                            !request.IsEnabledForAdmins
+                            && entity.IsEnabledForAdmins
+                            && onlyOneAdminAuthLeft
+                        )
+                        {
+                            context.AddFailure(
+                                "IsEnabledForAdmins",
+                                "You must have at least 1 authentication scheme enabled for administrators."
+                            );
+                            return;
+                        }
+                    }
+                );
+        }
+    }
+
+    public class Handler : IRequestHandler<Command, CommandResponseDto<ShortGuid>>
+    {
+        private readonly IAppDbContext _db;
+
+        public Handler(IAppDbContext db)
+        {
+            _db = db;
+        }
+
+        public async ValueTask<CommandResponseDto<ShortGuid>> Handle(
+            Command request,
+            CancellationToken cancellationToken
+        )
+        {
+            var entity = _db.AuthenticationSchemes.First(p => p.Id == request.Id.Guid);
+
+            entity.Label = request.Label;
+            entity.SignInUrl = request.SignInUrl;
+            entity.SignOutUrl = request.SignOutUrl;
+            entity.LoginButtonText = request.LoginButtonText;
+            entity.IsEnabledForUsers = request.IsEnabledForUsers;
+            entity.IsEnabledForAdmins = request.IsEnabledForAdmins;
+            entity.SamlCertificate = request.SamlCertificate;
+            entity.JwtSecretKey = request.JwtSecretKey;
+            entity.MagicLinkExpiresInSeconds = request.MagicLinkExpiresInSeconds;
+            entity.JwtUseHighSecurity = request.JwtUseHighSecurity;
+            entity.SamlIdpEntityId = request.SamlIdpEntityId;
+            entity.BruteForceProtectionMaxFailedAttempts = request.BruteForceProtectionMaxFailedAttempts;
+            entity.BruteForceProtectionWindowInSeconds = request.BruteForceProtectionWindowInSeconds;
+
+            await _db.SaveChangesAsync(cancellationToken);
+
+            return new CommandResponseDto<ShortGuid>(request.Id);
+        }
+    }
+}

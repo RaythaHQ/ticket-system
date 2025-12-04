@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>App.Domain</RootNamespace>
+    <AssemblyName>App.Domain</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Configurations>Debug;Release;Debug without JS</Configurations>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CSharpVitamins.ShortGuid" Version="2.0.0" />
+    <PackageReference Include="Mediator.Abstractions" Version="3.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Entities\DefaultTemplates\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Entities\DefaultTemplates\raytha_email_login_completedforgotpassword.liquid" />
+    <None Remove="Entities\DefaultTemplates\raytha_email_user_passwordchanged.liquid" />
+    <None Remove="Entities\DefaultTemplates\raytha_email_user_passwordreset.liquid" />
+    <None Remove="Entities\DefaultTemplates\raytha_email_user_welcome.liquid" />
+    <None Remove="Entities\DefaultTemplates\raytha_html_login_magiclink.liquid" />
+    <None Remove="Entities\DefaultTemplates\raytha_html_login_magiclinksent.liquid" />
+  </ItemGroup>
+</Project>

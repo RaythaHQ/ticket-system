@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - App</title>
+    <link rel="stylesheet" href="~/admin/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/admin/lib/bootstrap-icons/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/admin/css/volt.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/admin/css/site.css" asp-append-version="true" />
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico">
+
+    @RenderSection("headstyles", false)
+</head>
+
+<body data-active-menu="@ViewData["ActiveMenu"]">
+    @RenderBody()
+    <script src="~/admin/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @* Load shared modules that auto-initialize *@
+    <script type="module">
+        import '/admin/js/shared/role-permissions.js';
+        import '/admin/js/shared/confirm-dialog.js';
+        import '/admin/js/core/datepicker.js';
+        import { initNavigation } from '/admin/js/core/nav.js';
+        initNavigation();
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

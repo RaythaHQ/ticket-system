@@ -1,0 +1,18 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build:Debug",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "--no-restore",
+                "--configuration",
+                "Debug",
+                "${workspaceFolder}/src/App.Web/App.Web.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        }
+    ]
+}

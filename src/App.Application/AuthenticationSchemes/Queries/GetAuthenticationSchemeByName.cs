@@ -1,0 +1,46 @@
+using FluentValidation;
+using Mediator;
+using App.Application.Common.Exceptions;
+using App.Application.Common.Interfaces;
+using App.Application.Common.Models;
+using App.Application.Common.Utils;
+
+namespace App.Application.AuthenticationSchemes.Queries;
+
+public class GetAuthenticationSchemeByName
+{
+    public record Query : IRequest<IQueryResponseDto<AuthenticationSchemeDto>>
+    {
+        public string DeveloperName { get; init; } = null!;
+    }
+
+    public class Handler : IRequestHandler<Query, IQueryResponseDto<AuthenticationSchemeDto>>
+    {
+        private readonly IAppDbContext _db;
+
+        public Handler(IAppDbContext db)
+        {
+            _db = db;
+        }
+
+        public async ValueTask<IQueryResponseDto<AuthenticationSchemeDto>> Handle(
+            Query request,
+            CancellationToken cancellationToken
+        )
+        {
+            var entity = _db.AuthenticationSchemes.FirstOrDefault(p =>
+                p.DeveloperName == request.DeveloperName.ToDeveloperName()
+            );
+
+            if (entity == null)
+                throw new NotFoundException(
+                    "Authentication Scheme",
+                    request.DeveloperName.ToDeveloperName()
+                );
+
+            return new QueryResponseDto<AuthenticationSchemeDto>(
+                AuthenticationSchemeDto.GetProjection(entity)
+            );
+        }
+    }
+}

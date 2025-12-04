@@ -1,0 +1,69 @@
+﻿using System.Reflection;
+using Mediator;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using App.Application.Common.Interfaces;
+using App.Domain.Entities;
+using App.Infrastructure.Common;
+using App.Infrastructure.Persistence.Interceptors;
+
+namespace App.Infrastructure.Persistence;
+
+public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
+{
+    private readonly IMediator _mediator;
+    private readonly AuditableEntitySaveChangesInterceptor _auditableEntitySaveChangesInterceptor;
+
+    public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options) { }
+
+    public AppDbContext(
+        DbContextOptions<AppDbContext> options,
+        IMediator mediator,
+        AuditableEntitySaveChangesInterceptor auditableEntitySaveChangesInterceptor
+    )
+        : base(options)
+    {
+        _mediator = mediator;
+        _auditableEntitySaveChangesInterceptor = auditableEntitySaveChangesInterceptor;
+    }
+
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Role> Roles => Set<Role>();
+    public DbSet<UserGroup> UserGroups => Set<UserGroup>();
+    public DbSet<VerificationCode> VerificationCodes => Set<VerificationCode>();
+    public DbSet<OrganizationSettings> OrganizationSettings => Set<OrganizationSettings>();
+    public DbSet<EmailTemplate> EmailTemplates => Set<EmailTemplate>();
+    public DbSet<EmailTemplateRevision> EmailTemplateRevisions => Set<EmailTemplateRevision>();
+    public DbSet<AuthenticationScheme> AuthenticationSchemes => Set<AuthenticationScheme>();
+    public DbSet<JwtLogin> JwtLogins => Set<JwtLogin>();
+    public DbSet<OneTimePassword> OneTimePasswords => Set<OneTimePassword>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+    public DbSet<BackgroundTask> BackgroundTasks => Set<BackgroundTask>();
+    public DbSet<FailedLoginAttempt> FailedLoginAttempts => Set<FailedLoginAttempt>();
+    public DbSet<MediaItem> MediaItems => Set<MediaItem>();
+    public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
+
+    public DbContext DbContext => this;
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+        base.OnModelCreating(builder);
+    }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.AddInterceptors(_auditableEntitySaveChangesInterceptor);
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        await _mediator.DispatchDomainEventsBeforeSaveChanges(this);
+        var numItems = await base.SaveChangesAsync(cancellationToken);
+        await _mediator.DispatchDomainEventsAfterSaveChanges(this);
+
+        return numItems;
+    }
+}

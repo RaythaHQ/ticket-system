@@ -1,0 +1,52 @@
+/* Public Area Custom Styles */
+
+:root {
+    --public-primary: #4F46E5;
+    --public-primary-dark: #4338CA;
+    --public-secondary: #6B7280;
+    --public-success: #10B981;
+    --public-danger: #E11D48;
+    --public-warning: #F59E0B;
+    --public-info: #3B82F6;
+}
+
+body {
+    background-color: #F9FAFB;
+}
+
+.navbar-brand {
+    color: var(--public-primary) !important;
+    font-size: 1.5rem;
+}
+
+.navbar-brand:hover {
+    color: var(--public-primary-dark) !important;
+}
+
+.btn-primary {
+    background-color: var(--public-primary);
+    border-color: var(--public-primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--public-primary-dark);
+    border-color: var(--public-primary-dark);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    border-radius: 0.5rem;
+}
+
+.card-header {
+    background-color: white;
+    border-bottom: 1px solid #E5E7EB;
+    font-weight: 600;
+}
+
+.form-control:focus {
+    border-color: var(--public-primary);
+    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+}
+
