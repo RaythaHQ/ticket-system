@@ -1,8 +1,8 @@
-using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Roles.Queries;
 
@@ -24,9 +24,7 @@ public class GetRoleById
             CancellationToken cancellationToken
         )
         {
-            var entity = _db
-                .Roles
-                .FirstOrDefault(p => p.Id == request.Id.Guid);
+            var entity = _db.Roles.AsNoTracking().FirstOrDefault(p => p.Id == request.Id.Guid);
 
             if (entity == null)
                 throw new NotFoundException("Role", request.Id);

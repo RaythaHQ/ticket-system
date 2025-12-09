@@ -1,9 +1,9 @@
-﻿using CSharpVitamins;
-using Mediator;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
 using App.Domain.ValueObjects;
+using CSharpVitamins;
+using Mediator;
 
 namespace App.Application.Admins.Queries;
 
@@ -31,7 +31,10 @@ public class GetApiKeysForAdmin
             CancellationToken cancellationToken
         )
         {
-            var query = _db.ApiKeys.Where(p => p.UserId == request.UserId.Guid).AsQueryable();
+            var query = _db
+                .ApiKeys.AsNoTracking()
+                .Where(p => p.UserId == request.UserId.Guid)
+                .AsQueryable();
 
             var total = query.Count();
             var items = query

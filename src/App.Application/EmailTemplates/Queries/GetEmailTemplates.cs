@@ -1,9 +1,9 @@
-﻿using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
 using App.Domain.ValueObjects;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.EmailTemplates.Queries;
 
@@ -31,7 +31,10 @@ public class GetEmailTemplates
             CancellationToken cancellationToken
         )
         {
-            var query = _db.EmailTemplates.Include(p => p.LastModifierUser).AsQueryable();
+            var query = _db
+                .EmailTemplates.AsNoTracking()
+                .Include(p => p.LastModifierUser)
+                .AsQueryable();
 
             if (!string.IsNullOrEmpty(request.Search))
             {

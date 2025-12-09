@@ -1,10 +1,10 @@
-﻿using CSharpVitamins;
-using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
 using App.Domain.ValueObjects;
+using CSharpVitamins;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.EmailTemplates.Queries;
 
@@ -34,7 +34,8 @@ public class GetEmailTemplateRevisionsByTemplateId
         )
         {
             var query = _db
-                .EmailTemplateRevisions.AsQueryable()
+                .EmailTemplateRevisions.AsNoTracking()
+                .AsQueryable()
                 .Include(p => p.EmailTemplate)
                 .Include(p => p.CreatorUser)
                 .Where(p => p.EmailTemplateId == request.Id.Guid);

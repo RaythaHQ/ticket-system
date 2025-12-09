@@ -1,9 +1,9 @@
-using FluentValidation;
-using Mediator;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
+using FluentValidation;
+using Mediator;
 
 namespace App.Application.AuthenticationSchemes.Queries;
 
@@ -28,9 +28,9 @@ public class GetAuthenticationSchemeByName
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.AuthenticationSchemes.FirstOrDefault(p =>
-                p.DeveloperName == request.DeveloperName.ToDeveloperName()
-            );
+            var entity = _db
+                .AuthenticationSchemes.AsNoTracking()
+                .FirstOrDefault(p => p.DeveloperName == request.DeveloperName.ToDeveloperName());
 
             if (entity == null)
                 throw new NotFoundException(

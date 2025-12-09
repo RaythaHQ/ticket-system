@@ -1,9 +1,9 @@
-﻿using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
 using App.Domain.ValueObjects;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Users.Queries;
 
@@ -30,7 +30,7 @@ public class GetUsers
             CancellationToken cancellationToken
         )
         {
-            var query = _db.Users.Include(p => p.UserGroups).AsQueryable();
+            var query = _db.Users.AsNoTracking().Include(p => p.UserGroups).AsQueryable();
 
             if (!string.IsNullOrEmpty(request.Search))
             {

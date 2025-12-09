@@ -1,6 +1,6 @@
-﻿using Mediator;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using Mediator;
 
 namespace App.Application.OrganizationSettings.Queries;
 
@@ -22,7 +22,7 @@ public class GetOrganizationSettings
             CancellationToken cancellationToken
         )
         {
-            var settings = _db.OrganizationSettings.FirstOrDefault();
+            var settings = _db.OrganizationSettings.AsNoTracking().FirstOrDefault();
 
             return new QueryResponseDto<OrganizationSettingsDto>(
                 OrganizationSettingsDto.GetProjection(settings)

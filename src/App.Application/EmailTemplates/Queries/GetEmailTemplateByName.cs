@@ -1,9 +1,9 @@
-﻿using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.EmailTemplates.Queries;
 
@@ -28,9 +28,9 @@ public class GetEmailTemplateByName
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.EmailTemplates.FirstOrDefault(p =>
-                p.DeveloperName == request.DeveloperName.ToDeveloperName()
-            );
+            var entity = _db
+                .EmailTemplates.AsNoTracking()
+                .FirstOrDefault(p => p.DeveloperName == request.DeveloperName.ToDeveloperName());
 
             if (entity == null)
                 throw new NotFoundException("EmailTemplate", request.DeveloperName);

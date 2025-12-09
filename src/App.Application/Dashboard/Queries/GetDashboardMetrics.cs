@@ -1,7 +1,7 @@
-﻿using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Dashboard.Queries;
 
@@ -25,18 +25,14 @@ public class GetDashboardMetrics
             CancellationToken cancellationToken
         )
         {
-            int totalUsers = await _db.Users.CountAsync(cancellationToken);
+            int totalUsers = await _db.Users.AsNoTracking().CountAsync(cancellationToken);
             var dbSize = _rawSqlDb.GetDatabaseSize();
 
             decimal numericValueOfReserved = Convert.ToDecimal(dbSize.reserved.Split(" ").First());
             string units = dbSize.reserved.Split(" ").Last();
             decimal dbSizeInMb = ComputeToMb(numericValueOfReserved, units);
             return new QueryResponseDto<DashboardDto>(
-                new DashboardDto
-                {
-                    TotalUsers = totalUsers,
-                    DbSize = dbSizeInMb,
-                }
+                new DashboardDto { TotalUsers = totalUsers, DbSize = dbSizeInMb }
             );
         }
 

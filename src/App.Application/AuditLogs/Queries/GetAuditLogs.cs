@@ -1,11 +1,11 @@
-using CSharpVitamins;
-using FluentValidation;
-using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
 using App.Domain.ValueObjects;
+using CSharpVitamins;
+using FluentValidation;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.AuditLogs.Queries;
 
@@ -47,7 +47,7 @@ public class GetAuditLogs
             CancellationToken cancellationToken
         )
         {
-            var query = _db.AuditLogs.AsQueryable();
+            var query = _db.AuditLogs.AsNoTracking().AsQueryable();
 
             if (request.StartDateAsUtc.HasValue)
                 query = query.Where(p => p.CreationTime >= request.StartDateAsUtc);

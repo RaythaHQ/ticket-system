@@ -1,10 +1,10 @@
-using FluentValidation;
-using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
 using App.Domain.ValueObjects;
+using FluentValidation;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.AuthenticationSchemes.Queries;
 
@@ -34,7 +34,10 @@ public class GetAuthenticationSchemes
             CancellationToken cancellationToken
         )
         {
-            var query = _db.AuthenticationSchemes.Include(p => p.LastModifierUser).AsQueryable();
+            var query = _db
+                .AuthenticationSchemes.AsNoTracking()
+                .Include(p => p.LastModifierUser)
+                .AsQueryable();
 
             if (request.IsEnabledForUsers.HasValue)
                 query = query.Where(p => p.IsEnabledForUsers);

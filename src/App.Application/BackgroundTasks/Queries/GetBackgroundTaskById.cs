@@ -1,7 +1,7 @@
-﻿using Mediator;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using Mediator;
 
 namespace App.Application.BackgroundTasks.Queries;
 
@@ -23,7 +23,9 @@ public class GetBackgroundTaskById
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.BackgroundTasks.FirstOrDefault(p => p.Id == request.Id.Guid);
+            var entity = _db
+                .BackgroundTasks.AsNoTracking()
+                .FirstOrDefault(p => p.Id == request.Id.Guid);
 
             if (entity == null)
                 throw new NotFoundException("Background Task", request.Id);

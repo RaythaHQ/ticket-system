@@ -1,9 +1,9 @@
-using FluentValidation;
-using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using FluentValidation;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Login.Queries;
 
@@ -26,7 +26,8 @@ public class GetUserForAuthenticationById
         )
         {
             var entity = _db
-                .Users.Include(p => p.Roles)
+                .Users.AsNoTracking()
+                .Include(p => p.Roles)
                 .Include(p => p.UserGroups)
                 .Include(p => p.AuthenticationScheme)
                 .FirstOrDefault(p => p.Id == request.Id.Guid);

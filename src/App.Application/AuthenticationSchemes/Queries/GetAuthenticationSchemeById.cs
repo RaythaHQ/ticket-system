@@ -1,7 +1,7 @@
-using Mediator;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using Mediator;
 
 namespace App.Application.AuthenticationSchemes.Queries;
 
@@ -9,8 +9,7 @@ public class GetAuthenticationSchemeById
 {
     public record Query
         : GetEntityByIdInputDto,
-            IRequest<IQueryResponseDto<AuthenticationSchemeDto>>
-    { }
+            IRequest<IQueryResponseDto<AuthenticationSchemeDto>> { }
 
     public class Handler : IRequestHandler<Query, IQueryResponseDto<AuthenticationSchemeDto>>
     {
@@ -26,7 +25,9 @@ public class GetAuthenticationSchemeById
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.AuthenticationSchemes.FirstOrDefault(p => p.Id == request.Id.Guid);
+            var entity = _db
+                .AuthenticationSchemes.AsNoTracking()
+                .FirstOrDefault(p => p.Id == request.Id.Guid);
 
             if (entity == null)
                 throw new NotFoundException("Authentication Scheme", request.Id);

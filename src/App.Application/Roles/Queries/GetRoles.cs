@@ -1,11 +1,11 @@
 using System.Data;
-using FluentValidation;
-using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
 using App.Domain.ValueObjects;
+using FluentValidation;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Roles.Queries;
 
@@ -32,9 +32,7 @@ public class GetRoles
             CancellationToken cancellationToken
         )
         {
-            var query = _db
-                .Roles
-                .AsQueryable();
+            var query = _db.Roles.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrEmpty(request.Search))
             {

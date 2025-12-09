@@ -1,7 +1,7 @@
-using Mediator;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using Mediator;
 
 namespace App.Application.MediaItems.Queries;
 
@@ -23,7 +23,7 @@ public class GetMediaItemById
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.MediaItems.FirstOrDefault(p => p.Id == request.Id.Guid);
+            var entity = _db.MediaItems.AsNoTracking().FirstOrDefault(p => p.Id == request.Id.Guid);
 
             if (entity == null)
                 throw new NotFoundException("MediaItem", request.Id);
@@ -32,4 +32,3 @@ public class GetMediaItemById
         }
     }
 }
-

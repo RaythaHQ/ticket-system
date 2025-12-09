@@ -1,7 +1,7 @@
-﻿using Mediator;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using Mediator;
 
 namespace App.Application.UserGroups.Queries;
 
@@ -23,7 +23,7 @@ public class GetUserGroupById
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.UserGroups.FirstOrDefault(p => p.Id == request.Id.Guid);
+            var entity = _db.UserGroups.AsNoTracking().FirstOrDefault(p => p.Id == request.Id.Guid);
 
             if (entity == null)
                 throw new NotFoundException("UserGroup", request.Id);

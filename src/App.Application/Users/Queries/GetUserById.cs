@@ -1,8 +1,8 @@
-﻿using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Users.Queries;
 
@@ -25,7 +25,8 @@ public class GetUserById
         )
         {
             var entity = _db
-                .Users.Include(p => p.UserGroups)
+                .Users.AsNoTracking()
+                .Include(p => p.UserGroups)
                 .FirstOrDefault(p => p.Id == request.Id.Guid);
 
             if (entity == null)

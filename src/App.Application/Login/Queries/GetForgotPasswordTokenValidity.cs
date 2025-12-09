@@ -1,9 +1,9 @@
-﻿using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
 using App.Domain.ValueObjects;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Login.Queries;
 
@@ -25,9 +25,11 @@ public class GetForgotPasswordTokenValidity
             CancellationToken cancellationToken
         )
         {
-            var authScheme = _db.AuthenticationSchemes.First(p =>
-                p.AuthenticationSchemeType == AuthenticationSchemeType.EmailAndPassword
-            );
+            var authScheme = _db
+                .AuthenticationSchemes.AsNoTracking()
+                .First(p =>
+                    p.AuthenticationSchemeType == AuthenticationSchemeType.EmailAndPassword
+                );
 
             if (!authScheme.IsEnabledForUsers && !authScheme.IsEnabledForAdmins)
                 return new QueryResponseDto<bool>(
@@ -36,7 +38,8 @@ public class GetForgotPasswordTokenValidity
                 );
 
             var entity = _db
-                .OneTimePasswords.Include(p => p.User)
+                .OneTimePasswords.AsNoTracking()
+                .Include(p => p.User)
                 .ThenInclude(p => p.AuthenticationScheme)
                 .FirstOrDefault(p => p.Id == PasswordUtility.Hash(request.Id));
 
