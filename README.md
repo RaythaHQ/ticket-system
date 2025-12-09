@@ -151,7 +151,9 @@ See `src/App.Application/Common/Utils/FileStorageUtility.cs` for all configurati
 
 ## 📖 Documentation
 
-For detailed coding standards and conventions, see [.cursor/standards.md](.cursor/standards.md).
+For architecture rules, see the [App Constitution](.specify/memory/constitution.md).  
+For detailed coding standards, patterns, and examples, see
+[docs/architecture-standards.md](docs/architecture-standards.md).
 
 ## 🤝 Contributing
 
