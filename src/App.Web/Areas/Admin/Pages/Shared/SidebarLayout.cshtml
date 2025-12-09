@@ -71,7 +71,8 @@
             }
             <li role="separator" class="dropdown-divider mt-4 mb-3 border-gray-700"></li>
             <li class="nav-item">
-                <a asp-route="emptyroute" target="_blank" class="nav-link d-flex justify-content-between">
+                <a href="@(string.IsNullOrWhiteSpace(CurrentOrganization.PathBase) ? "/" : CurrentOrganization.PathBase)"
+                    target="_blank" class="nav-link d-flex justify-content-between">
                     <span>
                         <span class="sidebar-icon">
                             <svg class="icon icon-xs me-2" fill="currentColor" viewBox="0 0 20 20"
