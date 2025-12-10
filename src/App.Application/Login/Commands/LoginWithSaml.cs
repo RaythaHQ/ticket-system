@@ -33,13 +33,16 @@ public class LoginWithSaml
             RuleFor(x => x.SAMLResponse).NotEmpty();
             RuleFor(x => x.DeveloperName).NotEmpty();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
                         var developerName = request.DeveloperName.ToDeveloperName();
-                        var authScheme = db
+                        var authScheme = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .FirstOrDefault(p => p.DeveloperName == developerName);
+                            .FirstOrDefaultAsync(
+                                p => p.DeveloperName == developerName,
+                                cancellationToken
+                            );
 
                         if (authScheme == null)
                         {
@@ -92,21 +95,26 @@ public class LoginWithSaml
                             return;
                         }
 
-                        User entity = null;
+                        User? entity = null;
                         if (!string.IsNullOrEmpty(payload.NameID))
                         {
-                            entity = db
+                            entity = await db
                                 .Users.AsNoTracking()
-                                .FirstOrDefault(p =>
-                                    p.SsoId == payload.NameID
-                                    && p.AuthenticationSchemeId == authScheme.Id
+                                .FirstOrDefaultAsync(
+                                    p =>
+                                        p.SsoId == payload.NameID
+                                        && p.AuthenticationSchemeId == authScheme.Id,
+                                    cancellationToken
                                 );
                         }
                         else
                         {
-                            entity = db
+                            entity = await db
                                 .Users.AsNoTracking()
-                                .FirstOrDefault(p => p.EmailAddress.ToLower() == email);
+                                .FirstOrDefaultAsync(
+                                    p => p.EmailAddress.ToLower() == email,
+                                    cancellationToken
+                                );
                         }
 
                         if (entity != null)
@@ -157,8 +165,9 @@ public class LoginWithSaml
             CancellationToken cancellationToken
         )
         {
-            var authScheme = _db.AuthenticationSchemes.First(p =>
-                p.DeveloperName == request.DeveloperName.ToDeveloperName()
+            var authScheme = await _db.AuthenticationSchemes.FirstAsync(
+                p => p.DeveloperName == request.DeveloperName.ToDeveloperName(),
+                cancellationToken
             );
             var payload = new SAMLResponse(request.SAMLResponse, authScheme.SamlCertificate);
 
@@ -168,31 +177,35 @@ public class LoginWithSaml
             string familyName = payload.LastName;
             List<string> userGroups = payload.UserGroups.ToList();
 
-            User entity = null;
+            User? entity = null;
 
             if (!string.IsNullOrWhiteSpace(nameID))
             {
-                entity = _db
+                entity = await _db
                     .Users.Include(p => p.UserGroups)
-                    .FirstOrDefault(p =>
-                        p.SsoId == nameID && p.AuthenticationSchemeId == authScheme.Id
+                    .FirstOrDefaultAsync(
+                        p => p.SsoId == nameID && p.AuthenticationSchemeId == authScheme.Id,
+                        cancellationToken
                     );
             }
 
             if (entity == null)
             {
                 var cleanedEmail = email.Trim().ToLower();
-                entity = _db
+                entity = await _db
                     .Users.Include(p => p.UserGroups)
-                    .FirstOrDefault(p => p.EmailAddress.ToLower() == cleanedEmail);
+                    .FirstOrDefaultAsync(
+                        p => p.EmailAddress.ToLower() == cleanedEmail,
+                        cancellationToken
+                    );
             }
 
-            ICollection<UserGroup> foundUserGroups = null;
-            if (userGroups.Any())
+            ICollection<UserGroup>? foundUserGroups = null;
+            if (userGroups.Count > 0)
             {
-                foundUserGroups = _db
+                foundUserGroups = await _db
                     .UserGroups.Where(p => userGroups.Any(c => c == p.DeveloperName))
-                    .ToList();
+                    .ToListAsync(cancellationToken);
             }
 
             bool firstTime = false;
@@ -221,7 +234,7 @@ public class LoginWithSaml
                 entity.LastName = familyName.IfNullOrEmpty(entity.LastName);
                 entity.EmailAddress = email.Trim();
 
-                if (foundUserGroups != null && foundUserGroups.Any())
+                if (foundUserGroups != null && foundUserGroups.Count > 0)
                 {
                     foreach (var ug in entity.UserGroups)
                     {

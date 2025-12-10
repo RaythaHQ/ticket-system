@@ -27,12 +27,12 @@ public class EditUser
             RuleFor(x => x.LastName).NotEmpty();
             RuleFor(x => x.EmailAddress).NotEmpty().EmailAddress();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
-                        var entity = db
+                        var entity = await db
                             .Users.AsNoTracking()
-                            .FirstOrDefault(p => p.Id == request.Id.Guid);
+                            .FirstOrDefaultAsync(p => p.Id == request.Id.Guid, cancellationToken);
 
                         if (entity == null)
                             throw new NotFoundException("User", request.Id);
@@ -40,9 +40,12 @@ public class EditUser
                         if (request.EmailAddress.ToLower() != entity.EmailAddress.ToLower())
                         {
                             var emailAddressToCheck = request.EmailAddress.ToLower();
-                            var doesAnotherEmailExist = db
+                            var doesAnotherEmailExist = await db
                                 .Users.AsNoTracking()
-                                .Any(p => p.EmailAddress.ToLower() == emailAddressToCheck);
+                                .AnyAsync(
+                                    p => p.EmailAddress.ToLower() == emailAddressToCheck,
+                                    cancellationToken
+                                );
                             if (doesAnotherEmailExist)
                             {
                                 context.AddFailure(
@@ -71,7 +74,9 @@ public class EditUser
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.Users.Include(p => p.UserGroups).First(p => p.Id == request.Id.Guid);
+            var entity = await _db
+                .Users.Include(p => p.UserGroups)
+                .FirstAsync(p => p.Id == request.Id.Guid, cancellationToken);
 
             //do not allow modifications to these elements of admins. (they should use admins screens)
             if (!entity.IsAdmin)
@@ -96,7 +101,10 @@ public class EditUser
 
             foreach (var userGroupToAddId in userGroupsToAddIds)
             {
-                var userGroupToAdd = _db.UserGroups.First(p => p.Id == userGroupToAddId.Guid);
+                var userGroupToAdd = await _db.UserGroups.FirstAsync(
+                    p => p.Id == userGroupToAddId.Guid,
+                    cancellationToken
+                );
                 entity.UserGroups.Add(userGroupToAdd);
             }
 

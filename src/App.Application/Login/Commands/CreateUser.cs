@@ -36,8 +36,8 @@ public class CreateUser
             RuleFor(x => x.LastName).NotEmpty();
             RuleFor(x => x.EmailAddress).NotEmpty().EmailAddress();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
                         if (
                             string.IsNullOrEmpty(request.Password)
@@ -61,11 +61,13 @@ public class CreateUser
                             return;
                         }
 
-                        var emailAndPasswordScheme = db
+                        var emailAndPasswordScheme = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .First(p =>
-                                p.DeveloperName
-                                == AuthenticationSchemeType.EmailAndPassword.DeveloperName
+                            .FirstAsync(
+                                p =>
+                                    p.DeveloperName
+                                    == AuthenticationSchemeType.EmailAndPassword.DeveloperName,
+                                cancellationToken
                             );
                         if (!emailAndPasswordScheme.IsEnabledForUsers)
                         {
@@ -76,10 +78,11 @@ public class CreateUser
                             return;
                         }
 
-                        var entity = db
+                        var entity = await db
                             .Users.AsNoTracking()
-                            .FirstOrDefault(p =>
-                                p.EmailAddress.ToLower() == request.EmailAddress.ToLower()
+                            .FirstOrDefaultAsync(
+                                p => p.EmailAddress.ToLower() == request.EmailAddress.ToLower(),
+                                cancellationToken
                             );
 
                         if (entity != null)
@@ -109,8 +112,9 @@ public class CreateUser
             CancellationToken cancellationToken
         )
         {
-            var defaultToEmailAndPasswordScheme = _db.AuthenticationSchemes.First(p =>
-                p.DeveloperName == AuthenticationSchemeType.EmailAndPassword.DeveloperName
+            var defaultToEmailAndPasswordScheme = await _db.AuthenticationSchemes.FirstAsync(
+                p => p.DeveloperName == AuthenticationSchemeType.EmailAndPassword.DeveloperName,
+                cancellationToken
             );
             var salt = PasswordUtility.RandomSalt();
             var newUserId = Guid.NewGuid();

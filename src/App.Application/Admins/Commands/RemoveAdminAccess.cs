@@ -1,11 +1,11 @@
-using CSharpVitamins;
-using FluentValidation;
-using Mediator;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
+using CSharpVitamins;
+using FluentValidation;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Admins.Commands;
 
@@ -48,9 +48,9 @@ public class RemoveAdminAccess
             CancellationToken cancellationToken
         )
         {
-            var entity = _db
+            var entity = await _db
                 .Users.Include(p => p.Roles)
-                .FirstOrDefault(p => p.Id == request.Id.Guid && p.IsAdmin);
+                .FirstOrDefaultAsync(p => p.Id == request.Id.Guid && p.IsAdmin, cancellationToken);
             if (entity == null)
                 throw new NotFoundException("Admin", request.Id);
 

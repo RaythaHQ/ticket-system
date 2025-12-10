@@ -18,14 +18,16 @@ public class CompleteLoginWithMagicLink
         public Validator(IAppDbContext db)
         {
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
-                        var authScheme = db
+                        var authScheme = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .First(p =>
-                                p.AuthenticationSchemeType
-                                == AuthenticationSchemeType.MagicLink.DeveloperName
+                            .FirstAsync(
+                                p =>
+                                    p.AuthenticationSchemeType
+                                    == AuthenticationSchemeType.MagicLink.DeveloperName,
+                                cancellationToken
                             );
 
                         if (!authScheme.IsEnabledForUsers && !authScheme.IsEnabledForAdmins)
@@ -37,11 +39,14 @@ public class CompleteLoginWithMagicLink
                             return;
                         }
 
-                        var entity = db
+                        var entity = await db
                             .OneTimePasswords.AsNoTracking()
                             .Include(p => p.User)
                             .ThenInclude(p => p.AuthenticationScheme)
-                            .FirstOrDefault(p => p.Id == PasswordUtility.Hash(request.Id));
+                            .FirstOrDefaultAsync(
+                                p => p.Id == PasswordUtility.Hash(request.Id),
+                                cancellationToken
+                            );
 
                         if (entity == null)
                         {
@@ -103,15 +108,17 @@ public class CompleteLoginWithMagicLink
             CancellationToken cancellationToken
         )
         {
-            var authScheme = _db.AuthenticationSchemes.First(p =>
-                p.AuthenticationSchemeType
-                == AuthenticationSchemeType.EmailAndPassword.DeveloperName
+            var authScheme = await _db.AuthenticationSchemes.FirstAsync(
+                p =>
+                    p.AuthenticationSchemeType
+                    == AuthenticationSchemeType.EmailAndPassword.DeveloperName,
+                cancellationToken
             );
 
-            var entity = _db
+            var entity = await _db
                 .OneTimePasswords.Include(p => p.User)
                 .ThenInclude(p => p.AuthenticationScheme)
-                .First(p => p.Id == PasswordUtility.Hash(request.Id));
+                .FirstAsync(p => p.Id == PasswordUtility.Hash(request.Id), cancellationToken);
 
             entity.IsUsed = true;
             entity.User.LastLoggedInTime = DateTime.UtcNow;

@@ -25,14 +25,16 @@ public class BeginForgotPassword
         {
             RuleFor(x => x.EmailAddress).NotEmpty().EmailAddress();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
-                        var authScheme = db
+                        var authScheme = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .First(p =>
-                                p.DeveloperName
-                                == AuthenticationSchemeType.EmailAndPassword.DeveloperName
+                            .FirstAsync(
+                                p =>
+                                    p.DeveloperName
+                                    == AuthenticationSchemeType.EmailAndPassword.DeveloperName,
+                                cancellationToken
                             );
 
                         if (!authScheme.IsEnabledForUsers && !authScheme.IsEnabledForAdmins)
@@ -63,7 +65,10 @@ public class BeginForgotPassword
         )
         {
             var emailAddress = request.EmailAddress.ToLower().Trim();
-            var entity = _db.Users.FirstOrDefault(p => p.EmailAddress.ToLower() == emailAddress);
+            var entity = await _db.Users.FirstOrDefaultAsync(
+                p => p.EmailAddress.ToLower() == emailAddress,
+                cancellationToken
+            );
 
             if (entity == null || !entity.IsActive)
             {
@@ -71,8 +76,9 @@ public class BeginForgotPassword
             }
 
             // Check auth scheme eligibility without revealing to the caller
-            var authScheme = _db.AuthenticationSchemes.First(p =>
-                p.DeveloperName == AuthenticationSchemeType.EmailAndPassword.DeveloperName
+            var authScheme = await _db.AuthenticationSchemes.FirstAsync(
+                p => p.DeveloperName == AuthenticationSchemeType.EmailAndPassword.DeveloperName,
+                cancellationToken
             );
 
             if (

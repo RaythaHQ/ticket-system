@@ -26,14 +26,16 @@ public class BeginLoginWithMagicLink
         {
             RuleFor(x => x.EmailAddress).NotEmpty().EmailAddress();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
-                        var authScheme = db
+                        var authScheme = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .First(p =>
-                                p.AuthenticationSchemeType
-                                == AuthenticationSchemeType.MagicLink.DeveloperName
+                            .FirstAsync(
+                                p =>
+                                    p.AuthenticationSchemeType
+                                    == AuthenticationSchemeType.MagicLink.DeveloperName,
+                                cancellationToken
                             );
 
                         if (!authScheme.IsEnabledForUsers && !authScheme.IsEnabledForAdmins)
@@ -46,9 +48,12 @@ public class BeginLoginWithMagicLink
                         }
 
                         var emailAddress = request.EmailAddress.ToLower().Trim();
-                        var entity = db
+                        var entity = await db
                             .Users.AsNoTracking()
-                            .FirstOrDefault(p => p.EmailAddress.ToLower() == emailAddress);
+                            .FirstOrDefaultAsync(
+                                p => p.EmailAddress.ToLower() == emailAddress,
+                                cancellationToken
+                            );
 
                         if (entity == null)
                         {
@@ -101,14 +106,16 @@ public class BeginLoginWithMagicLink
             CancellationToken cancellationToken
         )
         {
-            var authScheme = _db.AuthenticationSchemes.First(p =>
-                p.AuthenticationSchemeType == AuthenticationSchemeType.MagicLink.DeveloperName
+            var authScheme = await _db.AuthenticationSchemes.FirstAsync(
+                p => p.AuthenticationSchemeType == AuthenticationSchemeType.MagicLink.DeveloperName,
+                cancellationToken
             );
 
-            var entity = _db
+            var entity = await _db
                 .Users.Include(p => p.AuthenticationScheme)
-                .FirstOrDefault(p =>
-                    p.EmailAddress.ToLower() == request.EmailAddress.ToLower().Trim()
+                .FirstOrDefaultAsync(
+                    p => p.EmailAddress.ToLower() == request.EmailAddress.ToLower().Trim(),
+                    cancellationToken
                 );
 
             var guid = ShortGuid.NewGuid();

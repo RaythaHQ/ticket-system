@@ -21,8 +21,8 @@ public class SetIsActive
         public Validator(IAppDbContext db, ICurrentUser currentUser)
         {
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
                         if (request.Id == currentUser.UserId)
                         {
@@ -33,9 +33,9 @@ public class SetIsActive
                             return;
                         }
 
-                        var entity = db
+                        var entity = await db
                             .Users.AsNoTracking()
-                            .FirstOrDefault(p => p.Id == request.Id.Guid);
+                            .FirstOrDefaultAsync(p => p.Id == request.Id.Guid, cancellationToken);
                         if (entity == null)
                             throw new NotFoundException("User", request.Id);
 
@@ -66,7 +66,10 @@ public class SetIsActive
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.Users.First(p => p.Id == request.Id.Guid);
+            var entity = await _db.Users.FirstAsync(
+                p => p.Id == request.Id.Guid,
+                cancellationToken
+            );
 
             entity.IsActive = request.IsActive;
 

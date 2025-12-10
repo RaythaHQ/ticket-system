@@ -80,12 +80,15 @@ public class CreateAuthenticationScheme
                 .WithMessage("Invalid developer name.");
             RuleFor(x => x.DeveloperName)
                 .NotEmpty()
-                .Must(
-                    (request, developerName) =>
+                .MustAsync(
+                    async (request, developerName, cancellationToken) =>
                     {
-                        var isDeveloperNameAlreadyExist = db
+                        var isDeveloperNameAlreadyExist = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .Any(p => p.DeveloperName == request.DeveloperName.ToDeveloperName());
+                            .AnyAsync(
+                                p => p.DeveloperName == request.DeveloperName.ToDeveloperName(),
+                                cancellationToken
+                            );
                         return !isDeveloperNameAlreadyExist;
                     }
                 )

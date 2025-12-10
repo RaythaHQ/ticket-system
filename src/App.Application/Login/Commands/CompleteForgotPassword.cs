@@ -29,8 +29,8 @@ public class CompleteForgotPassword
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
                         if (
                             string.IsNullOrEmpty(request.NewPassword)
@@ -54,11 +54,13 @@ public class CompleteForgotPassword
                             return;
                         }
 
-                        var authScheme = db
+                        var authScheme = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .First(p =>
-                                p.DeveloperName
-                                == AuthenticationSchemeType.EmailAndPassword.DeveloperName
+                            .FirstAsync(
+                                p =>
+                                    p.DeveloperName
+                                    == AuthenticationSchemeType.EmailAndPassword.DeveloperName,
+                                cancellationToken
                             );
 
                         if (!authScheme.IsEnabledForUsers && !authScheme.IsEnabledForAdmins)
@@ -70,11 +72,14 @@ public class CompleteForgotPassword
                             return;
                         }
 
-                        var entity = db
+                        var entity = await db
                             .OneTimePasswords.AsNoTracking()
                             .Include(p => p.User)
                             .ThenInclude(p => p.AuthenticationScheme)
-                            .FirstOrDefault(p => p.Id == PasswordUtility.Hash(request.Id));
+                            .FirstOrDefaultAsync(
+                                p => p.Id == PasswordUtility.Hash(request.Id),
+                                cancellationToken
+                            );
 
                         if (entity == null)
                         {
@@ -136,10 +141,10 @@ public class CompleteForgotPassword
             CancellationToken cancellationToken
         )
         {
-            var entity = _db
+            var entity = await _db
                 .OneTimePasswords.Include(p => p.User)
                 .ThenInclude(p => p.AuthenticationScheme)
-                .First(p => p.Id == PasswordUtility.Hash(request.Id));
+                .FirstAsync(p => p.Id == PasswordUtility.Hash(request.Id), cancellationToken);
 
             var salt = PasswordUtility.RandomSalt();
             entity.User.Salt = salt;

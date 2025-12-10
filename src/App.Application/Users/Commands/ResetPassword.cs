@@ -29,8 +29,8 @@ public class ResetPassword
         public Validator(IAppDbContext db)
         {
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
                         if (
                             request.NewPassword.Length
@@ -53,11 +53,13 @@ public class ResetPassword
                             return;
                         }
 
-                        var authScheme = db
+                        var authScheme = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .First(p =>
-                                p.AuthenticationSchemeType
-                                == AuthenticationSchemeType.EmailAndPassword.DeveloperName
+                            .FirstAsync(
+                                p =>
+                                    p.AuthenticationSchemeType
+                                    == AuthenticationSchemeType.EmailAndPassword.DeveloperName,
+                                cancellationToken
                             );
 
                         if (!authScheme.IsEnabledForUsers)
@@ -69,9 +71,9 @@ public class ResetPassword
                             return;
                         }
 
-                        var entity = db
+                        var entity = await db
                             .Users.AsNoTracking()
-                            .FirstOrDefault(p => p.Id == request.Id.Guid);
+                            .FirstOrDefaultAsync(p => p.Id == request.Id.Guid, cancellationToken);
 
                         if (entity == null)
                             throw new NotFoundException("User", request.Id);
@@ -112,7 +114,10 @@ public class ResetPassword
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.Users.First(p => p.Id == request.Id.Guid);
+            var entity = await _db.Users.FirstAsync(
+                p => p.Id == request.Id.Guid,
+                cancellationToken
+            );
 
             var salt = PasswordUtility.RandomSalt();
             entity.Salt = salt;

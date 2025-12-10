@@ -19,17 +19,17 @@ public class DeleteRole
         public Validator(IAppDbContext db)
         {
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
-                        var entity = db
+                        var entity = await db
                             .Roles.AsNoTracking()
                             .Include(p => p.Users)
-                            .FirstOrDefault(p => p.Id == request.Id.Guid);
+                            .FirstOrDefaultAsync(p => p.Id == request.Id.Guid, cancellationToken);
                         if (entity == null)
                             throw new NotFoundException("Role", request.Id);
 
-                        if (entity.Users.Any())
+                        if (entity.Users.Count > 0)
                         {
                             context.AddFailure(
                                 Constants.VALIDATION_SUMMARY,
@@ -65,7 +65,9 @@ public class DeleteRole
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.Roles.Include(p => p.Users).First(p => p.Id == request.Id.Guid);
+            var entity = await _db
+                .Roles.Include(p => p.Users)
+                .FirstAsync(p => p.Id == request.Id.Guid, cancellationToken);
 
             _db.Roles.Remove(entity);
             await _db.SaveChangesAsync(cancellationToken);

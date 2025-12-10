@@ -1,10 +1,11 @@
-using CSharpVitamins;
-using FluentValidation;
-using Mediator;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
+using CSharpVitamins;
+using FluentValidation;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Admins.Commands;
 
@@ -50,7 +51,10 @@ public class SetIsActive
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.Users.FirstOrDefault(p => p.Id == request.Id.Guid && p.IsAdmin);
+            var entity = await _db.Users.FirstOrDefaultAsync(
+                p => p.Id == request.Id.Guid && p.IsAdmin,
+                cancellationToken
+            );
             if (entity == null)
                 throw new NotFoundException("Admin", request.Id);
 

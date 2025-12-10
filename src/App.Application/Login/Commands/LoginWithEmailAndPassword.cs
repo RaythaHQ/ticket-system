@@ -1,12 +1,13 @@
 using System.Text.Json.Serialization;
-using CSharpVitamins;
-using FluentValidation;
-using Mediator;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
+using CSharpVitamins;
+using FluentValidation;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Login.Commands;
 
@@ -26,24 +27,27 @@ public class LoginWithEmailAndPassword
         {
             RuleFor(x => x.EmailAddress).NotEmpty().EmailAddress();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
-                        var authScheme = db.AuthenticationSchemes.First(p =>
-                            p.AuthenticationSchemeType == AuthenticationSchemeType.EmailAndPassword
+                        var authScheme = await db.AuthenticationSchemes.FirstAsync(
+                            p =>
+                                p.AuthenticationSchemeType
+                                == AuthenticationSchemeType.EmailAndPassword,
+                            cancellationToken
                         );
 
                         // Cleanup stale failed login attempts (older than 2x window)
                         var cleanupCutoff = DateTime.UtcNow.AddSeconds(
                             -2 * authScheme.BruteForceProtectionWindowInSeconds
                         );
-                        var staleAttempts = db
+                        var staleAttempts = await db
                             .FailedLoginAttempts.Where(f => f.LastFailedAttemptAt < cleanupCutoff)
-                            .ToList();
-                        if (staleAttempts.Any())
+                            .ToListAsync(cancellationToken);
+                        if (staleAttempts.Count > 0)
                         {
                             db.DbContext.RemoveRange(staleAttempts);
-                            db.DbContext.SaveChanges();
+                            await db.DbContext.SaveChangesAsync(cancellationToken);
                         }
 
                         if (!authScheme.IsEnabledForUsers && !authScheme.IsEnabledForAdmins)
@@ -71,8 +75,9 @@ public class LoginWithEmailAndPassword
                         // Check brute force lockout before proceeding
                         var failedAttempt =
                             emailAddress != null
-                                ? db.FailedLoginAttempts.FirstOrDefault(f =>
-                                    f.EmailAddress == emailAddress
+                                ? await db.FailedLoginAttempts.FirstOrDefaultAsync(
+                                    f => f.EmailAddress == emailAddress,
+                                    cancellationToken
                                 )
                                 : null;
                         var windowStart = DateTime.UtcNow.AddSeconds(
@@ -95,14 +100,21 @@ public class LoginWithEmailAndPassword
 
                         var entity =
                             emailAddress != null
-                                ? db.Users.FirstOrDefault(p =>
-                                    p.EmailAddress.ToLower() == emailAddress
+                                ? await db.Users.FirstOrDefaultAsync(
+                                    p => p.EmailAddress.ToLower() == emailAddress,
+                                    cancellationToken
                                 )
                                 : null;
 
                         if (entity == null)
                         {
-                            RecordFailedAttempt(db, emailAddress, failedAttempt, windowStart);
+                            await RecordFailedAttemptAsync(
+                                db,
+                                emailAddress,
+                                failedAttempt,
+                                windowStart,
+                                cancellationToken
+                            );
                             context.AddFailure(
                                 Constants.VALIDATION_SUMMARY,
                                 "Invalid email or password."
@@ -144,7 +156,13 @@ public class LoginWithEmailAndPassword
                         );
                         if (!passwordsMatch)
                         {
-                            RecordFailedAttempt(db, emailAddress, failedAttempt, windowStart);
+                            await RecordFailedAttemptAsync(
+                                db,
+                                emailAddress,
+                                failedAttempt,
+                                windowStart,
+                                cancellationToken
+                            );
                             context.AddFailure(
                                 Constants.VALIDATION_SUMMARY,
                                 "Invalid email or password."
@@ -155,11 +173,12 @@ public class LoginWithEmailAndPassword
                 );
         }
 
-        private static void RecordFailedAttempt(
+        private static async Task RecordFailedAttemptAsync(
             IAppDbContext db,
             string? emailAddress,
             FailedLoginAttempt? existing,
-            DateTime windowStart
+            DateTime windowStart,
+            CancellationToken cancellationToken
         )
         {
             if (string.IsNullOrEmpty(emailAddress))
@@ -190,7 +209,7 @@ public class LoginWithEmailAndPassword
                 existing.LastFailedAttemptAt = DateTime.UtcNow;
             }
 
-            db.DbContext.SaveChanges();
+            await db.DbContext.SaveChangesAsync(cancellationToken);
         }
     }
 
@@ -208,17 +227,22 @@ public class LoginWithEmailAndPassword
             CancellationToken cancellationToken
         )
         {
-            var authScheme = _db.AuthenticationSchemes.First(p =>
-                p.AuthenticationSchemeType == AuthenticationSchemeType.EmailAndPassword
+            var authScheme = await _db.AuthenticationSchemes.FirstAsync(
+                p => p.AuthenticationSchemeType == AuthenticationSchemeType.EmailAndPassword,
+                cancellationToken
             );
 
             var emailAddress = request.EmailAddress.ToLower().Trim();
 
-            var entity = _db.Users.First(p => p.EmailAddress.ToLower() == emailAddress);
+            var entity = await _db.Users.FirstAsync(
+                p => p.EmailAddress.ToLower() == emailAddress,
+                cancellationToken
+            );
 
             // Clear failed login attempts on successful login
-            var failedAttempt = _db.FailedLoginAttempts.FirstOrDefault(f =>
-                f.EmailAddress == emailAddress
+            var failedAttempt = await _db.FailedLoginAttempts.FirstOrDefaultAsync(
+                f => f.EmailAddress == emailAddress,
+                cancellationToken
             );
             if (failedAttempt != null)
             {

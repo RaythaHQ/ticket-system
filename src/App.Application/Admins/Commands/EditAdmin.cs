@@ -27,12 +27,12 @@ public class EditAdmin
             RuleFor(x => x.Roles).NotEmpty();
             RuleFor(x => x.EmailAddress).NotEmpty().EmailAddress();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
-                        var entity = db
+                        var entity = await db
                             .Users.AsNoTracking()
-                            .FirstOrDefault(p => p.Id == request.Id.Guid);
+                            .FirstOrDefaultAsync(p => p.Id == request.Id.Guid, cancellationToken);
 
                         if (entity == null)
                             throw new NotFoundException("Admin", request.Id);
@@ -40,9 +40,12 @@ public class EditAdmin
                         if (request.EmailAddress.ToLower() != entity.EmailAddress.ToLower())
                         {
                             var emailAddressToCheck = request.EmailAddress.ToLower();
-                            var doesAnotherEmailExist = db
+                            var doesAnotherEmailExist = await db
                                 .Users.AsNoTracking()
-                                .Any(p => p.EmailAddress.ToLower() == emailAddressToCheck);
+                                .AnyAsync(
+                                    p => p.EmailAddress.ToLower() == emailAddressToCheck,
+                                    cancellationToken
+                                );
                             if (doesAnotherEmailExist)
                             {
                                 context.AddFailure(
@@ -71,9 +74,9 @@ public class EditAdmin
             CancellationToken cancellationToken
         )
         {
-            var entity = _db
+            var entity = await _db
                 .Users.Include(p => p.Roles)
-                .First(p => p.Id == request.Id.Guid && p.IsAdmin);
+                .FirstAsync(p => p.Id == request.Id.Guid && p.IsAdmin, cancellationToken);
 
             entity.FirstName = request.FirstName;
             entity.LastName = request.LastName;
@@ -86,7 +89,10 @@ public class EditAdmin
 
             foreach (var roleToAddId in rolesToAddIds)
             {
-                var roleToAdd = _db.Roles.First(p => p.Id == roleToAddId.Guid);
+                var roleToAdd = await _db.Roles.FirstAsync(
+                    p => p.Id == roleToAddId.Guid,
+                    cancellationToken
+                );
                 entity.Roles.Add(roleToAdd);
             }
 

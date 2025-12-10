@@ -1,10 +1,11 @@
-﻿using CSharpVitamins;
-using FluentValidation;
-using Mediator;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
+using CSharpVitamins;
+using FluentValidation;
+using Mediator;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Users.Commands;
 
@@ -17,8 +18,8 @@ public class DeleteUser
         public Validator(IAppDbContext db, ICurrentUser currentUser)
         {
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
                         if (request.Id == currentUser.UserId)
                         {
@@ -29,7 +30,10 @@ public class DeleteUser
                             return;
                         }
 
-                        var entity = db.Users.FirstOrDefault(p => p.Id == request.Id.Guid);
+                        var entity = await db.Users.FirstOrDefaultAsync(
+                            p => p.Id == request.Id.Guid,
+                            cancellationToken
+                        );
                         if (entity == null)
                             throw new NotFoundException("User", request.Id);
 
@@ -60,7 +64,10 @@ public class DeleteUser
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.Users.First(p => p.Id == request.Id.Guid);
+            var entity = await _db.Users.FirstAsync(
+                p => p.Id == request.Id.Guid,
+                cancellationToken
+            );
 
             // Null out foreign key references to prevent constraint violations
             var emailTemplates = _db.EmailTemplates.Where(p =>

@@ -31,13 +31,16 @@ public class LoginWithJwt
             RuleFor(x => x.Token).NotEmpty();
             RuleFor(x => x.DeveloperName).NotEmpty();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
                         var developerName = request.DeveloperName.ToDeveloperName();
-                        var authScheme = db
+                        var authScheme = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .FirstOrDefault(p => p.DeveloperName == developerName);
+                            .FirstOrDefaultAsync(
+                                p => p.DeveloperName == developerName,
+                                cancellationToken
+                            );
 
                         if (authScheme == null)
                         {
@@ -109,9 +112,9 @@ public class LoginWithJwt
                                 return;
                             }
 
-                            var jtiResult = db
+                            var jtiResult = await db
                                 .JwtLogins.AsNoTracking()
-                                .FirstOrDefault(p => p.Jti == jti);
+                                .FirstOrDefaultAsync(p => p.Jti == jti, cancellationToken);
                             if (jtiResult != null)
                             {
                                 context.AddFailure(
@@ -122,7 +125,7 @@ public class LoginWithJwt
                             }
                         }
 
-                        string email =
+                        string? email =
                             payload.GetValueOrDefault<string, object>(JwtRegisteredClaimNames.Email)
                             as string;
 
@@ -135,7 +138,7 @@ public class LoginWithJwt
                             return;
                         }
 
-                        email = email.ToLower().Trim();
+                        email = email!.ToLower().Trim();
 
                         if (!email.IsValidEmailAddress())
                         {
@@ -146,21 +149,26 @@ public class LoginWithJwt
                             return;
                         }
 
-                        User entity = null;
+                        User? entity = null;
                         var sub = payload.Sub;
                         if (payload.ContainsKey(JwtRegisteredClaimNames.Sub))
                         {
-                            entity = db
+                            entity = await db
                                 .Users.AsNoTracking()
-                                .FirstOrDefault(p =>
-                                    p.SsoId == sub && p.AuthenticationSchemeId == authScheme.Id
+                                .FirstOrDefaultAsync(
+                                    p =>
+                                        p.SsoId == sub && p.AuthenticationSchemeId == authScheme.Id,
+                                    cancellationToken
                                 );
                         }
                         else
                         {
-                            entity = db
+                            entity = await db
                                 .Users.AsNoTracking()
-                                .FirstOrDefault(p => p.EmailAddress.ToLower() == email);
+                                .FirstOrDefaultAsync(
+                                    p => p.EmailAddress.ToLower() == email,
+                                    cancellationToken
+                                );
                         }
 
                         if (entity != null)
@@ -211,8 +219,9 @@ public class LoginWithJwt
             CancellationToken cancellationToken
         )
         {
-            var authScheme = _db.AuthenticationSchemes.First(p =>
-                p.DeveloperName == request.DeveloperName.ToDeveloperName()
+            var authScheme = await _db.AuthenticationSchemes.FirstAsync(
+                p => p.DeveloperName == request.DeveloperName.ToDeveloperName(),
+                cancellationToken
             );
 
             var validationParameters = new TokenValidationParameters()
@@ -233,7 +242,7 @@ public class LoginWithJwt
             );
             var payload = ((JwtSecurityToken)decodedToken).Payload;
 
-            JwtLogin jwtLogin = null;
+            JwtLogin? jwtLogin = null;
             if (authScheme.JwtUseHighSecurity)
             {
                 var jti = payload.Jti;
@@ -241,43 +250,48 @@ public class LoginWithJwt
             }
 
             string sub = payload.Sub;
-            string email =
+            string? email =
                 payload.GetValueOrDefault<string, object>(JwtRegisteredClaimNames.Email) as string;
-            string givenName =
+            string? givenName =
                 payload.GetValueOrDefault<string, object>(JwtRegisteredClaimNames.GivenName)
                 as string;
-            string familyName =
+            string? familyName =
                 payload.GetValueOrDefault<string, object>(JwtRegisteredClaimNames.FamilyName)
                 as string;
-            IEnumerable<string> userGroups = payload
+            var userGroupsList = payload
                 .Claims.Where(p => p.Type == RaythaClaimTypes.UserGroups)
-                .Select(p => p.Value);
+                .Select(p => p.Value)
+                .ToList();
 
-            User entity = null;
+            User? entity = null;
 
             if (!string.IsNullOrWhiteSpace(sub))
             {
-                entity = _db
+                entity = await _db
                     .Users.Include(p => p.UserGroups)
-                    .FirstOrDefault(p =>
-                        p.SsoId == sub && p.AuthenticationSchemeId == authScheme.Id
+                    .FirstOrDefaultAsync(
+                        p => p.SsoId == sub && p.AuthenticationSchemeId == authScheme.Id,
+                        cancellationToken
                     );
             }
 
             if (entity == null)
             {
-                var cleanedEmail = email.Trim().ToLower();
-                entity = _db
+                var cleanedEmail = email!.Trim().ToLower();
+                entity = await _db
                     .Users.Include(p => p.UserGroups)
-                    .FirstOrDefault(p => p.EmailAddress.ToLower() == cleanedEmail);
+                    .FirstOrDefaultAsync(
+                        p => p.EmailAddress.ToLower() == cleanedEmail,
+                        cancellationToken
+                    );
             }
 
-            ICollection<UserGroup> foundUserGroups = null;
-            if (userGroups.Any())
+            ICollection<UserGroup>? foundUserGroups = null;
+            if (userGroupsList.Count > 0)
             {
-                foundUserGroups = _db
-                    .UserGroups.Where(p => userGroups.Any(c => c == p.DeveloperName))
-                    .ToList();
+                foundUserGroups = await _db
+                    .UserGroups.Where(p => userGroupsList.Any(c => c == p.DeveloperName))
+                    .ToListAsync(cancellationToken);
             }
 
             //no user found at all, create a new user on the fly
@@ -308,7 +322,7 @@ public class LoginWithJwt
                 entity.LastName = familyName.IfNullOrEmpty(entity.LastName);
                 entity.EmailAddress = email.Trim();
 
-                if (foundUserGroups != null && foundUserGroups.Any())
+                if (foundUserGroups != null && foundUserGroups.Count > 0)
                 {
                     foreach (var ug in entity.UserGroups)
                     {

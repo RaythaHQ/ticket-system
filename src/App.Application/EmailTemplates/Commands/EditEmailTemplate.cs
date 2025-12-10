@@ -27,19 +27,19 @@ public class EditEmailTemplate
             RuleFor(x => x.Subject).NotEmpty();
             RuleFor(x => x.Content).NotEmpty();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
-                        var entity = db
+                        var entity = await db
                             .EmailTemplates.AsNoTracking()
-                            .FirstOrDefault(p => p.Id == request.Id.Guid);
+                            .FirstOrDefaultAsync(p => p.Id == request.Id.Guid, cancellationToken);
                         if (entity == null)
                             throw new NotFoundException("EmailTemplate", request.Id);
 
                         var ccArray = request.Cc.SplitIntoSeparateEmailAddresses();
                         var bccArray = request.Bcc.SplitIntoSeparateEmailAddresses();
 
-                        if (ccArray.Any())
+                        if (ccArray.Length > 0)
                         {
                             foreach (var cc in ccArray)
                             {
@@ -48,7 +48,7 @@ public class EditEmailTemplate
                             }
                         }
 
-                        if (bccArray.Any())
+                        if (bccArray.Length > 0)
                         {
                             foreach (var bcc in bccArray)
                             {
@@ -75,7 +75,10 @@ public class EditEmailTemplate
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.EmailTemplates.First(p => p.Id == request.Id.Guid);
+            var entity = await _db.EmailTemplates.FirstAsync(
+                p => p.Id == request.Id.Guid,
+                cancellationToken
+            );
 
             if (
                 BuiltInEmailTemplate.Templates.Any(p => p.DeveloperName == entity.DeveloperName)

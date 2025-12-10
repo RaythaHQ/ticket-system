@@ -21,12 +21,12 @@ public class EditUserGroup
         {
             RuleFor(x => x.Label).NotEmpty();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
-                        var entity = db
+                        var entity = await db
                             .UserGroups.AsNoTracking()
-                            .FirstOrDefault(p => p.Id == request.Id.Guid);
+                            .FirstOrDefaultAsync(p => p.Id == request.Id.Guid, cancellationToken);
                         if (entity == null)
                             throw new NotFoundException("UserGroup", request.Id);
                     }
@@ -48,7 +48,10 @@ public class EditUserGroup
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.UserGroups.First(p => p.Id == request.Id.Guid);
+            var entity = await _db.UserGroups.FirstAsync(
+                p => p.Id == request.Id.Guid,
+                cancellationToken
+            );
 
             entity.Label = request.Label;
 

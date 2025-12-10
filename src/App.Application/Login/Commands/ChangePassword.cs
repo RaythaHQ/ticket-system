@@ -34,8 +34,8 @@ public class ChangePassword
         {
             RuleFor(x => x.Id).NotEmpty();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
                         if (string.IsNullOrEmpty(request.CurrentPassword))
                         {
@@ -67,17 +67,19 @@ public class ChangePassword
                             return;
                         }
 
-                        var authScheme = db
+                        var authScheme = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .First(p =>
-                                p.DeveloperName
-                                == AuthenticationSchemeType.EmailAndPassword.DeveloperName
+                            .FirstAsync(
+                                p =>
+                                    p.DeveloperName
+                                    == AuthenticationSchemeType.EmailAndPassword.DeveloperName,
+                                cancellationToken
                             );
 
-                        var entity = db
+                        var entity = await db
                             .Users.AsNoTracking()
                             .Include(p => p.AuthenticationScheme)
-                            .FirstOrDefault(p => p.Id == request.Id.Guid);
+                            .FirstOrDefaultAsync(p => p.Id == request.Id.Guid, cancellationToken);
 
                         if (entity == null)
                             throw new NotFoundException("User", request.Id);
@@ -141,9 +143,9 @@ public class ChangePassword
             CancellationToken cancellationToken
         )
         {
-            var entity = _db
+            var entity = await _db
                 .Users.Include(p => p.AuthenticationScheme)
-                .First(p => p.Id == request.Id.Guid);
+                .FirstAsync(p => p.Id == request.Id.Guid, cancellationToken);
 
             var salt = PasswordUtility.RandomSalt();
             entity.Salt = salt;

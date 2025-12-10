@@ -29,8 +29,8 @@ public class ResetPassword
         public Validator(IAppDbContext db)
         {
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
                         if (
                             request.NewPassword.Length
@@ -53,11 +53,13 @@ public class ResetPassword
                             return;
                         }
 
-                        var authScheme = db
+                        var authScheme = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .First(p =>
-                                p.AuthenticationSchemeType
-                                == AuthenticationSchemeType.EmailAndPassword.DeveloperName
+                            .FirstAsync(
+                                p =>
+                                    p.AuthenticationSchemeType
+                                    == AuthenticationSchemeType.EmailAndPassword.DeveloperName,
+                                cancellationToken
                             );
 
                         if (!authScheme.IsEnabledForAdmins)
@@ -69,10 +71,13 @@ public class ResetPassword
                             return;
                         }
 
-                        var entity = db
+                        var entity = await db
                             .Users.AsNoTracking()
                             .Include(p => p.AuthenticationScheme)
-                            .FirstOrDefault(p => p.Id == request.Id.Guid && p.IsAdmin);
+                            .FirstOrDefaultAsync(
+                                p => p.Id == request.Id.Guid && p.IsAdmin,
+                                cancellationToken
+                            );
 
                         if (entity == null)
                             throw new NotFoundException("Admin", request.Id);
@@ -104,9 +109,9 @@ public class ResetPassword
             CancellationToken cancellationToken
         )
         {
-            var entity = _db
+            var entity = await _db
                 .Users.Include(p => p.AuthenticationScheme)
-                .First(p => p.Id == request.Id.Guid && p.IsAdmin);
+                .FirstAsync(p => p.Id == request.Id.Guid && p.IsAdmin, cancellationToken);
 
             var salt = PasswordUtility.RandomSalt();
             entity.Salt = salt;

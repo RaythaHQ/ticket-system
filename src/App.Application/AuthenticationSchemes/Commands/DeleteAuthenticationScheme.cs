@@ -18,12 +18,12 @@ public class DeleteAuthenticationScheme
         public Validator(IAppDbContext db)
         {
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
-                        var entity = db
+                        var entity = await db
                             .AuthenticationSchemes.AsNoTracking()
-                            .FirstOrDefault(p => p.Id == request.Id.Guid);
+                            .FirstOrDefaultAsync(p => p.Id == request.Id.Guid, cancellationToken);
                         if (entity == null)
                             throw new NotFoundException("Authentication Scheme", request.Id);
 
@@ -37,8 +37,9 @@ public class DeleteAuthenticationScheme
                         }
 
                         var onlyOneAdminAuthLeft =
-                            db.AuthenticationSchemes.AsNoTracking().Count(p => p.IsEnabledForAdmins)
-                            == 1;
+                            await db
+                                .AuthenticationSchemes.AsNoTracking()
+                                .CountAsync(p => p.IsEnabledForAdmins, cancellationToken) == 1;
                         if (entity.IsEnabledForAdmins && onlyOneAdminAuthLeft)
                         {
                             context.AddFailure(
@@ -66,7 +67,10 @@ public class DeleteAuthenticationScheme
             CancellationToken cancellationToken
         )
         {
-            var entity = _db.AuthenticationSchemes.First(p => p.Id == request.Id.Guid);
+            var entity = await _db.AuthenticationSchemes.FirstAsync(
+                p => p.Id == request.Id.Guid,
+                cancellationToken
+            );
 
             _db.AuthenticationSchemes.Remove(entity);
             await _db.SaveChangesAsync(cancellationToken);

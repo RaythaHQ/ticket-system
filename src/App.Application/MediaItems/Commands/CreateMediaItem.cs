@@ -31,8 +31,8 @@ public class CreateMediaItem
             RuleFor(x => x.ObjectKey).NotEmpty();
             RuleFor(x => x.FileStorageProvider).NotEmpty();
             RuleFor(x => x)
-                .Custom(
-                    (request, context) =>
+                .CustomAsync(
+                    async (request, context, cancellationToken) =>
                     {
                         if (
                             !FileStorageUtility.IsAllowedMimeType(
@@ -54,9 +54,9 @@ public class CreateMediaItem
                             return;
                         }
 
-                        var entity = db
+                        var entity = await db
                             .MediaItems.AsNoTracking()
-                            .FirstOrDefault(p => p.Id == request.Id.Guid);
+                            .FirstOrDefaultAsync(p => p.Id == request.Id.Guid, cancellationToken);
                         if (entity != null)
                         {
                             context.AddFailure("Id", "A media item with this ID already exists.");
