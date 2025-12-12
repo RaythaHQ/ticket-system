@@ -168,7 +168,7 @@ public class Index : BaseAdminPageModel
 
         AvailableUsers = await _db
             .Users.AsNoTracking()
-            .Where(u => u.IsActive && !existingMemberIds.Contains(u.Id))
+            .Where(u => u.IsAdmin && u.IsActive && !existingMemberIds.Contains(u.Id))
             .OrderBy(u => u.FirstName)
             .ThenBy(u => u.LastName)
             .Select(u => new AvailableUserItem

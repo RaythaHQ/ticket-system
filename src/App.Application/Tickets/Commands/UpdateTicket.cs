@@ -36,6 +36,32 @@ public class UpdateTicket
             RuleFor(x => x.Priority)
                 .Must(p => TicketPriority.SupportedTypes.Any(t => t.DeveloperName == p))
                 .WithMessage("Invalid priority value.");
+
+            RuleFor(x => x.OwningTeamId)
+                .MustAsync(async (teamId, cancellationToken) =>
+                {
+                    if (!teamId.HasValue) return true;
+                    return await db.Teams.AsNoTracking().AnyAsync(t => t.Id == teamId.Value.Guid, cancellationToken);
+                })
+                .WithMessage("Team not found.");
+
+            RuleFor(x => x.AssigneeId)
+                .MustAsync(async (assigneeId, cancellationToken) =>
+                {
+                    if (!assigneeId.HasValue) return true;
+                    return await db.Users.AsNoTracking().AnyAsync(u => u.Id == assigneeId.Value.Guid && u.IsActive, cancellationToken);
+                })
+                .WithMessage("Assignee not found or inactive.");
+
+            // Validate that if both team and assignee are provided, assignee is a member of that team
+            RuleFor(x => x)
+                .MustAsync(async (cmd, cancellationToken) =>
+                {
+                    if (!cmd.OwningTeamId.HasValue || !cmd.AssigneeId.HasValue) return true;
+                    return await db.TeamMemberships.AsNoTracking()
+                        .AnyAsync(m => m.TeamId == cmd.OwningTeamId.Value.Guid && m.StaffAdminId == cmd.AssigneeId.Value.Guid, cancellationToken);
+                })
+                .WithMessage("Assignee must be a member of the specified team.");
         }
     }
 
@@ -59,8 +85,6 @@ public class UpdateTicket
             CancellationToken cancellationToken
         )
         {
-            _permissionService.RequireCanManageTickets();
-
             var ticket = await _db.Tickets
                 .Include(t => t.Assignee)
                 .Include(t => t.OwningTeam)
@@ -68,6 +92,9 @@ public class UpdateTicket
 
             if (ticket == null)
                 throw new NotFoundException("Ticket", request.Id);
+
+            // Check permission - user can edit if they have CanManageTickets, are assigned, or are in the team
+            await _permissionService.RequireCanEditTicketAsync(ticket.AssigneeId, ticket.OwningTeamId, cancellationToken);
 
             var changes = new Dictionary<string, object>();
             var oldAssigneeId = ticket.AssigneeId;

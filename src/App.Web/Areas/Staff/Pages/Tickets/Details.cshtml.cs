@@ -20,7 +20,7 @@ public class Details : BaseStaffPageModel
     [BindProperty]
     public AddCommentViewModel CommentForm { get; set; } = new();
 
-    public bool CanManageTickets { get; set; }
+    public bool CanEditTicket { get; set; }
 
     public async Task<IActionResult> OnGet(long id, CancellationToken cancellationToken)
     {
@@ -36,7 +36,8 @@ public class Details : BaseStaffPageModel
         var changeLogResponse = await Mediator.Send(new GetTicketChangeLog.Query { TicketId = id }, cancellationToken);
         ChangeLog = changeLogResponse.Result;
 
-        CanManageTickets = TicketPermissionService.CanManageTickets();
+        // Check if user can edit this specific ticket (has permission, is assigned, or is in the team)
+        CanEditTicket = await TicketPermissionService.CanEditTicketAsync(Ticket.AssigneeId?.Guid, Ticket.OwningTeamId?.Guid, cancellationToken);
 
         return Page();
     }

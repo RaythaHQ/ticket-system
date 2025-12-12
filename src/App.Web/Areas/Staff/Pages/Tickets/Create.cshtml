@@ -77,26 +77,29 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label asp-for="Form.OwningTeamId" class="form-label">Assign to Team</label>
-                                    <select asp-for="Form.OwningTeamId" class="form-select">
-                                        <option value="">— No Team —</option>
-                                        @foreach (var team in Model.AvailableTeams)
+                                    <label class="form-label">Assignee</label>
+                                    <select id="assignee-dropdown" class="form-select">
+                                        @foreach (var assignee in Model.AvailableAssignees)
                                         {
-                                            <option value="@team.Id">@team.Name</option>
+                                            bool isSelected = false;
+                                            if (assignee.TeamId == null && assignee.AssigneeId == null)
+                                            {
+                                                isSelected = Model.Form.OwningTeamId == null && Model.Form.AssigneeId == null;
+                                            }
+                                            else if (assignee.TeamId.HasValue && assignee.AssigneeId == null)
+                                            {
+                                                isSelected = Model.Form.OwningTeamId == assignee.TeamId && Model.Form.AssigneeId == null;
+                                            }
+                                            else if (assignee.TeamId.HasValue && assignee.AssigneeId.HasValue)
+                                            {
+                                                isSelected = Model.Form.OwningTeamId == assignee.TeamId && Model.Form.AssigneeId == assignee.AssigneeId;
+                                            }
+                                            <option value="@assignee.Value" selected="@isSelected">@assignee.DisplayText</option>
                                         }
                                     </select>
+                                    <input type="hidden" asp-for="Form.OwningTeamId" id="owning-team-id" />
+                                    <input type="hidden" asp-for="Form.AssigneeId" id="assignee-id" />
                                     <span asp-validation-for="Form.OwningTeamId" class="text-danger small"></span>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label asp-for="Form.AssigneeId" class="form-label">Assign to Staff</label>
-                                    <select asp-for="Form.AssigneeId" class="form-select">
-                                        <option value="">— Unassigned —</option>
-                                        @foreach (var user in Model.AvailableAssignees)
-                                        {
-                                            <option value="@user.Id">@user.Name</option>
-                                        }
-                                    </select>
                                     <span asp-validation-for="Form.AssigneeId" class="text-danger small"></span>
                                 </div>
 
@@ -125,3 +128,39 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const assigneeDropdown = document.getElementById('assignee-dropdown');
+            const owningTeamIdInput = document.getElementById('owning-team-id');
+            const assigneeIdInput = document.getElementById('assignee-id');
+
+            // Initialize hidden fields based on current selection
+            updateHiddenFields();
+
+            // Update hidden fields when dropdown changes
+            assigneeDropdown.addEventListener('change', updateHiddenFields);
+
+            function updateHiddenFields() {
+                const value = assigneeDropdown.value;
+                
+                if (value === 'unassigned') {
+                    owningTeamIdInput.value = '';
+                    assigneeIdInput.value = '';
+                } else if (value.startsWith('team:')) {
+                    const parts = value.split(':');
+                    if (parts.length === 2) {
+                        // Team only: "team:{teamId}" - parts[1] is the ShortGuid string
+                        owningTeamIdInput.value = parts[1];
+                        assigneeIdInput.value = '';
+                    } else if (parts.length === 4 && parts[2] === 'assignee') {
+                        // Team and assignee: "team:{teamId}:assignee:{assigneeId}" - parts[1] and parts[3] are ShortGuid strings
+                        owningTeamIdInput.value = parts[1];
+                        assigneeIdInput.value = parts[3];
+                    }
+                }
+            }
+        });
+    </script>
+}

@@ -32,7 +32,7 @@
         </div>
     </div>
     <div class="d-flex gap-2">
-        @if (Model.CanManageTickets)
+        @if (Model.CanEditTicket)
         {
             <a asp-page="@RouteNames.Tickets.Edit" asp-route-id="@Model.Ticket.Id" class="btn btn-outline-primary">
                 <i class="bi bi-pencil me-2"></i>Edit

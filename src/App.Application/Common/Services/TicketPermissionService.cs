@@ -1,6 +1,7 @@
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Common.Services;
 
@@ -10,10 +11,12 @@ namespace App.Application.Common.Services;
 public class TicketPermissionService : ITicketPermissionService
 {
     private readonly ICurrentUser _currentUser;
+    private readonly IAppDbContext _db;
 
-    public TicketPermissionService(ICurrentUser currentUser)
+    public TicketPermissionService(ICurrentUser currentUser, IAppDbContext db)
     {
         _currentUser = currentUser;
+        _db = db;
     }
 
     public bool CanManageTickets()
@@ -70,5 +73,40 @@ public class TicketPermissionService : ITicketPermissionService
     {
         if (!CanManageSystemViews())
             throw new ForbiddenAccessException("You do not have permission to manage system views.");
+    }
+
+    public async Task<bool> CanEditTicketAsync(Guid? assigneeId, Guid? owningTeamId, CancellationToken cancellationToken = default)
+    {
+        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
+            return false;
+
+        // If user has CanManageTickets permission, they can edit any ticket
+        if (CanManageTickets())
+            return true;
+
+        var userId = _currentUser.UserId.Value.Guid;
+
+        // User can edit if they are assigned to the ticket
+        if (assigneeId.HasValue && assigneeId.Value == userId)
+            return true;
+
+        // User can edit if they are a member of the ticket's team
+        if (owningTeamId.HasValue)
+        {
+            var isTeamMember = await _db.TeamMemberships
+                .AsNoTracking()
+                .AnyAsync(m => m.TeamId == owningTeamId.Value && m.StaffAdminId == userId, cancellationToken);
+            
+            if (isTeamMember)
+                return true;
+        }
+
+        return false;
+    }
+
+    public async Task RequireCanEditTicketAsync(Guid? assigneeId, Guid? owningTeamId, CancellationToken cancellationToken = default)
+    {
+        if (!await CanEditTicketAsync(assigneeId, owningTeamId, cancellationToken))
+            throw new ForbiddenAccessException("You do not have permission to edit this ticket.");
     }
 }

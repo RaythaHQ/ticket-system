@@ -32,9 +32,12 @@ public class AddTeamMember
             RuleFor(x => x.StaffAdminId)
                 .MustAsync(async (userId, cancellationToken) =>
                 {
-                    return await db.Users.AsNoTracking().AnyAsync(u => u.Id == userId.Guid, cancellationToken);
+                    var user = await db.Users.AsNoTracking()
+                        .FirstOrDefaultAsync(u => u.Id == userId.Guid, cancellationToken);
+                    
+                    return user != null && user.IsAdmin && user.IsActive;
                 })
-                .WithMessage("User not found.");
+                .WithMessage("User must be an active admin to be added to a team.");
 
             RuleFor(x => x)
                 .MustAsync(async (cmd, cancellationToken) =>

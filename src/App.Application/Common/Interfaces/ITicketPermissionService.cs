@@ -26,6 +26,12 @@ public interface ITicketPermissionService
     bool CanManageSystemViews();
 
     /// <summary>
+    /// Returns true if the current user can edit a specific ticket.
+    /// User can edit if they have CanManageTickets permission, are assigned to the ticket, or are a member of the ticket's team.
+    /// </summary>
+    Task<bool> CanEditTicketAsync(Guid? assigneeId, Guid? owningTeamId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Throws ForbiddenAccessException if user cannot manage tickets.
     /// </summary>
     void RequireCanManageTickets();
@@ -44,5 +50,10 @@ public interface ITicketPermissionService
     /// Throws ForbiddenAccessException if user cannot manage system views.
     /// </summary>
     void RequireCanManageSystemViews();
+
+    /// <summary>
+    /// Throws ForbiddenAccessException if user cannot edit the specified ticket.
+    /// </summary>
+    Task RequireCanEditTicketAsync(Guid? assigneeId, Guid? owningTeamId, CancellationToken cancellationToken = default);
 }
 

@@ -45,9 +45,19 @@ public class CreateTicket
                 .MustAsync(async (assigneeId, cancellationToken) =>
                 {
                     if (!assigneeId.HasValue) return true;
-                    return await db.Users.AsNoTracking().AnyAsync(u => u.Id == assigneeId.Value.Guid, cancellationToken);
+                    return await db.Users.AsNoTracking().AnyAsync(u => u.Id == assigneeId.Value.Guid && u.IsActive, cancellationToken);
                 })
-                .WithMessage("Assignee not found.");
+                .WithMessage("Assignee not found or inactive.");
+
+            // Validate that if both team and assignee are provided, assignee is a member of that team
+            RuleFor(x => x)
+                .MustAsync(async (cmd, cancellationToken) =>
+                {
+                    if (!cmd.OwningTeamId.HasValue || !cmd.AssigneeId.HasValue) return true;
+                    return await db.TeamMemberships.AsNoTracking()
+                        .AnyAsync(m => m.TeamId == cmd.OwningTeamId.Value.Guid && m.StaffAdminId == cmd.AssigneeId.Value.Guid, cancellationToken);
+                })
+                .WithMessage("Assignee must be a member of the specified team.");
 
             RuleFor(x => x.ContactId)
                 .MustAsync(async (contactId, cancellationToken) =>
