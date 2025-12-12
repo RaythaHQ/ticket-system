@@ -67,6 +67,18 @@
                 <h5><i class="bi bi-chat-left-text me-2"></i>Comments (@Model.Comments.Count())</h5>
             </div>
             <div class="staff-card-body">
+                <form method="post" asp-page-handler="AddComment" asp-route-id="@Model.Ticket.Id" class="mb-4">
+                    <div class="mb-3">
+                        <label asp-for="CommentForm.Body" class="form-label fw-medium">Add a comment</label>
+                        <textarea asp-for="CommentForm.Body" class="form-control" rows="3"
+                            placeholder="Write your comment..."></textarea>
+                        <span asp-validation-for="CommentForm.Body" class="text-danger small"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-2"></i>Add Comment
+                    </button>
+                </form>
+
                 @if (!Model.Comments.Any())
                 {
                     <p class="text-muted fst-italic">No comments yet. Be the first to add one.</p>
@@ -91,18 +103,6 @@
                         <p class="mb-0 ms-5" style="white-space: pre-wrap;">@comment.Body</p>
                     </div>
                 }
-
-                <form method="post" asp-page-handler="AddComment" asp-route-id="@Model.Ticket.Id" class="mt-4">
-                    <div class="mb-3">
-                        <label asp-for="CommentForm.Body" class="form-label fw-medium">Add a comment</label>
-                        <textarea asp-for="CommentForm.Body" class="form-control" rows="3"
-                            placeholder="Write your comment..."></textarea>
-                        <span asp-validation-for="CommentForm.Body" class="text-danger small"></span>
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-send me-2"></i>Add Comment
-                    </button>
-                </form>
             </div>
         </div>
 
