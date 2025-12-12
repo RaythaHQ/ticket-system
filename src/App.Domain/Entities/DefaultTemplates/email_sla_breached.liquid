@@ -1,0 +1,38 @@
+<p>Hello {{ Target.AssigneeName }},</p>
+
+<p style="color: #dc3545; font-weight: bold;">🚨 SLA Breached</p>
+
+<p>The SLA for ticket #{{ Target.TicketId }} has been breached:</p>
+
+<table style="border-collapse: collapse; margin: 20px 0;">
+  <tr>
+    <td style="padding: 8px 16px; border: 1px solid #ddd; font-weight: bold;">Ticket</td>
+    <td style="padding: 8px 16px; border: 1px solid #ddd;">#{{ Target.TicketId }} - {{ Target.Title }}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 16px; border: 1px solid #ddd; font-weight: bold;">SLA Was Due</td>
+    <td style="padding: 8px 16px; border: 1px solid #ddd; color: #dc3545; font-weight: bold;">{{ Target.SlaDueAt }}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 16px; border: 1px solid #ddd; font-weight: bold;">Breached At</td>
+    <td style="padding: 8px 16px; border: 1px solid #ddd;">{{ Target.BreachedAt }}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 16px; border: 1px solid #ddd; font-weight: bold;">SLA Rule</td>
+    <td style="padding: 8px 16px; border: 1px solid #ddd;">{{ Target.SlaRuleName }}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 16px; border: 1px solid #ddd; font-weight: bold;">Priority</td>
+    <td style="padding: 8px 16px; border: 1px solid #ddd;">{{ Target.Priority }}</td>
+  </tr>
+</table>
+
+<p>Immediate attention is required.</p>
+
+<p>
+  <a href="{{ Target.TicketUrl }}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">View Ticket Urgently</a>
+</p>
+
+<p>Thank you,<br/>
+{{ CurrentOrganization.OrganizationName }}</p>
+

@@ -12,6 +12,8 @@ using App.Infrastructure.FileStorage;
 using App.Infrastructure.Persistence;
 using App.Infrastructure.Persistence.Interceptors;
 using App.Infrastructure.Services;
+using App.Application.Teams.Services;
+using App.Application.SlaRules.Services;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -88,6 +90,13 @@ public static class ConfigureServices
             services.AddSingleton<IHostedService, QueuedHostedService>();
         }
         services.AddScoped<IBackgroundTaskQueue, BackgroundTaskQueue>();
+
+        // SLA evaluation background job
+        services.AddSingleton<IHostedService, SlaEvaluationJob>();
+
+        // Ticketing services
+        services.AddScoped<IRoundRobinService, RoundRobinService>();
+        services.AddScoped<ISlaService, SlaService>();
 
         return services;
     }

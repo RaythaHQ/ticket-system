@@ -1,0 +1,126 @@
+@page "/admin/sla-rules/create"
+@model App.Web.Areas.Admin.Pages.SlaRules.Create
+
+@{
+    Layout = "SidebarLayout";
+    ViewData["Title"] = "Create SLA Rule";
+    ViewData["ActiveMenu"] = "SlaRules";
+    ViewData["ExpandTicketingMenu"] = true;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Create SLA Rule</h1>
+    <a asp-page="./Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    <h5 class="mb-3">Basic Information</h5>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Form.Name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input asp-for="Form.Name" class="form-control" placeholder="e.g., Urgent Priority SLA" />
+                        <span asp-validation-for="Form.Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Form.Description" class="form-label">Description</label>
+                        <textarea asp-for="Form.Description" class="form-control" rows="2" 
+                                  placeholder="When does this SLA apply?"></textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Form.TargetResolutionValue" class="form-label">Target Resolution Time <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input asp-for="Form.TargetResolutionValue" class="form-control" type="number" min="1" />
+                                <select asp-for="Form.TargetResolutionUnit" class="form-select" style="max-width: 120px;">
+                                    <option value="minutes">Minutes</option>
+                                    <option value="hours" selected>Hours</option>
+                                    <option value="days">Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.Priority" class="form-label">Rule Priority</label>
+                            <input asp-for="Form.Priority" class="form-control" type="number" min="0" />
+                            <small class="text-muted">Lower numbers are evaluated first</small>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+                    <h5 class="mb-3">Conditions (when to apply)</h5>
+                    <p class="text-muted">Leave blank to match all tickets.</p>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Form.ConditionPriority" class="form-label">Ticket Priority</label>
+                            <select asp-for="Form.ConditionPriority" class="form-select">
+                                <option value="">Any Priority</option>
+                                <option value="urgent">Urgent</option>
+                                <option value="high">High</option>
+                                <option value="normal">Normal</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.ConditionCategory" class="form-label">Category</label>
+                            <input asp-for="Form.ConditionCategory" class="form-control" placeholder="Optional category filter" />
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+                    <h5 class="mb-3">Business Hours</h5>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input asp-for="Form.BusinessHoursEnabled" class="form-check-input" type="checkbox" />
+                            <label asp-for="Form.BusinessHoursEnabled" class="form-check-label">
+                                Only count business hours
+                            </label>
+                        </div>
+                        <small class="text-muted">SLA time will only accumulate during configured business hours.</small>
+                    </div>
+
+                    <div class="row mb-3" id="businessHoursConfig">
+                        <div class="col-md-4">
+                            <label asp-for="Form.BusinessHoursStart" class="form-label">Start Time</label>
+                            <input asp-for="Form.BusinessHoursStart" class="form-control" type="time" />
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Form.BusinessHoursEnd" class="form-label">End Time</label>
+                            <input asp-for="Form.BusinessHoursEnd" class="form-control" type="time" />
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+                    <h5 class="mb-3">Breach Behavior</h5>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input asp-for="Form.NotifyAssignee" class="form-check-input" type="checkbox" checked />
+                            <label asp-for="Form.NotifyAssignee" class="form-check-label">
+                                Notify assignee when SLA is breached
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i> Create SLA Rule
+                        </button>
+                        <a asp-page="./Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

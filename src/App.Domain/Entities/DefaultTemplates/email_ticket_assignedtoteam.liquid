@@ -1,0 +1,33 @@
+<p>Hello,</p>
+
+<p>A ticket has been assigned to your team <strong>{{ Target.TeamName }}</strong>:</p>
+
+<table style="border-collapse: collapse; width: 100%; margin: 20px 0;">
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; font-weight: bold; width: 150px;">Ticket ID</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">#{{ Target.TicketId }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; font-weight: bold;">Title</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ Target.TicketTitle }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; font-weight: bold;">Priority</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ Target.Priority }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; font-weight: bold;">Team</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ Target.TeamName }}</td>
+    </tr>
+    {% if Target.AssigneeName %}
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; font-weight: bold;">Assignee</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ Target.AssigneeName }}</td>
+    </tr>
+    {% endif %}
+</table>
+
+<p><a href="{{ Target.TicketUrl }}" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Ticket</a></p>
+
+<p>Thank you,<br>{{ CurrentOrganization.OrganizationName }}</p>
+

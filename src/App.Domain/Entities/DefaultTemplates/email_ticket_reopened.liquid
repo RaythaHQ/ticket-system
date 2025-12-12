@@ -1,0 +1,27 @@
+<p>Hello {{ Target.RecipientName }},</p>
+
+<p>Ticket <strong>#{{ Target.TicketId }}</strong> has been reopened.</p>
+
+<table style="border-collapse: collapse; width: 100%; margin: 20px 0;">
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; font-weight: bold; width: 150px;">Ticket ID</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">#{{ Target.TicketId }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; font-weight: bold;">Title</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ Target.TicketTitle }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; font-weight: bold;">Reopened By</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ Target.ReopenedByName }}</td>
+    </tr>
+    <tr>
+        <td style="padding: 8px; border: 1px solid #ddd; background-color: #f9f9f9; font-weight: bold;">Current Status</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">{{ Target.Status }}</td>
+    </tr>
+</table>
+
+<p><a href="{{ Target.TicketUrl }}" style="background-color: #ffc107; color: #212529; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Ticket</a></p>
+
+<p>Thank you,<br>{{ CurrentOrganization.OrganizationName }}</p>
+

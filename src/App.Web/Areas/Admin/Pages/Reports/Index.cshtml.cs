@@ -1,0 +1,64 @@
+using App.Application.Common.Interfaces;
+using App.Application.Teams.Queries;
+using App.Application.Tickets;
+using App.Application.Tickets.Queries;
+using App.Web.Areas.Admin.Pages.Shared.Models;
+using Microsoft.AspNetCore.Mvc;
+
+namespace App.Web.Areas.Admin.Pages.Reports;
+
+public class Index : BaseAdminPageModel
+{
+    private readonly ITicketPermissionService _permissionService;
+
+    public Index(ITicketPermissionService permissionService)
+    {
+        _permissionService = permissionService;
+    }
+
+    public OrganizationReportDto Report { get; set; } = null!;
+    public List<TeamSelectItem> Teams { get; set; } = new();
+
+    [BindProperty(SupportsGet = true)]
+    public DateTime? StartDate { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public DateTime? EndDate { get; set; }
+
+    public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
+    {
+        if (!_permissionService.CanAccessReports())
+            return Forbid();
+
+        ViewData["Title"] = "Reports";
+        ViewData["ActiveMenu"] = "Reports";
+        ViewData["ExpandTicketingMenu"] = true;
+
+        StartDate ??= DateTime.UtcNow.AddDays(-30);
+        EndDate ??= DateTime.UtcNow;
+
+        var response = await Mediator.Send(new GetOrganizationReport.Query
+        {
+            StartDate = StartDate,
+            EndDate = EndDate
+        }, cancellationToken);
+
+        Report = response.Result;
+
+        var teamsResponse = await Mediator.Send(new GetTeams.Query(), cancellationToken);
+        Teams = teamsResponse.Result.Items.Select(t => new TeamSelectItem
+        {
+            Id = t.Id.Guid,
+            Name = t.Name
+        }).ToList();
+
+        return Page();
+    }
+
+    public record TeamSelectItem
+    {
+        public Guid Id { get; init; }
+        public string Name { get; init; } = string.Empty;
+    }
+}
+

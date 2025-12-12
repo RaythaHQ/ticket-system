@@ -1,7 +1,10 @@
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
+using App.Application.TicketViews;
+using App.Application.TicketViews.Services;
 using App.Domain.ValueObjects;
+using CSharpVitamins;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,15 +47,32 @@ public class GetTickets
         /// When true, show only unassigned tickets.
         /// </summary>
         public bool? Unassigned { get; init; }
+
+        /// <summary>
+        /// Optional view ID to apply saved view filters.
+        /// </summary>
+        public ShortGuid? ViewId { get; init; }
+
+        /// <summary>
+        /// Visible columns for column-limited search. If not provided with view, searches all fields.
+        /// </summary>
+        public List<string>? VisibleColumns { get; init; }
+
+        /// <summary>
+        /// View conditions to apply (alternative to ViewId for built-in views).
+        /// </summary>
+        public ViewConditions? ViewConditions { get; init; }
     }
 
     public class Handler : IRequestHandler<Query, IQueryResponseDto<ListResultDto<TicketListItemDto>>>
     {
         private readonly IAppDbContext _db;
+        private readonly ICurrentUser _currentUser;
 
-        public Handler(IAppDbContext db)
+        public Handler(IAppDbContext db, ICurrentUser currentUser)
         {
             _db = db;
+            _currentUser = currentUser;
         }
 
         public async ValueTask<IQueryResponseDto<ListResultDto<TicketListItemDto>>> Handle(
@@ -67,7 +87,41 @@ public class GetTickets
                 .Include(t => t.Contact)
                 .AsQueryable();
 
-            // Apply filters
+            var filterBuilder = new ViewFilterBuilder();
+            List<string> visibleColumns = request.VisibleColumns ?? new List<string>();
+
+            // Apply view filters if ViewId is provided
+            if (request.ViewId.HasValue)
+            {
+                var view = await _db.TicketViews
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(v => v.Id == request.ViewId.Value.Guid, cancellationToken);
+
+                if (view != null)
+                {
+                    visibleColumns = view.VisibleColumns;
+                    
+                    if (!string.IsNullOrEmpty(view.ConditionsJson))
+                    {
+                        try
+                        {
+                            var conditions = System.Text.Json.JsonSerializer.Deserialize<ViewConditions>(view.ConditionsJson);
+                            if (conditions != null)
+                            {
+                                query = filterBuilder.ApplyFilters(query, conditions);
+                            }
+                        }
+                        catch { }
+                    }
+                }
+            }
+            else if (request.ViewConditions != null)
+            {
+                // Apply inline view conditions
+                query = filterBuilder.ApplyFilters(query, request.ViewConditions);
+            }
+
+            // Apply additional direct filters (these override view filters)
             if (!string.IsNullOrEmpty(request.Status))
                 query = query.Where(t => t.Status == request.Status);
 
@@ -86,16 +140,24 @@ public class GetTickets
             if (request.Unassigned == true)
                 query = query.Where(t => t.AssigneeId == null);
 
-            // Apply search
+            // Apply search - respect visible columns if available
             if (!string.IsNullOrEmpty(request.Search))
             {
-                var searchQuery = request.Search.ToLower();
-                query = query.Where(t =>
-                    t.Title.ToLower().Contains(searchQuery)
-                    || (t.Description != null && t.Description.ToLower().Contains(searchQuery))
-                    || t.Id.ToString().Contains(searchQuery)
-                    || (t.Contact != null && t.Contact.Name.ToLower().Contains(searchQuery))
-                );
+                if (visibleColumns.Any())
+                {
+                    query = filterBuilder.ApplyColumnSearch(query, request.Search, visibleColumns);
+                }
+                else
+                {
+                    // Search all searchable fields
+                    var searchQuery = request.Search.ToLower();
+                    query = query.Where(t =>
+                        t.Title.ToLower().Contains(searchQuery)
+                        || (t.Description != null && t.Description.ToLower().Contains(searchQuery))
+                        || t.Id.ToString().Contains(searchQuery)
+                        || (t.Contact != null && t.Contact.Name.ToLower().Contains(searchQuery))
+                    );
+                }
             }
 
             var total = await query.CountAsync(cancellationToken);
@@ -110,4 +172,3 @@ public class GetTickets
         }
     }
 }
-

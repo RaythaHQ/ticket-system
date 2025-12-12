@@ -21,6 +21,13 @@ public class ManageTemplatesRequirement : IAuthorizationRequirement { }
 
 public class ManageAuditLogsRequirement : IAuthorizationRequirement { }
 
+// Ticketing system requirements
+public class ManageTeamsRequirement : IAuthorizationRequirement { }
+
+public class ManageTicketsRequirement : IAuthorizationRequirement { }
+
+public class AccessReportsRequirement : IAuthorizationRequirement { }
+
 public class AppAdminAuthorizationHandler : IAuthorizationHandler
 {
     private readonly IHttpContextAccessor _httpContextAccessor = null;
@@ -105,6 +112,40 @@ public class AppAdminAuthorizationHandler : IAuthorizationHandler
                 if (
                     systemPermissionsClaims.Contains(
                         BuiltInSystemPermission.MANAGE_ADMINISTRATORS_PERMISSION
+                    )
+                )
+                {
+                    context.Succeed(requirement);
+                }
+            }
+            // Ticketing system permissions
+            else if (requirement is ManageTeamsRequirement)
+            {
+                if (
+                    systemPermissionsClaims.Contains(
+                        BuiltInSystemPermission.MANAGE_TEAMS_PERMISSION
+                    )
+                )
+                {
+                    context.Succeed(requirement);
+                }
+            }
+            else if (requirement is ManageTicketsRequirement)
+            {
+                if (
+                    systemPermissionsClaims.Contains(
+                        BuiltInSystemPermission.MANAGE_TICKETS_PERMISSION
+                    )
+                )
+                {
+                    context.Succeed(requirement);
+                }
+            }
+            else if (requirement is AccessReportsRequirement)
+            {
+                if (
+                    systemPermissionsClaims.Contains(
+                        BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION
                     )
                 )
                 {

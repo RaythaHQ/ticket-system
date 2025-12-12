@@ -1,0 +1,214 @@
+@page "/admin/reports/team/{teamId}"
+@model App.Web.Areas.Admin.Pages.Reports.TeamReport
+@{
+    ViewData["ActiveMenu"] = "Reports";
+    ViewData["ExpandTicketingMenu"] = true;
+    Layout = "~/Areas/Admin/Pages/Shared/SidebarLayout.cshtml";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-page="./Index">Reports</a></li>
+                <li class="breadcrumb-item active">@Model.Report.TeamName</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-0">Team Report: @Model.Report.TeamName</h1>
+    </div>
+    <a asp-page="./Index" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Reports
+    </a>
+</div>
+
+<!-- Date Range Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <input type="hidden" name="teamId" value="@Model.TeamId" />
+            <div class="col-md-3">
+                <label class="form-label">Start Date</label>
+                <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">End Date</label>
+                <input type="date" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel me-1"></i> Apply Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">@Model.Report.TotalTickets</h3>
+                <p class="text-muted mb-0 small">Total</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-info">@Model.Report.OpenTickets</h3>
+                <p class="text-muted mb-0 small">Open</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">@Model.Report.ResolvedTickets</h3>
+                <p class="text-muted mb-0 small">Resolved</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-secondary">@Model.Report.ClosedTickets</h3>
+                <p class="text-muted mb-0 small">Closed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning">@Model.Report.UnassignedTickets</h3>
+                <p class="text-muted mb-0 small">Unassigned</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="@(Model.Report.SlaComplianceRate >= 90 ? "text-success" : Model.Report.SlaComplianceRate >= 70 ? "text-warning" : "text-danger")">
+                    @($"{Model.Report.SlaComplianceRate:F1}%")
+                </h3>
+                <p class="text-muted mb-0 small">SLA Compliance</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- SLA Metrics -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">SLA Performance</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h3 class="text-success">@Model.Report.SlaMetCount</h3>
+                        <p class="text-muted small">Met SLA</p>
+                    </div>
+                    <div class="col-4">
+                        <h3 class="text-danger">@Model.Report.SlaBreachedCount</h3>
+                        <p class="text-muted small">Breached</p>
+                    </div>
+                    <div class="col-4">
+                        <h3>@($"{Model.Report.SlaComplianceRate:F1}%")</h3>
+                        <p class="text-muted small">Compliance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resolution Time -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Resolution Time</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h3>
+                            @if (Model.Report.AverageResolutionTimeHours.HasValue)
+                            {
+                                @($"{Model.Report.AverageResolutionTimeHours:F1}h")
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </h3>
+                        <p class="text-muted small">Avg Resolution Time</p>
+                    </div>
+                    <div class="col-6">
+                        <h3>
+                            @if (Model.Report.MedianResolutionTimeHours.HasValue)
+                            {
+                                @($"{Model.Report.MedianResolutionTimeHours:F1}h")
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </h3>
+                        <p class="text-muted small">Median Resolution Time</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Member Metrics -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Team Member Performance</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th class="text-center">Assigned</th>
+                        <th class="text-center">Resolved</th>
+                        <th class="text-center">Avg Resolution Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var member in Model.Report.MemberMetrics.OrderByDescending(m => m.ResolvedTickets))
+                    {
+                        <tr>
+                            <td>@member.UserName</td>
+                            <td class="text-center">@member.AssignedTickets</td>
+                            <td class="text-center">
+                                <span class="badge bg-success">@member.ResolvedTickets</span>
+                            </td>
+                            <td class="text-center">
+                                @if (member.AverageResolutionTimeHours.HasValue)
+                                {
+                                    @($"{member.AverageResolutionTimeHours:F1}h")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Report.MemberMetrics.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-muted text-center">No team members</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

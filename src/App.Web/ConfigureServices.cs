@@ -76,6 +76,20 @@ public static class ConfigureServices
                 policy => policy.Requirements.Add(new ManageSystemSettingsRequirement())
             );
 
+            // Ticketing system policies
+            options.AddPolicy(
+                BuiltInSystemPermission.MANAGE_TEAMS_PERMISSION,
+                policy => policy.Requirements.Add(new ManageTeamsRequirement())
+            );
+            options.AddPolicy(
+                BuiltInSystemPermission.MANAGE_TICKETS_PERMISSION,
+                policy => policy.Requirements.Add(new ManageTicketsRequirement())
+            );
+            options.AddPolicy(
+                BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION,
+                policy => policy.Requirements.Add(new AccessReportsRequirement())
+            );
+
             options.AddPolicy(
                 AppApiAuthorizationHandler.POLICY_PREFIX + RaythaClaimTypes.IsAdmin,
                 policy => policy.Requirements.Add(new ApiIsAdminRequirement())

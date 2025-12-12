@@ -15,11 +15,6 @@ public class User : BaseAuditableEntity, IPassivable
     public Guid? AuthenticationSchemeId { get; set; }
     public virtual AuthenticationScheme? AuthenticationScheme { get; set; }
 
-    // Ticketing system permissions
-    public bool CanManageTickets { get; set; }
-    public bool ManageTeams { get; set; }
-    public bool AccessReports { get; set; }
-
     //base profile
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;

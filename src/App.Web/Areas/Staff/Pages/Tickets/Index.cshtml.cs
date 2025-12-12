@@ -2,9 +2,12 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using App.Application.Tickets;
 using App.Application.Tickets.Queries;
+using App.Application.TicketViews;
+using App.Application.TicketViews.Queries;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
+using CSharpVitamins;
 
 namespace App.Web.Areas.Staff.Pages.Tickets;
 
@@ -20,6 +23,26 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         new(Enumerable.Empty<TicketListItemViewModel>(), 0);
 
     /// <summary>
+    /// Available views for the view selector.
+    /// </summary>
+    public IEnumerable<TicketViewDto> AvailableViews { get; set; } = Enumerable.Empty<TicketViewDto>();
+
+    /// <summary>
+    /// Currently selected view.
+    /// </summary>
+    public TicketViewDto? SelectedView { get; set; }
+
+    /// <summary>
+    /// Currently selected view ID.
+    /// </summary>
+    public string? CurrentViewId { get; set; }
+
+    /// <summary>
+    /// Built-in view key (for non-database views).
+    /// </summary>
+    public string? BuiltInView { get; set; }
+
+    /// <summary>
     /// Handles GET requests to display the paginated list of tickets.
     /// </summary>
     public async Task<IActionResult> OnGet(
@@ -30,13 +53,22 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         string? status = null,
         string? priority = null,
         bool? unassigned = null,
+        string? viewId = null,
+        string? builtInView = null,
         CancellationToken cancellationToken = default
     )
     {
         ViewData["Title"] = "Tickets";
         ViewData["ActiveMenu"] = "Tickets";
 
-        var input = new GetTickets.Query
+        // Load available views
+        var viewsResponse = await Mediator.Send(new GetTicketViews.Query(), cancellationToken);
+        AvailableViews = viewsResponse.Result;
+
+        CurrentViewId = viewId;
+        BuiltInView = builtInView;
+
+        var query = new GetTickets.Query
         {
             Search = search,
             OrderBy = orderBy,
@@ -47,7 +79,25 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             Unassigned = unassigned
         };
 
-        var response = await Mediator.Send(input, cancellationToken);
+        // Apply view filters
+        if (!string.IsNullOrEmpty(viewId))
+        {
+            var selectedViewResponse = await Mediator.Send(new GetTicketViewById.Query { Id = viewId }, cancellationToken);
+            SelectedView = selectedViewResponse.Result;
+            
+            query = query with { ViewId = viewId };
+        }
+        else if (!string.IsNullOrEmpty(builtInView))
+        {
+            // Apply built-in view conditions
+            var conditions = GetBuiltInViewConditions(builtInView);
+            if (conditions != null)
+            {
+                query = query with { ViewConditions = conditions };
+            }
+        }
+
+        var response = await Mediator.Send(query, cancellationToken);
 
         var items = response.Result.Items.Select(p => new TicketListItemViewModel
         {
@@ -69,6 +119,40 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         ListView = new ListViewModel<TicketListItemViewModel>(items, response.Result.TotalCount);
 
         return Page();
+    }
+
+    private ViewConditions? GetBuiltInViewConditions(string key)
+    {
+        return key switch
+        {
+            "all" => null,
+            "unassigned" => new ViewConditions
+            {
+                Logic = "AND",
+                Filters = new List<ViewFilterCondition>
+                {
+                    new() { Field = "AssigneeId", Operator = "isnull" },
+                    new() { Field = "Status", Operator = "notin", Values = new List<string> { "CLOSED", "CANCELLED" } }
+                }
+            },
+            "open" => new ViewConditions
+            {
+                Logic = "AND",
+                Filters = new List<ViewFilterCondition>
+                {
+                    new() { Field = "Status", Operator = "equals", Value = "OPEN" }
+                }
+            },
+            "recently-closed" => new ViewConditions
+            {
+                Logic = "AND",
+                Filters = new List<ViewFilterCondition>
+                {
+                    new() { Field = "Status", Operator = "equals", Value = "CLOSED" }
+                }
+            },
+            _ => null
+        };
     }
 
     /// <summary>
@@ -113,4 +197,3 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         public string CreationTime { get; init; } = string.Empty;
     }
 }
-

@@ -1,0 +1,30 @@
+<p>Hello {{ Target.RecipientName }},</p>
+
+<p>The status of ticket #{{ Target.TicketId }} has been changed:</p>
+
+<table style="border-collapse: collapse; margin: 20px 0;">
+  <tr>
+    <td style="padding: 8px 16px; border: 1px solid #ddd; font-weight: bold;">Title</td>
+    <td style="padding: 8px 16px; border: 1px solid #ddd;">{{ Target.Title }}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 16px; border: 1px solid #ddd; font-weight: bold;">Previous Status</td>
+    <td style="padding: 8px 16px; border: 1px solid #ddd;">{{ Target.OldStatus }}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 16px; border: 1px solid #ddd; font-weight: bold;">New Status</td>
+    <td style="padding: 8px 16px; border: 1px solid #ddd;"><strong>{{ Target.NewStatus }}</strong></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 16px; border: 1px solid #ddd; font-weight: bold;">Changed By</td>
+    <td style="padding: 8px 16px; border: 1px solid #ddd;">{{ Target.ChangedBy }}</td>
+  </tr>
+</table>
+
+<p>
+  <a href="{{ Target.TicketUrl }}" style="background-color: #0d6efd; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">View Ticket</a>
+</p>
+
+<p>Thank you,<br/>
+{{ CurrentOrganization.OrganizationName }}</p>
+

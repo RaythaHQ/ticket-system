@@ -1,51 +1,43 @@
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using App.Domain.Entities;
 
 namespace App.Application.Common.Services;
 
 /// <summary>
-/// Implementation of ITicketPermissionService that checks ticketing permissions for the current user.
+/// Implementation of ITicketPermissionService that checks ticketing permissions using claims.
 /// </summary>
 public class TicketPermissionService : ITicketPermissionService
 {
     private readonly ICurrentUser _currentUser;
-    private readonly IAppDbContext _db;
 
-    public TicketPermissionService(ICurrentUser currentUser, IAppDbContext db)
+    public TicketPermissionService(ICurrentUser currentUser)
     {
         _currentUser = currentUser;
-        _db = db;
     }
 
     public bool CanManageTickets()
     {
-        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
+        if (!_currentUser.IsAuthenticated)
             return false;
 
-        var user = _db.Users.AsNoTracking()
-            .FirstOrDefault(u => u.Id == _currentUser.UserId.Value.Guid);
-        return user?.CanManageTickets ?? false;
+        return _currentUser.SystemPermissions?.Contains(BuiltInSystemPermission.MANAGE_TICKETS_PERMISSION) ?? false;
     }
 
     public bool CanManageTeams()
     {
-        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
+        if (!_currentUser.IsAuthenticated)
             return false;
 
-        var user = _db.Users.AsNoTracking()
-            .FirstOrDefault(u => u.Id == _currentUser.UserId.Value.Guid);
-        return user?.ManageTeams ?? false;
+        return _currentUser.SystemPermissions?.Contains(BuiltInSystemPermission.MANAGE_TEAMS_PERMISSION) ?? false;
     }
 
     public bool CanAccessReports()
     {
-        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
+        if (!_currentUser.IsAuthenticated)
             return false;
 
-        var user = _db.Users.AsNoTracking()
-            .FirstOrDefault(u => u.Id == _currentUser.UserId.Value.Guid);
-        return user?.AccessReports ?? false;
+        return _currentUser.SystemPermissions?.Contains(BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION) ?? false;
     }
 
     public void RequireCanManageTickets()
@@ -66,4 +58,3 @@ public class TicketPermissionService : ITicketPermissionService
             throw new ForbiddenAccessException("You do not have permission to access reports.");
     }
 }
-

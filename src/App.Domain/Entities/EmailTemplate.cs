@@ -94,6 +94,56 @@ public class BuiltInEmailTemplate : ValueObject
             false
         );
 
+    // Ticketing notification templates
+    public static BuiltInEmailTemplate TicketAssignedEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] Ticket #{{ Target.TicketId }} assigned to you",
+            "email_ticket_assigned",
+            true
+        );
+    public static BuiltInEmailTemplate TicketCommentAddedEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] New comment on ticket #{{ Target.TicketId }}",
+            "email_ticket_commentadded",
+            true
+        );
+    public static BuiltInEmailTemplate TicketStatusChangedEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] Ticket #{{ Target.TicketId }} status changed",
+            "email_ticket_statuschanged",
+            true
+        );
+    public static BuiltInEmailTemplate SlaApproachingEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] ⚠️ SLA approaching for ticket #{{ Target.TicketId }}",
+            "email_sla_approaching",
+            true
+        );
+    public static BuiltInEmailTemplate SlaBreachedEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] 🚨 SLA breached for ticket #{{ Target.TicketId }}",
+            "email_sla_breached",
+            true
+        );
+    public static BuiltInEmailTemplate TicketAssignedToTeamEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] Ticket #{{ Target.TicketId }} assigned to your team",
+            "email_ticket_assignedtoteam",
+            true
+        );
+    public static BuiltInEmailTemplate TicketClosedEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] Ticket #{{ Target.TicketId }} has been closed",
+            "email_ticket_closed",
+            true
+        );
+    public static BuiltInEmailTemplate TicketReopenedEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] Ticket #{{ Target.TicketId }} has been reopened",
+            "email_ticket_reopened",
+            true
+        );
+
     public string DefaultSubject { get; private set; } = string.Empty;
     public string DeveloperName { get; private set; } = string.Empty;
     public bool SafeToCc { get; private set; } = false;
@@ -142,6 +192,16 @@ public class BuiltInEmailTemplate : ValueObject
             yield return UserWelcomeEmail;
             yield return UserPasswordChangedEmail;
             yield return UserPasswordResetEmail;
+
+            // Ticketing templates
+            yield return TicketAssignedEmail;
+            yield return TicketAssignedToTeamEmail;
+            yield return TicketCommentAddedEmail;
+            yield return TicketStatusChangedEmail;
+            yield return TicketClosedEmail;
+            yield return TicketReopenedEmail;
+            yield return SlaApproachingEmail;
+            yield return SlaBreachedEmail;
         }
     }
 

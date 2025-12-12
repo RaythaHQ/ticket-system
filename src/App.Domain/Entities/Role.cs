@@ -85,6 +85,10 @@ public enum SystemPermissions
     ManageAdministrators = 4,
     ManageTemplates = 8,
     ManageUsers = 16,
+    // Ticketing system permissions
+    ManageTeams = 32,
+    ManageTickets = 64,
+    AccessReports = 128,
 }
 
 public class BuiltInSystemPermission : ValueObject
@@ -94,6 +98,10 @@ public class BuiltInSystemPermission : ValueObject
     public const string MANAGE_TEMPLATES_PERMISSION = "templates";
     public const string MANAGE_AUDIT_LOGS_PERMISSION = "audit_logs";
     public const string MANAGE_SYSTEM_SETTINGS_PERMISSION = "system_settings";
+    // Ticketing system permissions
+    public const string MANAGE_TEAMS_PERMISSION = "manage_teams";
+    public const string MANAGE_TICKETS_PERMISSION = "manage_tickets";
+    public const string ACCESS_REPORTS_PERMISSION = "access_reports";
 
     static BuiltInSystemPermission() { }
 
@@ -136,6 +144,13 @@ public class BuiltInSystemPermission : ValueObject
             permissions.Add(ManageSystemSettings);
         if (permission.HasFlag(SystemPermissions.ManageUsers))
             permissions.Add(ManageUsers);
+        // Ticketing permissions
+        if (permission.HasFlag(SystemPermissions.ManageTeams))
+            permissions.Add(ManageTeams);
+        if (permission.HasFlag(SystemPermissions.ManageTickets))
+            permissions.Add(ManageTickets);
+        if (permission.HasFlag(SystemPermissions.AccessReports))
+            permissions.Add(AccessReports);
         return permissions;
     }
 
@@ -174,6 +189,14 @@ public class BuiltInSystemPermission : ValueObject
         );
     public static BuiltInSystemPermission ManageUsers =>
         new("Manage Users", MANAGE_USERS_PERMISSION, SystemPermissions.ManageUsers);
+    
+    // Ticketing system permissions
+    public static BuiltInSystemPermission ManageTeams =>
+        new("Manage Teams", MANAGE_TEAMS_PERMISSION, SystemPermissions.ManageTeams);
+    public static BuiltInSystemPermission ManageTickets =>
+        new("Manage Tickets", MANAGE_TICKETS_PERMISSION, SystemPermissions.ManageTickets);
+    public static BuiltInSystemPermission AccessReports =>
+        new("Access Reports", ACCESS_REPORTS_PERMISSION, SystemPermissions.AccessReports);
 
     public string Label { get; private set; } = string.Empty;
     public string DeveloperName { get; private set; } = string.Empty;
@@ -203,6 +226,10 @@ public class BuiltInSystemPermission : ValueObject
             yield return ManageAuditLogs;
             yield return ManageTemplates;
             yield return ManageUsers;
+            // Ticketing permissions
+            yield return ManageTeams;
+            yield return ManageTickets;
+            yield return AccessReports;
         }
     }
 
@@ -214,7 +241,10 @@ public class BuiltInSystemPermission : ValueObject
                 | ManageAuditLogs.Permission
                 | ManageTemplates.Permission
                 | ManageAdministrators.Permission
-                | ManageUsers.Permission;
+                | ManageUsers.Permission
+                | ManageTeams.Permission
+                | ManageTickets.Permission
+                | AccessReports.Permission;
         }
     }
 

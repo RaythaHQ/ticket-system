@@ -1,0 +1,207 @@
+@page "/staff/dashboard"
+@model App.Web.Areas.Staff.Pages.Dashboard.Index
+
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["ActiveMenu"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Dashboard</h1>
+</div>
+
+<!-- Key Metrics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-0">Open Tickets</h6>
+                        <h2 class="mb-0">@Model.Metrics.OpenTicketsAssigned</h2>
+                    </div>
+                    <i class="bi bi-ticket-detailed fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-0">Resolved (7 days)</h6>
+                        <h2 class="mb-0">@Model.Metrics.TicketsResolvedLast7Days</h2>
+                    </div>
+                    <i class="bi bi-check-circle fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-0">Resolved (30 days)</h6>
+                        <h2 class="mb-0">@Model.Metrics.TicketsResolvedLast30Days</h2>
+                    </div>
+                    <i class="bi bi-calendar-check fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-secondary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-0">Median Close Time</h6>
+                        <h2 class="mb-0">
+                            @if (Model.Metrics.MedianCloseTimeHours.HasValue)
+                            {
+                                @($"{Model.Metrics.MedianCloseTimeHours.Value:F1}h")
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </h2>
+                    </div>
+                    <i class="bi bi-clock-history fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLA & Quality Metrics -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">SLA Status</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="p-3">
+                            <h3 class="@(Model.Metrics.SlaBreachCount > 0 ? "text-danger" : "text-success")">
+                                @Model.Metrics.SlaBreachCount
+                            </h3>
+                            <p class="text-muted mb-0">Breached</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3">
+                            <h3 class="@(Model.Metrics.SlaApproachingCount > 0 ? "text-warning" : "text-success")">
+                                @Model.Metrics.SlaApproachingCount
+                            </h3>
+                            <p class="text-muted mb-0">Approaching Breach</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quality Metrics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="p-3">
+                            <h3>@Model.Metrics.ReopenCount</h3>
+                            <p class="text-muted mb-0">Reopened Tickets</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3">
+                            <h3>@($"{Model.Metrics.ReopenRate:F1}%")</h3>
+                            <p class="text-muted mb-0">Reopen Rate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Summaries -->
+@if (Model.Metrics.TeamSummaries.Any())
+{
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">My Teams</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th class="text-center">Open Tickets</th>
+                            <th class="text-center">Unassigned</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var team in Model.Metrics.TeamSummaries)
+                        {
+                            <tr>
+                                <td>@team.TeamName</td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">@team.OpenTickets</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge @(team.UnassignedTickets > 0 ? "bg-warning text-dark" : "bg-secondary")">
+                                        @team.UnassignedTickets
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-page="/Tickets/Index" asp-route-teamId="@team.TeamId" class="btn btn-sm btn-outline-primary">
+                                        View Tickets
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Quick Actions -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Quick Actions</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <a asp-page="/Tickets/Create" class="btn btn-primary w-100">
+                    <i class="bi bi-plus-circle me-2"></i> Create Ticket
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a asp-page="/Tickets/Index" asp-route-assigneeId="@Model.UserId" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-person me-2"></i> My Tickets
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a asp-page="/Contacts/Index" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-people me-2"></i> Contacts
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a asp-page="/Tickets/Index" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-list-task me-2"></i> All Tickets
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+

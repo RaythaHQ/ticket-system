@@ -15,15 +15,93 @@
 
 @await Html.PartialAsync("_StaffNav")
 
+<!-- View Selector -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <span class="text-muted fw-semibold">Quick Views:</span>
+            <div class="btn-group btn-group-sm">
+                <a asp-page="./Index" class="btn @(string.IsNullOrEmpty(Model.BuiltInView) && string.IsNullOrEmpty(Model.CurrentViewId) ? "btn-primary" : "btn-outline-primary")">
+                    All Tickets
+                </a>
+                <a asp-page="./Index" asp-route-builtInView="open" class="btn @(Model.BuiltInView == "open" ? "btn-primary" : "btn-outline-primary")">
+                    Open
+                </a>
+                <a asp-page="./Index" asp-route-builtInView="unassigned" class="btn @(Model.BuiltInView == "unassigned" ? "btn-primary" : "btn-outline-primary")">
+                    Unassigned
+                </a>
+                <a asp-page="./Index" asp-route-builtInView="recently-closed" class="btn @(Model.BuiltInView == "recently-closed" ? "btn-primary" : "btn-outline-primary")">
+                    Recently Closed
+                </a>
+            </div>
+            @if (Model.AvailableViews.Any())
+            {
+                <div class="vr mx-2"></div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-eye me-1"></i> 
+                        @if (Model.SelectedView != null)
+                        {
+                            @Model.SelectedView.Name
+                        }
+                        else
+                        {
+                            <span>Saved Views</span>
+                        }
+                    </button>
+                    <ul class="dropdown-menu">
+                        @foreach (var view in Model.AvailableViews)
+                        {
+                            <li>
+                                <a class="dropdown-item @(Model.CurrentViewId == view.Id.ToString() ? "active" : "")" 
+                                   asp-page="./Index" asp-route-viewId="@view.Id">
+                                    @view.Name
+                                    @if (view.IsSystem)
+                                    {
+                                        <span class="badge bg-secondary ms-2">System</span>
+                                    }
+                                </a>
+                            </li>
+                        }
+                        @if (!Model.AvailableViews.Any())
+                        {
+                            <li><span class="dropdown-item text-muted">No saved views</span></li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
 <div class="card mb-4">
     <div class="card-body">
         <form method="get" class="row g-3 mb-3">
+            @if (!string.IsNullOrEmpty(Model.CurrentViewId))
+            {
+                <input type="hidden" name="viewId" value="@Model.CurrentViewId" />
+            }
+            @if (!string.IsNullOrEmpty(Model.BuiltInView))
+            {
+                <input type="hidden" name="builtInView" value="@Model.BuiltInView" />
+            }
             <div class="col-md-4">
                 <div class="input-group">
                     <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" name="search" class="form-control" placeholder="Search tickets..." 
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="@(Model.SelectedView != null ? "Search visible columns..." : "Search tickets...")" 
                            value="@ViewContext.HttpContext.Request.Query["search"]" />
                 </div>
+                @if (Model.SelectedView != null && Model.SelectedView.VisibleColumns.Any())
+                {
+                    <small class="text-muted mt-1">
+                        Searching: @string.Join(", ", Model.SelectedView.VisibleColumns.Take(3))
+                        @if (Model.SelectedView.VisibleColumns.Count > 3)
+                        {
+                            <span>+@(Model.SelectedView.VisibleColumns.Count - 3) more</span>
+                        }
+                    </small>
+                }
             </div>
             <div class="col-md-2">
                 <select name="status" class="form-select">
@@ -169,4 +247,3 @@
         _ => ""
     };
 }
-

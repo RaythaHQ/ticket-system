@@ -43,12 +43,14 @@ public class UpdateTicket
         private readonly IAppDbContext _db;
         private readonly ICurrentUser _currentUser;
         private readonly ITicketPermissionService _permissionService;
+        private readonly ISlaService _slaService;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser, ITicketPermissionService permissionService)
+        public Handler(IAppDbContext db, ICurrentUser currentUser, ITicketPermissionService permissionService, ISlaService slaService)
         {
             _db = db;
             _currentUser = currentUser;
             _permissionService = permissionService;
+            _slaService = slaService;
         }
 
         public async ValueTask<CommandResponseDto<long>> Handle(
@@ -115,6 +117,11 @@ public class UpdateTicket
 
             ticket.Tags = request.Tags ?? new List<string>();
 
+            // Check if SLA-relevant fields changed
+            var slaRelevantFieldsChanged = changes.ContainsKey("Priority") ||
+                                           changes.ContainsKey("Category") ||
+                                           changes.ContainsKey("OwningTeamId");
+
             if (changes.Any())
             {
                 // Add change log entry
@@ -131,6 +138,26 @@ public class UpdateTicket
                 if (oldAssigneeId != request.AssigneeId || oldTeamId != request.OwningTeamId)
                 {
                     ticket.AddDomainEvent(new TicketAssignedEvent(ticket, oldAssigneeId, request.AssigneeId, oldTeamId, request.OwningTeamId));
+                }
+            }
+
+            // Re-evaluate SLA if relevant fields changed
+            if (slaRelevantFieldsChanged)
+            {
+                var previousSlaId = ticket.SlaRuleId;
+                await _slaService.EvaluateAndAssignSlaAsync(ticket, cancellationToken);
+
+                if (ticket.SlaRuleId != previousSlaId)
+                {
+                    var slaChangeLog = new TicketChangeLogEntry
+                    {
+                        TicketId = ticket.Id,
+                        ActorStaffId = _currentUser.UserId?.Guid,
+                        Message = ticket.SlaRuleId.HasValue
+                            ? $"SLA rule re-evaluated and updated"
+                            : $"SLA rule removed after re-evaluation"
+                    };
+                    ticket.ChangeLogEntries.Add(slaChangeLog);
                 }
             }
 

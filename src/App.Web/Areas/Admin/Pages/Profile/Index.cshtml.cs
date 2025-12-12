@@ -1,6 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using App.Application.Login.Commands;
+using App.Application.NotificationPreferences;
+using App.Application.NotificationPreferences.Commands;
+using App.Application.NotificationPreferences.Queries;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
@@ -11,6 +14,8 @@ public class Index : BaseAdminPageModel
 {
     [BindProperty]
     public FormModel Form { get; set; }
+
+    public List<NotificationPreferenceDto> NotificationPreferences { get; set; } = new();
 
     public async Task<IActionResult> OnGet()
     {
@@ -30,6 +35,16 @@ public class Index : BaseAdminPageModel
             LastName = CurrentUser.LastName,
             EmailAddress = CurrentUser.EmailAddress,
         };
+
+        // Load notification preferences
+        if (CurrentUser.UserId?.Guid != null)
+        {
+            var prefsResponse = await Mediator.Send(new GetNotificationPreferences.Query
+            {
+                StaffAdminId = CurrentUser.UserId.Value.Guid
+            });
+            NotificationPreferences = prefsResponse.Result;
+        }
 
         return Page();
     }
@@ -55,6 +70,38 @@ public class Index : BaseAdminPageModel
             SetErrorMessage(response.GetErrors());
             return Page();
         }
+    }
+
+    public async Task<IActionResult> OnPostUpdateNotifications(
+        [FromForm] Dictionary<string, bool> emailPrefs,
+        CancellationToken cancellationToken)
+    {
+        if (CurrentUser.UserId?.Guid == null)
+            return RedirectToPage(RouteNames.Profile.Index);
+
+        var preferences = emailPrefs.Select(kvp => new UpdateNotificationPreferences.PreferenceUpdate
+        {
+            EventType = kvp.Key,
+            EmailEnabled = kvp.Value,
+            WebhookEnabled = false
+        }).ToList();
+
+        var response = await Mediator.Send(new UpdateNotificationPreferences.Command
+        {
+            StaffAdminId = CurrentUser.UserId.Value.Guid,
+            Preferences = preferences
+        }, cancellationToken);
+
+        if (response.Success)
+        {
+            SetSuccessMessage("Notification preferences updated successfully.");
+        }
+        else
+        {
+            SetErrorMessage(response.GetErrors());
+        }
+
+        return RedirectToPage(RouteNames.Profile.Index);
     }
 
     public record FormModel

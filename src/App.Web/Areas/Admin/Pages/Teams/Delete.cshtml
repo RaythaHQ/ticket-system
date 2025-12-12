@@ -1,0 +1,55 @@
+@page "/admin/teams/{id}/delete"
+@model App.Web.Areas.Admin.Pages.Teams.Delete
+
+@{
+    Layout = "SidebarLayout";
+    ViewData["Title"] = "Delete Team";
+    ViewData["ActiveMenu"] = "Teams";
+    ViewData["ExpandTicketingMenu"] = true;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Delete Team</h1>
+    <a asp-page="./Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Confirm Deletion</h5>
+            </div>
+            <div class="card-body">
+                <p>Are you sure you want to delete the following team?</p>
+
+                <dl class="row">
+                    <dt class="col-4">Name</dt>
+                    <dd class="col-8">@Model.Team.Name</dd>
+
+                    <dt class="col-4">Description</dt>
+                    <dd class="col-8">@(Model.Team.Description ?? "—")</dd>
+
+                    <dt class="col-4">Members</dt>
+                    <dd class="col-8">@Model.Team.MemberCount</dd>
+                </dl>
+
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    This will remove all team memberships. Tickets assigned to this team will become unassigned.
+                </div>
+
+                <form method="post">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i> Delete Team
+                        </button>
+                        <a asp-page="./Edit" asp-route-id="@Model.Team.Id" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

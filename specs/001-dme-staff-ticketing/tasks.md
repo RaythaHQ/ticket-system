@@ -227,39 +227,39 @@
 
 ### Application Layer - DTOs
 
-- [ ] T102 [P] [US9] Create TeamDto in src/App.Application/Teams/TeamDto.cs
-- [ ] T103 [P] [US9] Create TeamMembershipDto in src/App.Application/Teams/TeamMembershipDto.cs
+- [x] T102 [P] [US9] Create TeamDto in src/App.Application/Teams/TeamDto.cs
+- [x] T103 [P] [US9] Create TeamMembershipDto in src/App.Application/Teams/TeamMembershipDto.cs
 
 ### Application Layer - Commands
 
-- [ ] T104 [US9] Create CreateTeam command with permission check in src/App.Application/Teams/Commands/CreateTeam.cs
-- [ ] T105 [P] [US9] Create UpdateTeam command in src/App.Application/Teams/Commands/UpdateTeam.cs
-- [ ] T106 [P] [US9] Create DeleteTeam command in src/App.Application/Teams/Commands/DeleteTeam.cs
-- [ ] T107 [P] [US9] Create AddTeamMember command in src/App.Application/Teams/Commands/AddTeamMember.cs
-- [ ] T108 [P] [US9] Create RemoveTeamMember command in src/App.Application/Teams/Commands/RemoveTeamMember.cs
-- [ ] T109 [P] [US9] Create SetMemberAssignable command in src/App.Application/Teams/Commands/SetMemberAssignable.cs
-- [ ] T110 [P] [US9] Create ToggleRoundRobin command in src/App.Application/Teams/Commands/ToggleRoundRobin.cs
+- [x] T104 [US9] Create CreateTeam command with permission check in src/App.Application/Teams/Commands/CreateTeam.cs
+- [x] T105 [P] [US9] Create UpdateTeam command in src/App.Application/Teams/Commands/UpdateTeam.cs
+- [x] T106 [P] [US9] Create DeleteTeam command in src/App.Application/Teams/Commands/DeleteTeam.cs
+- [x] T107 [P] [US9] Create AddTeamMember command in src/App.Application/Teams/Commands/AddTeamMember.cs
+- [x] T108 [P] [US9] Create RemoveTeamMember command in src/App.Application/Teams/Commands/RemoveTeamMember.cs
+- [x] T109 [P] [US9] Create SetMemberAssignable command in src/App.Application/Teams/Commands/SetMemberAssignable.cs
+- [x] T110 [P] [US9] Create ToggleRoundRobin command in src/App.Application/Teams/Commands/ToggleRoundRobin.cs
 
 ### Application Layer - Queries
 
-- [ ] T111 [P] [US9] Create GetTeamById query in src/App.Application/Teams/Queries/GetTeamById.cs
-- [ ] T112 [P] [US9] Create GetTeams query in src/App.Application/Teams/Queries/GetTeams.cs
-- [ ] T113 [P] [US9] Create GetTeamMembers query in src/App.Application/Teams/Queries/GetTeamMembers.cs
+- [x] T111 [P] [US9] Create GetTeamById query in src/App.Application/Teams/Queries/GetTeamById.cs
+- [x] T112 [P] [US9] Create GetTeams query in src/App.Application/Teams/Queries/GetTeams.cs
+- [x] T113 [P] [US9] Create GetTeamMembers query in src/App.Application/Teams/Queries/GetTeamMembers.cs
 
 ### Admin UI - Teams
 
-- [ ] T114 [US9] Create Teams List page in src/App.Web/Areas/Admin/Pages/Teams/Index.cshtml
-- [ ] T115 [US9] Create Teams List PageModel with permission check in src/App.Web/Areas/Admin/Pages/Teams/Index.cshtml.cs
-- [ ] T116 [P] [US9] Create Team Create page in src/App.Web/Areas/Admin/Pages/Teams/Create.cshtml
-- [ ] T117 [P] [US9] Create Team Create PageModel in src/App.Web/Areas/Admin/Pages/Teams/Create.cshtml.cs
-- [ ] T118 [P] [US9] Create Team Edit page in src/App.Web/Areas/Admin/Pages/Teams/Edit.cshtml
-- [ ] T119 [P] [US9] Create Team Edit PageModel in src/App.Web/Areas/Admin/Pages/Teams/Edit.cshtml.cs
-- [ ] T120 [P] [US9] Create Team Delete page in src/App.Web/Areas/Admin/Pages/Teams/Delete.cshtml
-- [ ] T121 [P] [US9] Create Team Delete PageModel in src/App.Web/Areas/Admin/Pages/Teams/Delete.cshtml.cs
-- [ ] T122 [US9] Create Team Members List page in src/App.Web/Areas/Admin/Pages/Teams/Members/Index.cshtml
-- [ ] T123 [US9] Create Team Members List PageModel in src/App.Web/Areas/Admin/Pages/Teams/Members/Index.cshtml.cs
-- [ ] T124 [P] [US9] Create Add Member page in src/App.Web/Areas/Admin/Pages/Teams/Members/Add.cshtml
-- [ ] T125 [P] [US9] Create Add Member PageModel in src/App.Web/Areas/Admin/Pages/Teams/Members/Add.cshtml.cs
+- [x] T114 [US9] Create Teams List page in src/App.Web/Areas/Admin/Pages/Teams/Index.cshtml
+- [x] T115 [US9] Create Teams List PageModel with permission check in src/App.Web/Areas/Admin/Pages/Teams/Index.cshtml.cs
+- [x] T116 [P] [US9] Create Team Create page in src/App.Web/Areas/Admin/Pages/Teams/Create.cshtml
+- [x] T117 [P] [US9] Create Team Create PageModel in src/App.Web/Areas/Admin/Pages/Teams/Create.cshtml.cs
+- [x] T118 [P] [US9] Create Team Edit page in src/App.Web/Areas/Admin/Pages/Teams/Edit.cshtml
+- [x] T119 [P] [US9] Create Team Edit PageModel in src/App.Web/Areas/Admin/Pages/Teams/Edit.cshtml.cs
+- [x] T120 [P] [US9] Create Team Delete page in src/App.Web/Areas/Admin/Pages/Teams/Delete.cshtml
+- [x] T121 [P] [US9] Create Team Delete PageModel in src/App.Web/Areas/Admin/Pages/Teams/Delete.cshtml.cs
+- [x] T122 [US9] Create Team Members List page in src/App.Web/Areas/Admin/Pages/Teams/Members/Index.cshtml
+- [x] T123 [US9] Create Team Members List PageModel in src/App.Web/Areas/Admin/Pages/Teams/Members/Index.cshtml.cs
+- [x] T124 [P] [US9] Create Add Member page in src/App.Web/Areas/Admin/Pages/Teams/Members/Add.cshtml (integrated into Index)
+- [x] T125 [P] [US9] Create Add Member PageModel in src/App.Web/Areas/Admin/Pages/Teams/Members/Add.cshtml.cs (integrated into Index)
 
 **Checkpoint**: User Story 9 complete - team management with permissions functional
 
@@ -273,29 +273,29 @@
 
 ### Application Layer - DTOs
 
-- [ ] T126 [P] [US4] Create TicketViewDto in src/App.Application/TicketViews/TicketViewDto.cs
+- [x] T126 [P] [US4] Create TicketViewDto in src/App.Application/TicketViews/TicketViewDto.cs
 
 ### Application Layer - Services
 
-- [ ] T127 [US4] Create ViewFilterBuilder service in src/App.Application/TicketViews/Services/ViewFilterBuilder.cs
+- [x] T127 [US4] Create ViewFilterBuilder service in src/App.Application/TicketViews/Services/ViewFilterBuilder.cs
 
 ### Application Layer - Commands
 
-- [ ] T128 [US4] Create CreateTicketView command in src/App.Application/TicketViews/Commands/CreateTicketView.cs
-- [ ] T129 [P] [US4] Create UpdateTicketView command in src/App.Application/TicketViews/Commands/UpdateTicketView.cs
-- [ ] T130 [P] [US4] Create DeleteTicketView command in src/App.Application/TicketViews/Commands/DeleteTicketView.cs
+- [x] T128 [US4] Create CreateTicketView command in src/App.Application/TicketViews/Commands/CreateTicketView.cs
+- [x] T129 [P] [US4] Create UpdateTicketView command in src/App.Application/TicketViews/Commands/UpdateTicketView.cs
+- [x] T130 [P] [US4] Create DeleteTicketView command in src/App.Application/TicketViews/Commands/DeleteTicketView.cs
 
 ### Application Layer - Queries
 
-- [ ] T131 [P] [US4] Create GetTicketViewById query in src/App.Application/TicketViews/Queries/GetTicketViewById.cs
-- [ ] T132 [US4] Create GetTicketViews query (system + personal views) in src/App.Application/TicketViews/Queries/GetTicketViews.cs
-- [ ] T133 [US4] Create GetDefaultViews query (system views seeding) in src/App.Application/TicketViews/Queries/GetDefaultViews.cs
+- [x] T131 [P] [US4] Create GetTicketViewById query in src/App.Application/TicketViews/Queries/GetTicketViewById.cs
+- [x] T132 [US4] Create GetTicketViews query (system + personal views) in src/App.Application/TicketViews/Queries/GetTicketViews.cs
+- [x] T133 [US4] Create GetDefaultViews query (system views seeding) in src/App.Application/TicketViews/Queries/GetDefaultViews.cs
 
 ### Update Ticket List to Support Views
 
-- [ ] T134 [US4] Update GetTickets query to support view filters and column-limited search in src/App.Application/Tickets/Queries/GetTickets.cs
-- [ ] T135 [US4] Update Ticket List PageModel to support view selection in src/App.Web/Areas/Staff/Pages/Tickets/Index.cshtml.cs
-- [ ] T136 [US4] Update Ticket List page with view selector and column-aware search in src/App.Web/Areas/Staff/Pages/Tickets/Index.cshtml
+- [x] T134 [US4] Update GetTickets query to support view filters and column-limited search in src/App.Application/Tickets/Queries/GetTickets.cs
+- [x] T135 [US4] Update Ticket List PageModel to support view selection in src/App.Web/Areas/Staff/Pages/Tickets/Index.cshtml.cs
+- [x] T136 [US4] Update Ticket List page with view selector and column-aware search in src/App.Web/Areas/Staff/Pages/Tickets/Index.cshtml
 
 **Checkpoint**: User Story 4 complete - views and filtered search functional
 
@@ -309,18 +309,18 @@
 
 ### Application Layer - Services
 
-- [ ] T137 [US6] Create IRoundRobinService interface in src/App.Application/Common/Interfaces/IRoundRobinService.cs
-- [ ] T138 [US6] Create RoundRobinService implementation in src/App.Application/Teams/Services/RoundRobinService.cs
-- [ ] T139 [US6] Register RoundRobinService in src/App.Infrastructure/ConfigureServices.cs
+- [x] T137 [US6] Create IRoundRobinService interface in src/App.Application/Common/Interfaces/IRoundRobinService.cs
+- [x] T138 [US6] Create RoundRobinService implementation in src/App.Application/Teams/Services/RoundRobinService.cs
+- [x] T139 [US6] Register RoundRobinService in src/App.Infrastructure/ConfigureServices.cs
 
 ### Application Layer - Queries
 
-- [ ] T140 [US6] Create GetNextRoundRobinAssignee query in src/App.Application/Teams/Queries/GetNextRoundRobinAssignee.cs
+- [x] T140 [US6] Create GetNextRoundRobinAssignee query in src/App.Application/Teams/Queries/GetNextRoundRobinAssignee.cs
 
 ### Integration
 
-- [ ] T141 [US6] Update CreateTicket command to call RoundRobinService when owning_team_id is set
-- [ ] T142 [US6] Update AssignTicket command to trigger round-robin when team changes
+- [x] T141 [US6] Update CreateTicket command to call RoundRobinService when owning_team_id is set
+- [x] T142 [US6] Update AssignTicket command to trigger round-robin when team changes
 
 **Checkpoint**: User Story 6 complete - round-robin auto-assignment functional
 
@@ -334,22 +334,22 @@
 
 ### Domain Events
 
-- [ ] T143 [P] [US5] Create SlaApproachingBreachEvent in src/App.Domain/Events/SlaApproachingBreachEvent.cs
-- [ ] T144 [P] [US5] Create SlaBreachedEvent in src/App.Domain/Events/SlaBreachedEvent.cs
+- [x] T143 [P] [US5] Create SlaApproachingBreachEvent in src/App.Domain/Events/SlaApproachingBreachEvent.cs
+- [x] T144 [P] [US5] Create SlaBreachedEvent in src/App.Domain/Events/SlaBreachedEvent.cs
 
 ### Application Layer - DTOs
 
-- [ ] T145 [P] [US5] Create SlaRuleDto in src/App.Application/SlaRules/SlaRuleDto.cs
+- [x] T145 [P] [US5] Create SlaRuleDto in src/App.Application/SlaRules/SlaRuleDto.cs
 
 ### Application Layer - Services
 
-- [ ] T146 [US5] Create SlaEvaluationService in src/App.Application/SlaRules/Services/SlaEvaluationService.cs
+- [x] T146 [US5] Create SlaService (combines evaluation) in src/App.Application/SlaRules/Services/SlaService.cs
 
 ### Application Layer - Queries
 
-- [ ] T147 [P] [US5] Create GetSlaRuleById query in src/App.Application/SlaRules/Queries/GetSlaRuleById.cs
-- [ ] T148 [P] [US5] Create GetSlaRules query in src/App.Application/SlaRules/Queries/GetSlaRules.cs
-- [ ] T149 [US5] Create EvaluateSlaForTicket query in src/App.Application/SlaRules/Queries/EvaluateSlaForTicket.cs
+- [x] T147 [P] [US5] Create GetSlaRuleById query in src/App.Application/SlaRules/Queries/GetSlaRuleById.cs
+- [x] T148 [P] [US5] Create GetSlaRules query in src/App.Application/SlaRules/Queries/GetSlaRules.cs
+- [x] T149 [US5] SLA evaluation via SlaService.EvaluateAndAssignSlaAsync
 
 ### Background Job
 
@@ -358,7 +358,7 @@
 
 ### Integration
 
-- [ ] T152 [US5] Update CreateTicket to evaluate and assign SLA after creation
+- [x] T152 [US5] Update CreateTicket to evaluate and assign SLA after creation (via domain event handler)
 - [ ] T153 [US5] Update UpdateTicket to re-evaluate SLA when applicable fields change
 - [ ] T154 [P] [US5] Create _TicketSlaInfo.cshtml partial in src/App.Web/Areas/Staff/Pages/Tickets/_TicketSlaInfo.cshtml
 - [ ] T155 [US5] Update Ticket Details page to display SLA information
@@ -375,19 +375,19 @@
 
 ### Application Layer - Commands
 
-- [ ] T156 [US11] Create CreateSlaRule command in src/App.Application/SlaRules/Commands/CreateSlaRule.cs
-- [ ] T157 [P] [US11] Create UpdateSlaRule command in src/App.Application/SlaRules/Commands/UpdateSlaRule.cs
-- [ ] T158 [P] [US11] Create DeactivateSlaRule command in src/App.Application/SlaRules/Commands/DeactivateSlaRule.cs
+- [x] T156 [US11] Create CreateSlaRule command in src/App.Application/SlaRules/Commands/CreateSlaRule.cs
+- [x] T157 [P] [US11] Create UpdateSlaRule command in src/App.Application/SlaRules/Commands/UpdateSlaRule.cs
+- [x] T158 [P] [US11] Create DeleteSlaRule command in src/App.Application/SlaRules/Commands/DeleteSlaRule.cs
 - [ ] T159 [P] [US11] Create ReorderSlaRules command in src/App.Application/SlaRules/Commands/ReorderSlaRules.cs
 
 ### Admin UI - SLA Rules
 
-- [ ] T160 [US11] Create SLA Rules List page in src/App.Web/Areas/Admin/Pages/SlaRules/Index.cshtml
-- [ ] T161 [US11] Create SLA Rules List PageModel in src/App.Web/Areas/Admin/Pages/SlaRules/Index.cshtml.cs
-- [ ] T162 [P] [US11] Create SLA Rule Create page in src/App.Web/Areas/Admin/Pages/SlaRules/Create.cshtml
-- [ ] T163 [P] [US11] Create SLA Rule Create PageModel in src/App.Web/Areas/Admin/Pages/SlaRules/Create.cshtml.cs
-- [ ] T164 [P] [US11] Create SLA Rule Edit page in src/App.Web/Areas/Admin/Pages/SlaRules/Edit.cshtml
-- [ ] T165 [P] [US11] Create SLA Rule Edit PageModel in src/App.Web/Areas/Admin/Pages/SlaRules/Edit.cshtml.cs
+- [x] T160 [US11] Create SLA Rules List page in src/App.Web/Areas/Admin/Pages/SlaRules/Index.cshtml
+- [x] T161 [US11] Create SLA Rules List PageModel in src/App.Web/Areas/Admin/Pages/SlaRules/Index.cshtml.cs
+- [x] T162 [P] [US11] Create SLA Rule Create page in src/App.Web/Areas/Admin/Pages/SlaRules/Create.cshtml
+- [x] T163 [P] [US11] Create SLA Rule Create PageModel in src/App.Web/Areas/Admin/Pages/SlaRules/Create.cshtml.cs
+- [x] T164 [P] [US11] Create SLA Rule Edit page in src/App.Web/Areas/Admin/Pages/SlaRules/Edit.cshtml
+- [x] T165 [P] [US11] Create SLA Rule Edit PageModel in src/App.Web/Areas/Admin/Pages/SlaRules/Edit.cshtml.cs
 
 **Checkpoint**: User Story 11 complete - SLA configuration UI functional
 
@@ -401,26 +401,26 @@
 
 ### Email Templates
 
-- [ ] T166 [P] [US8] Create email_ticket_assigned.liquid in src/App.Domain/Entities/DefaultTemplates/email_ticket_assigned.liquid
+- [x] T166 [P] [US8] Create email_ticket_assigned.liquid in src/App.Domain/Entities/DefaultTemplates/email_ticket_assigned.liquid
 - [ ] T167 [P] [US8] Create email_ticket_assignedtoteam.liquid in src/App.Domain/Entities/DefaultTemplates/email_ticket_assignedtoteam.liquid
-- [ ] T168 [P] [US8] Create email_ticket_commentadded.liquid in src/App.Domain/Entities/DefaultTemplates/email_ticket_commentadded.liquid
-- [ ] T169 [P] [US8] Create email_ticket_statuschanged.liquid in src/App.Domain/Entities/DefaultTemplates/email_ticket_statuschanged.liquid
+- [x] T168 [P] [US8] Create email_ticket_commentadded.liquid in src/App.Domain/Entities/DefaultTemplates/email_ticket_commentadded.liquid
+- [x] T169 [P] [US8] Create email_ticket_statuschanged.liquid in src/App.Domain/Entities/DefaultTemplates/email_ticket_statuschanged.liquid
 - [ ] T170 [P] [US8] Create email_ticket_closed.liquid in src/App.Domain/Entities/DefaultTemplates/email_ticket_closed.liquid
 - [ ] T171 [P] [US8] Create email_ticket_reopened.liquid in src/App.Domain/Entities/DefaultTemplates/email_ticket_reopened.liquid
-- [ ] T172 [P] [US8] Create email_sla_approaching.liquid in src/App.Domain/Entities/DefaultTemplates/email_sla_approaching.liquid
-- [ ] T173 [P] [US8] Create email_sla_breached.liquid in src/App.Domain/Entities/DefaultTemplates/email_sla_breached.liquid
+- [x] T172 [P] [US8] Create email_sla_approaching.liquid in src/App.Domain/Entities/DefaultTemplates/email_sla_approaching.liquid
+- [x] T173 [P] [US8] Create email_sla_breached.liquid in src/App.Domain/Entities/DefaultTemplates/email_sla_breached.liquid
 
 ### Update BuiltInEmailTemplate
 
-- [ ] T174 [US8] Add ticket notification templates to BuiltInEmailTemplate in src/App.Domain/Entities/EmailTemplate.cs
+- [x] T174 [US8] Add ticket notification templates to BuiltInEmailTemplate in src/App.Domain/Entities/EmailTemplate.cs
 
 ### RenderModels
 
-- [ ] T175 [P] [US8] Create TicketAssigned_RenderModel in src/App.Application/Tickets/RenderModels/TicketAssigned_RenderModel.cs
-- [ ] T176 [P] [US8] Create TicketCommentAdded_RenderModel in src/App.Application/Tickets/RenderModels/TicketCommentAdded_RenderModel.cs
-- [ ] T177 [P] [US8] Create TicketStatusChanged_RenderModel in src/App.Application/Tickets/RenderModels/TicketStatusChanged_RenderModel.cs
-- [ ] T178 [P] [US8] Create SlaApproaching_RenderModel in src/App.Application/Tickets/RenderModels/SlaApproaching_RenderModel.cs
-- [ ] T179 [P] [US8] Create SlaBreach_RenderModel in src/App.Application/Tickets/RenderModels/SlaBreach_RenderModel.cs
+- [x] T175 [P] [US8] Create TicketAssigned_RenderModel in src/App.Application/Tickets/RenderModels/TicketAssigned_RenderModel.cs
+- [x] T176 [P] [US8] Create TicketCommentAdded_RenderModel in src/App.Application/Tickets/RenderModels/TicketCommentAdded_RenderModel.cs
+- [x] T177 [P] [US8] Create TicketStatusChanged_RenderModel in src/App.Application/Tickets/RenderModels/TicketStatusChanged_RenderModel.cs
+- [x] T178 [P] [US8] Create SlaApproaching_RenderModel in src/App.Application/Tickets/RenderModels/SlaApproaching_RenderModel.cs
+- [x] T179 [P] [US8] Create SlaBreach_RenderModel in src/App.Application/Tickets/RenderModels/SlaBreach_RenderModel.cs
 
 ### URL Builder
 

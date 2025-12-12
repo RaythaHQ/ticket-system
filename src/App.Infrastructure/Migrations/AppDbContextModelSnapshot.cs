@@ -1169,14 +1169,8 @@ namespace App.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("AccessReports")
-                        .HasColumnType("boolean");
-
                     b.Property<Guid?>("AuthenticationSchemeId")
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("CanManageTickets")
-                        .HasColumnType("boolean");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone");
@@ -1213,9 +1207,6 @@ namespace App.Infrastructure.Migrations
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<bool>("ManageTeams")
-                        .HasColumnType("boolean");
 
                     b.Property<byte[]>("PasswordHash")
                         .IsRequired()

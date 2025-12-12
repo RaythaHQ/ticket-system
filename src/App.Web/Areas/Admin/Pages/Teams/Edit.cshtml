@@ -1,0 +1,70 @@
+@page "/admin/teams/{id}/edit"
+@model App.Web.Areas.Admin.Pages.Teams.Edit
+
+@{
+    Layout = "SidebarLayout";
+    ViewData["Title"] = $"Edit Team: {Model.Form.Name}";
+    ViewData["ActiveMenu"] = "Teams";
+    ViewData["ExpandTicketingMenu"] = true;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Edit Team</h1>
+    <div class="d-flex gap-2">
+        <a asp-page="./Members/Index" asp-route-teamId="@Model.Form.Id" class="btn btn-outline-primary">
+            <i class="bi bi-people me-1"></i> Manage Members
+        </a>
+        <a asp-page="./Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" asp-for="Form.Id" />
+
+                    <div class="mb-3">
+                        <label asp-for="Form.Name" class="form-label">Name <span class="text-danger">*</span></label>
+                        <input asp-for="Form.Name" class="form-control" />
+                        <span asp-validation-for="Form.Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Form.Description" class="form-label">Description</label>
+                        <textarea asp-for="Form.Description" class="form-control" rows="3"></textarea>
+                        <span asp-validation-for="Form.Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input asp-for="Form.RoundRobinEnabled" class="form-check-input" type="checkbox" />
+                            <label asp-for="Form.RoundRobinEnabled" class="form-check-label">
+                                Enable Round Robin Assignment
+                            </label>
+                        </div>
+                        <small class="text-muted">When enabled, new unassigned tickets for this team will be automatically assigned to eligible members.</small>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="d-flex justify-content-between">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg me-1"></i> Save Changes
+                            </button>
+                            <a asp-page="./Index" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                        <a asp-page="./Delete" asp-route-id="@Model.Form.Id" class="btn btn-outline-danger">
+                            <i class="bi bi-trash me-1"></i> Delete
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+

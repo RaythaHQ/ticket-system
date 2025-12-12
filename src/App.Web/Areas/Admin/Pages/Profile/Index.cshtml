@@ -44,5 +44,45 @@
                 </form>
             </div>
         </div>
+
+        <!-- Notification Preferences -->
+        <div class="card border-0 shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Notification Preferences</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">Configure which email notifications you want to receive.</p>
+                <form method="post" asp-page-handler="UpdateNotifications">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Event Type</th>
+                                    <th class="text-center">Email</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var pref in Model.NotificationPreferences)
+                                {
+                                    <tr>
+                                        <td>@pref.EventTypeLabel</td>
+                                        <td class="text-center">
+                                            <div class="form-check d-flex justify-content-center">
+                                                <input type="hidden" name="emailPrefs[@pref.EventType]" value="false" />
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="emailPrefs[@pref.EventType]" 
+                                                       value="true"
+                                                       @(pref.EmailEnabled ? "checked" : "") />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Notification Preferences</button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>

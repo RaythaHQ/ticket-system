@@ -17,4 +17,5 @@ public interface ICurrentUser
     bool IsAdmin { get; }
     public string[] Roles { get; }
     public string[] UserGroups { get; }
+    public string[] SystemPermissions { get; }
 }

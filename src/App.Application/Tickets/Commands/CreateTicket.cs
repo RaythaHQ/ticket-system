@@ -62,11 +62,13 @@ public class CreateTicket
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUser _currentUser;
+        private readonly IRoundRobinService _roundRobinService;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser)
+        public Handler(IAppDbContext db, ICurrentUser currentUser, IRoundRobinService roundRobinService)
         {
             _db = db;
             _currentUser = currentUser;
+            _roundRobinService = roundRobinService;
         }
 
         public async ValueTask<CommandResponseDto<long>> Handle(
@@ -74,6 +76,20 @@ public class CreateTicket
             CancellationToken cancellationToken
         )
         {
+            Guid? assigneeId = request.AssigneeId;
+            bool wasAutoAssigned = false;
+
+            // If ticket is assigned to a team but no assignee specified, try round-robin
+            if (request.OwningTeamId.HasValue && !request.AssigneeId.HasValue)
+            {
+                var autoAssignee = await _roundRobinService.GetNextAssigneeAsync(request.OwningTeamId.Value, cancellationToken);
+                if (autoAssignee.HasValue)
+                {
+                    assigneeId = autoAssignee.Value;
+                    wasAutoAssigned = true;
+                }
+            }
+
             var ticket = new Ticket
             {
                 Title = request.Title,
@@ -83,7 +99,7 @@ public class CreateTicket
                 Category = request.Category,
                 Tags = request.Tags ?? new List<string>(),
                 OwningTeamId = request.OwningTeamId,
-                AssigneeId = request.AssigneeId,
+                AssigneeId = assigneeId,
                 ContactId = request.ContactId,
                 CreatedByStaffId = _currentUser.UserId?.Guid
             };
@@ -93,13 +109,28 @@ public class CreateTicket
             _db.Tickets.Add(ticket);
             await _db.SaveChangesAsync(cancellationToken);
 
+            // Record round-robin assignment if used
+            if (wasAutoAssigned && assigneeId.HasValue && request.OwningTeamId.HasValue)
+            {
+                var membership = await _db.TeamMemberships
+                    .FirstOrDefaultAsync(m => m.TeamId == request.OwningTeamId.Value && m.StaffAdminId == assigneeId.Value, cancellationToken);
+                if (membership != null)
+                {
+                    membership.LastAssignedAt = DateTime.UtcNow;
+                }
+            }
+
             // Add initial change log entry after save so we have the TicketId
+            var changeLogMessage = wasAutoAssigned
+                ? "Ticket created (auto-assigned via round-robin)"
+                : "Ticket created";
+
             var changeLog = new TicketChangeLogEntry
             {
                 Id = Guid.NewGuid(),
                 TicketId = ticket.Id,
                 ActorStaffId = _currentUser.UserId?.Guid,
-                Message = "Ticket created"
+                Message = changeLogMessage
             };
 
             _db.TicketChangeLogEntries.Add(changeLog);
@@ -109,4 +140,3 @@ public class CreateTicket
         }
     }
 }
-
