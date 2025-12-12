@@ -1,0 +1,32 @@
+@model IEnumerable<App.Application.Tickets.TicketChangeLogEntryDto>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Activity Log (@Model.Count())</h5>
+    </div>
+    <div class="card-body">
+        @if (!Model.Any())
+        {
+            <p class="text-muted">No activity recorded.</p>
+        }
+        else
+        {
+            <ul class="list-unstyled mb-0">
+                @foreach (var entry in Model)
+                {
+                    <li class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>@(entry.ActorStaffName ?? "System")</strong>
+                                <span class="text-muted">@entry.Message</span>
+                            </div>
+                            <small class="text-muted">
+                                @entry.CreationTime.ToString("MMM dd, yyyy HH:mm")
+                            </small>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>

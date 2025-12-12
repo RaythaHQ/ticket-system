@@ -20,6 +20,21 @@ public interface IAppDbContext
     public DbSet<BackgroundTask> BackgroundTasks { get; }
     public DbSet<FailedLoginAttempt> FailedLoginAttempts { get; }
     public DbSet<MediaItem> MediaItems { get; }
+
+    // Ticketing system entities
+    public DbSet<Ticket> Tickets { get; }
+    public DbSet<Contact> Contacts { get; }
+    public DbSet<Team> Teams { get; }
+    public DbSet<TeamMembership> TeamMemberships { get; }
+    public DbSet<TicketChangeLogEntry> TicketChangeLogEntries { get; }
+    public DbSet<TicketComment> TicketComments { get; }
+    public DbSet<TicketAttachment> TicketAttachments { get; }
+    public DbSet<ContactChangeLogEntry> ContactChangeLogEntries { get; }
+    public DbSet<ContactComment> ContactComments { get; }
+    public DbSet<SlaRule> SlaRules { get; }
+    public DbSet<TicketView> TicketViews { get; }
+    public DbSet<NotificationPreference> NotificationPreferences { get; }
+
     public DbContext DbContext { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);

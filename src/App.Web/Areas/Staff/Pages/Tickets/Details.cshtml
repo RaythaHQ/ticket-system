@@ -1,0 +1,260 @@
+@page "/staff/tickets/{id:long}"
+@model App.Web.Areas.Staff.Pages.Tickets.Details
+
+@{
+    ViewData["Title"] = $"Ticket #{Model.Ticket.Id}";
+    ViewData["ActiveMenu"] = "Tickets";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-1">
+            <span class="text-muted">#@Model.Ticket.Id</span>
+            @Model.Ticket.Title
+        </h1>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="badge @GetStatusBadgeClass(Model.Ticket.Status)">@Model.Ticket.StatusLabel</span>
+            <span class="badge @GetPriorityBadgeClass(Model.Ticket.Priority)">@Model.Ticket.PriorityLabel</span>
+            @if (!string.IsNullOrEmpty(Model.Ticket.Category))
+            {
+                <span class="badge bg-light text-dark">@Model.Ticket.Category</span>
+            }
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        @if (Model.CanManageTickets)
+        {
+            <a asp-page="./Edit" asp-route-id="@Model.Ticket.Id" class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-1"></i> Edit
+            </a>
+        }
+        <a asp-page="./Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Main Content -->
+    <div class="col-md-8">
+        <!-- Description -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Description</h5>
+            </div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(Model.Ticket.Description))
+                {
+                    <p class="mb-0" style="white-space: pre-wrap;">@Model.Ticket.Description</p>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No description provided.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Comments -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Comments (@Model.Comments.Count())</h5>
+            </div>
+            <div class="card-body">
+                @if (!Model.Comments.Any())
+                {
+                    <p class="text-muted">No comments yet.</p>
+                }
+                @foreach (var comment in Model.Comments)
+                {
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong>@comment.AuthorStaffName</strong>
+                                <small class="text-muted ms-2">
+                                    @comment.CreationTime.ToString("MMM dd, yyyy HH:mm")
+                                </small>
+                            </div>
+                        </div>
+                        <p class="mb-0" style="white-space: pre-wrap;">@comment.Body</p>
+                    </div>
+                }
+
+                <form method="post" asp-page-handler="AddComment" asp-route-id="@Model.Ticket.Id" class="mt-3">
+                    <div class="mb-3">
+                        <label asp-for="CommentForm.Body" class="form-label">Add a comment</label>
+                        <textarea asp-for="CommentForm.Body" class="form-control" rows="3" 
+                                  placeholder="Write your comment..."></textarea>
+                        <span asp-validation-for="CommentForm.Body" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-chat-left-text me-1"></i> Add Comment
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Change Log -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Activity Log (@Model.ChangeLog.Count())</h5>
+            </div>
+            <div class="card-body">
+                @if (!Model.ChangeLog.Any())
+                {
+                    <p class="text-muted">No activity recorded.</p>
+                }
+                <ul class="list-unstyled mb-0">
+                    @foreach (var entry in Model.ChangeLog)
+                    {
+                        <li class="border-bottom pb-2 mb-2">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>@(entry.ActorStaffName ?? "System")</strong>
+                                    <span class="text-muted">@entry.Message</span>
+                                </div>
+                                <small class="text-muted">
+                                    @entry.CreationTime.ToString("MMM dd, yyyy HH:mm")
+                                </small>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Ticket Info -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Details</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5">Assignee</dt>
+                    <dd class="col-7">@(Model.Ticket.AssigneeName ?? "Unassigned")</dd>
+
+                    <dt class="col-5">Team</dt>
+                    <dd class="col-7">@(Model.Ticket.OwningTeamName ?? "—")</dd>
+
+                    <dt class="col-5">Contact</dt>
+                    <dd class="col-7">
+                        @if (Model.Ticket.ContactId.HasValue)
+                        {
+                            <a asp-area="Staff" asp-page="/Contacts/Details" asp-route-id="@Model.Ticket.ContactId">
+                                @Model.Ticket.ContactName
+                            </a>
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </dd>
+
+                    <dt class="col-5">Created by</dt>
+                    <dd class="col-7">@(Model.Ticket.CreatedByStaffName ?? "—")</dd>
+
+                    <dt class="col-5">Created</dt>
+                    <dd class="col-7">@Model.Ticket.CreationTime.ToString("MMM dd, yyyy HH:mm")</dd>
+
+                    @if (Model.Ticket.ResolvedAt.HasValue)
+                    {
+                        <dt class="col-5">Resolved</dt>
+                        <dd class="col-7">@Model.Ticket.ResolvedAt.Value.ToString("MMM dd, yyyy HH:mm")</dd>
+                    }
+
+                    @if (Model.Ticket.ClosedAt.HasValue)
+                    {
+                        <dt class="col-5">Closed</dt>
+                        <dd class="col-7">@Model.Ticket.ClosedAt.Value.ToString("MMM dd, yyyy HH:mm")</dd>
+                    }
+                </dl>
+            </div>
+        </div>
+
+        <!-- SLA Info -->
+        @if (Model.Ticket.SlaRuleId.HasValue)
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">SLA</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-5">Rule</dt>
+                        <dd class="col-7">@Model.Ticket.SlaRuleName</dd>
+
+                        <dt class="col-5">Due</dt>
+                        <dd class="col-7 @GetSlaDueClass(Model.Ticket.SlaStatus)">
+                            @Model.Ticket.SlaDueAt?.ToString("MMM dd, yyyy HH:mm")
+                        </dd>
+
+                        <dt class="col-5">Status</dt>
+                        <dd class="col-7">
+                            <span class="badge @GetSlaBadgeClass(Model.Ticket.SlaStatus)">
+                                @Model.Ticket.SlaStatusLabel
+                            </span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        }
+
+        <!-- Tags -->
+        @if (Model.Ticket.Tags.Any())
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Tags</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (var tag in Model.Ticket.Tags)
+                        {
+                            <span class="badge bg-light text-dark border">@tag</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(string status) => status switch
+    {
+        "open" => "bg-primary",
+        "in_progress" => "bg-info",
+        "pending" => "bg-warning text-dark",
+        "resolved" => "bg-success",
+        "closed" => "bg-secondary",
+        _ => "bg-light text-dark"
+    };
+
+    string GetPriorityBadgeClass(string priority) => priority switch
+    {
+        "urgent" => "bg-danger",
+        "high" => "bg-warning text-dark",
+        "normal" => "bg-info",
+        "low" => "bg-light text-dark",
+        _ => "bg-light text-dark"
+    };
+
+    string GetSlaBadgeClass(string? slaStatus) => slaStatus switch
+    {
+        "breached" => "bg-danger",
+        "approaching_breach" => "bg-warning text-dark",
+        "on_track" => "bg-success",
+        "completed" => "bg-secondary",
+        _ => "bg-light text-dark"
+    };
+
+    string GetSlaDueClass(string? slaStatus) => slaStatus switch
+    {
+        "breached" => "text-danger fw-bold",
+        "approaching_breach" => "text-warning fw-bold",
+        _ => ""
+    };
+}
+

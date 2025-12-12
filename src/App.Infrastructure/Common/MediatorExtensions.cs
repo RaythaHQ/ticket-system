@@ -1,6 +1,6 @@
-﻿using Mediator;
+﻿using App.Domain.Common;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
-using App.Domain.Common;
 
 namespace App.Infrastructure.Common;
 
@@ -11,14 +11,27 @@ public static class MediatorExtensions
         DbContext context
     )
     {
-        var entities = context
+        // Handle GUID-based entities
+        var guidEntities = context
             .ChangeTracker.Entries<BaseEntity>()
             .Where(e => e.Entity.DomainEvents.Any(p => p is IBeforeSaveChangesNotification))
-            .Select(e => e.Entity);
+            .Select(e => e.Entity)
+            .ToList();
 
-        var domainEvents = entities.SelectMany(e => e.DomainEvents).ToList();
+        // Handle numeric ID entities (Tickets, Contacts, etc.)
+        var numericEntities = context
+            .ChangeTracker.Entries<BaseNumericEntity>()
+            .Where(e => e.Entity.DomainEvents.Any(p => p is IBeforeSaveChangesNotification))
+            .Select(e => e.Entity)
+            .ToList();
 
-        entities.ToList().ForEach(e => e.ClearDomainEvents());
+        var domainEvents = guidEntities
+            .SelectMany(e => e.DomainEvents)
+            .Concat(numericEntities.SelectMany(e => e.DomainEvents))
+            .ToList();
+
+        guidEntities.ForEach(e => e.ClearDomainEvents());
+        numericEntities.ForEach(e => e.ClearDomainEvents());
 
         foreach (var domainEvent in domainEvents)
             await mediator.Publish(domainEvent);
@@ -29,7 +42,8 @@ public static class MediatorExtensions
         DbContext context
     )
     {
-        var entities = context
+        // Handle GUID-based entities
+        var guidEntities = context
             .ChangeTracker.Entries<BaseEntity>()
             .Where(e =>
                 e.Entity.DomainEvents.Any(p =>
@@ -40,11 +54,31 @@ public static class MediatorExtensions
                     )
                 )
             )
-            .Select(e => e.Entity);
+            .Select(e => e.Entity)
+            .ToList();
 
-        var domainEvents = entities.SelectMany(e => e.DomainEvents).ToList();
+        // Handle numeric ID entities (Tickets, Contacts, etc.)
+        var numericEntities = context
+            .ChangeTracker.Entries<BaseNumericEntity>()
+            .Where(e =>
+                e.Entity.DomainEvents.Any(p =>
+                    p is IAfterSaveChangesNotification
+                    || (
+                        p is not IAfterSaveChangesNotification
+                        && p is not IBeforeSaveChangesNotification
+                    )
+                )
+            )
+            .Select(e => e.Entity)
+            .ToList();
 
-        entities.ToList().ForEach(e => e.ClearDomainEvents());
+        var domainEvents = guidEntities
+            .SelectMany(e => e.DomainEvents)
+            .Concat(numericEntities.SelectMany(e => e.DomainEvents))
+            .ToList();
+
+        guidEntities.ForEach(e => e.ClearDomainEvents());
+        numericEntities.ForEach(e => e.ClearDomainEvents());
 
         foreach (var domainEvent in domainEvents)
             await mediator.Publish(domainEvent);

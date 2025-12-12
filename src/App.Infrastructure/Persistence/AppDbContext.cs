@@ -45,6 +45,20 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     public DbSet<MediaItem> MediaItems => Set<MediaItem>();
     public DbSet<DataProtectionKey> DataProtectionKeys { get; set; } = null!;
 
+    // Ticketing system entities
+    public DbSet<Ticket> Tickets => Set<Ticket>();
+    public DbSet<Contact> Contacts => Set<Contact>();
+    public DbSet<Team> Teams => Set<Team>();
+    public DbSet<TeamMembership> TeamMemberships => Set<TeamMembership>();
+    public DbSet<TicketChangeLogEntry> TicketChangeLogEntries => Set<TicketChangeLogEntry>();
+    public DbSet<TicketComment> TicketComments => Set<TicketComment>();
+    public DbSet<TicketAttachment> TicketAttachments => Set<TicketAttachment>();
+    public DbSet<ContactChangeLogEntry> ContactChangeLogEntries => Set<ContactChangeLogEntry>();
+    public DbSet<ContactComment> ContactComments => Set<ContactComment>();
+    public DbSet<SlaRule> SlaRules => Set<SlaRule>();
+    public DbSet<TicketView> TicketViews => Set<TicketView>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+
     public DbContext DbContext => this;
 
     protected override void OnModelCreating(ModelBuilder builder)

@@ -1,0 +1,162 @@
+@page "/staff/tickets/{id:long}/edit"
+@model App.Web.Areas.Staff.Pages.Tickets.Edit
+
+@{
+    ViewData["Title"] = $"Edit Ticket #{Model.Form.Id}";
+    ViewData["ActiveMenu"] = "Tickets";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Edit Ticket #@Model.Form.Id</h1>
+    <div class="d-flex gap-2">
+        <a asp-page="./Details" asp-route-id="@Model.Form.Id" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Details
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    <input type="hidden" asp-for="Form.Id" />
+
+                    <div class="mb-3">
+                        <label asp-for="Form.Title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input asp-for="Form.Title" class="form-control" />
+                        <span asp-validation-for="Form.Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Form.Description" class="form-label">Description</label>
+                        <textarea asp-for="Form.Description" class="form-control" rows="5"></textarea>
+                        <span asp-validation-for="Form.Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Form.Status" class="form-label">Status</label>
+                            <select asp-for="Form.Status" class="form-select">
+                                <option value="open">Open</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="pending">Pending</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                            <span asp-validation-for="Form.Status" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Form.Priority" class="form-label">Priority</label>
+                            <select asp-for="Form.Priority" class="form-select">
+                                <option value="low">Low</option>
+                                <option value="normal">Normal</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                            <span asp-validation-for="Form.Priority" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Form.Category" class="form-label">Category</label>
+                            <input asp-for="Form.Category" class="form-control" />
+                            <span asp-validation-for="Form.Category" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Form.Tags" class="form-label">Tags</label>
+                            <input asp-for="Form.Tags" class="form-control" placeholder="Comma-separated" />
+                            <span asp-validation-for="Form.Tags" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Form.OwningTeamId" class="form-label">Team</label>
+                            <select asp-for="Form.OwningTeamId" class="form-select">
+                                <option value="">-- No Team --</option>
+                                @foreach (var team in Model.AvailableTeams)
+                                {
+                                    <option value="@team.Id">@team.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Form.OwningTeamId" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Form.AssigneeId" class="form-label">Assignee</label>
+                            <select asp-for="Form.AssigneeId" class="form-select">
+                                <option value="">-- Unassigned --</option>
+                                @foreach (var user in Model.AvailableAssignees)
+                                {
+                                    <option value="@user.Id">@user.Name</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Form.AssigneeId" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Form.ContactId" class="form-label">Contact ID</label>
+                        <input asp-for="Form.ContactId" type="number" class="form-control" />
+                        <span asp-validation-for="Form.ContactId" class="text-danger"></span>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i> Save Changes
+                        </button>
+                        <a asp-page="./Details" asp-route-id="@Model.Form.Id" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.Form.Status == "closed")
+                {
+                    <form method="post" asp-page-handler="Reopen" asp-route-id="@Model.Form.Id">
+                        <button type="submit" class="btn btn-success w-100 mb-2">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reopen Ticket
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <form method="post" asp-page-handler="Close" asp-route-id="@Model.Form.Id">
+                        <button type="submit" class="btn btn-danger w-100 mb-2">
+                            <i class="bi bi-x-circle me-1"></i> Close Ticket
+                        </button>
+                    </form>
+                }
+
+                <hr />
+
+                <p class="text-muted small mb-2">Change Status:</p>
+                <div class="d-flex flex-wrap gap-1">
+                    @foreach (var status in new[] { ("open", "Open"), ("in_progress", "In Progress"), ("pending", "Pending"), ("resolved", "Resolved") })
+                    {
+                        if (Model.Form.Status != status.Item1)
+                        {
+                            <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@Model.Form.Id" asp-route-status="@status.Item1" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">@status.Item2</button>
+                            </form>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

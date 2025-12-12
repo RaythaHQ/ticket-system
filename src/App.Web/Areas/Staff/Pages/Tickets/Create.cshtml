@@ -1,0 +1,103 @@
+@page "/staff/tickets/create"
+@model App.Web.Areas.Staff.Pages.Tickets.Create
+
+@{
+    ViewData["Title"] = "Create Ticket";
+    ViewData["ActiveMenu"] = "Tickets";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Create Ticket</h1>
+    <a asp-page="./Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to List
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label asp-for="Form.Title" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input asp-for="Form.Title" class="form-control" placeholder="Enter ticket title" />
+                        <span asp-validation-for="Form.Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Form.Description" class="form-label">Description</label>
+                        <textarea asp-for="Form.Description" class="form-control" rows="5" 
+                                  placeholder="Describe the issue or request in detail..."></textarea>
+                        <span asp-validation-for="Form.Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Form.Tags" class="form-label">Tags</label>
+                        <input asp-for="Form.Tags" class="form-control" placeholder="Comma-separated tags (e.g., billing, urgent, follow-up)" />
+                        <span asp-validation-for="Form.Tags" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label asp-for="Form.Priority" class="form-label">Priority <span class="text-danger">*</span></label>
+                        <select asp-for="Form.Priority" class="form-select">
+                            <option value="low">Low</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                        <span asp-validation-for="Form.Priority" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Form.Category" class="form-label">Category</label>
+                        <input asp-for="Form.Category" class="form-control" placeholder="e.g., Billing, Support, Equipment" />
+                        <span asp-validation-for="Form.Category" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Form.OwningTeamId" class="form-label">Assign to Team</label>
+                        <select asp-for="Form.OwningTeamId" class="form-select">
+                            <option value="">-- No Team --</option>
+                            @foreach (var team in Model.AvailableTeams)
+                            {
+                                <option value="@team.Id">@team.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Form.OwningTeamId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Form.AssigneeId" class="form-label">Assign to Staff</label>
+                        <select asp-for="Form.AssigneeId" class="form-select">
+                            <option value="">-- Unassigned --</option>
+                            @foreach (var user in Model.AvailableAssignees)
+                            {
+                                <option value="@user.Id">@user.Name</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Form.AssigneeId" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Form.ContactId" class="form-label">Link to Contact</label>
+                        <input asp-for="Form.ContactId" type="number" class="form-control" placeholder="Contact ID" />
+                        <span asp-validation-for="Form.ContactId" class="text-danger"></span>
+                        <small class="text-muted">Enter a contact ID to link this ticket to a contact</small>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i> Create Ticket
+                </button>
+                <a asp-page="./Index" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+

@@ -1,0 +1,30 @@
+@model IEnumerable<App.Application.Tickets.TicketCommentDto>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Comments (@Model.Count())</h5>
+    </div>
+    <div class="card-body">
+        @if (!Model.Any())
+        {
+            <p class="text-muted">No comments yet.</p>
+        }
+        else
+        {
+            @foreach (var comment in Model)
+            {
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <strong>@comment.AuthorStaffName</strong>
+                            <small class="text-muted ms-2">
+                                @comment.CreationTime.ToString("MMM dd, yyyy HH:mm")
+                            </small>
+                        </div>
+                    </div>
+                    <p class="mb-0" style="white-space: pre-wrap;">@comment.Body</p>
+                </div>
+            }
+        }
+    </div>
+</div>

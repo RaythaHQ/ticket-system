@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Staff Portal</title>
+    <link rel="stylesheet" href="~/admin/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/admin/lib/bootstrap-icons/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/admin/css/volt.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/admin/css/site.css" asp-append-version="true" />
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico">
+
+    <style>
+        :root {
+            --staff-primary: #2563eb;
+            --staff-primary-dark: #1d4ed8;
+            --staff-sidebar-bg: #1e293b;
+        }
+        .staff-sidebar {
+            background-color: var(--staff-sidebar-bg);
+            min-height: 100vh;
+        }
+        .staff-nav-link {
+            color: #94a3b8;
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .staff-nav-link:hover {
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .staff-nav-link.active {
+            color: #fff;
+            background-color: var(--staff-primary);
+        }
+        .staff-nav-link i {
+            font-size: 1.25rem;
+        }
+    </style>
+
+    @RenderSection("headstyles", false)
+</head>
+
+<body data-active-menu="@ViewData["ActiveMenu"]">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-auto px-0 staff-sidebar d-flex flex-column" style="width: 250px;">
+                <div class="p-3 border-bottom border-secondary">
+                    <h5 class="text-white mb-0">Staff Portal</h5>
+                </div>
+                <nav class="p-3 flex-grow-1">
+                    <a asp-area="Staff" asp-page="/Dashboard/Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Dashboard" ? "active" : "")">
+                        <i class="bi bi-house-door"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a asp-area="Staff" asp-page="/Tickets/Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Tickets" ? "active" : "")">
+                        <i class="bi bi-ticket-detailed"></i>
+                        <span>Tickets</span>
+                    </a>
+                    <a asp-area="Staff" asp-page="/Contacts/Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Contacts" ? "active" : "")">
+                        <i class="bi bi-people"></i>
+                        <span>Contacts</span>
+                    </a>
+                </nav>
+                <div class="p-3 border-top border-secondary">
+                    <div class="d-flex align-items-center text-white gap-2">
+                        <i class="bi bi-person-circle"></i>
+                        <span>@User.Identity?.Name</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col p-0">
+                <main class="p-4">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/admin/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

@@ -1,0 +1,64 @@
+@model IEnumerable<App.Application.Tickets.TicketListItemDto>
+
+<div class="table-responsive">
+    <table class="table table-hover mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        No tickets for this contact.
+                    </td>
+                </tr>
+            }
+            @foreach (var ticket in Model)
+            {
+                <tr>
+                    <td>
+                        <a asp-area="Staff" asp-page="/Tickets/Details" asp-route-id="@ticket.Id">
+                            #@ticket.Id
+                        </a>
+                    </td>
+                    <td>
+                        <a asp-area="Staff" asp-page="/Tickets/Details" asp-route-id="@ticket.Id">
+                            @(ticket.Title.Length > 40 ? ticket.Title.Substring(0, 37) + "..." : ticket.Title)
+                        </a>
+                    </td>
+                    <td><span class="badge @GetStatusBadgeClass(ticket.Status)">@ticket.StatusLabel</span></td>
+                    <td><span class="badge @GetPriorityBadgeClass(ticket.Priority)">@ticket.PriorityLabel</span></td>
+                    <td>@ticket.CreationTime.ToString("MMM dd, yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(string status) => status switch
+    {
+        "open" => "bg-primary",
+        "in_progress" => "bg-info",
+        "pending" => "bg-warning text-dark",
+        "resolved" => "bg-success",
+        "closed" => "bg-secondary",
+        _ => "bg-light text-dark"
+    };
+
+    string GetPriorityBadgeClass(string priority) => priority switch
+    {
+        "urgent" => "bg-danger",
+        "high" => "bg-warning text-dark",
+        "normal" => "bg-info",
+        "low" => "bg-light text-dark",
+        _ => "bg-light text-dark"
+    };
+}

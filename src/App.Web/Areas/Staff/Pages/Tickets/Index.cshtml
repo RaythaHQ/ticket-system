@@ -1,0 +1,172 @@
+@page "/staff/tickets"
+@model App.Web.Areas.Staff.Pages.Tickets.Index
+
+@{
+    ViewData["Title"] = "Tickets";
+    ViewData["ActiveMenu"] = "Tickets";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Tickets</h1>
+    <a asp-page="./Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> New Ticket
+    </a>
+</div>
+
+@await Html.PartialAsync("_StaffNav")
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 mb-3">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search tickets..." 
+                           value="@ViewContext.HttpContext.Request.Query["search"]" />
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="open" selected="@(ViewContext.HttpContext.Request.Query["status"] == "open")">Open</option>
+                    <option value="in_progress" selected="@(ViewContext.HttpContext.Request.Query["status"] == "in_progress")">In Progress</option>
+                    <option value="pending" selected="@(ViewContext.HttpContext.Request.Query["status"] == "pending")">Pending</option>
+                    <option value="resolved" selected="@(ViewContext.HttpContext.Request.Query["status"] == "resolved")">Resolved</option>
+                    <option value="closed" selected="@(ViewContext.HttpContext.Request.Query["status"] == "closed")">Closed</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="priority" class="form-select">
+                    <option value="">All Priorities</option>
+                    <option value="urgent" selected="@(ViewContext.HttpContext.Request.Query["priority"] == "urgent")">Urgent</option>
+                    <option value="high" selected="@(ViewContext.HttpContext.Request.Query["priority"] == "high")">High</option>
+                    <option value="normal" selected="@(ViewContext.HttpContext.Request.Query["priority"] == "normal")">Normal</option>
+                    <option value="low" selected="@(ViewContext.HttpContext.Request.Query["priority"] == "low")">Low</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <div class="form-check mt-2">
+                    <input type="checkbox" name="unassigned" value="true" class="form-check-input" 
+                           checked="@(ViewContext.HttpContext.Request.Query["unassigned"] == "true")" id="unassignedCheck" />
+                    <label class="form-check-label" for="unassignedCheck">Unassigned only</label>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Assignee</th>
+                        <th>Contact</th>
+                        <th>SLA</th>
+                        <th>Created</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.ListView.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                No tickets found
+                            </td>
+                        </tr>
+                    }
+                    @foreach (var ticket in Model.ListView.Items)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-page="./Details" asp-route-id="@ticket.Id" class="fw-semibold">
+                                    #@ticket.Id
+                                </a>
+                            </td>
+                            <td>
+                                <a asp-page="./Details" asp-route-id="@ticket.Id">
+                                    @(ticket.Title.Length > 50 ? ticket.Title.Substring(0, 47) + "..." : ticket.Title)
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge @GetStatusBadgeClass(ticket.Status)">
+                                    @ticket.StatusLabel
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @GetPriorityBadgeClass(ticket.Priority)">
+                                    @ticket.PriorityLabel
+                                </span>
+                            </td>
+                            <td>@ticket.AssigneeName</td>
+                            <td>@ticket.ContactName</td>
+                            <td>
+                                @if (ticket.SlaDueAt != "-")
+                                {
+                                    <span class="@GetSlaBadgeClass(ticket.SlaStatusLabel)">
+                                        @ticket.SlaDueAt
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </td>
+                            <td>@ticket.CreationTime</td>
+                            <td>
+                                <a asp-page="./Details" asp-route-id="@ticket.Id" class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @if (Model.ListView.TotalCount > 0)
+    {
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <span class="text-muted">Showing @Model.ListView.Items.Count() of @Model.ListView.TotalCount tickets</span>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetStatusBadgeClass(string status) => status switch
+    {
+        "open" => "bg-primary",
+        "in_progress" => "bg-info",
+        "pending" => "bg-warning text-dark",
+        "resolved" => "bg-success",
+        "closed" => "bg-secondary",
+        _ => "bg-light text-dark"
+    };
+
+    string GetPriorityBadgeClass(string priority) => priority switch
+    {
+        "urgent" => "bg-danger",
+        "high" => "bg-warning text-dark",
+        "normal" => "bg-info",
+        "low" => "bg-light text-dark",
+        _ => "bg-light text-dark"
+    };
+
+    string GetSlaBadgeClass(string slaStatus) => slaStatus switch
+    {
+        "Breached" => "text-danger fw-bold",
+        "Approaching Breach" => "text-warning fw-bold",
+        _ => ""
+    };
+}
+

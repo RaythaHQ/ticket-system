@@ -3,6 +3,8 @@ using FluentValidation;
 using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using App.Application.Common.Behaviors;
+using App.Application.Common.Interfaces;
+using App.Application.Common.Services;
 
 namespace App.Application;
 
@@ -20,6 +22,10 @@ public static class ConfigureServices
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(UnhandledExceptionBehaviour<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuditBehavior<,>));
+
+        // Ticketing system services
+        services.AddScoped<ITicketPermissionService, TicketPermissionService>();
+
         return services;
     }
 }
