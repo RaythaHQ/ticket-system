@@ -7,10 +7,12 @@
     ViewData["Title"] = $"Ticket #{Model.Ticket.Id}";
     ViewData["ActiveMenu"] = "Tickets";
 
+    var backToListUrl = ViewData["BackToListUrl"]?.ToString();
     var back = new BackLinkOptions
     {
         Page = RouteNames.Tickets.Index,
-        Text = "Back to Tickets"
+        Text = "Back to Tickets",
+        Href = !string.IsNullOrEmpty(backToListUrl) ? backToListUrl : null
     };
 }
 

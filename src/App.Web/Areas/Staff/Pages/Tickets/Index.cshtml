@@ -2,10 +2,24 @@
 @model App.Web.Areas.Staff.Pages.Tickets.Index
 @using App.Web.Areas.Staff.Pages.Shared.Models
 @using App.Domain.ValueObjects
+@inject Microsoft.AspNetCore.Mvc.IUrlHelper Url
 
 @{
     ViewData["Title"] = "Tickets";
     ViewData["ActiveMenu"] = "Tickets";
+
+    var backToListUrl = Url.Page(RouteNames.Tickets.Index, new
+    {
+        search = Model.ListView.Search,
+        sortBy = ViewContext.HttpContext.Request.Query["sortBy"].ToString(),
+        status = ViewContext.HttpContext.Request.Query["status"].ToString(),
+        priority = ViewContext.HttpContext.Request.Query["priority"].ToString(),
+        assigneeId = ViewContext.HttpContext.Request.Query["assigneeId"].ToString(),
+        viewId = Model.CurrentViewId,
+        builtInView = Model.BuiltInView,
+        pageNumber = Model.ListView.PageNumber,
+        pageSize = Model.ListView.PageSize
+    });
 }
 
 <div class="staff-page-heading mb-4">
@@ -15,67 +29,86 @@
     </a>
 </div>
 
-<!-- Quick Views -->
+<!-- Sort By -->
 <div class="staff-card mb-4">
     <div class="staff-card-body py-3">
         <div class="d-flex align-items-center gap-3 flex-wrap">
-            <span class="text-muted fw-semibold small">Quick Views:</span>
+            <span class="text-muted fw-semibold small">Sort By:</span>
             <div class="staff-quick-views">
-                <a asp-page="./Index"
-                    class="staff-quick-view-btn @(string.IsNullOrEmpty(Model.BuiltInView) && string.IsNullOrEmpty(Model.CurrentViewId) ? "active" : "")">
-                    All Tickets
+                @{
+                    var currentSortBy = ViewContext.HttpContext.Request.Query["sortBy"].ToString();
+                    if (string.IsNullOrEmpty(currentSortBy))
+                    {
+                        currentSortBy = "newest";
+                    }
+                }
+                <a asp-page="@RouteNames.Tickets.Index" 
+                   asp-route-sortBy="newest"
+                   asp-route-viewId="@Model.CurrentViewId"
+                   asp-route-builtInView="@Model.BuiltInView"
+                   asp-route-search="@ViewContext.HttpContext.Request.Query["search"]"
+                   asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
+                   asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
+                   asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
+                   class="staff-quick-view-btn @(currentSortBy == "newest" ? "active" : "")">
+                    Newest
                 </a>
-                <a asp-page="./Index" asp-route-builtInView="@TicketStatus.OPEN"
-                    class="staff-quick-view-btn @(Model.BuiltInView == TicketStatus.OPEN ? "active" : "")">
-                    @TicketStatus.Open.Label
+                <a asp-page="@RouteNames.Tickets.Index" 
+                   asp-route-sortBy="oldest"
+                   asp-route-viewId="@Model.CurrentViewId"
+                   asp-route-builtInView="@Model.BuiltInView"
+                   asp-route-search="@ViewContext.HttpContext.Request.Query["search"]"
+                   asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
+                   asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
+                   asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
+                   class="staff-quick-view-btn @(currentSortBy == "oldest" ? "active" : "")">
+                    Oldest
                 </a>
-                <a asp-page="./Index" asp-route-builtInView="unassigned"
-                    class="staff-quick-view-btn @(Model.BuiltInView == "unassigned" ? "active" : "")">
-                    Unassigned
+                <a asp-page="@RouteNames.Tickets.Index" 
+                   asp-route-sortBy="priority"
+                   asp-route-viewId="@Model.CurrentViewId"
+                   asp-route-builtInView="@Model.BuiltInView"
+                   asp-route-search="@ViewContext.HttpContext.Request.Query["search"]"
+                   asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
+                   asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
+                   asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
+                   class="staff-quick-view-btn @(currentSortBy == "priority" ? "active" : "")">
+                    Priority
                 </a>
-                <a asp-page="./Index" asp-route-builtInView="recently-closed"
-                    class="staff-quick-view-btn @(Model.BuiltInView == "recently-closed" ? "active" : "")">
-                    Recently Closed
+                <a asp-page="@RouteNames.Tickets.Index" 
+                   asp-route-sortBy="status"
+                   asp-route-viewId="@Model.CurrentViewId"
+                   asp-route-builtInView="@Model.BuiltInView"
+                   asp-route-search="@ViewContext.HttpContext.Request.Query["search"]"
+                   asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
+                   asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
+                   asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
+                   class="staff-quick-view-btn @(currentSortBy == "status" ? "active" : "")">
+                    Status
+                </a>
+                <a asp-page="@RouteNames.Tickets.Index" 
+                   asp-route-sortBy="assignee"
+                   asp-route-viewId="@Model.CurrentViewId"
+                   asp-route-builtInView="@Model.BuiltInView"
+                   asp-route-search="@ViewContext.HttpContext.Request.Query["search"]"
+                   asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
+                   asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
+                   asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
+                   class="staff-quick-view-btn @(currentSortBy == "assignee" ? "active" : "")">
+                    Assignee
+                </a>
+                <a asp-page="@RouteNames.Tickets.Index" 
+                   asp-route-sortBy="sla"
+                   asp-route-viewId="@Model.CurrentViewId"
+                   asp-route-builtInView="@Model.BuiltInView"
+                   asp-route-search="@ViewContext.HttpContext.Request.Query["search"]"
+                   asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
+                   asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
+                   asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
+                   class="staff-quick-view-btn @(currentSortBy == "sla" ? "active" : "")">
+                    SLA
                 </a>
             </div>
-            @if (Model.AvailableViews.Any())
-            {
-                <div class="vr mx-2"></div>
-                <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                        data-bs-toggle="dropdown">
-                        <i class="bi bi-eye me-1"></i>
-                        @if (Model.SelectedView != null)
-                        {
-                            @Model.SelectedView.Name
-                        }
-                        else
-                        {
-                            <span>Saved Views</span>
-                        }
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
-                        @foreach (var view in Model.AvailableViews)
-                        {
-                            <li>
-                                <a class="dropdown-item @(Model.CurrentViewId == view.Id.ToString() ? "active" : "")"
-                                    asp-page="./Index" asp-route-viewId="@view.Id">
-                                    @view.Name
-                                    @if (view.IsSystem)
-                                    {
-                                        <span class="staff-badge staff-badge-secondary ms-2"
-                                            style="font-size: 0.65rem;">System</span>
-                                    }
-                                </a>
-                            </li>
-                        }
-                        @if (!Model.AvailableViews.Any())
-                        {
-                            <li><span class="dropdown-item text-muted">No saved views</span></li>
-                        }
-                    </ul>
-                </div>
-            }
         </div>
     </div>
 </div>
@@ -92,6 +125,14 @@
             {
                 <input type="hidden" name="builtInView" value="@Model.BuiltInView" />
             }
+            @{
+                var currentSortBy = ViewContext.HttpContext.Request.Query["sortBy"].ToString();
+                if (string.IsNullOrEmpty(currentSortBy))
+                {
+                    currentSortBy = "newest";
+                }
+            }
+            <input type="hidden" name="sortBy" value="@currentSortBy" />
             <div class="col-lg-4 col-md-6">
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0">
@@ -136,13 +177,17 @@
                     }
                 </select>
             </div>
-            <div class="col-lg-2 col-md-4">
-                <div class="form-check mt-2">
-                    <input type="checkbox" name="unassigned" value="true" class="form-check-input"
-                        checked="@(ViewContext.HttpContext.Request.Query["unassigned"] == "true")"
-                        id="unassignedCheck" />
-                    <label class="form-check-label" for="unassignedCheck">Unassigned only</label>
-                </div>
+            <div class="col-lg-2 col-md-3">
+                <select name="assigneeId" class="form-select">
+                    <option value="">All Assignees</option>
+                    @foreach (var assignee in Model.AvailableAssignees)
+                    {
+                        <option value="@assignee.Value"
+                            selected="@(ViewContext.HttpContext.Request.Query["assigneeId"] == assignee.Value)">
+                            @assignee.DisplayText
+                        </option>
+                    }
+                </select>
             </div>
             <div class="col-lg-2 col-md-2">
                 <button type="submit" class="btn btn-outline-primary w-100">
@@ -185,13 +230,13 @@
                 {
                     <tr>
                         <td>
-                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
+                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
                                 class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
                                 #@ticket.Id
                             </a>
                         </td>
                         <td>
-                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
+                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
                                 class="text-dark text-decoration-none">
                                 @(ticket.Title.Length > 50 ? ticket.Title.Substring(0, 47) + "..." : ticket.Title)
                             </a>
@@ -206,7 +251,28 @@
                                 @ticket.PriorityLabel
                             </span>
                         </td>
-                        <td class="text-muted">@(ticket.AssigneeName ?? "—")</td>
+                        <td class="text-muted">
+                            @if (!string.IsNullOrEmpty(ticket.OwningTeamName))
+                            {
+                                @ticket.OwningTeamName
+                                @if (!string.IsNullOrEmpty(ticket.AssigneeName))
+                                {
+                                    <span> / @ticket.AssigneeName</span>
+                                }
+                                else
+                                {
+                                    <span> / Anyone</span>
+                                }
+                            }
+                            else if (!string.IsNullOrEmpty(ticket.AssigneeName))
+                            {
+                                @ticket.AssigneeName
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </td>
                         <td class="text-muted">@(ticket.ContactName ?? "—")</td>
                         <td>
                             @if (ticket.SlaDueAt != "-")
@@ -222,7 +288,7 @@
                         </td>
                         <td class="text-muted small">@ticket.CreationTime</td>
                         <td class="text-end">
-                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
+                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
                                 class="btn btn-sm btn-outline-primary">
                                 View
                             </a>

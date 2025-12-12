@@ -150,6 +150,52 @@
             border-radius: 999px;
         }
 
+        .staff-nav-link.has-submenu {
+            cursor: pointer;
+        }
+
+        .staff-nav-link.has-submenu .submenu-arrow {
+            margin-left: auto;
+            transition: transform 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .staff-nav-link.has-submenu.expanded .submenu-arrow {
+            transform: rotate(90deg);
+        }
+
+        .staff-submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding-left: 0.5rem;
+        }
+
+        .staff-submenu.expanded {
+            max-height: 1000px;
+        }
+
+        .staff-submenu-link {
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0.625rem 1rem 0.625rem 2.5rem;
+            border-radius: 6px;
+            display: block;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .staff-submenu-link:hover {
+            color: white;
+            background-color: var(--staff-sidebar-hover);
+        }
+
+        .staff-submenu-link.active {
+            color: white;
+            background: linear-gradient(135deg, var(--staff-primary) 0%, var(--staff-primary-dark) 100%);
+        }
+
         .staff-user-section {
             padding: 1rem 1.25rem;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -723,11 +769,36 @@
                     <i class="bi bi-grid-1x2"></i>
                     <span>Dashboard</span>
                 </a>
-                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index"
-                    class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Tickets" ? "active" : "")">
-                    <i class="bi bi-ticket-detailed"></i>
-                    <span>Tickets</span>
-                </a>
+                <div class="staff-nav-item">
+                    <span class="staff-nav-link has-submenu expanded @(ViewData["ActiveMenu"]?.ToString() == "Tickets" ? "active" : "")"
+                        onclick="toggleSubmenu(event, 'tickets-submenu')">
+                        <i class="bi bi-ticket-detailed"></i>
+                        <span>Tickets</span>
+                        <i class="bi bi-chevron-right submenu-arrow"></i>
+                    </span>
+                    <div class="staff-submenu expanded" id="tickets-submenu">
+                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="unassigned"
+                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Unassigned" ? "active" : "")">
+                            Unassigned
+                        </a>
+                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="my-tickets"
+                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "MyTickets" ? "active" : "")">
+                            My Tickets
+                        </a>
+                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="created-by-me"
+                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "CreatedByMe" ? "active" : "")">
+                            Created by Me
+                        </a>
+                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="team-tickets"
+                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "TeamTickets" ? "active" : "")">
+                            Team Tickets
+                        </a>
+                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="all"
+                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "AllTickets" ? "active" : "")">
+                            All Tickets
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <div class="staff-nav-section">
@@ -836,6 +907,21 @@
                 icon.classList.add('bi-chevron-up');
             }
         });
+
+        function toggleSubmenu(event, submenuId) {
+            event.preventDefault();
+            event.stopPropagation();
+            const submenu = document.getElementById(submenuId);
+            const link = event.currentTarget;
+            
+            if (submenu.classList.contains('expanded')) {
+                submenu.classList.remove('expanded');
+                link.classList.remove('expanded');
+            } else {
+                submenu.classList.add('expanded');
+                link.classList.add('expanded');
+            }
+        }
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

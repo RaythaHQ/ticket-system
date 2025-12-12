@@ -1,11 +1,11 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Contacts;
 using App.Application.Contacts.Commands;
 using App.Application.Contacts.Queries;
 using App.Application.Tickets;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Staff.Pages.Contacts;
 
@@ -15,46 +15,66 @@ namespace App.Web.Areas.Staff.Pages.Contacts;
 public class Details : BaseStaffPageModel
 {
     public ContactDto Contact { get; set; } = null!;
-    public IEnumerable<TicketListItemDto> Tickets { get; set; } = Enumerable.Empty<TicketListItemDto>();
-    public IEnumerable<ContactCommentDto> Comments { get; set; } = Enumerable.Empty<ContactCommentDto>();
-    public IEnumerable<ContactChangeLogEntryDto> ChangeLog { get; set; } = Enumerable.Empty<ContactChangeLogEntryDto>();
+    public IEnumerable<TicketListItemDto> Tickets { get; set; } =
+        Enumerable.Empty<TicketListItemDto>();
+    public IEnumerable<ContactCommentDto> Comments { get; set; } =
+        Enumerable.Empty<ContactCommentDto>();
+    public IEnumerable<ContactChangeLogEntryDto> ChangeLog { get; set; } =
+        Enumerable.Empty<ContactChangeLogEntryDto>();
 
     [BindProperty]
     public AddCommentViewModel CommentForm { get; set; } = new();
 
-    public async Task<IActionResult> OnGet(long id, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnGet(
+        long id,
+        string? backToListUrl = null,
+        CancellationToken cancellationToken = default
+    )
     {
         ViewData["Title"] = $"Contact #{id}";
         ViewData["ActiveMenu"] = "Contacts";
 
-        var contactResponse = await Mediator.Send(new GetContactById.Query { Id = id }, cancellationToken);
+        var contactResponse = await Mediator.Send(
+            new GetContactById.Query { Id = id },
+            cancellationToken
+        );
         Contact = contactResponse.Result;
 
-        var ticketsResponse = await Mediator.Send(new GetContactTickets.Query { ContactId = id }, cancellationToken);
+        var ticketsResponse = await Mediator.Send(
+            new GetContactTickets.Query { ContactId = id },
+            cancellationToken
+        );
         Tickets = ticketsResponse.Result;
 
-        var commentsResponse = await Mediator.Send(new GetContactComments.Query { ContactId = id }, cancellationToken);
+        var commentsResponse = await Mediator.Send(
+            new GetContactComments.Query { ContactId = id },
+            cancellationToken
+        );
         Comments = commentsResponse.Result;
 
-        var changeLogResponse = await Mediator.Send(new GetContactChangeLog.Query { ContactId = id }, cancellationToken);
+        var changeLogResponse = await Mediator.Send(
+            new GetContactChangeLog.Query { ContactId = id },
+            cancellationToken
+        );
         ChangeLog = changeLogResponse.Result;
+
+        // Store back URL for the view
+        ViewData["BackToListUrl"] = backToListUrl;
 
         return Page();
     }
 
     public async Task<IActionResult> OnPostAddComment(long id, CancellationToken cancellationToken)
     {
+        var backToListUrl = Request.Query["backToListUrl"].ToString();
+
         if (string.IsNullOrWhiteSpace(CommentForm.Body))
         {
             ModelState.AddModelError("CommentForm.Body", "Comment cannot be empty.");
-            return await OnGet(id, cancellationToken);
+            return await OnGet(id, backToListUrl, cancellationToken);
         }
 
-        var command = new AddContactComment.Command
-        {
-            ContactId = id,
-            Body = CommentForm.Body
-        };
+        var command = new AddContactComment.Command { ContactId = id, Body = CommentForm.Body };
 
         var response = await Mediator.Send(command, cancellationToken);
 
@@ -67,6 +87,11 @@ public class Details : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
+        if (!string.IsNullOrEmpty(backToListUrl))
+        {
+            return RedirectToPage(RouteNames.Contacts.Details, new { id, backToListUrl });
+        }
+
         return RedirectToPage(RouteNames.Contacts.Details, new { id });
     }
 
@@ -76,4 +101,3 @@ public class Details : BaseStaffPageModel
         public string Body { get; set; } = string.Empty;
     }
 }
-

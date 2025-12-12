@@ -2,10 +2,19 @@
 @model App.Web.Areas.Staff.Pages.Contacts.Index
 @using App.Web.Areas.Staff.Pages.Shared.Models
 @using App.Web.Areas.Shared.Models
+@inject Microsoft.AspNetCore.Mvc.IUrlHelper Url
 
 @{
     ViewData["Title"] = "Contacts";
     ViewData["ActiveMenu"] = "Contacts";
+
+    var backToListUrl = Url.Page(RouteNames.Contacts.Index, new
+    {
+        search = Model.ListView.Search,
+        orderBy = ViewContext.HttpContext.Request.Query["orderBy"].ToString(),
+        pageNumber = Model.ListView.PageNumber,
+        pageSize = Model.ListView.PageSize
+    });
 }
 
 <div class="staff-page-heading mb-4">
@@ -69,13 +78,13 @@
                 {
                     <tr>
                         <td>
-                            <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@contact.Id"
+                            <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@contact.Id" asp-route-backToListUrl="@backToListUrl"
                                class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
                                 #@contact.Id
                             </a>
                         </td>
                         <td>
-                            <a asp-page="./Details" asp-route-id="@contact.Id" 
+                            <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@contact.Id" asp-route-backToListUrl="@backToListUrl"
                                class="text-dark text-decoration-none fw-medium">
                                 @contact.Name
                             </a>
@@ -95,7 +104,7 @@
                         </td>
                         <td class="text-muted small">@contact.CreationTime</td>
                         <td class="text-end">
-                            <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@contact.Id"
+                            <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@contact.Id" asp-route-backToListUrl="@backToListUrl"
                                class="btn btn-sm btn-outline-primary">
                                 View
                             </a>

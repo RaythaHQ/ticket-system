@@ -7,10 +7,12 @@
     ViewData["Title"] = $"Contact #{Model.Contact.Id}";
     ViewData["ActiveMenu"] = "Contacts";
 
+    var backToListUrl = ViewData["BackToListUrl"]?.ToString();
     var back = new BackLinkOptions
     {
         Page = RouteNames.Contacts.Index,
-        Text = "Back to Contacts"
+        Text = "Back to Contacts",
+        Href = !string.IsNullOrEmpty(backToListUrl) ? backToListUrl : null
     };
 }
 

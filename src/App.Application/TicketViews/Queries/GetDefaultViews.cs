@@ -50,6 +50,22 @@ public class GetDefaultViews
                 },
                 new()
                 {
+                    Name = "My Tickets",
+                    Key = "my-tickets",
+                    Conditions = new ViewConditions
+                    {
+                        Logic = "AND",
+                        Filters = new List<ViewFilterCondition>
+                        {
+                            new() { Field = "AssigneeId", Operator = "isnotnull" }
+                        }
+                    },
+                    VisibleColumns = DefaultColumns,
+                    RequiresCurrentUser = true,
+                    CurrentUserField = "AssigneeId"
+                },
+                new()
+                {
                     Name = "Tickets I Opened",
                     Key = "my-opened",
                     Conditions = new ViewConditions
@@ -63,6 +79,38 @@ public class GetDefaultViews
                     VisibleColumns = DefaultColumns,
                     RequiresCurrentUser = true,
                     CurrentUserField = "CreatedByStaffId"
+                },
+                new()
+                {
+                    Name = "Created by Me",
+                    Key = "created-by-me",
+                    Conditions = new ViewConditions
+                    {
+                        Logic = "AND",
+                        Filters = new List<ViewFilterCondition>
+                        {
+                            new() { Field = "CreatedByStaffId", Operator = "isnotnull" }
+                        }
+                    },
+                    VisibleColumns = DefaultColumns,
+                    RequiresCurrentUser = true,
+                    CurrentUserField = "CreatedByStaffId"
+                },
+                new()
+                {
+                    Name = "Team Tickets",
+                    Key = "team-tickets",
+                    Conditions = new ViewConditions
+                    {
+                        Logic = "AND",
+                        Filters = new List<ViewFilterCondition>
+                        {
+                            new() { Field = "OwningTeamId", Operator = "isnotnull" }
+                        }
+                    },
+                    VisibleColumns = DefaultColumns,
+                    RequiresCurrentUser = true,
+                    CurrentUserField = "OwningTeamId"
                 },
                 new()
                 {

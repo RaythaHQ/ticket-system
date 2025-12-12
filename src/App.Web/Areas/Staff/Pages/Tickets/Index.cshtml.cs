@@ -8,6 +8,7 @@ using App.Web.Areas.Shared.Models;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using CSharpVitamins;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Web.Areas.Staff.Pages.Tickets;
 
@@ -44,16 +45,22 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
     public string? BuiltInView { get; set; }
 
     /// <summary>
+    /// Available assignees for filtering (all individuals from all teams).
+    /// </summary>
+    public List<AssigneeFilterItem> AvailableAssignees { get; set; } = new();
+
+    /// <summary>
     /// Handles GET requests to display the paginated list of tickets.
     /// </summary>
     public async Task<IActionResult> OnGet(
         string search = "",
+        string sortBy = "newest",
         string orderBy = $"CreationTime {SortOrder.DESCENDING}",
         int pageNumber = 1,
         int pageSize = 50,
         string? status = null,
         string? priority = null,
-        bool? unassigned = null,
+        string? assigneeId = null,
         string? viewId = null,
         string? builtInView = null,
         CancellationToken cancellationToken = default
@@ -61,6 +68,17 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
     {
         ViewData["Title"] = "Tickets";
         ViewData["ActiveMenu"] = "Tickets";
+        
+        // Set active submenu based on built-in view
+        ViewData["ActiveSubMenu"] = builtInView switch
+        {
+            "unassigned" => "Unassigned",
+            "my-tickets" => "MyTickets",
+            "created-by-me" or "my-opened" => "CreatedByMe",
+            "team-tickets" => "TeamTickets",
+            "all" or null or "" => "AllTickets",
+            _ => null
+        };
 
         // Load available views
         var viewsResponse = await Mediator.Send(new GetTicketViews.Query(), cancellationToken);
@@ -68,6 +86,51 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
 
         CurrentViewId = viewId;
         BuiltInView = builtInView;
+
+        // Load assignee filter options (all individuals from all teams)
+        await LoadAssigneeFilterOptionsAsync(cancellationToken);
+
+        // Map sortBy to orderBy
+        var mappedOrderBy = MapSortByToOrderBy(sortBy);
+        if (!string.IsNullOrEmpty(mappedOrderBy))
+        {
+            orderBy = mappedOrderBy;
+        }
+
+        // Parse assigneeId if provided (format: "team:guid" or "team:guid:assignee:guid" or "unassigned")
+        ShortGuid? parsedAssigneeId = null;
+        ShortGuid? parsedTeamId = null;
+        bool? unassigned = null;
+        
+        if (!string.IsNullOrEmpty(assigneeId))
+        {
+            if (assigneeId == "unassigned")
+            {
+                // Unassigned means no team and no individual
+                unassigned = true;
+            }
+            else if (assigneeId.StartsWith("team:"))
+            {
+                var parts = assigneeId.Split(':');
+                if (parts.Length >= 2 && ShortGuid.TryParse(parts[1], out ShortGuid teamGuid))
+                {
+                    parsedTeamId = teamGuid;
+                    
+                    // Check if there's an assignee part
+                    if (parts.Length >= 4 && parts[2] == "assignee" && ShortGuid.TryParse(parts[3], out ShortGuid assigneeGuid))
+                    {
+                        // Team and individual assigned
+                        parsedAssigneeId = assigneeGuid;
+                    }
+                    else
+                    {
+                        // "team:guid" means "Team/Anyone" - show all tickets for this team
+                        // (both with and without individual assignees)
+                        // Just set TeamId, don't set unassigned
+                    }
+                }
+            }
+        }
 
         var query = new GetTickets.Query
         {
@@ -77,7 +140,10 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             PageSize = pageSize,
             Status = status,
             Priority = priority,
+            AssigneeId = parsedAssigneeId,
+            TeamId = parsedTeamId,
             Unassigned = unassigned,
+            TeamTickets = builtInView == "team-tickets",
         };
 
         // Apply view filters
@@ -94,7 +160,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         else if (!string.IsNullOrEmpty(builtInView))
         {
             // Apply built-in view conditions
-            var conditions = GetBuiltInViewConditions(builtInView);
+            var conditions = await GetBuiltInViewConditionsAsync(builtInView, cancellationToken);
             if (conditions != null)
             {
                 query = query with { ViewConditions = conditions };
@@ -122,14 +188,21 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             ),
         });
 
-        ListView = new ListViewModel<TicketListItemViewModel>(items, response.Result.TotalCount);
+        ListView = new ListViewModel<TicketListItemViewModel>(items, response.Result.TotalCount)
+        {
+            Search = search,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
 
         return Page();
     }
 
-    private ViewConditions? GetBuiltInViewConditions(string key)
+    private Task<ViewConditions?> GetBuiltInViewConditionsAsync(string key, CancellationToken cancellationToken)
     {
-        return key switch
+        var currentUserId = CurrentUser.UserId?.Guid;
+        
+        ViewConditions? result = key switch
         {
             "all" => null,
             "unassigned" => new ViewConditions
@@ -146,6 +219,24 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                     },
                 },
             },
+            "my-tickets" => currentUserId.HasValue ? new ViewConditions
+            {
+                Logic = "AND",
+                Filters = new List<ViewFilterCondition>
+                {
+                    new() { Field = "AssigneeId", Operator = "equals", Value = new ShortGuid(currentUserId.Value).ToString() }
+                },
+            } : null,
+            "my-opened" or "created-by-me" => currentUserId.HasValue ? new ViewConditions
+            {
+                Logic = "AND",
+                Filters = new List<ViewFilterCondition>
+                {
+                    new() { Field = "CreatedByStaffId", Operator = "equals", Value = new ShortGuid(currentUserId.Value).ToString() }
+                },
+            } : null,
+            // team-tickets is handled via TeamTickets flag in the query
+            "team-tickets" => null,
             TicketStatus.OPEN => new ViewConditions
             {
                 Logic = "AND",
@@ -173,6 +264,72 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 },
             },
             _ => null,
+        };
+        
+        return Task.FromResult(result);
+    }
+
+    private async Task LoadAssigneeFilterOptionsAsync(CancellationToken cancellationToken)
+    {
+        var assignees = new List<AssigneeFilterItem>();
+
+        // Add "Unassigned" option
+        assignees.Add(new AssigneeFilterItem
+        {
+            Value = "unassigned",
+            DisplayText = "Unassigned"
+        });
+
+        // Load all teams with their members
+        var teams = await Db.Teams
+            .AsNoTracking()
+            .Include(t => t.Memberships)
+                .ThenInclude(m => m.StaffAdmin)
+            .OrderBy(t => t.Name)
+            .ToListAsync(cancellationToken);
+
+        foreach (var team in teams)
+        {
+            // Add "Team Name/Anyone" option (team assigned, individual unassigned)
+            var teamShortGuid = new ShortGuid(team.Id);
+            assignees.Add(new AssigneeFilterItem
+            {
+                Value = $"team:{teamShortGuid}",
+                DisplayText = $"{team.Name}/Anyone"
+            });
+
+            // Add all individual team members (for filtering, show everyone)
+            var members = team.Memberships
+                .Where(m => m.StaffAdmin != null && m.StaffAdmin.IsActive)
+                .OrderBy(m => m.StaffAdmin!.FirstName)
+                .ThenBy(m => m.StaffAdmin!.LastName)
+                .ToList();
+
+            foreach (var member in members)
+            {
+                var memberShortGuid = new ShortGuid(member.StaffAdminId);
+                assignees.Add(new AssigneeFilterItem
+                {
+                    Value = $"team:{teamShortGuid}:assignee:{memberShortGuid}",
+                    DisplayText = $"{team.Name}/{member.StaffAdmin!.FirstName} {member.StaffAdmin!.LastName}"
+                });
+            }
+        }
+
+        AvailableAssignees = assignees;
+    }
+
+    private string? MapSortByToOrderBy(string sortBy)
+    {
+        return sortBy?.ToLower() switch
+        {
+            "newest" => $"CreationTime {SortOrder.DESCENDING}",
+            "oldest" => $"CreationTime {SortOrder.ASCENDING}",
+            "priority" => $"Priority {SortOrder.DESCENDING}, CreationTime {SortOrder.DESCENDING}",
+            "status" => $"Status {SortOrder.ASCENDING}, CreationTime {SortOrder.DESCENDING}",
+            "assignee" => $"OwningTeamName {SortOrder.ASCENDING}, AssigneeName {SortOrder.ASCENDING}, CreationTime {SortOrder.DESCENDING}",
+            "sla" => $"SlaDueAt {SortOrder.ASCENDING}, CreationTime {SortOrder.DESCENDING}",
+            _ => null
         };
     }
 
@@ -216,5 +373,14 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
 
         [Display(Name = "Created")]
         public string CreationTime { get; init; } = string.Empty;
+    }
+
+    /// <summary>
+    /// Item for assignee filter dropdown.
+    /// </summary>
+    public record AssigneeFilterItem
+    {
+        public string Value { get; init; } = string.Empty;
+        public string DisplayText { get; init; } = string.Empty;
     }
 }

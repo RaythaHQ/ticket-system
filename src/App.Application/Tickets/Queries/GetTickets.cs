@@ -49,6 +49,11 @@ public class GetTickets
         public bool? Unassigned { get; init; }
 
         /// <summary>
+        /// When true, show only tickets assigned to teams the current user belongs to.
+        /// </summary>
+        public bool? TeamTickets { get; init; }
+
+        /// <summary>
         /// Optional view ID to apply saved view filters.
         /// </summary>
         public ShortGuid? ViewId { get; init; }
@@ -138,7 +143,32 @@ public class GetTickets
                 query = query.Where(t => t.ContactId == request.ContactId.Value);
 
             if (request.Unassigned == true)
-                query = query.Where(t => t.AssigneeId == null);
+            {
+                // Completely unassigned (no team, no individual)
+                query = query.Where(t => t.OwningTeamId == null && t.AssigneeId == null);
+            }
+
+            // Filter by user's teams if TeamTickets is requested
+            // Shows all tickets where the ticket's OwningTeamId matches any team the user is a member of
+            if (request.TeamTickets == true && _currentUser.UserId.HasValue)
+            {
+                var userTeamIds = await _db.TeamMemberships
+                    .AsNoTracking()
+                    .Where(m => m.StaffAdminId == _currentUser.UserId.Value.Guid)
+                    .Select(m => m.TeamId)
+                    .ToListAsync(cancellationToken);
+
+                if (userTeamIds.Any())
+                {
+                    // Filter tickets where OwningTeamId is in the user's team list
+                    query = query.Where(t => t.OwningTeamId.HasValue && userTeamIds.Contains(t.OwningTeamId.Value));
+                }
+                else
+                {
+                    // User is not in any team, return no results
+                    query = query.Where(t => false);
+                }
+            }
 
             // Apply search - respect visible columns if available
             if (!string.IsNullOrEmpty(request.Search))

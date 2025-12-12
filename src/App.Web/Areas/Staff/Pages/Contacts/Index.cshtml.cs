@@ -54,7 +54,12 @@ public class Index : BaseStaffPageModel, IHasListView<Index.ContactListItemViewM
             CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(p.CreationTime)
         });
 
-        ListView = new ListViewModel<ContactListItemViewModel>(items, response.Result.TotalCount);
+        ListView = new ListViewModel<ContactListItemViewModel>(items, response.Result.TotalCount)
+        {
+            Search = search,
+            PageNumber = pageNumber,
+            PageSize = pageSize
+        };
 
         return Page();
     }
