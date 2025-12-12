@@ -1,11 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using App.Application.Tickets.Commands;
+using App.Application.Tickets.Queries;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using CSharpVitamins;
-using Microsoft.EntityFrameworkCore;
 
 namespace App.Web.Areas.Staff.Pages.Tickets;
 
@@ -70,77 +70,23 @@ public class Create : BaseStaffPageModel
     private async Task LoadSelectListsAsync(CancellationToken cancellationToken)
     {
         var canManageTickets = TicketPermissionService.CanManageTickets();
-        var assignees = new List<AssigneeSelectItem>();
-
-        // Get current user's team memberships
-        var currentUserId = CurrentUser.UserId?.Guid;
-        var userTeamIds = new HashSet<Guid>();
-        if (currentUserId.HasValue)
-        {
-            userTeamIds = await Db.TeamMemberships
-                .AsNoTracking()
-                .Where(m => m.StaffAdminId == currentUserId.Value)
-                .Select(m => m.TeamId)
-                .ToHashSetAsync(cancellationToken);
-        }
-
-        // Add "Unassigned" option
-        assignees.Add(new AssigneeSelectItem
-        {
-            Value = "unassigned",
-            DisplayText = "Unassigned",
-            TeamId = null,
-            AssigneeId = null
-        });
-
-        // Load teams with their members
-        var teams = await Db.Teams
-            .AsNoTracking()
-            .Include(t => t.Memberships)
-                .ThenInclude(m => m.StaffAdmin)
-            .OrderBy(t => t.Name)
-            .ToListAsync(cancellationToken);
-
-        foreach (var team in teams)
-        {
-            // Add "Team Name/Anyone" option (team assigned, individual unassigned)
-            var teamShortGuid = new ShortGuid(team.Id);
-            assignees.Add(new AssigneeSelectItem
+        
+        var assigneeOptionsResponse = await Mediator.Send(
+            new GetAssigneeSelectOptions.Query
             {
-                Value = $"team:{teamShortGuid}",
-                DisplayText = $"{team.Name}/Anyone",
-                TeamId = teamShortGuid,
-                AssigneeId = null
-            });
+                CanManageTickets = canManageTickets,
+                CurrentUserId = CurrentUser.UserId?.Guid
+            },
+            cancellationToken
+        );
 
-            // Add individual team members if:
-            // 1. User has CanManageTickets permission (can assign to anyone in any team), OR
-            // 2. User is a member of this team (can assign to others in their team)
-            var showTeamMembers = canManageTickets || userTeamIds.Contains(team.Id);
-            
-            if (showTeamMembers)
-            {
-                var members = team.Memberships
-                    .Where(m => m.StaffAdmin != null && m.StaffAdmin.IsActive)
-                    .OrderBy(m => m.StaffAdmin!.FirstName)
-                    .ThenBy(m => m.StaffAdmin!.LastName)
-                    .ToList();
-
-                foreach (var member in members)
-                {
-                    var memberShortGuid = new ShortGuid(member.StaffAdminId);
-                    assignees.Add(new AssigneeSelectItem
-                    {
-                        Value = $"team:{teamShortGuid}:assignee:{memberShortGuid}",
-                        DisplayText = $"{team.Name}/{member.StaffAdmin!.FirstName} {member.StaffAdmin!.LastName}",
-                        TeamId = teamShortGuid,
-                        AssigneeId = memberShortGuid
-                    });
-                }
-            }
-        }
-
-        AvailableAssignees = assignees;
+        AvailableAssignees = assigneeOptionsResponse.Result.Select(a => new AssigneeSelectItem
+        {
+            Value = a.Value,
+            DisplayText = a.DisplayText,
+            TeamId = a.TeamId,
+            AssigneeId = a.AssigneeId
+        }).ToList();
     }
 
     public record CreateTicketViewModel

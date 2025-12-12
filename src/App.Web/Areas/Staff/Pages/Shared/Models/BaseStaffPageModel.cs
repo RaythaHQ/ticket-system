@@ -16,7 +16,6 @@ namespace App.Web.Areas.Staff.Pages.Shared.Models;
 public abstract class BaseStaffPageModel : BasePageModel
 {
     private ITicketPermissionService? _ticketPermissionService;
-    private IAppDbContext? _db;
 
     /// <summary>
     /// Gets the ticket permission service for checking ticketing-specific permissions.
@@ -24,10 +23,4 @@ public abstract class BaseStaffPageModel : BasePageModel
     protected ITicketPermissionService TicketPermissionService =>
         _ticketPermissionService ??=
             HttpContext.RequestServices.GetRequiredService<ITicketPermissionService>();
-
-    /// <summary>
-    /// Gets the database context for direct queries.
-    /// </summary>
-    protected IAppDbContext Db =>
-        _db ??= HttpContext.RequestServices.GetRequiredService<IAppDbContext>();
 }
