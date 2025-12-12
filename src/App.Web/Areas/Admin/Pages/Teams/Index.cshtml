@@ -1,112 +1,106 @@
 @page "/admin/teams"
 @model App.Web.Areas.Admin.Pages.Teams.Index
+@using App.Web.Areas.Shared.Models
 
 @{
+    var pageTitle = "Teams";
     Layout = "SidebarLayout";
-    ViewData["Title"] = "Teams";
+    ViewData["Title"] = pageTitle;
     ViewData["ActiveMenu"] = "Teams";
     ViewData["ExpandTicketingMenu"] = true;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Teams</h1>
+<div>
+    <partial name="_Partials/PageHeading" model="pageTitle" />
+
     @if (Model.CanManageTeams)
     {
-        <a asp-page="@RouteNames.Teams.Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> New Team
-        </a>
-    }
-</div>
+        @(await Html.PartialAsync("_Partials/TableCreateAndSearchBar", new BaseTableCreateAndSearchBarViewModel
+        {
+            Pagination = Model.ListView,
+            EntityName = "team",
+            CreateActionName = RouteNames.Teams.Create
+        }))
+        }
+    else
+    {
+        @(await Html.PartialAsync("_Partials/TableCreateAndSearchBar", new BaseTableCreateAndSearchBarViewModel
+        {
+            Pagination = Model.ListView,
+            EntityName = "team",
+            CreateActionName = ""
+        }))
+        }
 
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="Search teams..." 
-                           value="@ViewContext.HttpContext.Request.Query["search"]" />
-                </div>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-secondary w-100">Search</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="card">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Members</th>
-                        <th>Assignable</th>
-                        <th>Round Robin</th>
-                        <th>Created</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.ListView.Items.Any())
-                    {
+    <div class="raytha-data-card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">
-                                <i class="bi bi-people fs-1 d-block mb-2"></i>
-                                No teams found
-                            </td>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Members</th>
+                            <th>Assignable</th>
+                            <th>Round Robin</th>
+                            <th>Created</th>
+                            <th class="border-0 rounded-end">Action</th>
                         </tr>
-                    }
-                    @foreach (var team in Model.ListView.Items)
-                    {
-                        <tr>
-                            <td>
-                                <a asp-page="@RouteNames.Teams.Edit" asp-route-id="@team.Id" class="fw-semibold">
-                                    @team.Name
-                                </a>
-                            </td>
-                            <td>@(team.Description.Length > 50 ? team.Description.Substring(0, 47) + "..." : team.Description)</td>
+                    </thead>
+                    <tbody>
+                        @if (!Model.ListView.Items.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="bi bi-people fs-1 d-block mb-2"></i>
+                                    No teams found
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var team in Model.ListView.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="@RouteNames.Teams.Edit" asp-route-id="@team.Id" class="fw-semibold">
+                                        @team.Name
+                                    </a>
+                                </td>
+                                <td>@(team.Description.Length > 50 ? team.Description.Substring(0, 47) + "..." :
+                                                                    team.Description)</td>
                             <td>@team.MemberCount</td>
                             <td>@team.AssignableMemberCount</td>
                             <td>
                                 @if (team.RoundRobinEnabled == "Yes")
-                                {
-                                    <span class="badge bg-success">Enabled</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">Disabled</span>
-                                }
-                            </td>
-                            <td>@team.CreationTime</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a asp-page="@RouteNames.Teams.Members.Index" asp-route-teamId="@team.Id" class="btn btn-outline-primary">
-                                        Members
-                                    </a>
-                                    @if (Model.CanManageTeams)
                                     {
-                                        <a asp-page="@RouteNames.Teams.Edit" asp-route-id="@team.Id" class="btn btn-outline-secondary">
-                                            Edit
-                                        </a>
+                                        <span class="badge bg-success">Enabled</span>
                                     }
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Disabled</span>
+                                    }
+                                </td>
+                                <td>@team.CreationTime</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-page="@RouteNames.Teams.Members.Index" asp-route-teamId="@team.Id"
+                                            class="btn btn-outline-primary">
+                                            Members
+                                        </a>
+                                        @if (Model.CanManageTeams)
+                                        {
+                                            <a asp-page="@RouteNames.Teams.Edit" asp-route-id="@team.Id"
+                                                class="btn btn-outline-secondary">
+                                                Edit
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <partial name="_Partials/TablePagination" model="@Model.ListView" />
+            </div>
         </div>
     </div>
-    @if (Model.ListView.TotalCount > 0)
-    {
-        <div class="card-footer d-flex justify-content-between align-items-center">
-            <span class="text-muted">Showing @Model.ListView.Items.Count() of @Model.ListView.TotalCount teams</span>
-        </div>
-    }
 </div>
-

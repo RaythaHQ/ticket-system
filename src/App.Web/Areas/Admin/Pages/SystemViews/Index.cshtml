@@ -1,78 +1,67 @@
 @page "/admin/system-views"
 @model App.Web.Areas.Admin.Pages.SystemViews.Index
+@using App.Web.Areas.Shared.Models
 
 @{
+    var pageTitle = "System Views";
     Layout = "SidebarLayout";
-    ViewData["Title"] = "System Views";
+    ViewData["Title"] = pageTitle;
     ViewData["ActiveMenu"] = "SystemViews";
     ViewData["ExpandTicketingMenu"] = true;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">System Views</h1>
-    <a asp-page="@RouteNames.SystemViews.Create" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i> New System View
-    </a>
-</div>
+<div>
+    <partial name="_Partials/PageHeading" model="pageTitle" />
 
-<div class="alert alert-info">
-    <i class="bi bi-info-circle me-2"></i>
-    System views are available to all staff users and cannot be modified or deleted by them.
-</div>
-
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="Search system views..." 
-                           value="@ViewContext.HttpContext.Request.Query["search"]" />
-                </div>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-secondary w-100">Search</button>
-            </div>
-        </form>
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        System views are available to all staff users and cannot be modified or deleted by them.
     </div>
-</div>
 
-<div class="card">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Name</th>
-                        <th>Filters</th>
-                        <th>Columns</th>
-                        <th>Default</th>
-                        <th>Created</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.ListView.Items.Any())
-                    {
+    @(await Html.PartialAsync("_Partials/TableCreateAndSearchBar", new BaseTableCreateAndSearchBarViewModel
+    {
+        Pagination = Model.ListView,
+        EntityName = "system view",
+        CreateActionName = RouteNames.SystemViews.Create
+    }))
+
+    <div class="raytha-data-card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">
-                                <i class="bi bi-eye fs-1 d-block mb-2"></i>
-                                No system views found
-                                <br>
-                                <a asp-page="@RouteNames.SystemViews.Create" class="btn btn-primary btn-sm mt-2">Create your first system view</a>
-                            </td>
+                            <th>Name</th>
+                            <th>Filters</th>
+                            <th>Columns</th>
+                            <th>Default</th>
+                            <th>Created</th>
+                            <th class="border-0 rounded-end">Action</th>
                         </tr>
-                    }
-                    @foreach (var view in Model.ListView.Items)
-                    {
-                        <tr>
-                            <td>
-                                <a asp-page="@RouteNames.SystemViews.Edit" asp-route-id="@view.Id" class="fw-semibold">
-                                    @view.Name
-                                </a>
-                                <br>
-                                <small class="text-muted">@(view.Description.Length > 60 ? view.Description.Substring(0, 57) + "..." : view.Description)</small>
+                    </thead>
+                    <tbody>
+                        @if (!Model.ListView.Items.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    <i class="bi bi-eye fs-1 d-block mb-2"></i>
+                                    No system views found
+                                    <br>
+                                    <a asp-page="@RouteNames.SystemViews.Create" class="btn btn-primary btn-sm mt-2">Create
+                                        your first system view</a>
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var view in Model.ListView.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="@RouteNames.SystemViews.Edit" asp-route-id="@view.Id" class="fw-semibold">
+                                        @view.Name
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">@(view.Description.Length > 60 ? view.Description.Substring(0,
+                                                                            57) + "..." : view.Description)</small>
                             </td>
                             <td>
                                 <span class="badge bg-light text-dark">@view.FilterCount filters</span>
@@ -82,35 +71,32 @@
                             </td>
                             <td>
                                 @if (view.IsDefault)
-                                {
-                                    <span class="badge bg-primary">Default</span>
-                                }
-                            </td>
-                            <td>@view.CreationTime</td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a asp-page="@RouteNames.SystemViews.Edit" asp-route-id="@view.Id" class="btn btn-outline-secondary">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form method="post" asp-page-handler="Delete" asp-route-viewId="@view.Id" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-danger" 
+                                    {
+                                        <span class="badge bg-primary">Default</span>
+                                    }
+                                </td>
+                                <td>@view.CreationTime</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-page="@RouteNames.SystemViews.Edit" asp-route-id="@view.Id"
+                                            class="btn btn-outline-secondary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form method="post" asp-page-handler="Delete" asp-route-viewId="@view.Id"
+                                            class="d-inline">
+                                            <button type="submit" class="btn btn-outline-danger"
                                                 onclick="return confirm('Delete this system view? All staff will lose access to it.')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <partial name="_Partials/TablePagination" model="@Model.ListView" />
+            </div>
         </div>
     </div>
-    @if (Model.ListView.TotalCount > 0)
-    {
-        <div class="card-footer d-flex justify-content-between align-items-center">
-            <span class="text-muted">Showing @Model.ListView.Items.Count() of @Model.ListView.TotalCount system views</span>
-        </div>
-    }
 </div>
-

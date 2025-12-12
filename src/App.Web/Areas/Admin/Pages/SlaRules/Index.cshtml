@@ -1,123 +1,115 @@
 @page "/admin/sla-rules"
 @model App.Web.Areas.Admin.Pages.SlaRules.Index
+@using App.Web.Areas.Shared.Models
 
 @{
+    var pageTitle = "SLA Rules";
     Layout = "SidebarLayout";
-    ViewData["Title"] = "SLA Rules";
+    ViewData["Title"] = pageTitle;
     ViewData["ActiveMenu"] = "SlaRules";
     ViewData["ExpandTicketingMenu"] = true;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">SLA Rules</h1>
+<div>
+    <partial name="_Partials/PageHeading" model="pageTitle" />
+
     @if (Model.CanManageTickets)
     {
-        <a asp-page="@RouteNames.SlaRules.Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> New SLA Rule
-        </a>
-    }
-</div>
+        @(await Html.PartialAsync("_Partials/TableCreateAndSearchBar", new BaseTableCreateAndSearchBarViewModel
+        {
+            Pagination = Model.ListView,
+            EntityName = "SLA rule",
+            CreateActionName = RouteNames.SlaRules.Create
+        }))
+        }
+    else
+    {
+        @(await Html.PartialAsync("_Partials/TableCreateAndSearchBar", new BaseTableCreateAndSearchBarViewModel
+        {
+            Pagination = Model.ListView,
+            EntityName = "SLA rule",
+            CreateActionName = ""
+        }))
+        }
 
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="Search SLA rules..." 
-                           value="@ViewContext.HttpContext.Request.Query["search"]" />
-                </div>
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-secondary w-100">Search</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="card">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Priority</th>
-                        <th>Name</th>
-                        <th>Target Resolution</th>
-                        <th>Business Hours</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.ListView.Items.Any())
-                    {
+    <div class="raytha-data-card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">
-                                <i class="bi bi-hourglass-split fs-1 d-block mb-2"></i>
-                                No SLA rules found
-                            </td>
+                            <th>Priority</th>
+                            <th>Name</th>
+                            <th>Target Resolution</th>
+                            <th>Business Hours</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th class="border-0 rounded-end">Action</th>
                         </tr>
-                    }
-                    @foreach (var rule in Model.ListView.Items.OrderBy(r => r.Priority))
-                    {
-                        <tr class="@(!rule.IsActive ? "table-secondary" : "")">
-                            <td>
-                                <span class="badge bg-info">@rule.Priority</span>
-                            </td>
-                            <td>
-                                <a asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@rule.Id" class="fw-semibold">
-                                    @rule.Name
-                                </a>
-                                <br>
-                                <small class="text-muted">@(rule.Description.Length > 50 ? rule.Description.Substring(0, 47) + "..." : rule.Description)</small>
+                    </thead>
+                    <tbody>
+                        @if (!Model.ListView.Items.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="bi bi-hourglass-split fs-1 d-block mb-2"></i>
+                                    No SLA rules found
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var rule in Model.ListView.Items.OrderBy(r => r.Priority))
+                        {
+                            <tr class="@(!rule.IsActive ? "table-secondary" : "")">
+                                <td>
+                                    <span class="badge bg-info">@rule.Priority</span>
+                                </td>
+                                <td>
+                                    <a asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@rule.Id" class="fw-semibold">
+                                        @rule.Name
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">@(rule.Description.Length > 50 ? rule.Description.Substring(0,
+                                                                            47) + "..." : rule.Description)</small>
                             </td>
                             <td>@rule.TargetResolutionTime</td>
                             <td>
                                 @if (rule.BusinessHours == "Yes")
-                                {
-                                    <span class="badge bg-success">Yes</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">No</span>
-                                }
-                            </td>
-                            <td>
-                                @if (rule.IsActive)
-                                {
-                                    <span class="badge bg-success">Active</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning">Inactive</span>
-                                }
-                            </td>
-                            <td>@rule.CreationTime</td>
-                            <td>
-                                @if (Model.CanManageTickets)
-                                {
-                                    <div class="btn-group btn-group-sm">
-                                        <a asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@rule.Id" class="btn btn-outline-secondary">
-                                            Edit
-                                        </a>
-                                    </div>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                                    {
+                                        <span class="badge bg-success">Yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">No</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (rule.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning">Inactive</span>
+                                    }
+                                </td>
+                                <td>@rule.CreationTime</td>
+                                <td>
+                                    @if (Model.CanManageTickets)
+                                    {
+                                        <div class="btn-group btn-group-sm">
+                                            <a asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@rule.Id"
+                                                class="btn btn-outline-secondary">
+                                                Edit
+                                            </a>
+                                        </div>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <partial name="_Partials/TablePagination" model="@Model.ListView" />
+            </div>
         </div>
     </div>
-    @if (Model.ListView.TotalCount > 0)
-    {
-        <div class="card-footer d-flex justify-content-between align-items-center">
-            <span class="text-muted">Showing @Model.ListView.Items.Count() of @Model.ListView.TotalCount rules</span>
-            <small class="text-muted">Rules are evaluated in priority order (lowest first)</small>
-        </div>
-    }
 </div>
-

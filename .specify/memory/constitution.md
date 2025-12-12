@@ -200,6 +200,18 @@ Wherever there is ambiguity, the rules below clarify expectations.
   method automatically loads TempData messages into ViewData for the current request.
   This ensures consistent alert rendering across all areas and proper message
   persistence across redirects.
+- **Admin Area Page Layout Pattern**: All Admin area pages MUST follow the
+  established layout patterns for consistency. Index/List pages MUST use
+  `<partial name="_Partials/PageHeading" model="pageTitle" />` for the page
+  heading and `@(await Html.PartialAsync("_Partials/TableCreateAndSearchBar", ...))`
+  for the Create button and search functionality. Create/Edit pages MUST use
+  `<partial name="_Partials/PageHeading" model='ViewData["Title"]' />` for the
+  heading, `@(await Html.PartialAsync("_Partials/BackToList", back))` for the
+  Back button, content in `<div class="col-xxl-7 col-xl-8 col-lg-9 col-md-12">`
+  within a `<div class="row mb-4">` wrapper, cards with `class="card border-0 shadow mb-4"`,
+  and Save buttons as `<button type="submit" class="btn btn-success mt-4">Save changes</button>`
+  at the end of the form (no Cancel button, no icons). This ensures visual and
+  functional consistency across all Admin area pages.
 
 When in doubt, follow existing well-structured examples in the codebase using
 these standards.
@@ -258,4 +270,4 @@ layering, and non‑negotiable engineering standards in the App boilerplate.
 - When conflicts arise between older docs and this constitution, this
   constitution prevails.
 
-**Version**: 1.3.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-12
+**Version**: 1.4.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-12
