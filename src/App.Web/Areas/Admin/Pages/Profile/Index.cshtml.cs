@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Login.Commands;
 using App.Application.NotificationPreferences;
 using App.Application.NotificationPreferences.Commands;
@@ -7,6 +6,7 @@ using App.Application.NotificationPreferences.Queries;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Admin.Pages.Profile;
 
@@ -39,10 +39,12 @@ public class Index : BaseAdminPageModel
         // Load notification preferences
         if (CurrentUser.UserId?.Guid != null)
         {
-            var prefsResponse = await Mediator.Send(new GetNotificationPreferences.Query
-            {
-                StaffAdminId = CurrentUser.UserId.Value.Guid
-            });
+            var prefsResponse = await Mediator.Send(
+                new GetNotificationPreferences.Query
+                {
+                    StaffAdminId = CurrentUser.UserId.Value.Guid,
+                }
+            );
             NotificationPreferences = prefsResponse.Result;
         }
 
@@ -73,24 +75,35 @@ public class Index : BaseAdminPageModel
     }
 
     public async Task<IActionResult> OnPostUpdateNotifications(
-        [FromForm] Dictionary<string, bool> emailPrefs,
-        CancellationToken cancellationToken)
+        [FromForm] Dictionary<string, string> emailPrefs,
+        CancellationToken cancellationToken
+    )
     {
         if (CurrentUser.UserId?.Guid == null)
             return RedirectToPage(RouteNames.Profile.Index);
 
-        var preferences = emailPrefs.Select(kvp => new UpdateNotificationPreferences.PreferenceUpdate
-        {
-            EventType = kvp.Key,
-            EmailEnabled = kvp.Value,
-            WebhookEnabled = false
-        }).ToList();
+        // Get all supported event types
+        var allEventTypes = App.Domain.ValueObjects.NotificationEventType.SupportedTypes.ToList();
 
-        var response = await Mediator.Send(new UpdateNotificationPreferences.Command
-        {
-            StaffAdminId = CurrentUser.UserId.Value.Guid,
-            Preferences = preferences
-        }, cancellationToken);
+        // Build preferences list - checked checkboxes will be in the dictionary
+        // Unchecked checkboxes won't be in the dictionary at all
+        var preferences = allEventTypes
+            .Select(eventType => new UpdateNotificationPreferences.PreferenceUpdate
+            {
+                EventType = eventType.DeveloperName,
+                EmailEnabled = emailPrefs.ContainsKey(eventType.DeveloperName),
+                WebhookEnabled = false,
+            })
+            .ToList();
+
+        var response = await Mediator.Send(
+            new UpdateNotificationPreferences.Command
+            {
+                StaffAdminId = CurrentUser.UserId.Value.Guid,
+                Preferences = preferences,
+            },
+            cancellationToken
+        );
 
         if (response.Success)
         {

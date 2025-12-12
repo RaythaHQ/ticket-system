@@ -1,3 +1,6 @@
+@inject App.Application.Common.Interfaces.ICurrentUser CurrentUser
+@inject App.Application.Common.Interfaces.ICurrentOrganization CurrentOrganization
+@using App.Web.Areas.Admin.Pages.Shared
 <!DOCTYPE html>
 <html lang="en">
 
@@ -189,6 +192,84 @@
         .staff-user-role {
             color: rgba(255, 255, 255, 0.5);
             font-size: 0.75rem;
+        }
+
+        .staff-user-dropdown {
+            position: relative;
+        }
+
+        .staff-user-dropdown-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .staff-user-dropdown-toggle:hover {
+            background-color: var(--staff-sidebar-hover);
+        }
+
+        .staff-user-dropdown-menu {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            margin-bottom: 0.5rem;
+            background: var(--staff-sidebar-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            padding: 0.5rem 0;
+            display: none;
+            z-index: 1001;
+        }
+
+        .staff-user-dropdown-menu.show {
+            display: block;
+        }
+
+        .staff-user-dropdown-item {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .staff-user-dropdown-item:hover {
+            background-color: var(--staff-sidebar-hover);
+            color: white;
+        }
+
+        .staff-admin-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .staff-admin-link:hover {
+            background-color: var(--staff-sidebar-hover);
+            color: white;
+        }
+
+        .staff-admin-link i {
+            font-size: 1.125rem;
         }
 
         /* Main Content Area */
@@ -665,13 +746,40 @@
         </nav>
 
         <div class="staff-user-section">
-            <div class="staff-user-info">
-                <div class="staff-user-avatar">
-                    @(User.Identity?.Name?.FirstOrDefault().ToString().ToUpper() ?? "U")
-                </div>
-                <div class="staff-user-details">
-                    <div class="staff-user-name">@User.Identity?.Name</div>
-                    <div class="staff-user-role">Staff Member</div>
+            @if (CurrentUser.IsAdmin)
+            {
+                <a href="/admin" class="staff-admin-link">
+                    <i class="bi bi-gear"></i>
+                    <span>Admin Portal</span>
+                </a>
+            }
+            <div class="staff-user-dropdown">
+                <button type="button" class="staff-user-dropdown-toggle" onclick="toggleUserDropdown(event)">
+                    <div class="staff-user-avatar">
+                        @(CurrentUser.FullName?.FirstOrDefault().ToString().ToUpper() ?? "U")
+                    </div>
+                    <div class="staff-user-details">
+                        <div class="staff-user-name">@CurrentUser.FullName</div>
+                        <div class="staff-user-role">Staff Member</div>
+                    </div>
+                    <i class="bi bi-chevron-up ms-auto" id="user-dropdown-icon"></i>
+                </button>
+                <div class="staff-user-dropdown-menu" id="user-dropdown-menu">
+                    <a asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Profile.Index"
+                        class="staff-user-dropdown-item">
+                        <i class="bi bi-person me-2"></i> Profile
+                    </a>
+                    @if (CurrentOrganization.EmailAndPasswordIsEnabledForAdmins)
+                    {
+                        <a asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Profile.ChangePassword"
+                            class="staff-user-dropdown-item">
+                            <i class="bi bi-key me-2"></i> Change Password
+                        </a>
+                    }
+                    <a asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Login.Logout"
+                        class="staff-user-dropdown-item">
+                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                    </a>
                 </div>
             </div>
         </div>
@@ -690,11 +798,6 @@
                     }
                 </span>
             </div>
-            <div class="staff-topbar-actions">
-                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Create" class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-lg me-1"></i> New Ticket
-                </a>
-            </div>
         </header>
 
         <main class="staff-content">
@@ -704,6 +807,36 @@
     </div>
 
     <script src="~/admin/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleUserDropdown(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('user-dropdown-menu');
+            const icon = document.getElementById('user-dropdown-icon');
+            const isOpen = menu.classList.contains('show');
+
+            if (isOpen) {
+                menu.classList.remove('show');
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-up');
+            } else {
+                menu.classList.add('show');
+                icon.classList.remove('bi-chevron-up');
+                icon.classList.add('bi-chevron-down');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (event) {
+            const menu = document.getElementById('user-dropdown-menu');
+            const toggle = event.target.closest('.staff-user-dropdown-toggle');
+            if (!toggle && menu.classList.contains('show')) {
+                menu.classList.remove('show');
+                const icon = document.getElementById('user-dropdown-icon');
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-up');
+            }
+        });
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
