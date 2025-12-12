@@ -189,6 +189,17 @@ Wherever there is ambiguity, the rules below clarify expectations.
   constructor to convert `Guid` to `ShortGuid` when mapping from domain to DTOs.
   This pattern ensures that the domain layer remains pure and that all external
   interfaces expose user-friendly ShortGuid values.
+- **Alert/Message Display Pattern**: All success, error, warning, and info messages
+  MUST be displayed consistently across all areas using the established pattern.
+  PageModels MUST use the `SetSuccessMessage()`, `SetErrorMessage()`,
+  `SetWarningMessage()`, and `SetInfoMessage()` methods from `BasePageModel`,
+  which set both `ViewData` and `TempData` (TempData supports redirect scenarios).
+  Layout files MUST render alerts using the `<alert />` tag helper or the
+  `FlashMessage.cshtml` partial, which reads from `ViewData`. Pages MUST NOT
+  directly access `TempData` for message display; the `BasePageModel.OnGet()`
+  method automatically loads TempData messages into ViewData for the current request.
+  This ensures consistent alert rendering across all areas and proper message
+  persistence across redirects.
 
 When in doubt, follow existing well-structured examples in the codebase using
 these standards.
@@ -247,4 +258,4 @@ layering, and non‑negotiable engineering standards in the App boilerplate.
 - When conflicts arise between older docs and this constitution, this
   constitution prevails.
 
-**Version**: 1.2.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-12
+**Version**: 1.3.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-12
