@@ -1,8 +1,29 @@
+using System.Linq.Expressions;
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
 using CSharpVitamins;
 
 namespace App.Application.TicketViews.Services;
+
+/// <summary>
+/// Expression visitor to replace parameter in expression trees.
+/// </summary>
+internal class ParameterReplacer : ExpressionVisitor
+{
+    private readonly ParameterExpression _oldParameter;
+    private readonly ParameterExpression _newParameter;
+
+    public ParameterReplacer(ParameterExpression oldParameter, ParameterExpression newParameter)
+    {
+        _oldParameter = oldParameter;
+        _newParameter = newParameter;
+    }
+
+    protected override Expression VisitParameter(ParameterExpression node)
+    {
+        return node == _oldParameter ? _newParameter : base.VisitParameter(node);
+    }
+}
 
 /// <summary>
 /// Builds IQueryable filters from view conditions.
@@ -53,23 +74,57 @@ public class ViewFilterBuilder
     private IQueryable<Ticket> ApplyStringValueFilter(
         IQueryable<Ticket> query,
         ViewFilterCondition filter,
-        System.Linq.Expressions.Expression<Func<Ticket, string>> fieldSelector
+        Expression<Func<Ticket, string>> fieldSelector
     )
     {
+        var parameter = Expression.Parameter(typeof(Ticket), "t");
+        var replacer = new ParameterReplacer(fieldSelector.Parameters[0], parameter);
+        var body = replacer.Visit(fieldSelector.Body);
+
         if (filter.Operator == "equals" && !string.IsNullOrEmpty(filter.Value))
         {
             var value = filter.Value.ToLower();
-            return query.Where(t => fieldSelector.Compile()(t).ToLower() == value);
+            var toLower = Expression.Call(
+                body,
+                typeof(string).GetMethod("ToLower", Type.EmptyTypes)!
+            );
+            var constant = Expression.Constant(value);
+            var equals = Expression.Equal(toLower, constant);
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(equals, parameter);
+            return query.Where(lambda);
         }
         else if (filter.Operator == "in" && filter.Values?.Any() == true)
         {
             var values = filter.Values.Select(v => v.ToLower()).ToList();
-            return query.Where(t => values.Contains(fieldSelector.Compile()(t).ToLower()));
+            var toLower = Expression.Call(
+                body,
+                typeof(string).GetMethod("ToLower", Type.EmptyTypes)!
+            );
+            var containsMethod = typeof(List<string>).GetMethod(
+                "Contains",
+                new[] { typeof(string) }
+            )!;
+            var constant = Expression.Constant(values);
+            var contains = Expression.Call(constant, containsMethod, toLower);
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(contains, parameter);
+            return query.Where(lambda);
         }
         else if (filter.Operator == "notin" && filter.Values?.Any() == true)
         {
             var values = filter.Values.Select(v => v.ToLower()).ToList();
-            return query.Where(t => !values.Contains(fieldSelector.Compile()(t).ToLower()));
+            var toLower = Expression.Call(
+                body,
+                typeof(string).GetMethod("ToLower", Type.EmptyTypes)!
+            );
+            var containsMethod = typeof(List<string>).GetMethod(
+                "Contains",
+                new[] { typeof(string) }
+            )!;
+            var constant = Expression.Constant(values);
+            var contains = Expression.Call(constant, containsMethod, toLower);
+            var notContains = Expression.Not(contains);
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(notContains, parameter);
+            return query.Where(lambda);
         }
         return query;
     }
@@ -77,37 +132,90 @@ public class ViewFilterBuilder
     private IQueryable<Ticket> ApplyStringFilter(
         IQueryable<Ticket> query,
         ViewFilterCondition filter,
-        System.Linq.Expressions.Expression<Func<Ticket, string?>> fieldSelector
+        Expression<Func<Ticket, string?>> fieldSelector
     )
     {
-        var field = fieldSelector.Compile();
+        var parameter = Expression.Parameter(typeof(Ticket), "t");
+        var replacer = new ParameterReplacer(fieldSelector.Parameters[0], parameter);
+        var body = replacer.Visit(fieldSelector.Body);
+
         if (filter.Operator == "equals" && !string.IsNullOrEmpty(filter.Value))
         {
             var value = filter.Value.ToLower();
-            return query.Where(t => field(t) != null && field(t)!.ToLower() == value);
+            var notNull = Expression.NotEqual(body, Expression.Constant(null, typeof(string)));
+            var toLower = Expression.Call(
+                body,
+                typeof(string).GetMethod("ToLower", Type.EmptyTypes)!
+            );
+            var constant = Expression.Constant(value);
+            var equals = Expression.Equal(toLower, constant);
+            var and = Expression.AndAlso(notNull, equals);
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(and, parameter);
+            return query.Where(lambda);
         }
         else if (filter.Operator == "contains" && !string.IsNullOrEmpty(filter.Value))
         {
             var value = filter.Value.ToLower();
-            return query.Where(t => field(t) != null && field(t)!.ToLower().Contains(value));
+            var notNull = Expression.NotEqual(body, Expression.Constant(null, typeof(string)));
+            var toLower = Expression.Call(
+                body,
+                typeof(string).GetMethod("ToLower", Type.EmptyTypes)!
+            );
+            var constant = Expression.Constant(value);
+            var containsMethod = typeof(string).GetMethod("Contains", new[] { typeof(string) })!;
+            var contains = Expression.Call(toLower, containsMethod, constant);
+            var and = Expression.AndAlso(notNull, contains);
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(and, parameter);
+            return query.Where(lambda);
         }
         else if (filter.Operator == "in" && filter.Values?.Any() == true)
         {
             var values = filter.Values.Select(v => v.ToLower()).ToList();
-            return query.Where(t => field(t) != null && values.Contains(field(t)!.ToLower()));
+            var notNull = Expression.NotEqual(body, Expression.Constant(null, typeof(string)));
+            var toLower = Expression.Call(
+                body,
+                typeof(string).GetMethod("ToLower", Type.EmptyTypes)!
+            );
+            var containsMethod = typeof(List<string>).GetMethod(
+                "Contains",
+                new[] { typeof(string) }
+            )!;
+            var constant = Expression.Constant(values);
+            var contains = Expression.Call(constant, containsMethod, toLower);
+            var and = Expression.AndAlso(notNull, contains);
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(and, parameter);
+            return query.Where(lambda);
         }
         else if (filter.Operator == "notin" && filter.Values?.Any() == true)
         {
             var values = filter.Values.Select(v => v.ToLower()).ToList();
-            return query.Where(t => field(t) == null || !values.Contains(field(t)!.ToLower()));
+            var isNull = Expression.Equal(body, Expression.Constant(null, typeof(string)));
+            var toLower = Expression.Call(
+                body,
+                typeof(string).GetMethod("ToLower", Type.EmptyTypes)!
+            );
+            var containsMethod = typeof(List<string>).GetMethod(
+                "Contains",
+                new[] { typeof(string) }
+            )!;
+            var constant = Expression.Constant(values);
+            var contains = Expression.Call(constant, containsMethod, toLower);
+            var notContains = Expression.Not(contains);
+            var or = Expression.OrElse(isNull, notContains);
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(or, parameter);
+            return query.Where(lambda);
         }
         else if (filter.Operator == "isnull")
         {
-            return query.Where(t => field(t) == null);
+            var isNull = Expression.Equal(body, Expression.Constant(null, typeof(string)));
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(isNull, parameter);
+            return query.Where(lambda);
         }
         else if (filter.Operator == "isnotnull")
         {
-            return query.Where(t => field(t) != null);
+            var notNull = Expression.NotEqual(body, Expression.Constant(null, typeof(string)));
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(notNull, parameter);
+            return query.Where(lambda);
         }
         return query;
     }
@@ -115,10 +223,13 @@ public class ViewFilterBuilder
     private IQueryable<Ticket> ApplyGuidFilter(
         IQueryable<Ticket> query,
         ViewFilterCondition filter,
-        System.Linq.Expressions.Expression<Func<Ticket, Guid?>> fieldSelector
+        Expression<Func<Ticket, Guid?>> fieldSelector
     )
     {
-        var field = fieldSelector.Compile();
+        var parameter = Expression.Parameter(typeof(Ticket), "t");
+        var replacer = new ParameterReplacer(fieldSelector.Parameters[0], parameter);
+        var body = replacer.Visit(fieldSelector.Body);
+
         if (filter.Operator == "equals" && !string.IsNullOrEmpty(filter.Value))
         {
             // Try parsing as ShortGuid first (preferred), then fall back to Guid
@@ -135,16 +246,23 @@ public class ViewFilterBuilder
 
             if (guid.HasValue)
             {
-                return query.Where(t => field(t) == guid);
+                var constant = Expression.Constant(guid.Value, typeof(Guid?));
+                var equals = Expression.Equal(body, constant);
+                var lambda = Expression.Lambda<Func<Ticket, bool>>(equals, parameter);
+                return query.Where(lambda);
             }
         }
         else if (filter.Operator == "isnull")
         {
-            return query.Where(t => field(t) == null);
+            var isNull = Expression.Equal(body, Expression.Constant(null, typeof(Guid?)));
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(isNull, parameter);
+            return query.Where(lambda);
         }
         else if (filter.Operator == "isnotnull")
         {
-            return query.Where(t => field(t) != null);
+            var notNull = Expression.NotEqual(body, Expression.Constant(null, typeof(Guid?)));
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(notNull, parameter);
+            return query.Where(lambda);
         }
         return query;
     }
@@ -152,25 +270,35 @@ public class ViewFilterBuilder
     private IQueryable<Ticket> ApplyLongFilter(
         IQueryable<Ticket> query,
         ViewFilterCondition filter,
-        System.Linq.Expressions.Expression<Func<Ticket, long?>> fieldSelector
+        Expression<Func<Ticket, long?>> fieldSelector
     )
     {
-        var field = fieldSelector.Compile();
+        var parameter = Expression.Parameter(typeof(Ticket), "t");
+        var replacer = new ParameterReplacer(fieldSelector.Parameters[0], parameter);
+        var body = replacer.Visit(fieldSelector.Body);
+
         if (
             filter.Operator == "equals"
             && !string.IsNullOrEmpty(filter.Value)
             && long.TryParse(filter.Value, out var id)
         )
         {
-            return query.Where(t => field(t) == id);
+            var constant = Expression.Constant(id, typeof(long?));
+            var equals = Expression.Equal(body, constant);
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(equals, parameter);
+            return query.Where(lambda);
         }
         else if (filter.Operator == "isnull")
         {
-            return query.Where(t => field(t) == null);
+            var isNull = Expression.Equal(body, Expression.Constant(null, typeof(long?)));
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(isNull, parameter);
+            return query.Where(lambda);
         }
         else if (filter.Operator == "isnotnull")
         {
-            return query.Where(t => field(t) != null);
+            var notNull = Expression.NotEqual(body, Expression.Constant(null, typeof(long?)));
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(notNull, parameter);
+            return query.Where(lambda);
         }
         return query;
     }
@@ -178,21 +306,41 @@ public class ViewFilterBuilder
     private IQueryable<Ticket> ApplyDateFilter(
         IQueryable<Ticket> query,
         ViewFilterCondition filter,
-        System.Linq.Expressions.Expression<Func<Ticket, DateTime>> fieldSelector
+        Expression<Func<Ticket, DateTime>> fieldSelector
     )
     {
-        var field = fieldSelector.Compile();
+        var parameter = Expression.Parameter(typeof(Ticket), "t");
+        var replacer = new ParameterReplacer(fieldSelector.Parameters[0], parameter);
+        var body = replacer.Visit(fieldSelector.Body);
+
         if (!string.IsNullOrEmpty(filter.Value) && DateTime.TryParse(filter.Value, out var date))
         {
-            return filter.Operator switch
+            Expression comparison;
+            switch (filter.Operator)
             {
-                "gt" => query.Where(t => field(t) > date),
-                "gte" => query.Where(t => field(t) >= date),
-                "lt" => query.Where(t => field(t) < date),
-                "lte" => query.Where(t => field(t) <= date),
-                "equals" => query.Where(t => field(t).Date == date.Date),
-                _ => query,
-            };
+                case "gt":
+                    comparison = Expression.GreaterThan(body, Expression.Constant(date));
+                    break;
+                case "gte":
+                    comparison = Expression.GreaterThanOrEqual(body, Expression.Constant(date));
+                    break;
+                case "lt":
+                    comparison = Expression.LessThan(body, Expression.Constant(date));
+                    break;
+                case "lte":
+                    comparison = Expression.LessThanOrEqual(body, Expression.Constant(date));
+                    break;
+                case "equals":
+                    var dateProperty = typeof(DateTime).GetProperty("Date")!;
+                    var bodyDate = Expression.Property(body, dateProperty);
+                    var dateDate = Expression.Constant(date.Date);
+                    comparison = Expression.Equal(bodyDate, dateDate);
+                    break;
+                default:
+                    return query;
+            }
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(comparison, parameter);
+            return query.Where(lambda);
         }
         return query;
     }
@@ -200,33 +348,72 @@ public class ViewFilterBuilder
     private IQueryable<Ticket> ApplyNullableDateFilter(
         IQueryable<Ticket> query,
         ViewFilterCondition filter,
-        System.Linq.Expressions.Expression<Func<Ticket, DateTime?>> fieldSelector
+        Expression<Func<Ticket, DateTime?>> fieldSelector
     )
     {
-        var field = fieldSelector.Compile();
+        var parameter = Expression.Parameter(typeof(Ticket), "t");
+        var replacer = new ParameterReplacer(fieldSelector.Parameters[0], parameter);
+        var body = replacer.Visit(fieldSelector.Body);
+
         if (filter.Operator == "isnull")
         {
-            return query.Where(t => field(t) == null);
+            var isNull = Expression.Equal(body, Expression.Constant(null, typeof(DateTime?)));
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(isNull, parameter);
+            return query.Where(lambda);
         }
         else if (filter.Operator == "isnotnull")
         {
-            return query.Where(t => field(t) != null);
+            var notNull = Expression.NotEqual(body, Expression.Constant(null, typeof(DateTime?)));
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(notNull, parameter);
+            return query.Where(lambda);
         }
         else if (
             !string.IsNullOrEmpty(filter.Value) && DateTime.TryParse(filter.Value, out var date)
         )
         {
-            return filter.Operator switch
+            Expression comparison;
+            switch (filter.Operator)
             {
-                "gt" => query.Where(t => field(t) > date),
-                "gte" => query.Where(t => field(t) >= date),
-                "lt" => query.Where(t => field(t) < date),
-                "lte" => query.Where(t => field(t) <= date),
-                "equals" => query.Where(t =>
-                    field(t).HasValue && field(t)!.Value.Date == date.Date
-                ),
-                _ => query,
-            };
+                case "gt":
+                    comparison = Expression.GreaterThan(
+                        body,
+                        Expression.Constant(date, typeof(DateTime?))
+                    );
+                    break;
+                case "gte":
+                    comparison = Expression.GreaterThanOrEqual(
+                        body,
+                        Expression.Constant(date, typeof(DateTime?))
+                    );
+                    break;
+                case "lt":
+                    comparison = Expression.LessThan(
+                        body,
+                        Expression.Constant(date, typeof(DateTime?))
+                    );
+                    break;
+                case "lte":
+                    comparison = Expression.LessThanOrEqual(
+                        body,
+                        Expression.Constant(date, typeof(DateTime?))
+                    );
+                    break;
+                case "equals":
+                    var hasValueProperty = typeof(DateTime?).GetProperty("HasValue")!;
+                    var valueProperty = typeof(DateTime?).GetProperty("Value")!;
+                    var dateProperty = typeof(DateTime).GetProperty("Date")!;
+                    var hasValue = Expression.Property(body, hasValueProperty);
+                    var value = Expression.Property(body, valueProperty);
+                    var valueDate = Expression.Property(value, dateProperty);
+                    var dateDate = Expression.Constant(date.Date);
+                    var dateEquals = Expression.Equal(valueDate, dateDate);
+                    comparison = Expression.AndAlso(hasValue, dateEquals);
+                    break;
+                default:
+                    return query;
+            }
+            var lambda = Expression.Lambda<Func<Ticket, bool>>(comparison, parameter);
+            return query.Where(lambda);
         }
         return query;
     }
