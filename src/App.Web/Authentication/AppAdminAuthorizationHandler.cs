@@ -28,6 +28,8 @@ public class ManageTicketsRequirement : IAuthorizationRequirement { }
 
 public class AccessReportsRequirement : IAuthorizationRequirement { }
 
+public class ManageSystemViewsRequirement : IAuthorizationRequirement { }
+
 public class AppAdminAuthorizationHandler : IAuthorizationHandler
 {
     private readonly IHttpContextAccessor _httpContextAccessor = null;
@@ -146,6 +148,17 @@ public class AppAdminAuthorizationHandler : IAuthorizationHandler
                 if (
                     systemPermissionsClaims.Contains(
                         BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION
+                    )
+                )
+                {
+                    context.Succeed(requirement);
+                }
+            }
+            else if (requirement is ManageSystemViewsRequirement)
+            {
+                if (
+                    systemPermissionsClaims.Contains(
+                        BuiltInSystemPermission.MANAGE_SYSTEM_VIEWS_PERMISSION
                     )
                 )
                 {

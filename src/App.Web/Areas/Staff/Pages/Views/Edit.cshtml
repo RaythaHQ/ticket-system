@@ -1,0 +1,170 @@
+@page "/staff/views/{id}/edit"
+@model App.Web.Areas.Staff.Pages.Views.Edit
+
+@{
+    ViewData["Title"] = "Edit View";
+    ViewData["ActiveMenu"] = "Views";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Edit View</h1>
+    <a asp-area="Staff" asp-page="/Views/Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<form method="post">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Basic Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">View Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Form.Name" class="form-label">View Name *</label>
+                        <input asp-for="Form.Name" class="form-control" />
+                        <span asp-validation-for="Form.Name" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Form.Description" class="form-label">Description</label>
+                        <textarea asp-for="Form.Description" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Filters</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Form.StatusFilter" class="form-label">Status</label>
+                            <select asp-for="Form.StatusFilter" class="form-select">
+                                <option value="">Any Status</option>
+                                @foreach (var status in Model.AvailableStatuses)
+                                {
+                                    <option value="@status">@status.Replace("_", " ").ToUpper()</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Form.PriorityFilter" class="form-label">Priority</label>
+                            <select asp-for="Form.PriorityFilter" class="form-select">
+                                <option value="">Any Priority</option>
+                                @foreach (var priority in Model.AvailablePriorities)
+                                {
+                                    <option value="@priority">@priority.ToUpper()</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Form.TeamIdFilter" class="form-label">Team</label>
+                            <select asp-for="Form.TeamIdFilter" class="form-select">
+                                <option value="">Any Team</option>
+                                @foreach (var team in Model.AvailableTeams)
+                                {
+                                    <option value="@team.Id">@team.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input asp-for="Form.AssignedToMe" class="form-check-input" type="checkbox" />
+                                <label asp-for="Form.AssignedToMe" class="form-check-label">
+                                    Only tickets assigned to me
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input asp-for="Form.UnassignedOnly" class="form-check-input" type="checkbox" />
+                                <label asp-for="Form.UnassignedOnly" class="form-check-label">
+                                    Only unassigned tickets
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sorting -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Sorting</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Form.SortField" class="form-label">Sort By</label>
+                            <select asp-for="Form.SortField" class="form-select">
+                                <option value="CreationTime">Created Date</option>
+                                <option value="LastModificationTime">Last Updated</option>
+                                <option value="Priority">Priority</option>
+                                <option value="Status">Status</option>
+                                <option value="Title">Title</option>
+                                <option value="SlaDueAt">SLA Due Date</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Direction</label>
+                            <div class="form-check">
+                                <input asp-for="Form.SortDescending" class="form-check-input" type="checkbox" />
+                                <label asp-for="Form.SortDescending" class="form-check-label">
+                                    Descending (newest first)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Columns -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Visible Columns</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">Select which columns to display.</p>
+                    @if (Model.Form.SelectedColumns != null)
+                    {
+                        @for (int i = 0; i < Model.Form.SelectedColumns.Count; i++)
+                        {
+                            <div class="form-check mb-2">
+                                <input type="hidden" name="Form.SelectedColumns[@i].Name" value="@Model.Form.SelectedColumns[i].Name" />
+                                <input type="hidden" name="Form.SelectedColumns[@i].Label" value="@Model.Form.SelectedColumns[i].Label" />
+                                <input class="form-check-input" type="checkbox"
+                                       name="Form.SelectedColumns[@i].Selected" value="true"
+                                       id="col_@Model.Form.SelectedColumns[i].Name"
+                                       @(Model.Form.SelectedColumns[i].Selected ? "checked" : "") />
+                                <label class="form-check-label" for="col_@Model.Form.SelectedColumns[i].Name">
+                                    @Model.Form.SelectedColumns[i].Label
+                                </label>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-check-lg me-1"></i> Save Changes
+                </button>
+                <a asp-area="Staff" asp-page="/Views/Index" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </div>
+    </div>
+</form>
+

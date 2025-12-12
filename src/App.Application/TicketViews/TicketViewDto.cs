@@ -11,16 +11,25 @@ namespace App.Application.TicketViews;
 public record TicketViewDto : BaseAuditableEntityDto
 {
     public string Name { get; init; } = null!;
+    public string? Description { get; init; }
+    public Guid? OwnerUserId { get; init; }
     public ShortGuid? OwnerStaffId { get; init; }
     public string? OwnerStaffName { get; init; }
     public bool IsDefault { get; init; }
     public bool IsSystem { get; init; }
+    public bool IsSystemView => IsSystem;
     public ViewConditions? Conditions { get; init; }
     public string? SortPrimaryField { get; init; }
+    public string? SortField => SortPrimaryField;
     public string? SortPrimaryDirection { get; init; }
+    public string? SortDirection => SortPrimaryDirection;
     public string? SortSecondaryField { get; init; }
     public string? SortSecondaryDirection { get; init; }
     public List<string> VisibleColumns { get; init; } = new();
+    public List<string> Columns => VisibleColumns;
+    public int FilterCount => Conditions?.Filters?.Count ?? 0;
+    public int ColumnCount => VisibleColumns.Count;
+    public List<ViewFilterCondition> Filters => Conditions?.Filters ?? new();
 
     public static TicketViewDto MapFrom(TicketView view)
     {
@@ -38,6 +47,8 @@ public record TicketViewDto : BaseAuditableEntityDto
         {
             Id = view.Id,
             Name = view.Name,
+            Description = view.Description,
+            OwnerUserId = view.OwnerStaffId,
             OwnerStaffId = view.OwnerStaffId,
             OwnerStaffName = view.OwnerStaff?.FullName,
             IsDefault = view.IsDefault,

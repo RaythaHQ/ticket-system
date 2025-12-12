@@ -76,8 +76,10 @@
                     BuiltInSystemPermission.MANAGE_TICKETS_PERMISSION)).Succeeded;
                 var hasAccessReports = (await AuthorizationService.AuthorizeAsync(User,
                     BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION)).Succeeded;
+                var hasManageSystemViews = (await AuthorizationService.AuthorizeAsync(User,
+                    BuiltInSystemPermission.MANAGE_SYSTEM_VIEWS_PERMISSION)).Succeeded;
             }
-            @if (hasManageTeams || hasManageTickets || hasAccessReports)
+            @if (hasManageTeams || hasManageTickets || hasAccessReports || hasManageSystemViews)
             {
                 <li class="nav-item">
                     <span class="nav-link collapsed d-flex justify-content-between align-items-center"
@@ -127,6 +129,14 @@
                                 <li class="nav-item @(IsActivePage("Reports"))">
                                     <a class="nav-link" asp-page="/Reports/Index">
                                         <span class="sidebar-text">Reports</span>
+                                    </a>
+                                </li>
+                            }
+                            @if (hasManageSystemViews)
+                            {
+                                <li class="nav-item @(IsActivePage("SystemViews"))">
+                                    <a class="nav-link" asp-page="/SystemViews/Index">
+                                        <span class="sidebar-text">System Views</span>
                                     </a>
                                 </li>
                             }

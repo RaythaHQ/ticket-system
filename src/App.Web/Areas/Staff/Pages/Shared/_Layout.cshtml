@@ -64,6 +64,10 @@
                         <i class="bi bi-ticket-detailed"></i>
                         <span>Tickets</span>
                     </a>
+                    <a asp-area="Staff" asp-page="/Views/Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Views" ? "active" : "")">
+                        <i class="bi bi-grid"></i>
+                        <span>Views</span>
+                    </a>
                     <a asp-area="Staff" asp-page="/Contacts/Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Contacts" ? "active" : "")">
                         <i class="bi bi-people"></i>
                         <span>Contacts</span>

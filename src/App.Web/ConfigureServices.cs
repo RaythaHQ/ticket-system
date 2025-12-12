@@ -89,6 +89,10 @@ public static class ConfigureServices
                 BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION,
                 policy => policy.Requirements.Add(new AccessReportsRequirement())
             );
+            options.AddPolicy(
+                BuiltInSystemPermission.MANAGE_SYSTEM_VIEWS_PERMISSION,
+                policy => policy.Requirements.Add(new ManageSystemViewsRequirement())
+            );
 
             options.AddPolicy(
                 AppApiAuthorizationHandler.POLICY_PREFIX + RaythaClaimTypes.IsAdmin,

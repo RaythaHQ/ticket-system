@@ -11,6 +11,11 @@ public class TicketView : BaseAuditableEntity
     public string Name { get; set; } = null!;
 
     /// <summary>
+    /// Optional description for the view.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
     /// Owner of this view. Null for system-wide default views.
     /// </summary>
     public Guid? OwnerStaffId { get; set; }

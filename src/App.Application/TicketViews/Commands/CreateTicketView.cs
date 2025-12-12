@@ -13,13 +13,27 @@ public class CreateTicketView
     public record Command : LoggableRequest<CommandResponseDto<ShortGuid>>
     {
         public string Name { get; init; } = null!;
+        public string? Description { get; init; }
+        public Guid? OwnerUserId { get; init; }
         public bool IsDefault { get; init; }
+        public bool IsSystemView { get; init; }
         public ViewConditions? Conditions { get; init; }
+        public List<FilterCondition>? Filters { get; init; }
         public string? SortPrimaryField { get; init; }
+        public string? SortField { get; init; }
         public string? SortPrimaryDirection { get; init; }
+        public string? SortDirection { get; init; }
         public string? SortSecondaryField { get; init; }
         public string? SortSecondaryDirection { get; init; }
         public List<string> VisibleColumns { get; init; } = new();
+        public List<string>? Columns { get; init; }
+    }
+
+    public record FilterCondition
+    {
+        public string Field { get; init; } = string.Empty;
+        public string Operator { get; init; } = "equals";
+        public string? Value { get; init; }
     }
 
     public class Validator : AbstractValidator<Command>
@@ -47,19 +61,46 @@ public class CreateTicketView
             CancellationToken cancellationToken
         )
         {
+            // Support both Filters and Conditions for backward compat
+            string? conditionsJson = null;
+            if (request.Conditions != null)
+            {
+                conditionsJson = JsonSerializer.Serialize(request.Conditions);
+            }
+            else if (request.Filters?.Any() == true)
+            {
+                var conditions = new ViewConditions
+                {
+                    Logic = "AND",
+                    Filters = request.Filters.Select(f => new ViewFilterCondition
+                    {
+                        Field = f.Field,
+                        Operator = f.Operator,
+                        Value = f.Value
+                    }).ToList()
+                };
+                conditionsJson = JsonSerializer.Serialize(conditions);
+            }
+
+            // Support both property naming conventions
+            var columns = request.Columns?.Any() == true ? request.Columns : request.VisibleColumns;
+            var sortField = request.SortField ?? request.SortPrimaryField;
+            var sortDirection = request.SortDirection ?? request.SortPrimaryDirection;
+
             var view = new TicketView
             {
                 Id = Guid.NewGuid(),
                 Name = request.Name,
-                OwnerStaffId = _currentUser.UserId?.Guid,
+                Description = request.Description,
+                OwnerStaffId = request.OwnerUserId ?? _currentUser.UserId?.Guid,
                 IsDefault = request.IsDefault,
-                IsSystem = false,
-                ConditionsJson = request.Conditions != null ? JsonSerializer.Serialize(request.Conditions) : null,
-                SortPrimaryField = request.SortPrimaryField,
-                SortPrimaryDirection = request.SortPrimaryDirection,
+                IsSystem = request.IsSystemView,
+                ConditionsJson = conditionsJson,
+                SortPrimaryField = sortField,
+                SortPrimaryDirection = sortDirection,
                 SortSecondaryField = request.SortSecondaryField,
                 SortSecondaryDirection = request.SortSecondaryDirection,
-                VisibleColumns = request.VisibleColumns
+                VisibleColumns = columns
             };
 
             _db.TicketViews.Add(view);

@@ -40,6 +40,14 @@ public class TicketPermissionService : ITicketPermissionService
         return _currentUser.SystemPermissions?.Contains(BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION) ?? false;
     }
 
+    public bool CanManageSystemViews()
+    {
+        if (!_currentUser.IsAuthenticated)
+            return false;
+
+        return _currentUser.SystemPermissions?.Contains(BuiltInSystemPermission.MANAGE_SYSTEM_VIEWS_PERMISSION) ?? false;
+    }
+
     public void RequireCanManageTickets()
     {
         if (!CanManageTickets())
@@ -56,5 +64,11 @@ public class TicketPermissionService : ITicketPermissionService
     {
         if (!CanAccessReports())
             throw new ForbiddenAccessException("You do not have permission to access reports.");
+    }
+
+    public void RequireCanManageSystemViews()
+    {
+        if (!CanManageSystemViews())
+            throw new ForbiddenAccessException("You do not have permission to manage system views.");
     }
 }

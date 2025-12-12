@@ -21,6 +21,11 @@ public interface ITicketPermissionService
     bool CanAccessReports();
 
     /// <summary>
+    /// Returns true if the current user can create/edit/delete system views.
+    /// </summary>
+    bool CanManageSystemViews();
+
+    /// <summary>
     /// Throws ForbiddenAccessException if user cannot manage tickets.
     /// </summary>
     void RequireCanManageTickets();
@@ -34,5 +39,10 @@ public interface ITicketPermissionService
     /// Throws ForbiddenAccessException if user cannot access reports.
     /// </summary>
     void RequireCanAccessReports();
+
+    /// <summary>
+    /// Throws ForbiddenAccessException if user cannot manage system views.
+    /// </summary>
+    void RequireCanManageSystemViews();
 }
 

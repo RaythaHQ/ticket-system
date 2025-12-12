@@ -25,11 +25,13 @@ public class DeleteTicketView
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUser _currentUser;
+        private readonly ITicketPermissionService _permissionService;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser)
+        public Handler(IAppDbContext db, ICurrentUser currentUser, ITicketPermissionService permissionService)
         {
             _db = db;
             _currentUser = currentUser;
+            _permissionService = permissionService;
         }
 
         public async ValueTask<CommandResponseDto<ShortGuid>> Handle(
@@ -43,13 +45,17 @@ public class DeleteTicketView
             if (view == null)
                 throw new NotFoundException("TicketView", request.Id);
 
-            // Cannot delete system views
+            // System views can only be deleted by users with ManageSystemViews permission
             if (view.IsSystem)
-                throw new ForbiddenAccessException("Cannot delete system views.");
-
-            // Can only delete own views
-            if (view.OwnerStaffId != _currentUser.UserId?.Guid)
-                throw new ForbiddenAccessException("Cannot delete views you do not own.");
+            {
+                _permissionService.RequireCanManageSystemViews();
+            }
+            else
+            {
+                // Can only delete own views
+                if (view.OwnerStaffId != _currentUser.UserId?.Guid)
+                    throw new ForbiddenAccessException("Cannot delete views you do not own.");
+            }
 
             _db.TicketViews.Remove(view);
             await _db.SaveChangesAsync(cancellationToken);
