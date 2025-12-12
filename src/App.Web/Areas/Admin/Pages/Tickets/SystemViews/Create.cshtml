@@ -1,8 +1,8 @@
-@page "/admin/system-views/{id}/edit"
-@model App.Web.Areas.Admin.Pages.SystemViews.Edit
+@page "/admin/tickets/system-views/create"
+@model App.Web.Areas.Admin.Pages.SystemViews.Create
 
 @{
-    var pageTitle = "Edit system view";
+    var pageTitle = "Create system view";
     Layout = "SidebarLayout";
     ViewData["Title"] = pageTitle;
     ViewData["ActiveMenu"] = "SystemViews";
@@ -21,7 +21,7 @@
             <div class="card border-0 shadow mb-4">
                 <div class="card-body">
                     @(await Html.PartialAsync("_Partials/BackToList", back))
-                    <form asp-page="@RouteNames.SystemViews.Edit" asp-route-id="@Model.ViewId" method="post" class="py-4" novalidate>
+                    <form asp-page="@RouteNames.SystemViews.Create" method="post" class="py-4" novalidate>
                     <div class="row">
                         <div class="col-md-8">
                             <!-- Basic Info -->
@@ -82,7 +82,7 @@
                                                 <option value="">Any Team</option>
                                                 @foreach (var team in Model.AvailableTeams)
                                                 {
-                                                    <option value="@team.Id" selected="@(Model.Form.TeamIdFilter == team.Id)">@team.Name</option>
+                                                    <option value="@team.Id">@team.Name</option>
                                                 }
                                             </select>
                                             <div class="invalid-feedback">@Model.ErrorMessageFor("TeamIdFilter")</div>

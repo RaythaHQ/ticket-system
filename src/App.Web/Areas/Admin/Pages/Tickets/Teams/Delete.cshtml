@@ -1,4 +1,4 @@
-@page "/admin/teams/{id}/delete"
+@page "/admin/tickets/teams/{id}/delete"
 @model App.Web.Areas.Admin.Pages.Teams.Delete
 
 @{
@@ -45,11 +45,11 @@
                         <button type="submit" class="btn btn-danger">
                             <i class="bi bi-trash me-1"></i> Delete Team
                         </button>
-                        <a asp-page="@RouteNames.Teams.Edit" asp-route-id="@Model.Team.Id" class="btn btn-outline-secondary">Cancel</a>
+                        <a asp-page="@RouteNames.Teams.Edit" asp-route-id="@Model.Team.Id"
+                            class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
-

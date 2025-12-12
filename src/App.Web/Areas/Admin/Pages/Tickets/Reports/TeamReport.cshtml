@@ -1,4 +1,4 @@
-@page "/admin/reports/team/{teamId}"
+@page "/admin/tickets/reports/team/{teamId}"
 @model App.Web.Areas.Admin.Pages.Reports.TeamReport
 @{
     ViewData["ActiveMenu"] = "Reports";
@@ -16,7 +16,8 @@
         </nav>
         <h1 class="h3 mb-0">Team Report: @Model.Report.TeamName</h1>
     </div>
-    <a asp-page="@RouteNames.Reports.Index" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">
+    <a asp-page="@RouteNames.Reports.Index" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+        asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i> Back to Reports
     </a>
 </div>
@@ -28,7 +29,8 @@
             <input type="hidden" name="teamId" value="@Model.TeamId" />
             <div class="col-md-3">
                 <label class="form-label">Start Date</label>
-                <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-control" />
+                <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                    class="form-control" />
             </div>
             <div class="col-md-3">
                 <label class="form-label">End Date</label>
@@ -88,7 +90,8 @@
     <div class="col-md-2">
         <div class="card text-center">
             <div class="card-body">
-                <h3 class="@(Model.Report.SlaComplianceRate >= 90 ? "text-success" : Model.Report.SlaComplianceRate >= 70 ? "text-warning" : "text-danger")">
+                <h3
+                    class="@(Model.Report.SlaComplianceRate >= 90 ? "text-success" : Model.Report.SlaComplianceRate >= 70 ? "text-warning" : "text-danger")">
                     @($"{Model.Report.SlaComplianceRate:F1}%")
                 </h3>
                 <p class="text-muted mb-0 small">SLA Compliance</p>
@@ -211,4 +214,3 @@
         </div>
     </div>
 </div>
-

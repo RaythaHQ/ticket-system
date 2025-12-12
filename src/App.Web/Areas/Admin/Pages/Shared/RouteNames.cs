@@ -337,17 +337,17 @@ public static class RouteNames
     /// </summary>
     public static class Teams
     {
-        public const string Index = "/Teams/Index";
-        public const string Create = "/Teams/Create";
-        public const string Edit = "/Teams/Edit";
-        public const string Delete = "/Teams/Delete";
+        public const string Index = "/Tickets/Teams/Index";
+        public const string Create = "/Tickets/Teams/Create";
+        public const string Edit = "/Tickets/Teams/Edit";
+        public const string Delete = "/Tickets/Teams/Delete";
 
         /// <summary>
         /// Route constants for team member management pages.
         /// </summary>
         public static class Members
         {
-            public const string Index = "/Teams/Members/Index";
+            public const string Index = "/Tickets/Teams/Members/Index";
         }
     }
 
@@ -356,9 +356,9 @@ public static class RouteNames
     /// </summary>
     public static class SlaRules
     {
-        public const string Index = "/SlaRules/Index";
-        public const string Create = "/SlaRules/Create";
-        public const string Edit = "/SlaRules/Edit";
+        public const string Index = "/Tickets/SlaRules/Index";
+        public const string Create = "/Tickets/SlaRules/Create";
+        public const string Edit = "/Tickets/SlaRules/Edit";
     }
 
     /// <summary>
@@ -366,9 +366,9 @@ public static class RouteNames
     /// </summary>
     public static class SystemViews
     {
-        public const string Index = "/SystemViews/Index";
-        public const string Create = "/SystemViews/Create";
-        public const string Edit = "/SystemViews/Edit";
+        public const string Index = "/Tickets/SystemViews/Index";
+        public const string Create = "/Tickets/SystemViews/Create";
+        public const string Edit = "/Tickets/SystemViews/Edit";
     }
 
     /// <summary>
@@ -376,7 +376,7 @@ public static class RouteNames
     /// </summary>
     public static class Reports
     {
-        public const string Index = "/Reports/Index";
-        public const string TeamReport = "/Reports/TeamReport";
+        public const string Index = "/Tickets/Reports/Index";
+        public const string TeamReport = "/Tickets/Reports/TeamReport";
     }
 }

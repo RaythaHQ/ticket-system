@@ -1,4 +1,4 @@
-@page "/admin/teams/{teamId}/members"
+@page "/admin/tickets/teams/{teamId}/members"
 @model App.Web.Areas.Admin.Pages.Teams.Members.Index
 
 @{
@@ -109,31 +109,30 @@
                                     <div class="btn-group btn-group-sm">
                                         @if (member.IsAssignable)
                                         {
-                                            <form method="post" asp-page-handler="ToggleAssignable" 
-                                                  asp-route-teamId="@Model.Team.Id" 
-                                                  asp-route-membershipId="@member.Id"
-                                                  asp-route-isAssignable="false" class="d-inline">
-                                                <button type="submit" class="btn btn-outline-warning" title="Disable assignment eligibility">
+                                            <form method="post" asp-page-handler="ToggleAssignable"
+                                                asp-route-teamId="@Model.Team.Id" asp-route-membershipId="@member.Id"
+                                                asp-route-isAssignable="false" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-warning"
+                                                    title="Disable assignment eligibility">
                                                     <i class="bi bi-pause"></i>
                                                 </button>
                                             </form>
                                         }
                                         else
                                         {
-                                            <form method="post" asp-page-handler="ToggleAssignable" 
-                                                  asp-route-teamId="@Model.Team.Id" 
-                                                  asp-route-membershipId="@member.Id"
-                                                  asp-route-isAssignable="true" class="d-inline">
-                                                <button type="submit" class="btn btn-outline-success" title="Enable assignment eligibility">
+                                            <form method="post" asp-page-handler="ToggleAssignable"
+                                                asp-route-teamId="@Model.Team.Id" asp-route-membershipId="@member.Id"
+                                                asp-route-isAssignable="true" class="d-inline">
+                                                <button type="submit" class="btn btn-outline-success"
+                                                    title="Enable assignment eligibility">
                                                     <i class="bi bi-play"></i>
                                                 </button>
                                             </form>
                                         }
-                                        <form method="post" asp-page-handler="RemoveMember" 
-                                              asp-route-teamId="@Model.Team.Id" 
-                                              asp-route-membershipId="@member.Id" class="d-inline">
-                                            <button type="submit" class="btn btn-outline-danger" 
-                                                    onclick="return confirm('Remove this member from the team?')">
+                                        <form method="post" asp-page-handler="RemoveMember" asp-route-teamId="@Model.Team.Id"
+                                            asp-route-membershipId="@member.Id" class="d-inline">
+                                            <button type="submit" class="btn btn-outline-danger"
+                                                onclick="return confirm('Remove this member from the team?')">
                                                 <i class="bi bi-x-lg"></i>
                                             </button>
                                         </form>
@@ -147,4 +146,3 @@
         </div>
     </div>
 </div>
-

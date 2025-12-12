@@ -1,8 +1,8 @@
-@page "/admin/sla-rules/{id}/edit"
-@model App.Web.Areas.Admin.Pages.SlaRules.Edit
+@page "/admin/tickets/sla-rules/create"
+@model App.Web.Areas.Admin.Pages.SlaRules.Create
 
 @{
-    var pageTitle = "Edit SLA rule";
+    var pageTitle = "Create SLA rule";
     Layout = "SidebarLayout";
     ViewData["Title"] = pageTitle;
     ViewData["ActiveMenu"] = "SlaRules";
@@ -21,10 +21,7 @@
             <div class="card border-0 shadow mb-4">
                 <div class="card-body">
                     @(await Html.PartialAsync("_Partials/BackToList", back))
-                    <form asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@Model.Form.Id" method="post" class="py-4"
-                        novalidate>
-                        <input type="hidden" asp-for="Form.Id" />
-
+                    <form asp-page="@RouteNames.SlaRules.Create" method="post" class="py-4" novalidate>
                         <div class="col-lg-12">
                             <div class="mb-3">
                                 <label class="form-label raytha-required" asp-for="Form.Name"></label>
@@ -55,7 +52,7 @@
                                         <select class="form-select" asp-for="Form.TargetResolutionUnit"
                                             style="max-width: 120px;">
                                             <option value="minutes">Minutes</option>
-                                            <option value="hours">Hours</option>
+                                            <option value="hours" selected>Hours</option>
                                             <option value="days">Days</option>
                                         </select>
                                     </div>
@@ -73,17 +70,6 @@
                             </div>
                         </div>
 
-                        <div class="col-lg-12">
-                            <div class="form-check">
-                                <input class="form-check-input @Model.HasError("IsActive")" type="checkbox"
-                                    asp-for="Form.IsActive">
-                                <label class="form-check-label" asp-for="Form.IsActive">
-                                    Active (rule will be evaluated for new tickets)
-                                </label>
-                                <div class="invalid-feedback">@Model.ErrorMessageFor("IsActive")</div>
-                            </div>
-                        </div>
-
                         <div class="row">
                             <div class="col-lg-6">
                                 <div class="mb-3">
@@ -97,6 +83,7 @@
                                         <option value="low">Low</option>
                                     </select>
                                     <div class="invalid-feedback">@Model.ErrorMessageFor("ConditionPriority")</div>
+                                    <div class="form-text">Leave blank to match all tickets</div>
                                 </div>
                             </div>
                             <div class="col-lg-6">
@@ -117,10 +104,12 @@
                                     Only count business hours
                                 </label>
                                 <div class="invalid-feedback">@Model.ErrorMessageFor("BusinessHoursEnabled")</div>
+                                <div class="form-text">SLA time will only accumulate during configured business hours
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row">
+                        <div class="row" id="businessHoursConfig">
                             <div class="col-lg-6">
                                 <div class="mb-3">
                                     <label class="form-label" asp-for="Form.BusinessHoursStart"></label>
@@ -142,7 +131,7 @@
                         <div class="col-lg-12">
                             <div class="form-check">
                                 <input class="form-check-input @Model.HasError("NotifyAssignee")" type="checkbox"
-                                    asp-for="Form.NotifyAssignee">
+                                    asp-for="Form.NotifyAssignee" checked>
                                 <label class="form-check-label" asp-for="Form.NotifyAssignee">
                                     Notify assignee when SLA is breached
                                 </label>
@@ -152,32 +141,6 @@
 
                         <button type="submit" class="btn btn-success mt-4">Save changes</button>
                     </form>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-md-12">
-            <div class="card border-0 shadow mb-4">
-                <div class="card-body">
-                    <div class="nav-wrapper position-relative">
-                        <ul class="nav nav-pills square nav-fill flex-column vertical-tab">
-                            <li class="nav-item">
-                                <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Form.Id"
-                                    onsubmit="return confirm('Are you sure you want to delete?');">
-                                    <button
-                                        class="nav-link d-inline-flex align-items-center justify-content-center text-danger">
-                                        <svg class="icon icon-sm mx-2" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                            </path>
-                                        </svg>
-                                        Delete SLA rule
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>

@@ -71,13 +71,13 @@
             }
             @{
                 var hasManageTeams = (await AuthorizationService.AuthorizeAsync(User,
-                    BuiltInSystemPermission.MANAGE_TEAMS_PERMISSION)).Succeeded;
+                BuiltInSystemPermission.MANAGE_TEAMS_PERMISSION)).Succeeded;
                 var hasManageTickets = (await AuthorizationService.AuthorizeAsync(User,
-                    BuiltInSystemPermission.MANAGE_TICKETS_PERMISSION)).Succeeded;
+                BuiltInSystemPermission.MANAGE_TICKETS_PERMISSION)).Succeeded;
                 var hasAccessReports = (await AuthorizationService.AuthorizeAsync(User,
-                    BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION)).Succeeded;
+                BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION)).Succeeded;
                 var hasManageSystemViews = (await AuthorizationService.AuthorizeAsync(User,
-                    BuiltInSystemPermission.MANAGE_SYSTEM_VIEWS_PERMISSION)).Succeeded;
+                BuiltInSystemPermission.MANAGE_SYSTEM_VIEWS_PERMISSION)).Succeeded;
             }
             @if (hasManageTeams || hasManageTickets || hasAccessReports || hasManageSystemViews)
             {
@@ -111,7 +111,7 @@
                             @if (hasManageTeams)
                             {
                                 <li class="nav-item @(IsActivePage("Teams"))">
-                                    <a class="nav-link" asp-page="/Teams/Index">
+                                    <a class="nav-link" asp-page="@RouteNames.Teams.Index">
                                         <span class="sidebar-text">Teams</span>
                                     </a>
                                 </li>
@@ -119,7 +119,7 @@
                             @if (hasManageTickets)
                             {
                                 <li class="nav-item @(IsActivePage("SlaRules"))">
-                                    <a class="nav-link" asp-page="/SlaRules/Index">
+                                    <a class="nav-link" asp-page="@RouteNames.SlaRules.Index">
                                         <span class="sidebar-text">SLA Rules</span>
                                     </a>
                                 </li>
@@ -127,7 +127,7 @@
                             @if (hasAccessReports)
                             {
                                 <li class="nav-item @(IsActivePage("Reports"))">
-                                    <a class="nav-link" asp-page="/Reports/Index">
+                                    <a class="nav-link" asp-page="@RouteNames.Reports.Index">
                                         <span class="sidebar-text">Reports</span>
                                     </a>
                                 </li>
@@ -135,7 +135,7 @@
                             @if (hasManageSystemViews)
                             {
                                 <li class="nav-item @(IsActivePage("SystemViews"))">
-                                    <a class="nav-link" asp-page="/SystemViews/Index">
+                                    <a class="nav-link" asp-page="@RouteNames.SystemViews.Index">
                                         <span class="sidebar-text">System Views</span>
                                     </a>
                                 </li>

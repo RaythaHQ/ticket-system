@@ -1,4 +1,4 @@
-@page "/admin/reports"
+@page "/admin/tickets/reports"
 @model App.Web.Areas.Admin.Pages.Reports.Index
 @using App.Domain.Entities
 @inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
@@ -19,7 +19,8 @@
         <form method="get" class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label">Start Date</label>
-                <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-control" />
+                <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                    class="form-control" />
             </div>
             <div class="col-md-3">
                 <label class="form-label">End Date</label>
@@ -79,7 +80,8 @@
     <div class="col-md-2">
         <div class="card text-center">
             <div class="card-body">
-                <h3 class="@(Model.Report.OverallSlaComplianceRate >= 90 ? "text-success" : Model.Report.OverallSlaComplianceRate >= 70 ? "text-warning" : "text-danger")">
+                <h3
+                    class="@(Model.Report.OverallSlaComplianceRate >= 90 ? "text-success" : Model.Report.OverallSlaComplianceRate >= 70 ? "text-warning" : "text-danger")">
                     @($"{Model.Report.OverallSlaComplianceRate:F1}%")
                 </h3>
                 <p class="text-muted mb-0 small">SLA Compliance</p>
@@ -249,15 +251,16 @@
                             <td class="text-center">@team.TicketsResolved</td>
                             <td class="text-center">@team.OpenTickets</td>
                             <td class="text-center">
-                                <span class="badge @(team.SlaComplianceRate >= 90 ? "bg-success" : team.SlaComplianceRate >= 70 ? "bg-warning text-dark" : "bg-danger")">
+                                <span
+                                    class="badge @(team.SlaComplianceRate >= 90 ? "bg-success" : team.SlaComplianceRate >= 70 ? "bg-warning text-dark" : "bg-danger")">
                                     @($"{team.SlaComplianceRate:F1}%")
                                 </span>
                             </td>
                             <td class="text-end">
-                                <a asp-page="@RouteNames.Reports.TeamReport" asp-route-teamId="@team.TeamId" 
-                                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
-                                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
-                                   class="btn btn-sm btn-outline-primary">
+                                <a asp-page="@RouteNames.Reports.TeamReport" asp-route-teamId="@team.TeamId"
+                                    asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                                    asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                                    class="btn btn-sm btn-outline-primary">
                                     Details
                                 </a>
                             </td>
@@ -268,4 +271,3 @@
         </div>
     </div>
 </div>
-
