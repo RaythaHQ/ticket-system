@@ -1,12 +1,13 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Interfaces;
 using App.Application.Teams;
 using App.Application.Teams.Commands;
 using App.Application.Teams.Queries;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
+using App.Web.Areas.Shared.Models;
 using CSharpVitamins;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Admin.Pages.Teams;
 
@@ -35,12 +36,29 @@ public class Edit : BaseAdminPageModel
         var response = await Mediator.Send(new GetTeamById.Query { Id = id }, cancellationToken);
         Team = response.Result;
 
+        // Set breadcrumbs for navigation
+        SetBreadcrumbs(
+            new BreadcrumbNode
+            {
+                Label = "Teams",
+                RouteName = RouteNames.Teams.Index,
+                IsActive = false,
+            },
+            new BreadcrumbNode
+            {
+                Label = "Edit team",
+                RouteName = RouteNames.Teams.Edit,
+                IsActive = true,
+                RouteValues = new Dictionary<string, string> { { "id", id } },
+            }
+        );
+
         Form = new EditTeamViewModel
         {
             Id = Team.Id.ToString(),
             Name = Team.Name,
             Description = Team.Description,
-            RoundRobinEnabled = Team.RoundRobinEnabled
+            RoundRobinEnabled = Team.RoundRobinEnabled,
         };
 
         return Page();
@@ -59,7 +77,7 @@ public class Edit : BaseAdminPageModel
             Id = Form.Id,
             Name = Form.Name,
             Description = Form.Description,
-            RoundRobinEnabled = Form.RoundRobinEnabled
+            RoundRobinEnabled = Form.RoundRobinEnabled,
         };
 
         var response = await Mediator.Send(command, cancellationToken);
@@ -89,4 +107,3 @@ public class Edit : BaseAdminPageModel
         public bool RoundRobinEnabled { get; set; }
     }
 }
-

@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Interfaces;
 using App.Application.SlaRules;
 using App.Application.SlaRules.Commands;
 using App.Application.SlaRules.Queries;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
+using App.Web.Areas.Shared.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Admin.Pages.SlaRules;
 
@@ -34,6 +35,23 @@ public class Edit : BaseAdminPageModel
         var response = await Mediator.Send(new GetSlaRuleById.Query { Id = id }, cancellationToken);
         Rule = response.Result;
 
+        // Set breadcrumbs for navigation
+        SetBreadcrumbs(
+            new BreadcrumbNode
+            {
+                Label = "SLA Rules",
+                RouteName = RouteNames.SlaRules.Index,
+                IsActive = false,
+            },
+            new BreadcrumbNode
+            {
+                Label = "Edit SLA rule",
+                RouteName = RouteNames.SlaRules.Edit,
+                IsActive = true,
+                RouteValues = new Dictionary<string, string> { { "id", id } },
+            }
+        );
+
         var (value, unit) = ParseMinutes(Rule.TargetResolutionMinutes);
 
         Form = new EditSlaRuleViewModel
@@ -47,10 +65,14 @@ public class Edit : BaseAdminPageModel
             BusinessHoursEnabled = Rule.BusinessHoursEnabled,
             BusinessHoursStart = Rule.BusinessHoursConfig?.StartTime ?? "08:00",
             BusinessHoursEnd = Rule.BusinessHoursConfig?.EndTime ?? "18:00",
-            ConditionPriority = Rule.Conditions.ContainsKey("priority") ? Rule.Conditions["priority"]?.ToString() : null,
-            ConditionCategory = Rule.Conditions.ContainsKey("category") ? Rule.Conditions["category"]?.ToString() : null,
+            ConditionPriority = Rule.Conditions.ContainsKey("priority")
+                ? Rule.Conditions["priority"]?.ToString()
+                : null,
+            ConditionCategory = Rule.Conditions.ContainsKey("category")
+                ? Rule.Conditions["category"]?.ToString()
+                : null,
             NotifyAssignee = Rule.BreachBehavior?.NotifyAssignee ?? true,
-            IsActive = Rule.IsActive
+            IsActive = Rule.IsActive,
         };
 
         return Page();
@@ -79,7 +101,7 @@ public class Edit : BaseAdminPageModel
             {
                 Workdays = new List<int> { 1, 2, 3, 4, 5 },
                 StartTime = Form.BusinessHoursStart ?? "08:00",
-                EndTime = Form.BusinessHoursEnd ?? "18:00"
+                EndTime = Form.BusinessHoursEnd ?? "18:00",
             };
         }
 
@@ -96,9 +118,9 @@ public class Edit : BaseAdminPageModel
             BreachBehavior = new BreachBehavior
             {
                 UiMarkers = true,
-                NotifyAssignee = Form.NotifyAssignee
+                NotifyAssignee = Form.NotifyAssignee,
             },
-            IsActive = Form.IsActive
+            IsActive = Form.IsActive,
         };
 
         var response = await Mediator.Send(command, cancellationToken);
@@ -138,7 +160,7 @@ public class Edit : BaseAdminPageModel
             "minutes" => value,
             "hours" => value * 60,
             "days" => value * 1440,
-            _ => value * 60
+            _ => value * 60,
         };
     }
 
@@ -182,4 +204,3 @@ public class Edit : BaseAdminPageModel
         public bool IsActive { get; set; } = true;
     }
 }
-

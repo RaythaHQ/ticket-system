@@ -64,7 +64,7 @@
                         <th>Last Assigned</th>
                         @if (Model.CanManageTeams)
                         {
-                            <th></th>
+                            <th class="text-end">Action</th>
                         }
                     </tr>
                 </thead>
@@ -105,38 +105,34 @@
                             </td>
                             @if (Model.CanManageTeams)
                             {
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        @if (member.IsAssignable)
-                                        {
-                                            <form method="post" asp-page-handler="ToggleAssignable"
-                                                asp-route-teamId="@Model.Team.Id" asp-route-membershipId="@member.Id"
-                                                asp-route-isAssignable="false" class="d-inline">
-                                                <button type="submit" class="btn btn-outline-warning"
-                                                    title="Disable assignment eligibility">
-                                                    <i class="bi bi-pause"></i>
-                                                </button>
-                                            </form>
-                                        }
-                                        else
-                                        {
-                                            <form method="post" asp-page-handler="ToggleAssignable"
-                                                asp-route-teamId="@Model.Team.Id" asp-route-membershipId="@member.Id"
-                                                asp-route-isAssignable="true" class="d-inline">
-                                                <button type="submit" class="btn btn-outline-success"
-                                                    title="Enable assignment eligibility">
-                                                    <i class="bi bi-play"></i>
-                                                </button>
-                                            </form>
-                                        }
-                                        <form method="post" asp-page-handler="RemoveMember" asp-route-teamId="@Model.Team.Id"
-                                            asp-route-membershipId="@member.Id" class="d-inline">
-                                            <button type="submit" class="btn btn-outline-danger"
-                                                onclick="return confirm('Remove this member from the team?')">
-                                                <i class="bi bi-x-lg"></i>
+                                <td class="text-end">
+                                    @if (member.IsAssignable)
+                                    {
+                                        <form method="post" asp-page-handler="ToggleAssignable" asp-route-teamId="@Model.Team.Id"
+                                            asp-route-membershipId="@member.Id" asp-route-isAssignable="false" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-warning me-1"
+                                                title="Disable assignment eligibility">
+                                                <i class="bi bi-pause"></i>
                                             </button>
                                         </form>
-                                    </div>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-page-handler="ToggleAssignable" asp-route-teamId="@Model.Team.Id"
+                                            asp-route-membershipId="@member.Id" asp-route-isAssignable="true" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-success me-1"
+                                                title="Enable assignment eligibility">
+                                                <i class="bi bi-play"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    <form method="post" asp-page-handler="RemoveMember" asp-route-teamId="@Model.Team.Id"
+                                        asp-route-membershipId="@member.Id" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Remove this member from the team?')">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             }
                         </tr>

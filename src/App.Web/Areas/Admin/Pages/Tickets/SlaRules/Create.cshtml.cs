@@ -1,10 +1,11 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Interfaces;
 using App.Application.SlaRules;
 using App.Application.SlaRules.Commands;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
+using App.Web.Areas.Shared.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Admin.Pages.SlaRules;
 
@@ -27,6 +28,22 @@ public class Create : BaseAdminPageModel
     {
         if (!_permissionService.CanManageTickets())
             return Forbid();
+
+        // Set breadcrumbs for navigation
+        SetBreadcrumbs(
+            new BreadcrumbNode
+            {
+                Label = "SLA Rules",
+                RouteName = RouteNames.SlaRules.Index,
+                IsActive = false,
+            },
+            new BreadcrumbNode
+            {
+                Label = "Create SLA rule",
+                RouteName = RouteNames.SlaRules.Create,
+                IsActive = true,
+            }
+        );
 
         return Page();
     }
@@ -54,7 +71,7 @@ public class Create : BaseAdminPageModel
             {
                 Workdays = new List<int> { 1, 2, 3, 4, 5 }, // Mon-Fri
                 StartTime = Form.BusinessHoursStart ?? "08:00",
-                EndTime = Form.BusinessHoursEnd ?? "18:00"
+                EndTime = Form.BusinessHoursEnd ?? "18:00",
             };
         }
 
@@ -70,8 +87,8 @@ public class Create : BaseAdminPageModel
             BreachBehavior = new BreachBehavior
             {
                 UiMarkers = true,
-                NotifyAssignee = Form.NotifyAssignee
-            }
+                NotifyAssignee = Form.NotifyAssignee,
+            },
         };
 
         var response = await Mediator.Send(command, cancellationToken);
@@ -93,7 +110,7 @@ public class Create : BaseAdminPageModel
             "minutes" => value,
             "hours" => value * 60,
             "days" => value * 1440,
-            _ => value * 60
+            _ => value * 60,
         };
     }
 
@@ -133,4 +150,3 @@ public class Create : BaseAdminPageModel
         public bool NotifyAssignee { get; set; } = true;
     }
 }
-

@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
+using App.Application.Common.Interfaces;
 using App.Application.SlaRules;
 using App.Application.SlaRules.Queries;
-using App.Application.Common.Interfaces;
 using App.Domain.ValueObjects;
+using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Admin.Pages.SlaRules;
 
@@ -34,6 +35,16 @@ public class Index : BaseAdminPageModel, IHasListView<Index.SlaRuleListItemViewM
         CancellationToken cancellationToken = default
     )
     {
+        // Set breadcrumbs for navigation
+        SetBreadcrumbs(
+            new BreadcrumbNode
+            {
+                Label = "SLA Rules",
+                RouteName = RouteNames.SlaRules.Index,
+                IsActive = true,
+            }
+        );
+
         CanManageTickets = _permissionService.CanManageTickets();
 
         var input = new GetSlaRules.Query
@@ -41,7 +52,7 @@ public class Index : BaseAdminPageModel, IHasListView<Index.SlaRuleListItemViewM
             Search = search,
             OrderBy = orderBy,
             PageNumber = pageNumber,
-            PageSize = pageSize
+            PageSize = pageSize,
         };
 
         var response = await Mediator.Send(input, cancellationToken);
@@ -55,7 +66,9 @@ public class Index : BaseAdminPageModel, IHasListView<Index.SlaRuleListItemViewM
             BusinessHours = r.BusinessHoursEnabled ? "Yes" : "No",
             Priority = r.Priority,
             IsActive = r.IsActive,
-            CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(r.CreationTime)
+            CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+                r.CreationTime
+            ),
         });
 
         ListView = new ListViewModel<SlaRuleListItemViewModel>(items, response.Result.TotalCount);
@@ -88,4 +101,3 @@ public class Index : BaseAdminPageModel, IHasListView<Index.SlaRuleListItemViewM
         public string CreationTime { get; init; } = string.Empty;
     }
 }
-

@@ -1,14 +1,14 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.TicketViews;
-using App.Application.TicketViews.Queries;
 using App.Application.TicketViews.Commands;
+using App.Application.TicketViews.Queries;
 using App.Domain.Entities;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
 using CSharpVitamins;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Admin.Pages.SystemViews;
 
@@ -22,19 +22,30 @@ public class Index : BaseAdminPageModel, IHasListView<Index.SystemViewListItemVi
         string search = "",
         int pageNumber = 1,
         int pageSize = 50,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         ViewData["Title"] = "System Views";
         ViewData["ActiveMenu"] = "SystemViews";
         ViewData["ExpandTicketingMenu"] = true;
 
-        var response = await Mediator.Send(new GetTicketViews.Query
-        {
-            IncludeSystem = true
-        }, cancellationToken);
+        // Set breadcrumbs for navigation
+        SetBreadcrumbs(
+            new BreadcrumbNode
+            {
+                Label = "System Views",
+                RouteName = RouteNames.SystemViews.Index,
+                IsActive = true,
+            }
+        );
 
-        var systemViews = response.Result
-            .Where(v => v.IsSystem)
+        var response = await Mediator.Send(
+            new GetTicketViews.Query { IncludeSystem = true },
+            cancellationToken
+        );
+
+        var systemViews = response
+            .Result.Where(v => v.IsSystem)
             .Select(v => new SystemViewListItemViewModel
             {
                 Id = v.Id,
@@ -43,14 +54,17 @@ public class Index : BaseAdminPageModel, IHasListView<Index.SystemViewListItemVi
                 FilterCount = v.Conditions?.Filters?.Count() ?? 0,
                 ColumnCount = v.VisibleColumns?.Count ?? 0,
                 IsDefault = v.IsDefault,
-                CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(v.CreationTime)
+                CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+                    v.CreationTime
+                ),
             });
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            systemViews = systemViews.Where(v => 
-                v.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                v.Description.Contains(search, StringComparison.OrdinalIgnoreCase));
+            systemViews = systemViews.Where(v =>
+                v.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || v.Description.Contains(search, StringComparison.OrdinalIgnoreCase)
+            );
         }
 
         var items = systemViews.ToList();
@@ -59,9 +73,15 @@ public class Index : BaseAdminPageModel, IHasListView<Index.SystemViewListItemVi
         return Page();
     }
 
-    public async Task<IActionResult> OnPostDelete(ShortGuid viewId, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostDelete(
+        ShortGuid viewId,
+        CancellationToken cancellationToken
+    )
     {
-        var response = await Mediator.Send(new DeleteTicketView.Command { Id = viewId }, cancellationToken);
+        var response = await Mediator.Send(
+            new DeleteTicketView.Command { Id = viewId },
+            cancellationToken
+        );
 
         if (response.Success)
         {
@@ -97,4 +117,3 @@ public class Index : BaseAdminPageModel, IHasListView<Index.SystemViewListItemVi
         public string CreationTime { get; init; } = string.Empty;
     }
 }
-

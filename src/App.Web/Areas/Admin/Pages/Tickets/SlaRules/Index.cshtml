@@ -38,13 +38,54 @@
                 <table class="table table-centered table-nowrap mb-0 rounded">
                     <thead class="thead-light">
                         <tr>
-                            <th>Priority</th>
-                            <th>Name</th>
-                            <th>Target Resolution</th>
-                            <th>Business Hours</th>
-                            <th>Status</th>
-                            <th>Created</th>
-                            <th class="border-0 rounded-end">Action</th>
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
+                                                        BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "Priority",
+                                IsFirst = true,
+                                DisplayName =
+                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.SlaRules.Index.SlaRuleListItemViewModel>(p
+                                                        => p.Priority)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
+                                                        BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "Name",
+                                DisplayName =
+                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.SlaRules.Index.SlaRuleListItemViewModel>(p
+                                                        => p.Name)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
+                                                        BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "TargetResolutionTime",
+                                DisplayName =
+                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.SlaRules.Index.SlaRuleListItemViewModel>(p
+                                                        => p.TargetResolutionTime)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
+                                                        BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "BusinessHours",
+                                DisplayName =
+                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.SlaRules.Index.SlaRuleListItemViewModel>(p
+                                                        => p.BusinessHours)
+                            }))
+                            <th class="border-0">Status</th>
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
+                                                        BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "CreationTime",
+                                DisplayName =
+                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.SlaRules.Index.SlaRuleListItemViewModel>(p
+                                                        => p.CreationTime)
+                            }))
+                            <th class="border-0 rounded-end text-end">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -93,7 +134,7 @@
                                     }
                                 </td>
                                 <td>@rule.CreationTime</td>
-                                <td>
+                                <td class="text-end">
                                     @if (Model.CanManageTickets)
                                     {
                                         <div class="btn-group btn-group-sm">

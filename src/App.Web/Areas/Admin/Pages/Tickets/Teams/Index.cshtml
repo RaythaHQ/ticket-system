@@ -38,13 +38,62 @@
                 <table class="table table-centered table-nowrap mb-0 rounded">
                     <thead class="thead-light">
                         <tr>
-                            <th>Name</th>
-                            <th>Description</th>
-                            <th>Members</th>
-                            <th>Assignable</th>
-                            <th>Round Robin</th>
-                            <th>Created</th>
-                            <th class="border-0 rounded-end">Action</th>
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
+                                                        BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "Name",
+                                IsFirst = true,
+                                DisplayName =
+                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Teams.Index.TeamListItemViewModel>(p
+                                                        => p.Name)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
+                                                        BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "Description",
+                                DisplayName =
+                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Teams.Index.TeamListItemViewModel>(p
+                                                        => p.Description)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
+                                                        BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "MemberCount",
+                                DisplayName =
+                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Teams.Index.TeamListItemViewModel>(p
+                                                        => p.MemberCount)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
+                                                        BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "AssignableMemberCount",
+                                DisplayName =
+                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Teams.Index.TeamListItemViewModel>(p
+                                                        => p.AssignableMemberCount)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
+                                                        BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "RoundRobinEnabled",
+                                DisplayName =
+                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Teams.Index.TeamListItemViewModel>(p
+                                                        => p.RoundRobinEnabled)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
+                                                        BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "CreationTime",
+                                DisplayName =
+                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Teams.Index.TeamListItemViewModel>(p
+                                                        => p.CreationTime)
+                            }))
+                            <th class="border-0 rounded-end text-end">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -80,7 +129,7 @@
                                     }
                                 </td>
                                 <td>@team.CreationTime</td>
-                                <td>
+                                <td class="text-end">
                                     <div class="btn-group btn-group-sm">
                                         <a asp-page="@RouteNames.Teams.Members.Index" asp-route-teamId="@team.Id"
                                             class="btn btn-outline-primary">

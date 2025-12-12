@@ -8,13 +8,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a asp-page="@RouteNames.Reports.Index">Reports</a></li>
-                <li class="breadcrumb-item active">@Model.Report.TeamName</li>
-            </ol>
-        </nav>
-        <h1 class="h3 mb-0">Team Report: @Model.Report.TeamName</h1>
+        <partial name="_Partials/PageHeading" model='$"Team Report: {Model.Report.TeamName}"' />
     </div>
     <a asp-page="@RouteNames.Reports.Index" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
         asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">

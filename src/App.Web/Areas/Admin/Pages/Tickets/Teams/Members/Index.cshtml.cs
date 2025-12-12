@@ -1,11 +1,12 @@
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Interfaces;
 using App.Application.Teams;
 using App.Application.Teams.Commands;
 using App.Application.Teams.Queries;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
+using App.Web.Areas.Shared.Models;
 using CSharpVitamins;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Web.Areas.Admin.Pages.Teams.Members;
@@ -25,7 +26,8 @@ public class Index : BaseAdminPageModel
     }
 
     public TeamDto Team { get; set; } = null!;
-    public IEnumerable<TeamMembershipDto> Members { get; set; } = Enumerable.Empty<TeamMembershipDto>();
+    public IEnumerable<TeamMembershipDto> Members { get; set; } =
+        Enumerable.Empty<TeamMembershipDto>();
     public List<AvailableUserItem> AvailableUsers { get; set; } = new();
     public bool CanManageTeams { get; set; }
 
@@ -36,10 +38,33 @@ public class Index : BaseAdminPageModel
     {
         CanManageTeams = _permissionService.CanManageTeams();
 
-        var teamResponse = await Mediator.Send(new GetTeamById.Query { Id = teamId }, cancellationToken);
+        var teamResponse = await Mediator.Send(
+            new GetTeamById.Query { Id = teamId },
+            cancellationToken
+        );
         Team = teamResponse.Result;
 
-        var membersResponse = await Mediator.Send(new GetTeamMembers.Query { TeamId = teamId }, cancellationToken);
+        // Set breadcrumbs for navigation
+        SetBreadcrumbs(
+            new BreadcrumbNode
+            {
+                Label = "Teams",
+                RouteName = RouteNames.Teams.Index,
+                IsActive = false,
+            },
+            new BreadcrumbNode
+            {
+                Label = "Team Members",
+                RouteName = RouteNames.Teams.Members.Index,
+                IsActive = true,
+                RouteValues = new Dictionary<string, string> { { "teamId", teamId } },
+            }
+        );
+
+        var membersResponse = await Mediator.Send(
+            new GetTeamMembers.Query { TeamId = teamId },
+            cancellationToken
+        );
         Members = membersResponse.Result;
 
         await LoadAvailableUsersAsync(teamId, cancellationToken);
@@ -47,7 +72,10 @@ public class Index : BaseAdminPageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostAddMember(string teamId, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostAddMember(
+        string teamId,
+        CancellationToken cancellationToken
+    )
     {
         if (!_permissionService.CanManageTeams())
             return Forbid();
@@ -62,7 +90,7 @@ public class Index : BaseAdminPageModel
         {
             TeamId = teamId,
             StaffAdminId = SelectedUserId.Value,
-            IsAssignable = true
+            IsAssignable = true,
         };
 
         var response = await Mediator.Send(command, cancellationToken);
@@ -79,7 +107,11 @@ public class Index : BaseAdminPageModel
         return RedirectToPage(RouteNames.Teams.Members.Index, new { teamId });
     }
 
-    public async Task<IActionResult> OnPostRemoveMember(string teamId, string membershipId, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostRemoveMember(
+        string teamId,
+        string membershipId,
+        CancellationToken cancellationToken
+    )
     {
         if (!_permissionService.CanManageTeams())
             return Forbid();
@@ -100,7 +132,12 @@ public class Index : BaseAdminPageModel
         return RedirectToPage(RouteNames.Teams.Members.Index, new { teamId });
     }
 
-    public async Task<IActionResult> OnPostToggleAssignable(string teamId, string membershipId, bool isAssignable, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostToggleAssignable(
+        string teamId,
+        string membershipId,
+        bool isAssignable,
+        CancellationToken cancellationToken
+    )
     {
         if (!_permissionService.CanManageTeams())
             return Forbid();
@@ -108,7 +145,7 @@ public class Index : BaseAdminPageModel
         var command = new SetMemberAssignable.Command
         {
             Id = membershipId,
-            IsAssignable = isAssignable
+            IsAssignable = isAssignable,
         };
 
         var response = await Mediator.Send(command, cancellationToken);
@@ -124,13 +161,13 @@ public class Index : BaseAdminPageModel
     private async Task LoadAvailableUsersAsync(string teamId, CancellationToken cancellationToken)
     {
         var teamGuid = new ShortGuid(teamId).Guid;
-        var existingMemberIds = await _db.TeamMemberships
-            .Where(m => m.TeamId == teamGuid)
+        var existingMemberIds = await _db
+            .TeamMemberships.Where(m => m.TeamId == teamGuid)
             .Select(m => m.StaffAdminId)
             .ToListAsync(cancellationToken);
 
-        AvailableUsers = await _db.Users
-            .AsNoTracking()
+        AvailableUsers = await _db
+            .Users.AsNoTracking()
             .Where(u => u.IsActive && !existingMemberIds.Contains(u.Id))
             .OrderBy(u => u.FirstName)
             .ThenBy(u => u.LastName)
@@ -138,7 +175,7 @@ public class Index : BaseAdminPageModel
             {
                 Id = u.Id,
                 Name = u.FirstName + " " + u.LastName,
-                Email = u.EmailAddress
+                Email = u.EmailAddress,
             })
             .ToListAsync(cancellationToken);
     }
@@ -150,4 +187,3 @@ public class Index : BaseAdminPageModel
         public string Email { get; init; } = string.Empty;
     }
 }
-

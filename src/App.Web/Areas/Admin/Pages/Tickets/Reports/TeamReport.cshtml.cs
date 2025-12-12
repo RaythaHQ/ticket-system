@@ -1,7 +1,9 @@
 using App.Application.Common.Interfaces;
 using App.Application.Tickets;
 using App.Application.Tickets.Queries;
+using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
+using App.Web.Areas.Shared.Models;
 using CSharpVitamins;
 using Microsoft.AspNetCore.Mvc;
 
@@ -39,17 +41,36 @@ public class TeamReport : BaseAdminPageModel
         StartDate ??= DateTime.UtcNow.AddDays(-30);
         EndDate ??= DateTime.UtcNow;
 
-        var response = await Mediator.Send(new GetTeamReport.Query
-        {
-            TeamId = new ShortGuid(TeamId),
-            StartDate = StartDate,
-            EndDate = EndDate
-        }, cancellationToken);
+        var response = await Mediator.Send(
+            new GetTeamReport.Query
+            {
+                TeamId = new ShortGuid(TeamId),
+                StartDate = StartDate,
+                EndDate = EndDate,
+            },
+            cancellationToken
+        );
 
         Report = response.Result;
         ViewData["Title"] = $"Report: {Report.TeamName}";
 
+        // Set breadcrumbs for navigation
+        SetBreadcrumbs(
+            new BreadcrumbNode
+            {
+                Label = "Reports",
+                RouteName = RouteNames.Reports.Index,
+                IsActive = false,
+            },
+            new BreadcrumbNode
+            {
+                Label = Report.TeamName,
+                RouteName = RouteNames.Reports.TeamReport,
+                IsActive = true,
+                RouteValues = new Dictionary<string, string> { { "teamId", TeamId } },
+            }
+        );
+
         return Page();
     }
 }
-

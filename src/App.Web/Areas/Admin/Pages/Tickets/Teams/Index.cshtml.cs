@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
+using App.Application.Common.Interfaces;
 using App.Application.Teams;
 using App.Application.Teams.Queries;
 using App.Domain.ValueObjects;
+using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
-using App.Application.Common.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Admin.Pages.Teams;
 
@@ -34,6 +35,16 @@ public class Index : BaseAdminPageModel, IHasListView<Index.TeamListItemViewMode
         CancellationToken cancellationToken = default
     )
     {
+        // Set breadcrumbs for navigation
+        SetBreadcrumbs(
+            new BreadcrumbNode
+            {
+                Label = "Teams",
+                RouteName = RouteNames.Teams.Index,
+                IsActive = true,
+            }
+        );
+
         CanManageTeams = _permissionService.CanManageTeams();
 
         var input = new GetTeams.Query
@@ -41,7 +52,7 @@ public class Index : BaseAdminPageModel, IHasListView<Index.TeamListItemViewMode
             Search = search,
             OrderBy = orderBy,
             PageNumber = pageNumber,
-            PageSize = pageSize
+            PageSize = pageSize,
         };
 
         var response = await Mediator.Send(input, cancellationToken);
@@ -54,7 +65,9 @@ public class Index : BaseAdminPageModel, IHasListView<Index.TeamListItemViewMode
             MemberCount = t.MemberCount,
             AssignableMemberCount = t.AssignableMemberCount,
             RoundRobinEnabled = t.RoundRobinEnabled ? "Yes" : "No",
-            CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(t.CreationTime)
+            CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+                t.CreationTime
+            ),
         });
 
         ListView = new ListViewModel<TeamListItemViewModel>(items, response.Result.TotalCount);
@@ -85,4 +98,3 @@ public class Index : BaseAdminPageModel, IHasListView<Index.TeamListItemViewMode
         public string CreationTime { get; init; } = string.Empty;
     }
 }
-

@@ -1,9 +1,10 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Interfaces;
 using App.Application.Teams.Commands;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
+using App.Web.Areas.Shared.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Admin.Pages.Teams;
 
@@ -27,6 +28,22 @@ public class Create : BaseAdminPageModel
         if (!_permissionService.CanManageTeams())
             return Forbid();
 
+        // Set breadcrumbs for navigation
+        SetBreadcrumbs(
+            new BreadcrumbNode
+            {
+                Label = "Teams",
+                RouteName = RouteNames.Teams.Index,
+                IsActive = false,
+            },
+            new BreadcrumbNode
+            {
+                Label = "Create team",
+                RouteName = RouteNames.Teams.Create,
+                IsActive = true,
+            }
+        );
+
         return Page();
     }
 
@@ -42,7 +59,7 @@ public class Create : BaseAdminPageModel
         {
             Name = Form.Name,
             Description = Form.Description,
-            RoundRobinEnabled = Form.RoundRobinEnabled
+            RoundRobinEnabled = Form.RoundRobinEnabled,
         };
 
         var response = await Mediator.Send(command, cancellationToken);
@@ -70,4 +87,3 @@ public class Create : BaseAdminPageModel
         public bool RoundRobinEnabled { get; set; }
     }
 }
-

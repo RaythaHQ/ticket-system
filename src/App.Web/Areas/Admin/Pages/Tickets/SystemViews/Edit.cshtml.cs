@@ -1,18 +1,19 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using App.Application.Common.Interfaces;
-using App.Application.TicketViews;
-using App.Application.TicketViews.Queries;
-using App.Application.TicketViews.Commands;
 using App.Application.Teams.Queries;
+using App.Application.TicketViews;
+using App.Application.TicketViews.Commands;
+using App.Application.TicketViews.Queries;
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
+using App.Web.Areas.Shared.Models;
 using CSharpVitamins;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Web.Areas.Admin.Pages.SystemViews;
 
@@ -40,7 +41,27 @@ public class Edit : BaseAdminPageModel
 
         ViewId = id;
 
-        var response = await Mediator.Send(new GetTicketViewById.Query { Id = id }, cancellationToken);
+        // Set breadcrumbs for navigation
+        SetBreadcrumbs(
+            new BreadcrumbNode
+            {
+                Label = "System Views",
+                RouteName = RouteNames.SystemViews.Index,
+                IsActive = false,
+            },
+            new BreadcrumbNode
+            {
+                Label = "Edit system view",
+                RouteName = RouteNames.SystemViews.Edit,
+                IsActive = true,
+                RouteValues = new Dictionary<string, string> { { "id", id.ToString() } },
+            }
+        );
+
+        var response = await Mediator.Send(
+            new GetTicketViewById.Query { Id = id },
+            cancellationToken
+        );
         if (!response.Success || response.Result == null)
         {
             SetErrorMessage("System view not found.");
@@ -60,7 +81,7 @@ public class Edit : BaseAdminPageModel
             Description = view.Description,
             IsDefault = view.IsDefault,
             SortField = view.SortPrimaryField ?? "CreationTime",
-            SortDescending = view.SortPrimaryDirection?.ToLower() == "desc"
+            SortDescending = view.SortPrimaryDirection?.ToLower() == "desc",
         };
 
         // Parse existing filters
@@ -117,69 +138,78 @@ public class Edit : BaseAdminPageModel
 
         // Get columns from form directly
         var formColumns = Request.Form["SelectedColumnNames"];
-        var columnList = formColumns.Count > 0 
-            ? formColumns.ToList() 
-            : SelectedColumnNames;
+        var columnList = formColumns.Count > 0 ? formColumns.ToList() : SelectedColumnNames;
 
         // Build filters
         var filters = new List<UpdateTicketView.FilterCondition>();
-        
+
         if (!string.IsNullOrEmpty(Form.StatusFilter))
         {
-            filters.Add(new UpdateTicketView.FilterCondition
-            {
-                Field = "Status",
-                Operator = "equals",
-                Value = Form.StatusFilter
-            });
+            filters.Add(
+                new UpdateTicketView.FilterCondition
+                {
+                    Field = "Status",
+                    Operator = "equals",
+                    Value = Form.StatusFilter,
+                }
+            );
         }
 
         if (!string.IsNullOrEmpty(Form.PriorityFilter))
         {
-            filters.Add(new UpdateTicketView.FilterCondition
-            {
-                Field = "Priority",
-                Operator = "equals",
-                Value = Form.PriorityFilter
-            });
+            filters.Add(
+                new UpdateTicketView.FilterCondition
+                {
+                    Field = "Priority",
+                    Operator = "equals",
+                    Value = Form.PriorityFilter,
+                }
+            );
         }
 
         if (Form.TeamIdFilter.HasValue)
         {
-            filters.Add(new UpdateTicketView.FilterCondition
-            {
-                Field = "OwningTeamId",
-                Operator = "equals",
-                Value = Form.TeamIdFilter.Value.ToString()
-            });
+            filters.Add(
+                new UpdateTicketView.FilterCondition
+                {
+                    Field = "OwningTeamId",
+                    Operator = "equals",
+                    Value = Form.TeamIdFilter.Value.ToString(),
+                }
+            );
         }
 
         if (Form.UnassignedOnly)
         {
-            filters.Add(new UpdateTicketView.FilterCondition
-            {
-                Field = "AssigneeId",
-                Operator = "is_null",
-                Value = "true"
-            });
+            filters.Add(
+                new UpdateTicketView.FilterCondition
+                {
+                    Field = "AssigneeId",
+                    Operator = "is_null",
+                    Value = "true",
+                }
+            );
         }
 
         // Get selected columns
-        var selectedColumns = columnList.Any() 
-            ? columnList 
+        var selectedColumns = columnList.Any()
+            ? columnList
             : new List<string> { "Id", "Title", "Status", "Priority", "CreationTime" };
 
-        var response = await Mediator.Send(new UpdateTicketView.Command
-        {
-            Id = id,
-            Name = Form.Name,
-            Description = Form.Description,
-            IsDefault = Form.IsDefault,
-            Filters = filters,
-            VisibleColumns = selectedColumns,
-            SortField = Form.SortField ?? "CreationTime",
-            SortDirection = Form.SortDescending ? "desc" : "asc"
-        }, cancellationToken);
+        var response = await Mediator.Send(
+            new UpdateTicketView.Command
+            {
+                Id = id,
+                Name = Form.Name,
+                Description = Form.Description,
+                IsDefault = Form.IsDefault,
+                Filters = filters,
+                VisibleColumns = selectedColumns,
+                SortField = Form.SortField ?? "CreationTime",
+                SortDirection = Form.SortDescending ? "desc" : "asc",
+            },
+            cancellationToken
+        );
 
         if (response.Success)
         {
@@ -196,40 +226,97 @@ public class Edit : BaseAdminPageModel
     {
         // Load teams
         var teamsResponse = await Mediator.Send(new GetTeams.Query(), cancellationToken);
-        AvailableTeams = teamsResponse.Result.Items.Select(t => new TeamSelectItem
-        {
-            Id = t.Id.Guid,
-            Name = t.Name
-        }).ToList();
+        AvailableTeams = teamsResponse
+            .Result.Items.Select(t => new TeamSelectItem { Id = t.Id.Guid, Name = t.Name })
+            .ToList();
 
         // Status options
-        AvailableStatuses = TicketStatus.SupportedTypes.Select(s => new SelectListItem
-        {
-            Value = s.DeveloperName,
-            Text = s.Label
-        }).ToList();
+        AvailableStatuses = TicketStatus
+            .SupportedTypes.Select(s => new SelectListItem
+            {
+                Value = s.DeveloperName,
+                Text = s.Label,
+            })
+            .ToList();
 
         // Priority options
-        AvailablePriorities = TicketPriority.SupportedTypes.Select(p => new SelectListItem
-        {
-            Value = p.DeveloperName,
-            Text = p.Label
-        }).ToList();
+        AvailablePriorities = TicketPriority
+            .SupportedTypes.Select(p => new SelectListItem
+            {
+                Value = p.DeveloperName,
+                Text = p.Label,
+            })
+            .ToList();
 
         // Available columns
         AvailableColumns = new List<ColumnOption>
         {
-            new() { Name = "Id", Label = "Ticket ID", Selected = false },
-            new() { Name = "Title", Label = "Title", Selected = false },
-            new() { Name = "Status", Label = "Status", Selected = false },
-            new() { Name = "Priority", Label = "Priority", Selected = false },
-            new() { Name = "Category", Label = "Category", Selected = false },
-            new() { Name = "OwningTeamName", Label = "Team", Selected = false },
-            new() { Name = "AssigneeName", Label = "Assignee", Selected = false },
-            new() { Name = "ContactName", Label = "Contact", Selected = false },
-            new() { Name = "SlaStatus", Label = "SLA Status", Selected = false },
-            new() { Name = "CreationTime", Label = "Created", Selected = false },
-            new() { Name = "LastModificationTime", Label = "Last Updated", Selected = false }
+            new()
+            {
+                Name = "Id",
+                Label = "Ticket ID",
+                Selected = false,
+            },
+            new()
+            {
+                Name = "Title",
+                Label = "Title",
+                Selected = false,
+            },
+            new()
+            {
+                Name = "Status",
+                Label = "Status",
+                Selected = false,
+            },
+            new()
+            {
+                Name = "Priority",
+                Label = "Priority",
+                Selected = false,
+            },
+            new()
+            {
+                Name = "Category",
+                Label = "Category",
+                Selected = false,
+            },
+            new()
+            {
+                Name = "OwningTeamName",
+                Label = "Team",
+                Selected = false,
+            },
+            new()
+            {
+                Name = "AssigneeName",
+                Label = "Assignee",
+                Selected = false,
+            },
+            new()
+            {
+                Name = "ContactName",
+                Label = "Contact",
+                Selected = false,
+            },
+            new()
+            {
+                Name = "SlaStatus",
+                Label = "SLA Status",
+                Selected = false,
+            },
+            new()
+            {
+                Name = "CreationTime",
+                Label = "Created",
+                Selected = false,
+            },
+            new()
+            {
+                Name = "LastModificationTime",
+                Label = "Last Updated",
+                Selected = false,
+            },
         };
     }
 
@@ -268,4 +355,3 @@ public class Edit : BaseAdminPageModel
         public string Name { get; set; } = string.Empty;
     }
 }
-

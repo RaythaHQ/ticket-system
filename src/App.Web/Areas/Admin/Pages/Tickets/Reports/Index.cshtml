@@ -9,265 +9,265 @@
     Layout = "~/Areas/Admin/Pages/Shared/SidebarLayout.cshtml";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Organization Reports</h1>
-</div>
+<div>
+    <partial name="_Partials/PageHeading" model='"Organization Reports"' />
 
-<!-- Date Range Filter -->
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label class="form-label">Start Date</label>
-                <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")"
-                    class="form-control" />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">End Date</label>
-                <input type="date" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")" class="form-control" />
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-funnel me-1"></i> Apply Filter
-                </button>
-            </div>
-        </form>
+    <!-- Date Range Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                        class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                        class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel me-1"></i> Apply Filter
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- Summary Cards -->
-<div class="row mb-4">
-    <div class="col-md-2">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3 class="text-primary">@Model.Report.TotalTicketsCreated</h3>
-                <p class="text-muted mb-0 small">Created</p>
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">@Model.Report.TotalTicketsCreated</h3>
+                    <p class="text-muted mb-0 small">Created</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">@Model.Report.TotalTicketsResolved</h3>
+                    <p class="text-muted mb-0 small">Resolved</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-secondary">@Model.Report.TotalTicketsClosed</h3>
+                    <p class="text-muted mb-0 small">Closed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">@Model.Report.CurrentOpenTickets</h3>
+                    <p class="text-muted mb-0 small">Open Now</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">@Model.Report.CurrentUnassignedTickets</h3>
+                    <p class="text-muted mb-0 small">Unassigned</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3
+                        class="@(Model.Report.OverallSlaComplianceRate >= 90 ? "text-success" : Model.Report.OverallSlaComplianceRate >= 70 ? "text-warning" : "text-danger")">
+                        @($"{Model.Report.OverallSlaComplianceRate:F1}%")
+                    </h3>
+                    <p class="text-muted mb-0 small">SLA Compliance</p>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3 class="text-success">@Model.Report.TotalTicketsResolved</h3>
-                <p class="text-muted mb-0 small">Resolved</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3 class="text-secondary">@Model.Report.TotalTicketsClosed</h3>
-                <p class="text-muted mb-0 small">Closed</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3 class="text-info">@Model.Report.CurrentOpenTickets</h3>
-                <p class="text-muted mb-0 small">Open Now</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3 class="text-warning">@Model.Report.CurrentUnassignedTickets</h3>
-                <p class="text-muted mb-0 small">Unassigned</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card text-center">
-            <div class="card-body">
-                <h3
-                    class="@(Model.Report.OverallSlaComplianceRate >= 90 ? "text-success" : Model.Report.OverallSlaComplianceRate >= 70 ? "text-warning" : "text-danger")">
-                    @($"{Model.Report.OverallSlaComplianceRate:F1}%")
-                </h3>
-                <p class="text-muted mb-0 small">SLA Compliance</p>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="row mb-4">
-    <!-- SLA Metrics -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">SLA Performance</h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-4">
-                        <h3 class="text-success">@Model.Report.TotalSlaMet</h3>
-                        <p class="text-muted small">Met SLA</p>
+    <div class="row mb-4">
+        <!-- SLA Metrics -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">SLA Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h3 class="text-success">@Model.Report.TotalSlaMet</h3>
+                            <p class="text-muted small">Met SLA</p>
+                        </div>
+                        <div class="col-4">
+                            <h3 class="text-danger">@Model.Report.TotalSlaBreaches</h3>
+                            <p class="text-muted small">Breached</p>
+                        </div>
+                        <div class="col-4">
+                            <h3>@($"{Model.Report.OverallSlaComplianceRate:F1}%")</h3>
+                            <p class="text-muted small">Compliance Rate</p>
+                        </div>
                     </div>
-                    <div class="col-4">
-                        <h3 class="text-danger">@Model.Report.TotalSlaBreaches</h3>
-                        <p class="text-muted small">Breached</p>
-                    </div>
-                    <div class="col-4">
-                        <h3>@($"{Model.Report.OverallSlaComplianceRate:F1}%")</h3>
-                        <p class="text-muted small">Compliance Rate</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resolution Time -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Resolution Time</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h3>
+                                @if (Model.Report.AverageResolutionTimeHours.HasValue)
+                                {
+                                    @($"{Model.Report.AverageResolutionTimeHours:F1}h")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </h3>
+                            <p class="text-muted small">Avg Resolution Time</p>
+                        </div>
+                        <div class="col-6">
+                            <h3>
+                                @if (Model.Report.MedianResolutionTimeHours.HasValue)
+                                {
+                                    @($"{Model.Report.MedianResolutionTimeHours:F1}h")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </h3>
+                            <p class="text-muted small">Median Resolution Time</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Resolution Time -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Resolution Time</h5>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-6">
-                        <h3>
-                            @if (Model.Report.AverageResolutionTimeHours.HasValue)
-                            {
-                                @($"{Model.Report.AverageResolutionTimeHours:F1}h")
-                            }
-                            else
-                            {
-                                <span class="text-muted">—</span>
-                            }
-                        </h3>
-                        <p class="text-muted small">Avg Resolution Time</p>
-                    </div>
-                    <div class="col-6">
-                        <h3>
-                            @if (Model.Report.MedianResolutionTimeHours.HasValue)
-                            {
-                                @($"{Model.Report.MedianResolutionTimeHours:F1}h")
-                            }
-                            else
-                            {
-                                <span class="text-muted">—</span>
-                            }
-                        </h3>
-                        <p class="text-muted small">Median Resolution Time</p>
-                    </div>
+    <div class="row mb-4">
+        <!-- Tickets by Priority -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">By Priority</h5>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <!-- Tickets by Priority -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">By Priority</h5>
-            </div>
-            <div class="card-body">
-                @foreach (var item in Model.Report.TicketsByPriority.OrderByDescending(x => x.Value))
-                {
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-capitalize">@item.Key</span>
-                        <strong>@item.Value</strong>
-                    </div>
-                }
-                @if (!Model.Report.TicketsByPriority.Any())
-                {
-                    <p class="text-muted mb-0">No data</p>
-                }
-            </div>
-        </div>
-    </div>
-
-    <!-- Tickets by Category -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">By Category</h5>
-            </div>
-            <div class="card-body">
-                @foreach (var item in Model.Report.TicketsByCategory.OrderByDescending(x => x.Value))
-                {
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>@item.Key</span>
-                        <strong>@item.Value</strong>
-                    </div>
-                }
-                @if (!Model.Report.TicketsByCategory.Any())
-                {
-                    <p class="text-muted mb-0">No data</p>
-                }
-            </div>
-        </div>
-    </div>
-
-    <!-- Tickets by Status -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">By Status</h5>
-            </div>
-            <div class="card-body">
-                @foreach (var item in Model.Report.TicketsByStatus.OrderByDescending(x => x.Value))
-                {
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-capitalize">@item.Key.Replace("_", " ")</span>
-                        <strong>@item.Value</strong>
-                    </div>
-                }
-                @if (!Model.Report.TicketsByStatus.Any())
-                {
-                    <p class="text-muted mb-0">No data</p>
-                }
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Team Breakdown -->
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Team Breakdown</h5>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>Team</th>
-                        <th class="text-center">Created</th>
-                        <th class="text-center">Resolved</th>
-                        <th class="text-center">Open</th>
-                        <th class="text-center">SLA Compliance</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var team in Model.Report.TeamBreakdown)
+                <div class="card-body">
+                    @foreach (var item in Model.Report.TicketsByPriority.OrderByDescending(x => x.Value))
                     {
-                        <tr>
-                            <td>@team.TeamName</td>
-                            <td class="text-center">@team.TicketsCreated</td>
-                            <td class="text-center">@team.TicketsResolved</td>
-                            <td class="text-center">@team.OpenTickets</td>
-                            <td class="text-center">
-                                <span
-                                    class="badge @(team.SlaComplianceRate >= 90 ? "bg-success" : team.SlaComplianceRate >= 70 ? "bg-warning text-dark" : "bg-danger")">
-                                    @($"{team.SlaComplianceRate:F1}%")
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <a asp-page="@RouteNames.Reports.TeamReport" asp-route-teamId="@team.TeamId"
-                                    asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
-                                    asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
-                                    class="btn btn-sm btn-outline-primary">
-                                    Details
-                                </a>
-                            </td>
-                        </tr>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-capitalize">@item.Key</span>
+                            <strong>@item.Value</strong>
+                        </div>
                     }
-                </tbody>
-            </table>
+                    @if (!Model.Report.TicketsByPriority.Any())
+                    {
+                        <p class="text-muted mb-0">No data</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets by Category -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">By Category</h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var item in Model.Report.TicketsByCategory.OrderByDescending(x => x.Value))
+                    {
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>@item.Key</span>
+                            <strong>@item.Value</strong>
+                        </div>
+                    }
+                    @if (!Model.Report.TicketsByCategory.Any())
+                    {
+                        <p class="text-muted mb-0">No data</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets by Status -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">By Status</h5>
+                </div>
+                <div class="card-body">
+                    @foreach (var item in Model.Report.TicketsByStatus.OrderByDescending(x => x.Value))
+                    {
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-capitalize">@item.Key.Replace("_", " ")</span>
+                            <strong>@item.Value</strong>
+                        </div>
+                    }
+                    @if (!Model.Report.TicketsByStatus.Any())
+                    {
+                        <p class="text-muted mb-0">No data</p>
+                    }
+                </div>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Team Breakdown -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Team Breakdown</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th class="text-center">Created</th>
+                            <th class="text-center">Resolved</th>
+                            <th class="text-center">Open</th>
+                            <th class="text-center">SLA Compliance</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var team in Model.Report.TeamBreakdown)
+                        {
+                            <tr>
+                                <td>@team.TeamName</td>
+                                <td class="text-center">@team.TicketsCreated</td>
+                                <td class="text-center">@team.TicketsResolved</td>
+                                <td class="text-center">@team.OpenTickets</td>
+                                <td class="text-center">
+                                    <span
+                                        class="badge @(team.SlaComplianceRate >= 90 ? "bg-success" : team.SlaComplianceRate >= 70 ? "bg-warning text-dark" : "bg-danger")">
+                                        @($"{team.SlaComplianceRate:F1}%")
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-page="@RouteNames.Reports.TeamReport" asp-route-teamId="@team.TeamId"
+                                        asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                                        asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                                        class="btn btn-sm btn-outline-primary">
+                                        Details
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
