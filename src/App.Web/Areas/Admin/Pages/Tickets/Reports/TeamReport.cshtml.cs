@@ -41,12 +41,36 @@ public class TeamReport : BaseAdminPageModel
         StartDate ??= DateTime.UtcNow.AddDays(-30);
         EndDate ??= DateTime.UtcNow;
 
+        // Ensure dates are UTC for PostgreSQL
+        var startDateUtc = StartDate.HasValue
+            ? DateTime.SpecifyKind(StartDate.Value, DateTimeKind.Utc)
+            : (DateTime?)null;
+        var endDateUtc = EndDate.HasValue
+            ? DateTime.SpecifyKind(EndDate.Value, DateTimeKind.Utc)
+            : (DateTime?)null;
+
+        // Parse TeamId - handle both ShortGuid and Guid formats
+        ShortGuid teamIdShortGuid;
+        if (!ShortGuid.TryParse(TeamId, out teamIdShortGuid))
+        {
+            // If it's a Guid, convert it to ShortGuid
+            if (Guid.TryParse(TeamId, out var teamIdGuid))
+            {
+                teamIdShortGuid = new ShortGuid(teamIdGuid);
+            }
+            else
+            {
+                SetErrorMessage("Invalid team ID format.");
+                return RedirectToPage(RouteNames.Reports.Index);
+            }
+        }
+
         var response = await Mediator.Send(
             new GetTeamReport.Query
             {
-                TeamId = new ShortGuid(TeamId),
-                StartDate = StartDate,
-                EndDate = EndDate,
+                TeamId = teamIdShortGuid,
+                StartDate = startDateUtc,
+                EndDate = endDateUtc,
             },
             cancellationToken
         );

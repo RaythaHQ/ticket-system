@@ -1,3 +1,5 @@
+using CSharpVitamins;
+
 namespace App.Application.Tickets;
 
 /// <summary>
@@ -37,11 +39,10 @@ public record OrganizationReportDto
 
 public record TeamSummaryReportDto
 {
-    public Guid TeamId { get; init; }
+    public ShortGuid TeamId { get; init; }
     public string TeamName { get; init; } = string.Empty;
     public int TicketsCreated { get; init; }
     public int TicketsResolved { get; init; }
     public int OpenTickets { get; init; }
     public double SlaComplianceRate { get; init; }
 }
-

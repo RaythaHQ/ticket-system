@@ -257,7 +257,7 @@
                                     </span>
                                 </td>
                                 <td class="text-end">
-                                    <a asp-page="@RouteNames.Reports.TeamReport" asp-route-teamId="@team.TeamId"
+                                    <a asp-page="@RouteNames.Reports.TeamReport" asp-route-teamId="@team.TeamId.Value"
                                         asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
                                         asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
                                         class="btn btn-sm btn-outline-primary">

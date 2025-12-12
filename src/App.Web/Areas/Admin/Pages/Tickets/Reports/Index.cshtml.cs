@@ -49,8 +49,16 @@ public class Index : BaseAdminPageModel
         StartDate ??= DateTime.UtcNow.AddDays(-30);
         EndDate ??= DateTime.UtcNow;
 
+        // Ensure dates are UTC for PostgreSQL
+        var startDateUtc = StartDate.HasValue
+            ? DateTime.SpecifyKind(StartDate.Value, DateTimeKind.Utc)
+            : (DateTime?)null;
+        var endDateUtc = EndDate.HasValue
+            ? DateTime.SpecifyKind(EndDate.Value, DateTimeKind.Utc)
+            : (DateTime?)null;
+
         var response = await Mediator.Send(
-            new GetOrganizationReport.Query { StartDate = StartDate, EndDate = EndDate },
+            new GetOrganizationReport.Query { StartDate = startDateUtc, EndDate = endDateUtc },
             cancellationToken
         );
 
