@@ -1,36 +1,39 @@
 @page "/staff/tickets"
 @model App.Web.Areas.Staff.Pages.Tickets.Index
+@using App.Web.Areas.Staff.Pages.Shared.Models
 
 @{
     ViewData["Title"] = "Tickets";
     ViewData["ActiveMenu"] = "Tickets";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="staff-page-heading mb-4">
     <h1 class="h3 mb-0">Tickets</h1>
     <a asp-page="@RouteNames.Tickets.Create" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i> New Ticket
+        <i class="bi bi-plus-lg me-2"></i>New Ticket
     </a>
 </div>
 
-@await Html.PartialAsync("_StaffNav")
-
-<!-- View Selector -->
-<div class="card mb-3">
-    <div class="card-body py-2">
+<!-- Quick Views -->
+<div class="staff-card mb-4">
+    <div class="staff-card-body py-3">
         <div class="d-flex align-items-center gap-3 flex-wrap">
-            <span class="text-muted fw-semibold">Quick Views:</span>
-            <div class="btn-group btn-group-sm">
-                <a asp-page="./Index" class="btn @(string.IsNullOrEmpty(Model.BuiltInView) && string.IsNullOrEmpty(Model.CurrentViewId) ? "btn-primary" : "btn-outline-primary")">
+            <span class="text-muted fw-semibold small">Quick Views:</span>
+            <div class="staff-quick-views">
+                <a asp-page="./Index" 
+                   class="staff-quick-view-btn @(string.IsNullOrEmpty(Model.BuiltInView) && string.IsNullOrEmpty(Model.CurrentViewId) ? "active" : "")">
                     All Tickets
                 </a>
-                <a asp-page="./Index" asp-route-builtInView="open" class="btn @(Model.BuiltInView == "open" ? "btn-primary" : "btn-outline-primary")">
+                <a asp-page="./Index" asp-route-builtInView="open" 
+                   class="staff-quick-view-btn @(Model.BuiltInView == "open" ? "active" : "")">
                     Open
                 </a>
-                <a asp-page="./Index" asp-route-builtInView="unassigned" class="btn @(Model.BuiltInView == "unassigned" ? "btn-primary" : "btn-outline-primary")">
+                <a asp-page="./Index" asp-route-builtInView="unassigned" 
+                   class="staff-quick-view-btn @(Model.BuiltInView == "unassigned" ? "active" : "")">
                     Unassigned
                 </a>
-                <a asp-page="./Index" asp-route-builtInView="recently-closed" class="btn @(Model.BuiltInView == "recently-closed" ? "btn-primary" : "btn-outline-primary")">
+                <a asp-page="./Index" asp-route-builtInView="recently-closed" 
+                   class="staff-quick-view-btn @(Model.BuiltInView == "recently-closed" ? "active" : "")">
                     Recently Closed
                 </a>
             </div>
@@ -39,7 +42,7 @@
                 <div class="vr mx-2"></div>
                 <div class="dropdown">
                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="bi bi-eye me-1"></i> 
+                        <i class="bi bi-eye me-1"></i>
                         @if (Model.SelectedView != null)
                         {
                             @Model.SelectedView.Name
@@ -49,16 +52,16 @@
                             <span>Saved Views</span>
                         }
                     </button>
-                    <ul class="dropdown-menu">
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                         @foreach (var view in Model.AvailableViews)
                         {
                             <li>
-                                <a class="dropdown-item @(Model.CurrentViewId == view.Id.ToString() ? "active" : "")" 
+                                <a class="dropdown-item @(Model.CurrentViewId == view.Id.ToString() ? "active" : "")"
                                    asp-page="./Index" asp-route-viewId="@view.Id">
                                     @view.Name
                                     @if (view.IsSystem)
                                     {
-                                        <span class="badge bg-secondary ms-2">System</span>
+                                        <span class="staff-badge staff-badge-secondary ms-2" style="font-size: 0.65rem;">System</span>
                                     }
                                 </a>
                             </li>
@@ -74,9 +77,10 @@
     </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-3 mb-3">
+<!-- Filters -->
+<div class="staff-card mb-4">
+    <div class="staff-card-body">
+        <form method="get" class="row g-3">
             @if (!string.IsNullOrEmpty(Model.CurrentViewId))
             {
                 <input type="hidden" name="viewId" value="@Model.CurrentViewId" />
@@ -85,16 +89,18 @@
             {
                 <input type="hidden" name="builtInView" value="@Model.BuiltInView" />
             }
-            <div class="col-md-4">
+            <div class="col-lg-4 col-md-6">
                 <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="@(Model.SelectedView != null ? "Search visible columns..." : "Search tickets...")" 
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" name="search" class="form-control border-start-0 ps-0"
+                           placeholder="@(Model.SelectedView != null ? "Search visible columns..." : "Search tickets...")"
                            value="@ViewContext.HttpContext.Request.Query["search"]" />
                 </div>
                 @if (Model.SelectedView != null && Model.SelectedView.VisibleColumns.Any())
                 {
-                    <small class="text-muted mt-1">
+                    <small class="text-muted mt-1 d-block">
                         Searching: @string.Join(", ", Model.SelectedView.VisibleColumns.Take(3))
                         @if (Model.SelectedView.VisibleColumns.Count > 3)
                         {
@@ -103,7 +109,7 @@
                     </small>
                 }
             </div>
-            <div class="col-md-2">
+            <div class="col-lg-2 col-md-3">
                 <select name="status" class="form-select">
                     <option value="">All Statuses</option>
                     <option value="open" selected="@(ViewContext.HttpContext.Request.Query["status"] == "open")">Open</option>
@@ -113,7 +119,7 @@
                     <option value="closed" selected="@(ViewContext.HttpContext.Request.Query["status"] == "closed")">Closed</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-lg-2 col-md-3">
                 <select name="priority" class="form-select">
                     <option value="">All Priorities</option>
                     <option value="urgent" selected="@(ViewContext.HttpContext.Request.Query["priority"] == "urgent")">Urgent</option>
@@ -122,122 +128,125 @@
                     <option value="low" selected="@(ViewContext.HttpContext.Request.Query["priority"] == "low")">Low</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-lg-2 col-md-4">
                 <div class="form-check mt-2">
-                    <input type="checkbox" name="unassigned" value="true" class="form-check-input" 
+                    <input type="checkbox" name="unassigned" value="true" class="form-check-input"
                            checked="@(ViewContext.HttpContext.Request.Query["unassigned"] == "true")" id="unassignedCheck" />
                     <label class="form-check-label" for="unassignedCheck">Unassigned only</label>
                 </div>
             </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-secondary w-100">Filter</button>
+            <div class="col-lg-2 col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="bi bi-funnel me-1"></i>Filter
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
+<!-- Tickets Table -->
+<div class="staff-card">
+    <div class="table-responsive">
+        <table class="table staff-table mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Assignee</th>
+                    <th>Contact</th>
+                    <th>SLA</th>
+                    <th>Created</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.ListView.Items.Any())
+                {
                     <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Status</th>
-                        <th>Priority</th>
-                        <th>Assignee</th>
-                        <th>Contact</th>
-                        <th>SLA</th>
-                        <th>Created</th>
-                        <th></th>
+                        <td colspan="9" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.5;"></i>
+                            <p class="mt-3 mb-0 fw-medium">No tickets found</p>
+                            <p class="small">Try adjusting your filters or create a new ticket</p>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @if (!Model.ListView.Items.Any())
-                    {
-                        <tr>
-                            <td colspan="9" class="text-center py-4 text-muted">
-                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                No tickets found
-                            </td>
-                        </tr>
-                    }
-                    @foreach (var ticket in Model.ListView.Items)
-                    {
-                        <tr>
-                            <td>
-                                <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" class="fw-semibold">
-                                    #@ticket.Id
-                                </a>
-                            </td>
-                            <td>
-                                <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id">
-                                    @(ticket.Title.Length > 50 ? ticket.Title.Substring(0, 47) + "..." : ticket.Title)
-                                </a>
-                            </td>
-                            <td>
-                                <span class="badge @GetStatusBadgeClass(ticket.Status)">
-                                    @ticket.StatusLabel
+                }
+                @foreach (var ticket in Model.ListView.Items)
+                {
+                    <tr>
+                        <td>
+                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" 
+                               class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
+                                #@ticket.Id
+                            </a>
+                        </td>
+                        <td>
+                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" 
+                               class="text-dark text-decoration-none">
+                                @(ticket.Title.Length > 50 ? ticket.Title.Substring(0, 47) + "..." : ticket.Title)
+                            </a>
+                        </td>
+                        <td>
+                            <span class="staff-badge @GetStatusBadgeClass(ticket.Status)">
+                                @ticket.StatusLabel
+                            </span>
+                        </td>
+                        <td>
+                            <span class="staff-badge @GetPriorityBadgeClass(ticket.Priority)">
+                                @ticket.PriorityLabel
+                            </span>
+                        </td>
+                        <td class="text-muted">@(ticket.AssigneeName ?? "—")</td>
+                        <td class="text-muted">@(ticket.ContactName ?? "—")</td>
+                        <td>
+                            @if (ticket.SlaDueAt != "-")
+                            {
+                                <span class="@GetSlaBadgeClass(ticket.SlaStatusLabel) small">
+                                    @ticket.SlaDueAt
                                 </span>
-                            </td>
-                            <td>
-                                <span class="badge @GetPriorityBadgeClass(ticket.Priority)">
-                                    @ticket.PriorityLabel
-                                </span>
-                            </td>
-                            <td>@ticket.AssigneeName</td>
-                            <td>@ticket.ContactName</td>
-                            <td>
-                                @if (ticket.SlaDueAt != "-")
-                                {
-                                    <span class="@GetSlaBadgeClass(ticket.SlaStatusLabel)">
-                                        @ticket.SlaDueAt
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">-</span>
-                                }
-                            </td>
-                            <td>@ticket.CreationTime</td>
-                            <td>
-                                <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" class="btn btn-sm btn-outline-primary">
-                                    View
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td class="text-muted small">@ticket.CreationTime</td>
+                        <td class="text-end">
+                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" 
+                               class="btn btn-sm btn-outline-primary">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
     @if (Model.ListView.TotalCount > 0)
     {
-        <div class="card-footer d-flex justify-content-between align-items-center">
-            <span class="text-muted">Showing @Model.ListView.Items.Count() of @Model.ListView.TotalCount tickets</span>
-        </div>
+        <partial name="_Partials/TablePagination" model="@Model.ListView" />
     }
 </div>
 
 @functions {
     string GetStatusBadgeClass(string status) => status switch
     {
-        "open" => "bg-primary",
-        "in_progress" => "bg-info",
-        "pending" => "bg-warning text-dark",
-        "resolved" => "bg-success",
-        "closed" => "bg-secondary",
-        _ => "bg-light text-dark"
+        "open" => "staff-badge-primary",
+        "in_progress" => "staff-badge-primary",
+        "pending" => "staff-badge-warning",
+        "resolved" => "staff-badge-success",
+        "closed" => "staff-badge-secondary",
+        _ => "staff-badge-secondary"
     };
 
     string GetPriorityBadgeClass(string priority) => priority switch
     {
-        "urgent" => "bg-danger",
-        "high" => "bg-warning text-dark",
-        "normal" => "bg-info",
-        "low" => "bg-light text-dark",
-        _ => "bg-light text-dark"
+        "urgent" => "staff-badge-danger",
+        "high" => "staff-badge-warning",
+        "normal" => "staff-badge-primary",
+        "low" => "staff-badge-secondary",
+        _ => "staff-badge-secondary"
     };
 
     string GetSlaBadgeClass(string slaStatus) => slaStatus switch

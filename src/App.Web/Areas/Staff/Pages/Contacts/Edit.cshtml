@@ -1,67 +1,74 @@
 @page "/staff/contacts/{id:long}/edit"
 @model App.Web.Areas.Staff.Pages.Contacts.Edit
+@using App.Web.Areas.Staff.Pages.Shared.Models
 
 @{
     ViewData["Title"] = $"Edit Contact #{Model.Form.Id}";
     ViewData["ActiveMenu"] = "Contacts";
+
+    var back = new BackLinkOptions
+    {
+        Page = RouteNames.Contacts.Details,
+        RouteValues = new Microsoft.AspNetCore.Routing.RouteValueDictionary { { "id", Model.Form.Id } },
+        Text = "Back to Details"
+    };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Edit Contact #@Model.Form.Id</h1>
-    <a asp-page="./Details" asp-route-id="@Model.Form.Id" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Back to Details
-    </a>
-</div>
+<partial name="_Partials/PageHeading" model='$"Edit Contact #{Model.Form.Id}"' />
 
 <div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <form method="post">
+    <div class="col-xl-7 col-lg-8">
+        <div class="staff-card">
+            <div class="staff-card-body">
+                @(await Html.PartialAsync("_Partials/BackToList", back))
+                
+                <form method="post" class="mt-4">
                     <input type="hidden" asp-for="Form.Id" />
 
-                    <div class="mb-3">
-                        <label asp-for="Form.Name" class="form-label">Name <span class="text-danger">*</span></label>
+                    <div class="mb-4">
+                        <label asp-for="Form.Name" class="form-label">
+                            Name <span class="text-danger">*</span>
+                        </label>
                         <input asp-for="Form.Name" class="form-control" />
-                        <span asp-validation-for="Form.Name" class="text-danger"></span>
+                        <span asp-validation-for="Form.Name" class="text-danger small"></span>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label asp-for="Form.Email" class="form-label">Email</label>
                         <input asp-for="Form.Email" type="email" class="form-control" />
-                        <span asp-validation-for="Form.Email" class="text-danger"></span>
+                        <span asp-validation-for="Form.Email" class="text-danger small"></span>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label asp-for="Form.PhoneNumbers" class="form-label">Phone Numbers</label>
                         <textarea asp-for="Form.PhoneNumbers" class="form-control" rows="3"></textarea>
-                        <span asp-validation-for="Form.PhoneNumbers" class="text-danger"></span>
-                        <small class="text-muted">One phone number per line</small>
+                        <span asp-validation-for="Form.PhoneNumbers" class="text-danger small"></span>
+                        <small class="text-muted d-block mt-1">One phone number per line</small>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label asp-for="Form.Address" class="form-label">Address</label>
                         <textarea asp-for="Form.Address" class="form-control" rows="2"></textarea>
-                        <span asp-validation-for="Form.Address" class="text-danger"></span>
+                        <span asp-validation-for="Form.Address" class="text-danger small"></span>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label asp-for="Form.OrganizationAccount" class="form-label">Organization / Account</label>
                         <input asp-for="Form.OrganizationAccount" class="form-control" />
-                        <span asp-validation-for="Form.OrganizationAccount" class="text-danger"></span>
+                        <span asp-validation-for="Form.OrganizationAccount" class="text-danger small"></span>
                     </div>
 
                     <hr class="my-4" />
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg me-1"></i> Save Changes
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg me-2"></i>Save Changes
                         </button>
-                        <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@Model.Form.Id" class="btn btn-outline-secondary">Cancel</a>
+                        <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@Model.Form.Id" 
+                           class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
-

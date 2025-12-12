@@ -1,45 +1,53 @@
 @page "/staff/views/{id}/edit"
 @model App.Web.Areas.Staff.Pages.Views.Edit
+@using App.Web.Areas.Staff.Pages.Shared.Models
 
 @{
     ViewData["Title"] = "Edit View";
     ViewData["ActiveMenu"] = "Views";
+
+    var back = new BackLinkOptions
+    {
+        Page = RouteNames.Views.Index,
+        Text = "Back to Views"
+    };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Edit View</h1>
-    <a asp-area="Staff" asp-page="@RouteNames.Views.Index" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Back
-    </a>
-</div>
+<partial name="_Partials/PageHeading" model='"Edit View"' />
 
 <form method="post">
     <div class="row">
-        <div class="col-md-8">
-            <!-- Basic Info -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">View Details</h5>
+        <div class="col-lg-8">
+            <!-- View Details -->
+            <div class="staff-card mb-4">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-info-circle me-2"></i>View Details</h5>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label asp-for="Form.Name" class="form-label">View Name *</label>
-                        <input asp-for="Form.Name" class="form-control" />
-                        <span asp-validation-for="Form.Name" class="text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="Form.Description" class="form-label">Description</label>
-                        <textarea asp-for="Form.Description" class="form-control" rows="2"></textarea>
+                <div class="staff-card-body">
+                    @(await Html.PartialAsync("_Partials/BackToList", back))
+
+                    <div class="mt-4">
+                        <div class="mb-4">
+                            <label asp-for="Form.Name" class="form-label">
+                                View Name <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Form.Name" class="form-control" />
+                            <span asp-validation-for="Form.Name" class="text-danger small"></span>
+                        </div>
+                        <div class="mb-0">
+                            <label asp-for="Form.Description" class="form-label">Description</label>
+                            <textarea asp-for="Form.Description" class="form-control" rows="2"></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Filters</h5>
+            <div class="staff-card mb-4">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-funnel me-2"></i>Filters</h5>
                 </div>
-                <div class="card-body">
+                <div class="staff-card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="Form.StatusFilter" class="form-label">Status</label>
@@ -98,11 +106,11 @@
             </div>
 
             <!-- Sorting -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Sorting</h5>
+            <div class="staff-card mb-4">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-sort-down me-2"></i>Sorting</h5>
                 </div>
-                <div class="card-body">
+                <div class="staff-card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="Form.SortField" class="form-label">Sort By</label>
@@ -117,7 +125,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Direction</label>
-                            <div class="form-check">
+                            <div class="form-check mt-2">
                                 <input asp-for="Form.SortDescending" class="form-check-input" type="checkbox" />
                                 <label asp-for="Form.SortDescending" class="form-check-label">
                                     Descending (newest first)
@@ -129,25 +137,26 @@
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-lg-4">
             <!-- Columns -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Visible Columns</h5>
+            <div class="staff-card mb-4">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-layout-three-columns me-2"></i>Visible Columns</h5>
                 </div>
-                <div class="card-body">
+                <div class="staff-card-body">
                     <p class="text-muted small mb-3">Select which columns to display.</p>
                     @if (Model.Form.SelectedColumns != null)
                     {
                         @for (int i = 0; i < Model.Form.SelectedColumns.Count; i++)
                         {
                             <div class="form-check mb-2">
-                                <input type="hidden" name="Form.SelectedColumns[@i].Name" value="@Model.Form.SelectedColumns[i].Name" />
-                                <input type="hidden" name="Form.SelectedColumns[@i].Label" value="@Model.Form.SelectedColumns[i].Label" />
-                                <input class="form-check-input" type="checkbox"
-                                       name="Form.SelectedColumns[@i].Selected" value="true"
-                                       id="col_@Model.Form.SelectedColumns[i].Name"
-                                       @(Model.Form.SelectedColumns[i].Selected ? "checked" : "") />
+                                <input type="hidden" name="Form.SelectedColumns[@i].Name"
+                                    value="@Model.Form.SelectedColumns[i].Name" />
+                                <input type="hidden" name="Form.SelectedColumns[@i].Label"
+                                    value="@Model.Form.SelectedColumns[i].Label" />
+                                <input class="form-check-input" type="checkbox" name="Form.SelectedColumns[@i].Selected"
+                                    value="true" id="col_@Model.Form.SelectedColumns[i].Name"
+                                    @(Model.Form.SelectedColumns[i].Selected ? "checked" : "") />
                                 <label class="form-check-label" for="col_@Model.Form.SelectedColumns[i].Name">
                                     @Model.Form.SelectedColumns[i].Label
                                 </label>
@@ -159,12 +168,11 @@
 
             <!-- Submit -->
             <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="bi bi-check-lg me-1"></i> Save Changes
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-lg me-2"></i>Save Changes
                 </button>
                 <a asp-area="Staff" asp-page="@RouteNames.Views.Index" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </div>
     </div>
 </form>
-

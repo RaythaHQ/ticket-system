@@ -1,23 +1,32 @@
 @page "/staff/tickets/{id:long}"
 @model App.Web.Areas.Staff.Pages.Tickets.Details
+@using App.Web.Areas.Staff.Pages.Shared.Models
 
 @{
     ViewData["Title"] = $"Ticket #{Model.Ticket.Id}";
     ViewData["ActiveMenu"] = "Tickets";
+
+    var back = new BackLinkOptions
+    {
+        Page = RouteNames.Tickets.Index,
+        Text = "Back to Tickets"
+    };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
     <div>
-        <h1 class="h3 mb-1">
-            <span class="text-muted">#@Model.Ticket.Id</span>
+        @(await Html.PartialAsync("_Partials/BackToList", back))
+        <h1 class="h3 mb-2" style="font-weight: 700;">
+            <span style="color: var(--staff-primary);">#@Model.Ticket.Id</span>
             @Model.Ticket.Title
         </h1>
-        <div class="d-flex gap-2 align-items-center">
-            <span class="badge @GetStatusBadgeClass(Model.Ticket.Status)">@Model.Ticket.StatusLabel</span>
-            <span class="badge @GetPriorityBadgeClass(Model.Ticket.Priority)">@Model.Ticket.PriorityLabel</span>
+        <div class="d-flex gap-2 align-items-center flex-wrap">
+            <span class="staff-badge @GetStatusBadgeClass(Model.Ticket.Status)">@Model.Ticket.StatusLabel</span>
+            <span class="staff-badge @GetPriorityBadgeClass(Model.Ticket.Priority)">@Model.Ticket.PriorityLabel</span>
             @if (!string.IsNullOrEmpty(Model.Ticket.Category))
             {
-                <span class="badge bg-light text-dark">@Model.Ticket.Category</span>
+                <span class="staff-badge staff-badge-secondary">@Model.Ticket.Category</span>
             }
         </div>
     </div>
@@ -25,124 +34,137 @@
         @if (Model.CanManageTickets)
         {
             <a asp-page="@RouteNames.Tickets.Edit" asp-route-id="@Model.Ticket.Id" class="btn btn-outline-primary">
-                <i class="bi bi-pencil me-1"></i> Edit
+                <i class="bi bi-pencil me-2"></i>Edit
             </a>
         }
-        <a asp-page="@RouteNames.Tickets.Index" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Back
-        </a>
     </div>
 </div>
 
 <div class="row">
     <!-- Main Content -->
-    <div class="col-md-8">
+    <div class="col-lg-8">
         <!-- Description -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Description</h5>
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-file-text me-2"></i>Description</h5>
             </div>
-            <div class="card-body">
+            <div class="staff-card-body">
                 @if (!string.IsNullOrEmpty(Model.Ticket.Description))
                 {
-                    <p class="mb-0" style="white-space: pre-wrap;">@Model.Ticket.Description</p>
+                    <p class="mb-0" style="white-space: pre-wrap; line-height: 1.7;">@Model.Ticket.Description</p>
                 }
                 else
                 {
-                    <p class="text-muted mb-0">No description provided.</p>
+                    <p class="text-muted mb-0 fst-italic">No description provided.</p>
                 }
             </div>
         </div>
 
         <!-- Comments -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Comments (@Model.Comments.Count())</h5>
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-chat-left-text me-2"></i>Comments (@Model.Comments.Count())</h5>
             </div>
-            <div class="card-body">
+            <div class="staff-card-body">
                 @if (!Model.Comments.Any())
                 {
-                    <p class="text-muted">No comments yet.</p>
+                    <p class="text-muted fst-italic">No comments yet. Be the first to add one.</p>
                 }
                 @foreach (var comment in Model.Comments)
                 {
-                    <div class="border-bottom pb-3 mb-3">
+                    <div class="border-bottom pb-4 mb-4">
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <strong>@comment.AuthorStaffName</strong>
-                                <small class="text-muted ms-2">
-                                    @comment.CreationTime.ToString("MMM dd, yyyy HH:mm")
-                                </small>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                                    style="width: 36px; height: 36px; background: var(--staff-primary); font-size: 0.875rem;">
+                                    @(comment.AuthorStaffName?.FirstOrDefault().ToString().ToUpper() ?? "?")
+                                </div>
+                                <div>
+                                    <span class="fw-semibold">@comment.AuthorStaffName</span>
+                                    <span class="text-muted small ms-2">
+                                        @comment.CreationTime.ToString("MMM dd, yyyy 'at' HH:mm")
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                        <p class="mb-0" style="white-space: pre-wrap;">@comment.Body</p>
+                        <p class="mb-0 ms-5" style="white-space: pre-wrap;">@comment.Body</p>
                     </div>
                 }
 
-                <form method="post" asp-page-handler="AddComment" asp-route-id="@Model.Ticket.Id" class="mt-3">
+                <form method="post" asp-page-handler="AddComment" asp-route-id="@Model.Ticket.Id" class="mt-4">
                     <div class="mb-3">
-                        <label asp-for="CommentForm.Body" class="form-label">Add a comment</label>
-                        <textarea asp-for="CommentForm.Body" class="form-control" rows="3" 
-                                  placeholder="Write your comment..."></textarea>
-                        <span asp-validation-for="CommentForm.Body" class="text-danger"></span>
+                        <label asp-for="CommentForm.Body" class="form-label fw-medium">Add a comment</label>
+                        <textarea asp-for="CommentForm.Body" class="form-control" rows="3"
+                            placeholder="Write your comment..."></textarea>
+                        <span asp-validation-for="CommentForm.Body" class="text-danger small"></span>
                     </div>
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-chat-left-text me-1"></i> Add Comment
+                        <i class="bi bi-send me-2"></i>Add Comment
                     </button>
                 </form>
             </div>
         </div>
 
-        <!-- Change Log -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Activity Log (@Model.ChangeLog.Count())</h5>
+        <!-- Activity Log -->
+        <div class="staff-card">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-clock-history me-2"></i>Activity Log (@Model.ChangeLog.Count())</h5>
             </div>
-            <div class="card-body">
+            <div class="staff-card-body p-0">
                 @if (!Model.ChangeLog.Any())
                 {
-                    <p class="text-muted">No activity recorded.</p>
+                    <p class="text-muted p-4 mb-0">No activity recorded.</p>
                 }
-                <ul class="list-unstyled mb-0">
-                    @foreach (var entry in Model.ChangeLog)
-                    {
-                        <li class="border-bottom pb-2 mb-2">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <strong>@(entry.ActorStaffName ?? "System")</strong>
-                                    <span class="text-muted">@entry.Message</span>
+                else
+                {
+                    <div class="timeline-list">
+                        @foreach (var entry in Model.ChangeLog)
+                        {
+                            <div class="d-flex gap-3 p-3 border-bottom">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                    style="width: 32px; height: 32px; background: #f1f5f9;">
+                                    <i class="bi bi-activity text-muted small"></i>
                                 </div>
-                                <small class="text-muted">
-                                    @entry.CreationTime.ToString("MMM dd, yyyy HH:mm")
-                                </small>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <p class="mb-0">
+                                            <span class="fw-medium">@(entry.ActorStaffName ?? "System")</span>
+                                            <span class="text-muted">@entry.Message</span>
+                                        </p>
+                                        <small class="text-muted flex-shrink-0 ms-3">
+                                            @entry.CreationTime.ToString("MMM dd, HH:mm")
+                                        </small>
+                                    </div>
+                                </div>
                             </div>
-                        </li>
-                    }
-                </ul>
+                        }
+                    </div>
+                }
             </div>
         </div>
     </div>
 
     <!-- Sidebar -->
-    <div class="col-md-4">
-        <!-- Ticket Info -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Details</h5>
+    <div class="col-lg-4">
+        <!-- Ticket Details -->
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-info-circle me-2"></i>Details</h5>
             </div>
-            <div class="card-body">
+            <div class="staff-card-body">
                 <dl class="row mb-0">
-                    <dt class="col-5">Assignee</dt>
-                    <dd class="col-7">@(Model.Ticket.AssigneeName ?? "Unassigned")</dd>
+                    <dt class="col-5 text-muted fw-medium">Assignee</dt>
+                    <dd class="col-7 fw-medium">@(Model.Ticket.AssigneeName ?? "Unassigned")</dd>
 
-                    <dt class="col-5">Team</dt>
+                    <dt class="col-5 text-muted fw-medium">Team</dt>
                     <dd class="col-7">@(Model.Ticket.OwningTeamName ?? "—")</dd>
 
-                    <dt class="col-5">Contact</dt>
+                    <dt class="col-5 text-muted fw-medium">Contact</dt>
                     <dd class="col-7">
                         @if (Model.Ticket.ContactId.HasValue)
                         {
-                            <a asp-area="Staff" asp-page="@RouteNames.Contacts.Details" asp-route-id="@Model.Ticket.ContactId">
+                            <a asp-area="Staff" asp-page="@RouteNames.Contacts.Details"
+                                asp-route-id="@Model.Ticket.ContactId" style="color: var(--staff-primary);">
                                 @Model.Ticket.ContactName
                             </a>
                         }
@@ -152,22 +174,22 @@
                         }
                     </dd>
 
-                    <dt class="col-5">Created by</dt>
+                    <dt class="col-5 text-muted fw-medium">Created by</dt>
                     <dd class="col-7">@(Model.Ticket.CreatedByStaffName ?? "—")</dd>
 
-                    <dt class="col-5">Created</dt>
-                    <dd class="col-7">@Model.Ticket.CreationTime.ToString("MMM dd, yyyy HH:mm")</dd>
+                    <dt class="col-5 text-muted fw-medium">Created</dt>
+                    <dd class="col-7 small">@Model.Ticket.CreationTime.ToString("MMM dd, yyyy HH:mm")</dd>
 
                     @if (Model.Ticket.ResolvedAt.HasValue)
                     {
-                        <dt class="col-5">Resolved</dt>
-                        <dd class="col-7">@Model.Ticket.ResolvedAt.Value.ToString("MMM dd, yyyy HH:mm")</dd>
+                        <dt class="col-5 text-muted fw-medium">Resolved</dt>
+                        <dd class="col-7 small">@Model.Ticket.ResolvedAt.Value.ToString("MMM dd, yyyy HH:mm")</dd>
                     }
 
                     @if (Model.Ticket.ClosedAt.HasValue)
                     {
-                        <dt class="col-5">Closed</dt>
-                        <dd class="col-7">@Model.Ticket.ClosedAt.Value.ToString("MMM dd, yyyy HH:mm")</dd>
+                        <dt class="col-5 text-muted fw-medium">Closed</dt>
+                        <dd class="col-7 small">@Model.Ticket.ClosedAt.Value.ToString("MMM dd, yyyy HH:mm")</dd>
                     }
                 </dl>
             </div>
@@ -176,23 +198,23 @@
         <!-- SLA Info -->
         @if (Model.Ticket.SlaRuleId.HasValue)
         {
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">SLA</h5>
+            <div class="staff-card mb-4">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-hourglass-split me-2"></i>SLA</h5>
                 </div>
-                <div class="card-body">
+                <div class="staff-card-body">
                     <dl class="row mb-0">
-                        <dt class="col-5">Rule</dt>
+                        <dt class="col-5 text-muted fw-medium">Rule</dt>
                         <dd class="col-7">@Model.Ticket.SlaRuleName</dd>
 
-                        <dt class="col-5">Due</dt>
+                        <dt class="col-5 text-muted fw-medium">Due</dt>
                         <dd class="col-7 @GetSlaDueClass(Model.Ticket.SlaStatus)">
                             @Model.Ticket.SlaDueAt?.ToString("MMM dd, yyyy HH:mm")
                         </dd>
 
-                        <dt class="col-5">Status</dt>
+                        <dt class="col-5 text-muted fw-medium">Status</dt>
                         <dd class="col-7">
-                            <span class="badge @GetSlaBadgeClass(Model.Ticket.SlaStatus)">
+                            <span class="staff-badge @GetSlaBadgeClass(Model.Ticket.SlaStatus)">
                                 @Model.Ticket.SlaStatusLabel
                             </span>
                         </dd>
@@ -204,15 +226,15 @@
         <!-- Tags -->
         @if (Model.Ticket.Tags.Any())
         {
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Tags</h5>
+            <div class="staff-card">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-tags me-2"></i>Tags</h5>
                 </div>
-                <div class="card-body">
-                    <div class="d-flex flex-wrap gap-1">
+                <div class="staff-card-body">
+                    <div class="d-flex flex-wrap gap-2">
                         @foreach (var tag in Model.Ticket.Tags)
                         {
-                            <span class="badge bg-light text-dark border">@tag</span>
+                            <span class="staff-badge staff-badge-secondary">@tag</span>
                         }
                     </div>
                 </div>
@@ -224,30 +246,30 @@
 @functions {
     string GetStatusBadgeClass(string status) => status switch
     {
-        "open" => "bg-primary",
-        "in_progress" => "bg-info",
-        "pending" => "bg-warning text-dark",
-        "resolved" => "bg-success",
-        "closed" => "bg-secondary",
-        _ => "bg-light text-dark"
+        "open" => "staff-badge-primary",
+        "in_progress" => "staff-badge-primary",
+        "pending" => "staff-badge-warning",
+        "resolved" => "staff-badge-success",
+        "closed" => "staff-badge-secondary",
+        _ => "staff-badge-secondary"
     };
 
     string GetPriorityBadgeClass(string priority) => priority switch
     {
-        "urgent" => "bg-danger",
-        "high" => "bg-warning text-dark",
-        "normal" => "bg-info",
-        "low" => "bg-light text-dark",
-        _ => "bg-light text-dark"
+        "urgent" => "staff-badge-danger",
+        "high" => "staff-badge-warning",
+        "normal" => "staff-badge-primary",
+        "low" => "staff-badge-secondary",
+        _ => "staff-badge-secondary"
     };
 
     string GetSlaBadgeClass(string? slaStatus) => slaStatus switch
     {
-        "breached" => "bg-danger",
-        "approaching_breach" => "bg-warning text-dark",
-        "on_track" => "bg-success",
-        "completed" => "bg-secondary",
-        _ => "bg-light text-dark"
+        "breached" => "staff-badge-danger",
+        "approaching_breach" => "staff-badge-warning",
+        "on_track" => "staff-badge-success",
+        "completed" => "staff-badge-secondary",
+        _ => "staff-badge-secondary"
     };
 
     string GetSlaDueClass(string? slaStatus) => slaStatus switch
@@ -257,4 +279,3 @@
         _ => ""
     };
 }
-

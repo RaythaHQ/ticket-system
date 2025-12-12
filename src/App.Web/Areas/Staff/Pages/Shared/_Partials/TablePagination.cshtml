@@ -1,0 +1,57 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model App.Web.Areas.Shared.Models.IPaginationViewModel
+
+@{
+    Layout = null;
+}
+
+@if (Model.TotalPages > 0)
+{
+    <nav aria-label="page navigation" class="d-flex justify-content-between align-items-center py-3 px-3 border-top">
+        <p class="mb-0 text-muted small">
+            @if (Model.TotalCount == 1)
+            {
+                @:@Model.TotalCount result
+            }
+            else
+            {
+                @:@Model.TotalCount results
+            }
+        </p>
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item @Model.PreviousDisabledCss">
+                <a asp-area="Staff" asp-page="@Model.PageName" asp-route-search="@Model.Search" asp-route-orderBy="@Model.OrderByAsString"
+                    asp-route-pageNumber="@(Model.PageNumber - 1)" asp-route-pageSize="@Model.PageSize" class="page-link">
+                    <i class="bi bi-chevron-double-left"></i>
+                </a>
+            </li>
+
+            @if (Model.FirstVisiblePageNumber > 1)
+            {
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            }
+
+            @for (var i = Model.FirstVisiblePageNumber; i <= Model.LastVisiblePageNumber; i++)
+            {
+                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                    <a asp-area="Staff" asp-page="@Model.PageName" asp-route-search="@Model.Search" asp-route-orderBy="@Model.OrderByAsString"
+                        asp-route-pageNumber="@i" asp-route-pageSize="@Model.PageSize" class="page-link">
+                        @i
+                    </a>
+                </li>
+            }
+
+            @if (Model.LastVisiblePageNumber < Model.TotalPages)
+            {
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            }
+
+            <li class="page-item @Model.NextDisabledCss">
+                <a asp-area="Staff" asp-page="@Model.PageName" asp-route-search="@Model.Search" asp-route-orderBy="@Model.OrderByAsString"
+                    asp-route-pageNumber="@(Model.PageNumber + 1)" asp-route-pageSize="@Model.PageSize" class="page-link">
+                    <i class="bi bi-chevron-double-right"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+}

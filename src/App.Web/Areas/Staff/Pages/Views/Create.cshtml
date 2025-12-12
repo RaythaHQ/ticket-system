@@ -1,23 +1,25 @@
 @page "/staff/views/create"
 @model App.Web.Areas.Staff.Pages.Views.Create
+@using App.Web.Areas.Staff.Pages.Shared.Models
 
 @{
     ViewData["Title"] = "Create View";
     ViewData["ActiveMenu"] = "Views";
+
+    var back = new BackLinkOptions
+    {
+        Page = RouteNames.Views.Index,
+        Text = "Back to Views"
+    };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Create Custom View</h1>
-    <a asp-area="Staff" asp-page="@RouteNames.Views.Index" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Back
-    </a>
-</div>
+<partial name="_Partials/PageHeading" model='"Create Custom View"' />
 
 <form method="post">
     @if (!ViewData.ModelState.IsValid)
     {
         <div class="alert alert-danger">
-            <strong>Please fix the following errors:</strong>
+            <strong><i class="bi bi-exclamation-triangle me-2"></i>Please fix the following errors:</strong>
             <ul class="mb-0 mt-2">
                 @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
                 {
@@ -26,37 +28,42 @@
             </ul>
         </div>
     }
-    
-    
+
     <div class="row">
-        <div class="col-md-8">
-            <!-- Basic Info -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">View Details</h5>
+        <div class="col-lg-8">
+            <!-- View Details -->
+            <div class="staff-card mb-4">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-info-circle me-2"></i>View Details</h5>
                 </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label asp-for="Form.Name" class="form-label">View Name *</label>
-                        <input asp-for="Form.Name" class="form-control" placeholder="e.g., My Open Tickets" />
-                        <span asp-validation-for="Form.Name" class="text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="Form.Description" class="form-label">Description</label>
-                        <textarea asp-for="Form.Description" class="form-control" rows="2" 
-                                  placeholder="Optional description for this view"></textarea>
+                <div class="staff-card-body">
+                    @(await Html.PartialAsync("_Partials/BackToList", back))
+
+                    <div class="mt-4">
+                        <div class="mb-4">
+                            <label asp-for="Form.Name" class="form-label">
+                                View Name <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Form.Name" class="form-control" placeholder="e.g., My Open Tickets" />
+                            <span asp-validation-for="Form.Name" class="text-danger small"></span>
+                        </div>
+                        <div class="mb-0">
+                            <label asp-for="Form.Description" class="form-label">Description</label>
+                            <textarea asp-for="Form.Description" class="form-control" rows="2"
+                                placeholder="Optional description for this view"></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Filters -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Filters</h5>
+            <div class="staff-card mb-4">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-funnel me-2"></i>Filters</h5>
                 </div>
-                <div class="card-body">
-                    <p class="text-muted mb-3">Define which tickets should appear in this view.</p>
-                    
+                <div class="staff-card-body">
+                    <p class="text-muted small mb-4">Define which tickets should appear in this view.</p>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="Form.StatusFilter" class="form-label">Status</label>
@@ -115,11 +122,11 @@
             </div>
 
             <!-- Sorting -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Sorting</h5>
+            <div class="staff-card mb-4">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-sort-down me-2"></i>Sorting</h5>
                 </div>
-                <div class="card-body">
+                <div class="staff-card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="Form.SortField" class="form-label">Sort By</label>
@@ -134,7 +141,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Direction</label>
-                            <div class="form-check">
+                            <div class="form-check mt-2">
                                 <input asp-for="Form.SortDescending" class="form-check-input" type="checkbox" />
                                 <label asp-for="Form.SortDescending" class="form-check-label">
                                     Descending (newest first)
@@ -146,21 +153,19 @@
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-lg-4">
             <!-- Columns -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Visible Columns</h5>
+            <div class="staff-card mb-4">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-layout-three-columns me-2"></i>Visible Columns</h5>
                 </div>
-                <div class="card-body">
-                    <p class="text-muted small mb-3">Select which columns to display. Search will only match visible columns.</p>
+                <div class="staff-card-body">
+                    <p class="text-muted small mb-3">Select which columns to display.</p>
                     @foreach (var col in Model.AvailableColumns)
                     {
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" 
-                                   name="SelectedColumnNames" value="@col.Name"
-                                   id="col_@col.Name"
-                                   @(col.Selected ? "checked" : "") />
+                            <input class="form-check-input" type="checkbox" name="SelectedColumnNames"
+                                value="@col.Name" id="col_@col.Name" @(col.Selected ? "checked" : "") />
                             <label class="form-check-label" for="col_@col.Name">
                                 @col.Label
                             </label>
@@ -171,12 +176,11 @@
 
             <!-- Submit -->
             <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="bi bi-check-lg me-1"></i> Create View
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="bi bi-check-lg me-2"></i>Create View
                 </button>
                 <a asp-area="Staff" asp-page="@RouteNames.Views.Index" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </div>
     </div>
 </form>
-

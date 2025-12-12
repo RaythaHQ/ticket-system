@@ -212,6 +212,28 @@ Wherever there is ambiguity, the rules below clarify expectations.
   and Save buttons as `<button type="submit" class="btn btn-success mt-4">Save changes</button>`
   at the end of the form (no Cancel button, no icons). This ensures visual and
   functional consistency across all Admin area pages.
+- **Staff Area UI Pattern**: The Staff area uses a modern, professional design with
+  brand colors (primary: `rgb(0, 157, 220)`, secondary: `#FED65A`). All Staff pages
+  MUST use the established layout patterns:
+  - **Layout**: Fixed sidebar with gradient background (`#0a1929` to `#0d2137`),
+    sticky top bar with breadcrumbs, and padded content area. The layout uses
+    CSS custom properties (e.g., `--staff-primary`, `--staff-border`) for consistency.
+  - **Cards**: Use `.staff-card` with `.staff-card-header` and `.staff-card-body`
+    classes. Cards have subtle shadows and rounded corners (12px).
+  - **Tables**: Use `.staff-table` class with uppercase header styling and hover states.
+  - **Badges**: Use `.staff-badge` with modifiers (`.staff-badge-primary`, `.staff-badge-success`,
+    `.staff-badge-warning`, `.staff-badge-danger`, `.staff-badge-secondary`).
+  - **Stat Cards**: Dashboard metrics use `.staff-stat-card` with color variants
+    (`.primary`, `.success`, `.warning`, `.secondary`) and accent bars at the top.
+  - **Page Headings**: Use `<partial name="_Partials/PageHeading" model="title" />`
+    or `.staff-page-heading` class for flex layout with action buttons.
+  - **Back Links**: Use `@(await Html.PartialAsync("_Partials/BackToList", back))`
+    with `BackLinkOptions` for navigation.
+  - **Forms**: Forms use `.staff-card` containers, `.btn-success` for primary submit
+    buttons, and `.btn-outline-secondary` for cancel actions.
+  - **Partials**: Staff area has its own partials in `_Partials/` including
+    `PageHeading.cshtml`, `BackToList.cshtml`, `TableCreateAndSearchBar.cshtml`,
+    and `TablePagination.cshtml`.
 
 When in doubt, follow existing well-structured examples in the codebase using
 these standards.
@@ -270,4 +292,4 @@ layering, and non‑negotiable engineering standards in the App boilerplate.
 - When conflicts arise between older docs and this constitution, this
   constitution prevails.
 
-**Version**: 1.4.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-12
+**Version**: 1.5.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-12

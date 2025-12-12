@@ -1,169 +1,192 @@
 @page "/staff/contacts/{id:long}"
 @model App.Web.Areas.Staff.Pages.Contacts.Details
+@using App.Web.Areas.Staff.Pages.Shared.Models
 
 @{
     ViewData["Title"] = $"Contact #{Model.Contact.Id}";
     ViewData["ActiveMenu"] = "Contacts";
+
+    var back = new BackLinkOptions
+    {
+        Page = RouteNames.Contacts.Index,
+        Text = "Back to Contacts"
+    };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
     <div>
-        <h1 class="h3 mb-1">
-            <span class="text-muted">#@Model.Contact.Id</span>
+        @(await Html.PartialAsync("_Partials/BackToList", back))
+        <h1 class="h3 mb-2" style="font-weight: 700;">
+            <span style="color: var(--staff-primary);">#@Model.Contact.Id</span>
             @Model.Contact.Name
         </h1>
     </div>
     <div class="d-flex gap-2">
         <a asp-page="@RouteNames.Contacts.Edit" asp-route-id="@Model.Contact.Id" class="btn btn-outline-primary">
-            <i class="bi bi-pencil me-1"></i> Edit
-        </a>
-        <a asp-page="@RouteNames.Contacts.Index" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Back
+            <i class="bi bi-pencil me-2"></i>Edit
         </a>
     </div>
 </div>
 
 <div class="row">
     <!-- Main Content -->
-    <div class="col-md-8">
+    <div class="col-lg-8">
         <!-- Associated Tickets -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Tickets (@Model.Tickets.Count())</h5>
-                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Create" asp-route-contactId="@Model.Contact.Id" 
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-ticket-detailed me-2"></i>Tickets (@Model.Tickets.Count())</h5>
+                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Create" asp-route-contactId="@Model.Contact.Id"
                    class="btn btn-sm btn-primary">
-                    <i class="bi bi-plus me-1"></i> New Ticket
+                    <i class="bi bi-plus me-1"></i>New Ticket
                 </a>
             </div>
-            <div class="card-body p-0">
-                @if (!Model.Tickets.Any())
-                {
-                    <p class="text-muted text-center py-4">No tickets for this contact.</p>
-                }
-                else
-                {
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
+            @if (!Model.Tickets.Any())
+            {
+                <div class="staff-card-body text-center py-5 text-muted">
+                    <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="mt-2 mb-0">No tickets for this contact.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table staff-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ticket in Model.Tickets)
+                            {
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Title</th>
-                                    <th>Status</th>
-                                    <th>Priority</th>
-                                    <th>Created</th>
+                                    <td>
+                                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
+                                           style="color: var(--staff-primary);">
+                                            #@ticket.Id
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
+                                           class="text-dark text-decoration-none">
+                                            @(ticket.Title.Length > 40 ? ticket.Title.Substring(0, 37) + "..." : ticket.Title)
+                                        </a>
+                                    </td>
+                                    <td><span class="staff-badge @GetStatusBadgeClass(ticket.Status)">@ticket.StatusLabel</span></td>
+                                    <td><span class="staff-badge @GetPriorityBadgeClass(ticket.Priority)">@ticket.PriorityLabel</span></td>
+                                    <td class="text-muted small">@ticket.CreationTime.ToString("MMM dd, yyyy")</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var ticket in Model.Tickets)
-                                {
-                                    <tr>
-                                        <td>
-                                            <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id">
-                                                #@ticket.Id
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id">
-                                                @(ticket.Title.Length > 40 ? ticket.Title.Substring(0, 37) + "..." : ticket.Title)
-                                            </a>
-                                        </td>
-                                        <td><span class="badge @GetStatusBadgeClass(ticket.Status)">@ticket.StatusLabel</span></td>
-                                        <td><span class="badge @GetPriorityBadgeClass(ticket.Priority)">@ticket.PriorityLabel</span></td>
-                                        <td>@ticket.CreationTime.ToString("MMM dd, yyyy")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            </div>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
 
-        <!-- Comments -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Notes (@Model.Comments.Count())</h5>
+        <!-- Notes -->
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-sticky me-2"></i>Notes (@Model.Comments.Count())</h5>
             </div>
-            <div class="card-body">
+            <div class="staff-card-body">
                 @if (Model.Comments.Any())
                 {
                     @foreach (var comment in Model.Comments)
                     {
-                        <div class="border-bottom pb-3 mb-3">
+                        <div class="border-bottom pb-4 mb-4">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div>
-                                    <strong>@comment.AuthorStaffName</strong>
-                                    <small class="text-muted ms-2">
-                                        @comment.CreationTime.ToString("MMM dd, yyyy HH:mm")
-                                    </small>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                                         style="width: 36px; height: 36px; background: var(--staff-secondary); color: #1e293b; font-size: 0.875rem;">
+                                        @(comment.AuthorStaffName?.FirstOrDefault().ToString().ToUpper() ?? "?")
+                                    </div>
+                                    <div>
+                                        <span class="fw-semibold">@comment.AuthorStaffName</span>
+                                        <span class="text-muted small ms-2">
+                                            @comment.CreationTime.ToString("MMM dd, yyyy 'at' HH:mm")
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <p class="mb-0" style="white-space: pre-wrap;">@comment.Body</p>
+                            <p class="mb-0 ms-5" style="white-space: pre-wrap;">@comment.Body</p>
                         </div>
                     }
                 }
 
                 <form method="post" asp-page-handler="AddComment" asp-route-id="@Model.Contact.Id" class="mt-3">
                     <div class="mb-3">
-                        <label class="form-label">Add a note</label>
-                        <textarea asp-for="CommentForm.Body" class="form-control" rows="3" 
+                        <label class="form-label fw-medium">Add a note</label>
+                        <textarea asp-for="CommentForm.Body" class="form-control" rows="3"
                                   placeholder="Add a note about this contact..."></textarea>
-                        <span asp-validation-for="CommentForm.Body" class="text-danger"></span>
+                        <span asp-validation-for="CommentForm.Body" class="text-danger small"></span>
                     </div>
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-plus me-1"></i> Add Note
+                        <i class="bi bi-plus me-2"></i>Add Note
                     </button>
                 </form>
             </div>
         </div>
 
-        <!-- Change Log -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Activity Log (@Model.ChangeLog.Count())</h5>
+        <!-- Activity Log -->
+        <div class="staff-card">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-clock-history me-2"></i>Activity Log (@Model.ChangeLog.Count())</h5>
             </div>
-            <div class="card-body">
+            <div class="staff-card-body p-0">
                 @if (!Model.ChangeLog.Any())
                 {
-                    <p class="text-muted">No activity recorded.</p>
+                    <p class="text-muted p-4 mb-0 fst-italic">No activity recorded.</p>
                 }
                 else
                 {
-                    <ul class="list-unstyled mb-0">
+                    <div class="timeline-list">
                         @foreach (var entry in Model.ChangeLog)
                         {
-                            <li class="border-bottom pb-2 mb-2">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <strong>@(entry.ActorStaffName ?? "System")</strong>
-                                        <span class="text-muted">@entry.Message</span>
-                                    </div>
-                                    <small class="text-muted">
-                                        @entry.CreationTime.ToString("MMM dd, yyyy HH:mm")
-                                    </small>
+                            <div class="d-flex gap-3 p-3 border-bottom">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                     style="width: 32px; height: 32px; background: #f1f5f9;">
+                                    <i class="bi bi-activity text-muted small"></i>
                                 </div>
-                            </li>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <p class="mb-0">
+                                            <span class="fw-medium">@(entry.ActorStaffName ?? "System")</span>
+                                            <span class="text-muted">@entry.Message</span>
+                                        </p>
+                                        <small class="text-muted flex-shrink-0 ms-3">
+                                            @entry.CreationTime.ToString("MMM dd, HH:mm")
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
                         }
-                    </ul>
+                    </div>
                 }
             </div>
         </div>
     </div>
 
     <!-- Sidebar -->
-    <div class="col-md-4">
+    <div class="col-lg-4">
         <!-- Contact Info -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Contact Information</h5>
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-person-vcard me-2"></i>Contact Information</h5>
             </div>
-            <div class="card-body">
+            <div class="staff-card-body">
                 <dl class="row mb-0">
-                    <dt class="col-4">Email</dt>
+                    <dt class="col-4 text-muted fw-medium">Email</dt>
                     <dd class="col-8">
                         @if (!string.IsNullOrEmpty(Model.Contact.Email))
                         {
-                            <a href="mailto:@Model.Contact.Email">@Model.Contact.Email</a>
+                            <a href="mailto:@Model.Contact.Email" style="color: var(--staff-primary);">
+                                @Model.Contact.Email
+                            </a>
                         }
                         else
                         {
@@ -171,13 +194,15 @@
                         }
                     </dd>
 
-                    <dt class="col-4">Phone</dt>
+                    <dt class="col-4 text-muted fw-medium">Phone</dt>
                     <dd class="col-8">
                         @if (Model.Contact.PhoneNumbers.Any())
                         {
                             @foreach (var phone in Model.Contact.PhoneNumbers)
                             {
-                                <div><a href="tel:@phone">@phone</a></div>
+                                <div>
+                                    <a href="tel:@phone" style="color: var(--staff-primary);">@phone</a>
+                                </div>
                             }
                         }
                         else
@@ -186,29 +211,29 @@
                         }
                     </dd>
 
-                    <dt class="col-4">Address</dt>
+                    <dt class="col-4 text-muted fw-medium">Address</dt>
                     <dd class="col-8" style="white-space: pre-wrap;">@(Model.Contact.Address ?? "—")</dd>
 
-                    <dt class="col-4">Organization</dt>
+                    <dt class="col-4 text-muted fw-medium">Organization</dt>
                     <dd class="col-8">@(Model.Contact.OrganizationAccount ?? "—")</dd>
 
-                    <dt class="col-4">Created</dt>
-                    <dd class="col-8">@Model.Contact.CreationTime.ToString("MMM dd, yyyy HH:mm")</dd>
+                    <dt class="col-4 text-muted fw-medium">Created</dt>
+                    <dd class="col-8 small">@Model.Contact.CreationTime.ToString("MMM dd, yyyy HH:mm")</dd>
                 </dl>
             </div>
         </div>
 
         @if (Model.Contact.DmeIdentifiers.Any())
         {
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">DME Identifiers</h5>
+            <div class="staff-card">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-card-list me-2"></i>DME Identifiers</h5>
                 </div>
-                <div class="card-body">
+                <div class="staff-card-body">
                     <dl class="row mb-0">
                         @foreach (var kvp in Model.Contact.DmeIdentifiers)
                         {
-                            <dt class="col-5">@kvp.Key</dt>
+                            <dt class="col-5 text-muted fw-medium">@kvp.Key</dt>
                             <dd class="col-7">@kvp.Value</dd>
                         }
                     </dl>
@@ -221,21 +246,20 @@
 @functions {
     string GetStatusBadgeClass(string status) => status switch
     {
-        "open" => "bg-primary",
-        "in_progress" => "bg-info",
-        "pending" => "bg-warning text-dark",
-        "resolved" => "bg-success",
-        "closed" => "bg-secondary",
-        _ => "bg-light text-dark"
+        "open" => "staff-badge-primary",
+        "in_progress" => "staff-badge-primary",
+        "pending" => "staff-badge-warning",
+        "resolved" => "staff-badge-success",
+        "closed" => "staff-badge-secondary",
+        _ => "staff-badge-secondary"
     };
 
     string GetPriorityBadgeClass(string priority) => priority switch
     {
-        "urgent" => "bg-danger",
-        "high" => "bg-warning text-dark",
-        "normal" => "bg-info",
-        "low" => "bg-light text-dark",
-        _ => "bg-light text-dark"
+        "urgent" => "staff-badge-danger",
+        "high" => "staff-badge-warning",
+        "normal" => "staff-badge-primary",
+        "low" => "staff-badge-secondary",
+        _ => "staff-badge-secondary"
     };
 }
-

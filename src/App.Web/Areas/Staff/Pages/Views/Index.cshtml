@@ -1,70 +1,73 @@
 @page "/staff/views"
 @model App.Web.Areas.Staff.Pages.Views.Index
+@using App.Web.Areas.Staff.Pages.Shared.Models
 
 @{
     ViewData["Title"] = "Manage Views";
     ViewData["ActiveMenu"] = "Views";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="staff-page-heading mb-4">
     <h1 class="h3 mb-0">Manage Views</h1>
     <a asp-area="Staff" asp-page="@RouteNames.Views.Create" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-1"></i> Create View
+        <i class="bi bi-plus-lg me-2"></i>Create View
     </a>
 </div>
 
 <!-- My Custom Views -->
-<div class="card mb-4">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-person me-2"></i>My Views</h5>
+<div class="staff-card mb-4">
+    <div class="staff-card-header">
+        <h5><i class="bi bi-person me-2"></i>My Views</h5>
     </div>
-    <div class="card-body p-0">
+    @if (!Model.MyViews.Any())
+    {
+        <div class="staff-card-body text-center py-5 text-muted">
+            <i class="bi bi-layout-text-window" style="font-size: 3rem; opacity: 0.5;"></i>
+            <p class="mt-3 mb-2 fw-medium">You haven't created any custom views yet.</p>
+            <a asp-area="Staff" asp-page="@RouteNames.Views.Create" class="btn btn-primary btn-sm mt-2">
+                <i class="bi bi-plus me-1"></i>Create your first view
+            </a>
+        </div>
+    }
+    else
+    {
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
+            <table class="table staff-table mb-0">
+                <thead>
                     <tr>
                         <th>Name</th>
                         <th>Filters</th>
                         <th>Columns</th>
                         <th>Created</th>
-                        <th></th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (!Model.MyViews.Any())
-                    {
-                        <tr>
-                            <td colspan="5" class="text-center py-4 text-muted">
-                                <i class="bi bi-grid fs-1 d-block mb-2"></i>
-                                You haven't created any custom views yet.
-                                <br>
-                                <a asp-area="Staff" asp-page="@RouteNames.Views.Create" class="btn btn-primary btn-sm mt-2">Create your first view</a>
-                            </td>
-                        </tr>
-                    }
                     @foreach (var view in Model.MyViews)
                     {
                         <tr>
                             <td>
-                                <a asp-area="Staff" asp-page="/Tickets/Index" asp-route-viewId="@view.Id" class="fw-semibold">
+                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@view.Id"
+                                    class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
                                     @view.Name
                                 </a>
                             </td>
                             <td>
-                                <span class="badge bg-light text-dark">@view.FilterCount filters</span>
+                                <span class="staff-badge staff-badge-secondary">@view.FilterCount filters</span>
                             </td>
                             <td>
-                                <span class="badge bg-light text-dark">@view.ColumnCount columns</span>
+                                <span class="staff-badge staff-badge-secondary">@view.ColumnCount columns</span>
                             </td>
-                            <td>@view.CreationTime.ToString("MMM dd, yyyy")</td>
-                            <td>
+                            <td class="text-muted small">@view.CreationTime.ToString("MMM dd, yyyy")</td>
+                            <td class="text-end">
                                 <div class="btn-group btn-group-sm">
-                                    <a asp-area="Staff" asp-page="@RouteNames.Views.Edit" asp-route-id="@view.Id" class="btn btn-outline-secondary">
+                                    <a asp-area="Staff" asp-page="@RouteNames.Views.Edit" asp-route-id="@view.Id"
+                                        class="btn btn-outline-secondary">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form method="post" asp-page-handler="Delete" asp-route-viewId="@view.Id" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-danger" 
-                                                onclick="return confirm('Delete this view?')">
+                                        <button type="submit" class="btn btn-outline-danger"
+                                            onclick="return confirm('Delete this view?')">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
@@ -75,22 +78,29 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    }
 </div>
 
 <!-- System Views -->
-<div class="card">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-gear me-2"></i>System Views</h5>
+<div class="staff-card">
+    <div class="staff-card-header">
+        <h5><i class="bi bi-gear me-2"></i>System Views</h5>
     </div>
-    <div class="card-body p-0">
+    @if (!Model.SystemViews.Any())
+    {
+        <div class="staff-card-body text-center py-4 text-muted">
+            No system views available.
+        </div>
+    }
+    else
+    {
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
+            <table class="table staff-table mb-0">
+                <thead>
                     <tr>
                         <th>Name</th>
                         <th>Description</th>
-                        <th></th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -98,29 +108,22 @@
                     {
                         <tr>
                             <td>
-                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@view.Id" class="fw-semibold">
-                                    <i class="bi bi-lock me-1 text-muted"></i>@view.Name
+                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@view.Id"
+                                    class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
+                                    <i class="bi bi-lock me-1 small text-muted"></i>@view.Name
                                 </a>
                             </td>
                             <td class="text-muted">@view.Description</td>
-                            <td>
-                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@view.Id" class="btn btn-sm btn-outline-primary">
+                            <td class="text-end">
+                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@view.Id"
+                                    class="btn btn-sm btn-outline-primary">
                                     Use View
                                 </a>
-                            </td>
-                        </tr>
-                    }
-                    @if (!Model.SystemViews.Any())
-                    {
-                        <tr>
-                            <td colspan="3" class="text-center py-4 text-muted">
-                                No system views available.
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-    </div>
+    }
 </div>
-

@@ -1,62 +1,69 @@
 @page "/staff/contacts/create"
 @model App.Web.Areas.Staff.Pages.Contacts.Create
+@using App.Web.Areas.Staff.Pages.Shared.Models
 
 @{
     ViewData["Title"] = "Create Contact";
     ViewData["ActiveMenu"] = "Contacts";
+
+    var back = new BackLinkOptions
+    {
+        Page = RouteNames.Contacts.Index,
+        Text = "Back to Contacts"
+    };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Create Contact</h1>
-    <a asp-page="./Index" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i> Back to List
-    </a>
-</div>
+<partial name="_Partials/PageHeading" model='"Create Contact"' />
 
 <div class="row">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <form method="post">
-                    <div class="mb-3">
-                        <label asp-for="Form.Name" class="form-label">Name <span class="text-danger">*</span></label>
+    <div class="col-xl-7 col-lg-8">
+        <div class="staff-card">
+            <div class="staff-card-body">
+                @(await Html.PartialAsync("_Partials/BackToList", back))
+
+                <form method="post" class="mt-4">
+                    <div class="mb-4">
+                        <label asp-for="Form.Name" class="form-label">
+                            Name <span class="text-danger">*</span>
+                        </label>
                         <input asp-for="Form.Name" class="form-control" placeholder="Full name" />
-                        <span asp-validation-for="Form.Name" class="text-danger"></span>
+                        <span asp-validation-for="Form.Name" class="text-danger small"></span>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label asp-for="Form.Email" class="form-label">Email</label>
                         <input asp-for="Form.Email" type="email" class="form-control" placeholder="email@example.com" />
-                        <span asp-validation-for="Form.Email" class="text-danger"></span>
+                        <span asp-validation-for="Form.Email" class="text-danger small"></span>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label asp-for="Form.PhoneNumbers" class="form-label">Phone Numbers</label>
-                        <textarea asp-for="Form.PhoneNumbers" class="form-control" rows="3" 
-                                  placeholder="One phone number per line&#10;(555) 123-4567&#10;+1 555-987-6543"></textarea>
-                        <span asp-validation-for="Form.PhoneNumbers" class="text-danger"></span>
-                        <small class="text-muted">Enter one phone number per line. Any format is accepted.</small>
+                        <textarea asp-for="Form.PhoneNumbers" class="form-control" rows="3"
+                            placeholder="One phone number per line&#10;(555) 123-4567&#10;+1 555-987-6543"></textarea>
+                        <span asp-validation-for="Form.PhoneNumbers" class="text-danger small"></span>
+                        <small class="text-muted d-block mt-1">Enter one phone number per line. Any format is
+                            accepted.</small>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label asp-for="Form.Address" class="form-label">Address</label>
-                        <textarea asp-for="Form.Address" class="form-control" rows="2" 
-                                  placeholder="Street address, city, state, zip"></textarea>
-                        <span asp-validation-for="Form.Address" class="text-danger"></span>
+                        <textarea asp-for="Form.Address" class="form-control" rows="2"
+                            placeholder="Street address, city, state, zip"></textarea>
+                        <span asp-validation-for="Form.Address" class="text-danger small"></span>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label asp-for="Form.OrganizationAccount" class="form-label">Organization / Account</label>
-                        <input asp-for="Form.OrganizationAccount" class="form-control" 
-                               placeholder="Company or organization name" />
-                        <span asp-validation-for="Form.OrganizationAccount" class="text-danger"></span>
+                        <input asp-for="Form.OrganizationAccount" class="form-control"
+                            placeholder="Company or organization name" />
+                        <span asp-validation-for="Form.OrganizationAccount" class="text-danger small"></span>
                     </div>
 
                     <hr class="my-4" />
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-check-lg me-1"></i> Create Contact
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg me-2"></i>Create Contact
                         </button>
                         <a asp-page="@RouteNames.Contacts.Index" class="btn btn-outline-secondary">Cancel</a>
                     </div>
@@ -65,4 +72,3 @@
         </div>
     </div>
 </div>
-

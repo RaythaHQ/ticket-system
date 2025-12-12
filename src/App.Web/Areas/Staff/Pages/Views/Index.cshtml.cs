@@ -21,20 +21,20 @@ public class Index : BaseStaffPageModel
             return RedirectToPage(RouteNames.Error.Index);
 
         var response = await Mediator.Send(new GetTicketViews.Query(), cancellationToken);
-        
+
         var allViews = response.Result;
         SystemViews = allViews.Where(v => v.IsSystemView);
-        MyViews = allViews.Where(v => !v.IsSystemView && v.OwnerUserId == userId.Value);
+        MyViews = allViews.Where(v => !v.IsSystemView && v.OwnerStaffId?.Guid == userId.Value);
 
         return Page();
     }
 
     public async Task<IActionResult> OnPostDelete(Guid viewId, CancellationToken cancellationToken)
     {
-        var response = await Mediator.Send(new App.Application.TicketViews.Commands.DeleteTicketView.Command
-        {
-            Id = viewId
-        }, cancellationToken);
+        var response = await Mediator.Send(
+            new App.Application.TicketViews.Commands.DeleteTicketView.Command { Id = viewId },
+            cancellationToken
+        );
 
         if (response.Success)
         {
@@ -48,4 +48,3 @@ public class Index : BaseStaffPageModel
         return RedirectToPage();
     }
 }
-

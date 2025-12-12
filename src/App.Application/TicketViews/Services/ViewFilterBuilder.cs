@@ -39,14 +39,22 @@ public class ViewFilterBuilder
             "createdbystaffid" => ApplyGuidFilter(query, filter, t => t.CreatedByStaffId),
             "contactid" => ApplyLongFilter(query, filter, t => t.ContactId),
             "creationtime" => ApplyDateFilter(query, filter, t => t.CreationTime),
-            "lastmodificationtime" => ApplyNullableDateFilter(query, filter, t => t.LastModificationTime),
+            "lastmodificationtime" => ApplyNullableDateFilter(
+                query,
+                filter,
+                t => t.LastModificationTime
+            ),
             "resolvedat" => ApplyNullableDateFilter(query, filter, t => t.ResolvedAt),
             "closedat" => ApplyNullableDateFilter(query, filter, t => t.ClosedAt),
-            _ => query
+            _ => query,
         };
     }
 
-    private IQueryable<Ticket> ApplyStringValueFilter(IQueryable<Ticket> query, ViewFilterCondition filter, System.Linq.Expressions.Expression<Func<Ticket, string>> fieldSelector)
+    private IQueryable<Ticket> ApplyStringValueFilter(
+        IQueryable<Ticket> query,
+        ViewFilterCondition filter,
+        System.Linq.Expressions.Expression<Func<Ticket, string>> fieldSelector
+    )
     {
         if (filter.Operator == "equals" && !string.IsNullOrEmpty(filter.Value))
         {
@@ -66,7 +74,11 @@ public class ViewFilterBuilder
         return query;
     }
 
-    private IQueryable<Ticket> ApplyStringFilter(IQueryable<Ticket> query, ViewFilterCondition filter, System.Linq.Expressions.Expression<Func<Ticket, string?>> fieldSelector)
+    private IQueryable<Ticket> ApplyStringFilter(
+        IQueryable<Ticket> query,
+        ViewFilterCondition filter,
+        System.Linq.Expressions.Expression<Func<Ticket, string?>> fieldSelector
+    )
     {
         var field = fieldSelector.Compile();
         if (filter.Operator == "equals" && !string.IsNullOrEmpty(filter.Value))
@@ -100,14 +112,19 @@ public class ViewFilterBuilder
         return query;
     }
 
-    private IQueryable<Ticket> ApplyGuidFilter(IQueryable<Ticket> query, ViewFilterCondition filter, System.Linq.Expressions.Expression<Func<Ticket, Guid?>> fieldSelector)
+    private IQueryable<Ticket> ApplyGuidFilter(
+        IQueryable<Ticket> query,
+        ViewFilterCondition filter,
+        System.Linq.Expressions.Expression<Func<Ticket, Guid?>> fieldSelector
+    )
     {
         var field = fieldSelector.Compile();
         if (filter.Operator == "equals" && !string.IsNullOrEmpty(filter.Value))
         {
             // Try parsing as ShortGuid first (preferred), then fall back to Guid
             Guid? guid = null;
-            if (ShortGuid.TryParse(filter.Value, out var shortGuid))
+            ShortGuid shortGuid;
+            if (ShortGuid.TryParse(filter.Value, out shortGuid))
             {
                 guid = shortGuid.Guid;
             }
@@ -115,7 +132,7 @@ public class ViewFilterBuilder
             {
                 guid = parsedGuid;
             }
-            
+
             if (guid.HasValue)
             {
                 return query.Where(t => field(t) == guid);
@@ -132,10 +149,18 @@ public class ViewFilterBuilder
         return query;
     }
 
-    private IQueryable<Ticket> ApplyLongFilter(IQueryable<Ticket> query, ViewFilterCondition filter, System.Linq.Expressions.Expression<Func<Ticket, long?>> fieldSelector)
+    private IQueryable<Ticket> ApplyLongFilter(
+        IQueryable<Ticket> query,
+        ViewFilterCondition filter,
+        System.Linq.Expressions.Expression<Func<Ticket, long?>> fieldSelector
+    )
     {
         var field = fieldSelector.Compile();
-        if (filter.Operator == "equals" && !string.IsNullOrEmpty(filter.Value) && long.TryParse(filter.Value, out var id))
+        if (
+            filter.Operator == "equals"
+            && !string.IsNullOrEmpty(filter.Value)
+            && long.TryParse(filter.Value, out var id)
+        )
         {
             return query.Where(t => field(t) == id);
         }
@@ -150,7 +175,11 @@ public class ViewFilterBuilder
         return query;
     }
 
-    private IQueryable<Ticket> ApplyDateFilter(IQueryable<Ticket> query, ViewFilterCondition filter, System.Linq.Expressions.Expression<Func<Ticket, DateTime>> fieldSelector)
+    private IQueryable<Ticket> ApplyDateFilter(
+        IQueryable<Ticket> query,
+        ViewFilterCondition filter,
+        System.Linq.Expressions.Expression<Func<Ticket, DateTime>> fieldSelector
+    )
     {
         var field = fieldSelector.Compile();
         if (!string.IsNullOrEmpty(filter.Value) && DateTime.TryParse(filter.Value, out var date))
@@ -162,13 +191,17 @@ public class ViewFilterBuilder
                 "lt" => query.Where(t => field(t) < date),
                 "lte" => query.Where(t => field(t) <= date),
                 "equals" => query.Where(t => field(t).Date == date.Date),
-                _ => query
+                _ => query,
             };
         }
         return query;
     }
 
-    private IQueryable<Ticket> ApplyNullableDateFilter(IQueryable<Ticket> query, ViewFilterCondition filter, System.Linq.Expressions.Expression<Func<Ticket, DateTime?>> fieldSelector)
+    private IQueryable<Ticket> ApplyNullableDateFilter(
+        IQueryable<Ticket> query,
+        ViewFilterCondition filter,
+        System.Linq.Expressions.Expression<Func<Ticket, DateTime?>> fieldSelector
+    )
     {
         var field = fieldSelector.Compile();
         if (filter.Operator == "isnull")
@@ -179,7 +212,9 @@ public class ViewFilterBuilder
         {
             return query.Where(t => field(t) != null);
         }
-        else if (!string.IsNullOrEmpty(filter.Value) && DateTime.TryParse(filter.Value, out var date))
+        else if (
+            !string.IsNullOrEmpty(filter.Value) && DateTime.TryParse(filter.Value, out var date)
+        )
         {
             return filter.Operator switch
             {
@@ -187,8 +222,10 @@ public class ViewFilterBuilder
                 "gte" => query.Where(t => field(t) >= date),
                 "lt" => query.Where(t => field(t) < date),
                 "lte" => query.Where(t => field(t) <= date),
-                "equals" => query.Where(t => field(t).HasValue && field(t)!.Value.Date == date.Date),
-                _ => query
+                "equals" => query.Where(t =>
+                    field(t).HasValue && field(t)!.Value.Date == date.Date
+                ),
+                _ => query,
             };
         }
         return query;
@@ -197,7 +234,11 @@ public class ViewFilterBuilder
     /// <summary>
     /// Apply column-limited search to query. Search only searches fields that are visible in the view.
     /// </summary>
-    public IQueryable<Ticket> ApplyColumnSearch(IQueryable<Ticket> query, string? searchTerm, List<string> visibleColumns)
+    public IQueryable<Ticket> ApplyColumnSearch(
+        IQueryable<Ticket> query,
+        string? searchTerm,
+        List<string> visibleColumns
+    )
     {
         if (string.IsNullOrWhiteSpace(searchTerm) || !visibleColumns.Any())
             return query;
@@ -207,15 +248,35 @@ public class ViewFilterBuilder
 
         // Build search based on visible columns only
         return query.Where(t =>
-            (normalizedColumns.Contains("title") && t.Title.ToLower().Contains(term)) ||
-            (normalizedColumns.Contains("description") && t.Description != null && t.Description.ToLower().Contains(term)) ||
-            (normalizedColumns.Contains("category") && t.Category != null && t.Category.ToLower().Contains(term)) ||
-            (normalizedColumns.Contains("status") && t.Status.ToLower().Contains(term)) ||
-            (normalizedColumns.Contains("priority") && t.Priority.ToLower().Contains(term)) ||
-            (normalizedColumns.Contains("id") && t.Id.ToString().Contains(term)) ||
-            (normalizedColumns.Contains("contactname") && t.Contact != null && t.Contact.Name.ToLower().Contains(term)) ||
-            (normalizedColumns.Contains("assigneename") && t.Assignee != null && (t.Assignee.FirstName + " " + t.Assignee.LastName).ToLower().Contains(term)) ||
-            (normalizedColumns.Contains("teamname") && t.OwningTeam != null && t.OwningTeam.Name.ToLower().Contains(term))
+            (normalizedColumns.Contains("title") && t.Title.ToLower().Contains(term))
+            || (
+                normalizedColumns.Contains("description")
+                && t.Description != null
+                && t.Description.ToLower().Contains(term)
+            )
+            || (
+                normalizedColumns.Contains("category")
+                && t.Category != null
+                && t.Category.ToLower().Contains(term)
+            )
+            || (normalizedColumns.Contains("status") && t.Status.ToLower().Contains(term))
+            || (normalizedColumns.Contains("priority") && t.Priority.ToLower().Contains(term))
+            || (normalizedColumns.Contains("id") && t.Id.ToString().Contains(term))
+            || (
+                normalizedColumns.Contains("contactname")
+                && t.Contact != null
+                && t.Contact.Name.ToLower().Contains(term)
+            )
+            || (
+                normalizedColumns.Contains("assigneename")
+                && t.Assignee != null
+                && (t.Assignee.FirstName + " " + t.Assignee.LastName).ToLower().Contains(term)
+            )
+            || (
+                normalizedColumns.Contains("teamname")
+                && t.OwningTeam != null
+                && t.OwningTeam.Name.ToLower().Contains(term)
+            )
         );
     }
 }
