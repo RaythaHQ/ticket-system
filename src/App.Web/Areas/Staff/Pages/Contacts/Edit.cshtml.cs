@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using App.Application.Contacts;
 using App.Application.Contacts.Commands;
 using App.Application.Contacts.Queries;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 
 namespace App.Web.Areas.Staff.Pages.Contacts;
@@ -61,7 +62,7 @@ public class Edit : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage("Contact updated successfully.");
-            return RedirectToPage("./Details", new { id = Form.Id });
+            return RedirectToPage(RouteNames.Contacts.Details, new { id = Form.Id });
         }
 
         SetErrorMessage(response.GetErrors());

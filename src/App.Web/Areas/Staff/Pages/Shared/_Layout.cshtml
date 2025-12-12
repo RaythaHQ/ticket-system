@@ -56,19 +56,19 @@
                     <h5 class="text-white mb-0">Staff Portal</h5>
                 </div>
                 <nav class="p-3 flex-grow-1">
-                    <a asp-area="Staff" asp-page="/Dashboard/Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Dashboard" ? "active" : "")">
+                    <a asp-area="Staff" asp-page="@RouteNames.Dashboard.Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Dashboard" ? "active" : "")">
                         <i class="bi bi-house-door"></i>
                         <span>Dashboard</span>
                     </a>
-                    <a asp-area="Staff" asp-page="/Tickets/Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Tickets" ? "active" : "")">
+                    <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Tickets" ? "active" : "")">
                         <i class="bi bi-ticket-detailed"></i>
                         <span>Tickets</span>
                     </a>
-                    <a asp-area="Staff" asp-page="/Views/Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Views" ? "active" : "")">
+                    <a asp-area="Staff" asp-page="@RouteNames.Views.Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Views" ? "active" : "")">
                         <i class="bi bi-grid"></i>
                         <span>Views</span>
                     </a>
-                    <a asp-area="Staff" asp-page="/Contacts/Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Contacts" ? "active" : "")">
+                    <a asp-area="Staff" asp-page="@RouteNames.Contacts.Index" class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Contacts" ? "active" : "")">
                         <i class="bi bi-people"></i>
                         <span>Contacts</span>
                     </a>

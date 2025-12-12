@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using App.Application.Tickets.Commands;
 using App.Domain.ValueObjects;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -58,7 +59,7 @@ public class Create : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage($"Ticket #{response.Result} created successfully.");
-            return RedirectToPage("./Details", new { id = response.Result });
+            return RedirectToPage(RouteNames.Tickets.Details, new { id = response.Result });
         }
 
         SetErrorMessage(response.GetErrors());

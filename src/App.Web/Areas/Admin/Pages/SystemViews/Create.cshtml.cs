@@ -6,6 +6,7 @@ using App.Application.TicketViews.Commands;
 using App.Application.Teams.Queries;
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
+using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using CSharpVitamins;
 
@@ -117,7 +118,7 @@ public class Create : BaseAdminPageModel
         if (response.Success)
         {
             SetSuccessMessage("System view created successfully.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.SystemViews.Index);
         }
 
         SetErrorMessage(response.GetErrors());

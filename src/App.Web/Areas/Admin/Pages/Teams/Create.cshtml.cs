@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Interfaces;
 using App.Application.Teams.Commands;
+using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 
 namespace App.Web.Areas.Admin.Pages.Teams;
@@ -49,7 +50,7 @@ public class Create : BaseAdminPageModel
         if (response.Success)
         {
             SetSuccessMessage($"Team '{Form.Name}' created successfully.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.Teams.Index);
         }
 
         SetErrorMessage(response.GetErrors());

@@ -2,9 +2,9 @@
 
 <nav class="nav nav-pills nav-fill mb-4">
     <a class="nav-link @(ViewData["ActiveSubMenu"]?.ToString() == "AllTickets" ? "active" : "")" 
-       asp-area="Staff" asp-page="/Tickets/Index">All Tickets</a>
+       asp-area="Staff" asp-page="@RouteNames.Tickets.Index">All Tickets</a>
     <a class="nav-link @(ViewData["ActiveSubMenu"]?.ToString() == "MyTickets" ? "active" : "")" 
-       asp-area="Staff" asp-page="/Tickets/Index" asp-route-view="my-tickets">My Tickets</a>
+       asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-view="my-tickets">My Tickets</a>
     <a class="nav-link @(ViewData["ActiveSubMenu"]?.ToString() == "Unassigned" ? "active" : "")" 
-       asp-area="Staff" asp-page="/Tickets/Index" asp-route-view="unassigned">Unassigned</a>
+       asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-view="unassigned">Unassigned</a>
 </nav>

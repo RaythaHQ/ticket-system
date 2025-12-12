@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using App.Application.Teams.Queries;
 using App.Application.TicketViews.Commands;
 using App.Domain.ValueObjects;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -43,7 +44,7 @@ public class Create : BaseStaffPageModel
 
         var userId = CurrentUser.UserId?.Guid;
         if (!userId.HasValue)
-            return RedirectToPage("/Error");
+            return RedirectToPage(RouteNames.Error.Index);
 
         // Get columns from form directly (model binding for List<string> can be unreliable)
         var formColumns = Request.Form["SelectedColumnNames"];
@@ -124,7 +125,7 @@ public class Create : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage("View created successfully.");
-            return RedirectToPage("/Views/Index");
+            return RedirectToPage(RouteNames.Views.Index);
         }
 
         SetErrorMessage(response.GetErrors());

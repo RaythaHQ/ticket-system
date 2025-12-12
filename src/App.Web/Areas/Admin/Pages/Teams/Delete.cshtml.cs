@@ -3,6 +3,7 @@ using App.Application.Common.Interfaces;
 using App.Application.Teams;
 using App.Application.Teams.Commands;
 using App.Application.Teams.Queries;
+using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 
 namespace App.Web.Areas.Admin.Pages.Teams;
@@ -44,7 +45,7 @@ public class Delete : BaseAdminPageModel
         if (response.Success)
         {
             SetSuccessMessage("Team deleted successfully.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.Teams.Index);
         }
 
         SetErrorMessage(response.GetErrors());

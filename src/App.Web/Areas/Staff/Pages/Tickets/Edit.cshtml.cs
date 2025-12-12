@@ -4,6 +4,7 @@ using App.Application.Tickets;
 using App.Application.Tickets.Commands;
 using App.Application.Tickets.Queries;
 using App.Domain.ValueObjects;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -85,7 +86,7 @@ public class Edit : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage("Ticket updated successfully.");
-            return RedirectToPage("./Details", new { id = Form.Id });
+            return RedirectToPage(RouteNames.Tickets.Details, new { id = Form.Id });
         }
 
         SetErrorMessage(response.GetErrors());
@@ -107,7 +108,7 @@ public class Edit : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage("./Details", new { id });
+        return RedirectToPage(RouteNames.Tickets.Details, new { id });
     }
 
     public async Task<IActionResult> OnPostClose(long id, CancellationToken cancellationToken)
@@ -124,7 +125,7 @@ public class Edit : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage("./Details", new { id });
+        return RedirectToPage(RouteNames.Tickets.Details, new { id });
     }
 
     public async Task<IActionResult> OnPostReopen(long id, CancellationToken cancellationToken)
@@ -141,7 +142,7 @@ public class Edit : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage("./Details", new { id });
+        return RedirectToPage(RouteNames.Tickets.Details, new { id });
     }
 
     private async Task LoadSelectListsAsync(CancellationToken cancellationToken)

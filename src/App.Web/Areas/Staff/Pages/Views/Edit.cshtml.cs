@@ -3,6 +3,7 @@ using App.Application.Teams.Queries;
 using App.Application.TicketViews.Commands;
 using App.Application.TicketViews.Queries;
 using App.Domain.ValueObjects;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using CSharpVitamins;
 using Microsoft.AspNetCore.Mvc;
@@ -31,7 +32,7 @@ public class Edit : BaseStaffPageModel
         if (!response.Success || response.Result == null)
         {
             SetErrorMessage("View not found.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.Views.Index);
         }
 
         var view = response.Result;
@@ -41,7 +42,7 @@ public class Edit : BaseStaffPageModel
         if (view.OwnerUserId != userId)
         {
             SetErrorMessage("You can only edit your own views.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.Views.Index);
         }
 
         await LoadOptionsAsync(cancellationToken);
@@ -103,7 +104,7 @@ public class Edit : BaseStaffPageModel
 
         var userId = CurrentUser.UserId?.Guid;
         if (!userId.HasValue)
-            return RedirectToPage("/Error");
+            return RedirectToPage(RouteNames.Error.Index);
 
         // Build filters
         var filters = new List<UpdateTicketView.FilterCondition>();
@@ -175,7 +176,7 @@ public class Edit : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage("View updated successfully.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.Views.Index);
         }
 
         SetErrorMessage(response.GetErrors());

@@ -14,10 +14,10 @@
         </h1>
     </div>
     <div class="d-flex gap-2">
-        <a asp-page="./Edit" asp-route-id="@Model.Contact.Id" class="btn btn-outline-primary">
+        <a asp-page="@RouteNames.Contacts.Edit" asp-route-id="@Model.Contact.Id" class="btn btn-outline-primary">
             <i class="bi bi-pencil me-1"></i> Edit
         </a>
-        <a asp-page="./Index" class="btn btn-outline-secondary">
+        <a asp-page="@RouteNames.Contacts.Index" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back
         </a>
     </div>
@@ -30,7 +30,7 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Tickets (@Model.Tickets.Count())</h5>
-                <a asp-area="Staff" asp-page="/Tickets/Create" asp-route-contactId="@Model.Contact.Id" 
+                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Create" asp-route-contactId="@Model.Contact.Id" 
                    class="btn btn-sm btn-primary">
                     <i class="bi bi-plus me-1"></i> New Ticket
                 </a>
@@ -58,12 +58,12 @@
                                 {
                                     <tr>
                                         <td>
-                                            <a asp-area="Staff" asp-page="/Tickets/Details" asp-route-id="@ticket.Id">
+                                            <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id">
                                                 #@ticket.Id
                                             </a>
                                         </td>
                                         <td>
-                                            <a asp-area="Staff" asp-page="/Tickets/Details" asp-route-id="@ticket.Id">
+                                            <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id">
                                                 @(ticket.Title.Length > 40 ? ticket.Title.Substring(0, 37) + "..." : ticket.Title)
                                             </a>
                                         </td>

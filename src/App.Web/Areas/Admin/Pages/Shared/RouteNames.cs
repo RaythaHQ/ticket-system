@@ -331,4 +331,52 @@ public static class RouteNames
         public const string ForgotPasswordComplete = "/Login/ForgotPasswordComplete";
         public const string Logout = "/Login/Logout";
     }
+
+    /// <summary>
+    /// Route constants for team management pages.
+    /// </summary>
+    public static class Teams
+    {
+        public const string Index = "/Teams/Index";
+        public const string Create = "/Teams/Create";
+        public const string Edit = "/Teams/Edit";
+        public const string Delete = "/Teams/Delete";
+
+        /// <summary>
+        /// Route constants for team member management pages.
+        /// </summary>
+        public static class Members
+        {
+            public const string Index = "/Teams/Members/Index";
+        }
+    }
+
+    /// <summary>
+    /// Route constants for SLA rule management pages.
+    /// </summary>
+    public static class SlaRules
+    {
+        public const string Index = "/SlaRules/Index";
+        public const string Create = "/SlaRules/Create";
+        public const string Edit = "/SlaRules/Edit";
+    }
+
+    /// <summary>
+    /// Route constants for system view management pages.
+    /// </summary>
+    public static class SystemViews
+    {
+        public const string Index = "/SystemViews/Index";
+        public const string Create = "/SystemViews/Create";
+        public const string Edit = "/SystemViews/Edit";
+    }
+
+    /// <summary>
+    /// Route constants for report pages.
+    /// </summary>
+    public static class Reports
+    {
+        public const string Index = "/Reports/Index";
+        public const string TeamReport = "/Reports/TeamReport";
+    }
 }

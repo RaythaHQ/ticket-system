@@ -171,6 +171,14 @@ Wherever there is ambiguity, the rules below clarify expectations.
   commands are Priority 1 for testing; query handlers, DTO mappings, and
   utilities are Priority 2; Razor Pages and full flows are nice-to-have but
   encouraged as the project matures.
+- **Route Constants**: All Razor Page route references MUST use the centralized
+  `RouteNames` class constants instead of hardcoded strings. Each area (Admin,
+  Public, Staff) MUST have a `RouteNames.cs` file under
+  `Areas/{Area}/Pages/Shared/` containing nested static classes that group route
+  constants by feature. This eliminates magic strings, provides compile-time
+  safety, and ensures route consistency. Hardcoded route strings in
+  `RedirectToPage()`, `asp-page`, or similar attributes are prohibited except
+  for error pages or special cases explicitly documented.
 
 When in doubt, follow existing well-structured examples in the codebase using
 these standards.
@@ -229,4 +237,4 @@ layering, and non‑negotiable engineering standards in the App boilerplate.
 - When conflicts arise between older docs and this constitution, this
   constitution prevails.
 
-**Version**: 1.0.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-09
+**Version**: 1.1.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-12

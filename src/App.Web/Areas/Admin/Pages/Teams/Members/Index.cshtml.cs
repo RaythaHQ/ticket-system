@@ -3,6 +3,7 @@ using App.Application.Common.Interfaces;
 using App.Application.Teams;
 using App.Application.Teams.Commands;
 using App.Application.Teams.Queries;
+using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using CSharpVitamins;
 using Microsoft.EntityFrameworkCore;
@@ -75,7 +76,7 @@ public class Index : BaseAdminPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage("./Index", new { teamId });
+        return RedirectToPage(RouteNames.Teams.Members.Index, new { teamId });
     }
 
     public async Task<IActionResult> OnPostRemoveMember(string teamId, string membershipId, CancellationToken cancellationToken)
@@ -96,7 +97,7 @@ public class Index : BaseAdminPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage("./Index", new { teamId });
+        return RedirectToPage(RouteNames.Teams.Members.Index, new { teamId });
     }
 
     public async Task<IActionResult> OnPostToggleAssignable(string teamId, string membershipId, bool isAssignable, CancellationToken cancellationToken)
@@ -117,7 +118,7 @@ public class Index : BaseAdminPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage("./Index", new { teamId });
+        return RedirectToPage(RouteNames.Teams.Members.Index, new { teamId });
     }
 
     private async Task LoadAvailableUsersAsync(string teamId, CancellationToken cancellationToken)

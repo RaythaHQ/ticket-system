@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using App.Application.Tickets;
 using App.Application.Tickets.Commands;
 using App.Application.Tickets.Queries;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 
 namespace App.Web.Areas.Staff.Pages.Tickets;
@@ -65,7 +66,7 @@ public class Details : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage("./Details", new { id });
+        return RedirectToPage(RouteNames.Tickets.Details, new { id });
     }
 
     public record AddCommentViewModel

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Interfaces;
 using App.Application.SlaRules;
 using App.Application.SlaRules.Commands;
+using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 
 namespace App.Web.Areas.Admin.Pages.SlaRules;
@@ -78,7 +79,7 @@ public class Create : BaseAdminPageModel
         if (response.Success)
         {
             SetSuccessMessage($"SLA rule '{Form.Name}' created successfully.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.SlaRules.Index);
         }
 
         SetErrorMessage(response.GetErrors());

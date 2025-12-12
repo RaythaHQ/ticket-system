@@ -10,7 +10,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0">System Views</h1>
-    <a asp-page="./Create" class="btn btn-primary">
+    <a asp-page="@RouteNames.SystemViews.Create" class="btn btn-primary">
         <i class="bi bi-plus-lg me-1"></i> New System View
     </a>
 </div>
@@ -60,7 +60,7 @@
                                 <i class="bi bi-eye fs-1 d-block mb-2"></i>
                                 No system views found
                                 <br>
-                                <a asp-page="./Create" class="btn btn-primary btn-sm mt-2">Create your first system view</a>
+                                <a asp-page="@RouteNames.SystemViews.Create" class="btn btn-primary btn-sm mt-2">Create your first system view</a>
                             </td>
                         </tr>
                     }
@@ -68,7 +68,7 @@
                     {
                         <tr>
                             <td>
-                                <a asp-page="./Edit" asp-route-id="@view.Id" class="fw-semibold">
+                                <a asp-page="@RouteNames.SystemViews.Edit" asp-route-id="@view.Id" class="fw-semibold">
                                     @view.Name
                                 </a>
                                 <br>
@@ -89,7 +89,7 @@
                             <td>@view.CreationTime</td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <a asp-page="./Edit" asp-route-id="@view.Id" class="btn btn-outline-secondary">
+                                    <a asp-page="@RouteNames.SystemViews.Edit" asp-route-id="@view.Id" class="btn btn-outline-secondary">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form method="post" asp-page-handler="Delete" asp-route-viewId="@view.Id" class="d-inline">

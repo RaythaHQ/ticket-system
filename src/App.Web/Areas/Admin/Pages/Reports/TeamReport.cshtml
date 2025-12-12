@@ -10,13 +10,13 @@
     <div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a asp-page="./Index">Reports</a></li>
+                <li class="breadcrumb-item"><a asp-page="@RouteNames.Reports.Index">Reports</a></li>
                 <li class="breadcrumb-item active">@Model.Report.TeamName</li>
             </ol>
         </nav>
         <h1 class="h3 mb-0">Team Report: @Model.Report.TeamName</h1>
     </div>
-    <a asp-page="./Index" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">
+    <a asp-page="@RouteNames.Reports.Index" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i> Back to Reports
     </a>
 </div>

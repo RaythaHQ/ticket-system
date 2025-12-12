@@ -13,7 +13,7 @@
         <h1 class="h3 mb-1">Team Members</h1>
         <p class="text-muted mb-0">@Model.Team.Name</p>
     </div>
-    <a asp-page="../Edit" asp-route-id="@Model.Team.Id" class="btn btn-outline-secondary">
+    <a asp-page="@RouteNames.Teams.Edit" asp-route-id="@Model.Team.Id" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i> Back to Team
     </a>
 </div>

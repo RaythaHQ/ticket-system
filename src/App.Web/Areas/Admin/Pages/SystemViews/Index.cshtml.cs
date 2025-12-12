@@ -5,6 +5,7 @@ using App.Application.TicketViews;
 using App.Application.TicketViews.Queries;
 using App.Application.TicketViews.Commands;
 using App.Domain.Entities;
+using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
 using CSharpVitamins;
@@ -71,7 +72,7 @@ public class Index : BaseAdminPageModel, IHasListView<Index.SystemViewListItemVi
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage("./Index");
+        return RedirectToPage(RouteNames.SystemViews.Index);
     }
 
     public record SystemViewListItemViewModel

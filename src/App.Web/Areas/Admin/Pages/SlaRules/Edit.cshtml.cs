@@ -4,6 +4,7 @@ using App.Application.Common.Interfaces;
 using App.Application.SlaRules;
 using App.Application.SlaRules.Commands;
 using App.Application.SlaRules.Queries;
+using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 
 namespace App.Web.Areas.Admin.Pages.SlaRules;
@@ -105,7 +106,7 @@ public class Edit : BaseAdminPageModel
         if (response.Success)
         {
             SetSuccessMessage("SLA rule updated successfully.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.SlaRules.Index);
         }
 
         SetErrorMessage(response.GetErrors());
@@ -123,7 +124,7 @@ public class Edit : BaseAdminPageModel
         if (response.Success)
         {
             SetSuccessMessage("SLA rule deleted successfully.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.SlaRules.Index);
         }
 
         SetErrorMessage(response.GetErrors());

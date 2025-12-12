@@ -12,7 +12,7 @@
     <h1 class="h3 mb-0">SLA Rules</h1>
     @if (Model.CanManageTickets)
     {
-        <a asp-page="./Create" class="btn btn-primary">
+        <a asp-page="@RouteNames.SlaRules.Create" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> New SLA Rule
         </a>
     }
@@ -68,7 +68,7 @@
                                 <span class="badge bg-info">@rule.Priority</span>
                             </td>
                             <td>
-                                <a asp-page="./Edit" asp-route-id="@rule.Id" class="fw-semibold">
+                                <a asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@rule.Id" class="fw-semibold">
                                     @rule.Name
                                 </a>
                                 <br>
@@ -100,7 +100,7 @@
                                 @if (Model.CanManageTickets)
                                 {
                                     <div class="btn-group btn-group-sm">
-                                        <a asp-page="./Edit" asp-route-id="@rule.Id" class="btn btn-outline-secondary">
+                                        <a asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@rule.Id" class="btn btn-outline-secondary">
                                             Edit
                                         </a>
                                     </div>

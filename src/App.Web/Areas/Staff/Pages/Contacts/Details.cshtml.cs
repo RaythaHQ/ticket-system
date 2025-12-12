@@ -4,6 +4,7 @@ using App.Application.Contacts;
 using App.Application.Contacts.Commands;
 using App.Application.Contacts.Queries;
 using App.Application.Tickets;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 
 namespace App.Web.Areas.Staff.Pages.Contacts;
@@ -66,7 +67,7 @@ public class Details : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage("./Details", new { id });
+        return RedirectToPage(RouteNames.Contacts.Details, new { id });
     }
 
     public record AddCommentViewModel

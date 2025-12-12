@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using App.Application.Contacts.Commands;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 
 namespace App.Web.Areas.Staff.Pages.Contacts;
@@ -42,7 +43,7 @@ public class Create : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage($"Contact #{response.Result} created successfully.");
-            return RedirectToPage("./Details", new { id = response.Result });
+            return RedirectToPage(RouteNames.Contacts.Details, new { id = response.Result });
         }
 
         SetErrorMessage(response.GetErrors());

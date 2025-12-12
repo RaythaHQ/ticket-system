@@ -10,6 +10,7 @@ using App.Application.TicketViews.Commands;
 using App.Application.Teams.Queries;
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
+using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using CSharpVitamins;
 
@@ -43,14 +44,14 @@ public class Edit : BaseAdminPageModel
         if (!response.Success || response.Result == null)
         {
             SetErrorMessage("System view not found.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.SystemViews.Index);
         }
 
         var view = response.Result;
         if (!view.IsSystem)
         {
             SetErrorMessage("This is not a system view.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.SystemViews.Index);
         }
 
         Form = new EditViewForm
@@ -183,7 +184,7 @@ public class Edit : BaseAdminPageModel
         if (response.Success)
         {
             SetSuccessMessage("System view updated successfully.");
-            return RedirectToPage("./Index");
+            return RedirectToPage(RouteNames.SystemViews.Index);
         }
 
         SetErrorMessage(response.GetErrors());

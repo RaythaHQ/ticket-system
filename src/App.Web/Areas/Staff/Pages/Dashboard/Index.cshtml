@@ -161,7 +161,7 @@
                                     </span>
                                 </td>
                                 <td class="text-end">
-                                    <a asp-page="/Tickets/Index" asp-route-teamId="@team.TeamId" class="btn btn-sm btn-outline-primary">
+                                    <a asp-page="@RouteNames.Tickets.Index" asp-route-teamId="@team.TeamId" class="btn btn-sm btn-outline-primary">
                                         View Tickets
                                     </a>
                                 </td>
@@ -182,22 +182,22 @@
     <div class="card-body">
         <div class="row">
             <div class="col-md-3">
-                <a asp-page="/Tickets/Create" class="btn btn-primary w-100">
+                <a asp-page="@RouteNames.Tickets.Create" class="btn btn-primary w-100">
                     <i class="bi bi-plus-circle me-2"></i> Create Ticket
                 </a>
             </div>
             <div class="col-md-3">
-                <a asp-page="/Tickets/Index" asp-route-assigneeId="@Model.UserId" class="btn btn-outline-primary w-100">
+                <a asp-page="@RouteNames.Tickets.Index" asp-route-assigneeId="@Model.UserId" class="btn btn-outline-primary w-100">
                     <i class="bi bi-person me-2"></i> My Tickets
                 </a>
             </div>
             <div class="col-md-3">
-                <a asp-page="/Contacts/Index" class="btn btn-outline-secondary w-100">
+                <a asp-page="@RouteNames.Contacts.Index" class="btn btn-outline-secondary w-100">
                     <i class="bi bi-people me-2"></i> Contacts
                 </a>
             </div>
             <div class="col-md-3">
-                <a asp-page="/Tickets/Index" class="btn btn-outline-secondary w-100">
+                <a asp-page="@RouteNames.Tickets.Index" class="btn btn-outline-secondary w-100">
                     <i class="bi bi-list-task me-2"></i> All Tickets
                 </a>
             </div>

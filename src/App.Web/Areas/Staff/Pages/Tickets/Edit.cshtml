@@ -111,7 +111,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-check-lg me-1"></i> Save Changes
                         </button>
-                        <a asp-page="./Details" asp-route-id="@Model.Form.Id" class="btn btn-outline-secondary">Cancel</a>
+                        <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@Model.Form.Id" class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>

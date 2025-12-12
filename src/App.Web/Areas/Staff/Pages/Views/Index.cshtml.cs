@@ -1,5 +1,6 @@
 using App.Application.TicketViews;
 using App.Application.TicketViews.Queries;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +18,7 @@ public class Index : BaseStaffPageModel
 
         var userId = CurrentUser.UserId?.Guid;
         if (!userId.HasValue)
-            return RedirectToPage("/Error");
+            return RedirectToPage(RouteNames.Error.Index);
 
         var response = await Mediator.Send(new GetTicketViews.Query(), cancellationToken);
         

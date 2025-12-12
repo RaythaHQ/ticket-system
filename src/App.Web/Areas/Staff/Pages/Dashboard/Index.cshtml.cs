@@ -1,6 +1,7 @@
 using App.Application.Common.Interfaces;
 using App.Application.Tickets;
 using App.Application.Tickets.Queries;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,7 +19,7 @@ public class Index : BaseStaffPageModel
 
         UserId = CurrentUser.UserId?.Guid;
         if (!UserId.HasValue)
-            return RedirectToPage("/Error");
+            return RedirectToPage(RouteNames.Error.Index);
 
         var response = await Mediator.Send(new GetUserDashboardMetrics.Query { UserId = UserId.Value }, cancellationToken);
         Metrics = response.Result;

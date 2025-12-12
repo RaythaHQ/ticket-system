@@ -24,12 +24,12 @@
             {
                 <tr>
                     <td>
-                        <a asp-area="Staff" asp-page="/Tickets/Details" asp-route-id="@ticket.Id">
+                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id">
                             #@ticket.Id
                         </a>
                     </td>
                     <td>
-                        <a asp-area="Staff" asp-page="/Tickets/Details" asp-route-id="@ticket.Id">
+                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id">
                             @(ticket.Title.Length > 40 ? ticket.Title.Substring(0, 37) + "..." : ticket.Title)
                         </a>
                     </td>

@@ -8,7 +8,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="h3 mb-0">Tickets</h1>
-    <a asp-page="./Create" class="btn btn-primary">
+    <a asp-page="@RouteNames.Tickets.Create" class="btn btn-primary">
         <i class="bi bi-plus-lg me-1"></i> New Ticket
     </a>
 </div>
@@ -167,12 +167,12 @@
                     {
                         <tr>
                             <td>
-                                <a asp-page="./Details" asp-route-id="@ticket.Id" class="fw-semibold">
+                                <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" class="fw-semibold">
                                     #@ticket.Id
                                 </a>
                             </td>
                             <td>
-                                <a asp-page="./Details" asp-route-id="@ticket.Id">
+                                <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id">
                                     @(ticket.Title.Length > 50 ? ticket.Title.Substring(0, 47) + "..." : ticket.Title)
                                 </a>
                             </td>
@@ -202,7 +202,7 @@
                             </td>
                             <td>@ticket.CreationTime</td>
                             <td>
-                                <a asp-page="./Details" asp-route-id="@ticket.Id" class="btn btn-sm btn-outline-primary">
+                                <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" class="btn btn-sm btn-outline-primary">
                                     View
                                 </a>
                             </td>
