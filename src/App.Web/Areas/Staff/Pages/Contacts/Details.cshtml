@@ -1,6 +1,7 @@
 @page "/staff/contacts/{id:long}"
 @model App.Web.Areas.Staff.Pages.Contacts.Details
 @using App.Web.Areas.Staff.Pages.Shared.Models
+@using App.Domain.ValueObjects
 
 @{
     ViewData["Title"] = $"Contact #{Model.Contact.Id}";
@@ -37,7 +38,7 @@
             <div class="staff-card-header">
                 <h5><i class="bi bi-ticket-detailed me-2"></i>Tickets (@Model.Tickets.Count())</h5>
                 <a asp-area="Staff" asp-page="@RouteNames.Tickets.Create" asp-route-contactId="@Model.Contact.Id"
-                   class="btn btn-sm btn-primary">
+                    class="btn btn-sm btn-primary">
                     <i class="bi bi-plus me-1"></i>New Ticket
                 </a>
             </div>
@@ -67,18 +68,21 @@
                                 <tr>
                                     <td>
                                         <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
-                                           style="color: var(--staff-primary);">
+                                            style="color: var(--staff-primary);">
                                             #@ticket.Id
                                         </a>
                                     </td>
                                     <td>
                                         <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
-                                           class="text-dark text-decoration-none">
+                                            class="text-dark text-decoration-none">
                                             @(ticket.Title.Length > 40 ? ticket.Title.Substring(0, 37) + "..." : ticket.Title)
                                         </a>
                                     </td>
-                                    <td><span class="staff-badge @GetStatusBadgeClass(ticket.Status)">@ticket.StatusLabel</span></td>
-                                    <td><span class="staff-badge @GetPriorityBadgeClass(ticket.Priority)">@ticket.PriorityLabel</span></td>
+                                    <td><span class="staff-badge @GetStatusBadgeClass(ticket.Status)">@ticket.StatusLabel</span>
+                                    </td>
+                                    <td><span
+                                            class="staff-badge @GetPriorityBadgeClass(ticket.Priority)">@ticket.PriorityLabel</span>
+                                    </td>
                                     <td class="text-muted small">@ticket.CreationTime.ToString("MMM dd, yyyy")</td>
                                 </tr>
                             }
@@ -102,7 +106,7 @@
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                                         style="width: 36px; height: 36px; background: var(--staff-secondary); color: #1e293b; font-size: 0.875rem;">
+                                        style="width: 36px; height: 36px; background: var(--staff-secondary); color: #1e293b; font-size: 0.875rem;">
                                         @(comment.AuthorStaffName?.FirstOrDefault().ToString().ToUpper() ?? "?")
                                     </div>
                                     <div>
@@ -122,7 +126,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-medium">Add a note</label>
                         <textarea asp-for="CommentForm.Body" class="form-control" rows="3"
-                                  placeholder="Add a note about this contact..."></textarea>
+                            placeholder="Add a note about this contact..."></textarea>
                         <span asp-validation-for="CommentForm.Body" class="text-danger small"></span>
                     </div>
                     <button type="submit" class="btn btn-primary">
@@ -149,7 +153,7 @@
                         {
                             <div class="d-flex gap-3 p-3 border-bottom">
                                 <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                                     style="width: 32px; height: 32px; background: #f1f5f9;">
+                                    style="width: 32px; height: 32px; background: #f1f5f9;">
                                     <i class="bi bi-activity text-muted small"></i>
                                 </div>
                                 <div class="flex-grow-1">
@@ -244,22 +248,44 @@
 </div>
 
 @functions {
-    string GetStatusBadgeClass(string status) => status switch
+    string GetStatusBadgeClass(string status)
     {
-        "open" => "staff-badge-primary",
-        "in_progress" => "staff-badge-primary",
-        "pending" => "staff-badge-warning",
-        "resolved" => "staff-badge-success",
-        "closed" => "staff-badge-secondary",
-        _ => "staff-badge-secondary"
-    };
+        try
+        {
+            var statusObj = TicketStatus.From(status);
+            return statusObj.DeveloperName switch
+            {
+                TicketStatus.OPEN => "staff-badge-primary",
+                TicketStatus.IN_PROGRESS => "staff-badge-primary",
+                TicketStatus.PENDING => "staff-badge-warning",
+                TicketStatus.RESOLVED => "staff-badge-success",
+                TicketStatus.CLOSED => "staff-badge-secondary",
+                _ => "staff-badge-secondary"
+            };
+        }
+        catch
+        {
+            return "staff-badge-secondary";
+        }
+    }
 
-    string GetPriorityBadgeClass(string priority) => priority switch
+    string GetPriorityBadgeClass(string priority)
     {
-        "urgent" => "staff-badge-danger",
-        "high" => "staff-badge-warning",
-        "normal" => "staff-badge-primary",
-        "low" => "staff-badge-secondary",
-        _ => "staff-badge-secondary"
-    };
+        try
+        {
+            var priorityObj = TicketPriority.From(priority);
+            return priorityObj.DeveloperName switch
+            {
+                TicketPriority.URGENT => "staff-badge-danger",
+                TicketPriority.HIGH => "staff-badge-warning",
+                TicketPriority.NORMAL => "staff-badge-primary",
+                TicketPriority.LOW => "staff-badge-secondary",
+                _ => "staff-badge-secondary"
+            };
+        }
+        catch
+        {
+            return "staff-badge-secondary";
+        }
+    }
 }

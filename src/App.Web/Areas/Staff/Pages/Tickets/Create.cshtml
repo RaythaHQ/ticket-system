@@ -1,6 +1,7 @@
 @page "/staff/tickets/create"
 @model App.Web.Areas.Staff.Pages.Tickets.Create
 @using App.Web.Areas.Staff.Pages.Shared.Models
+@using App.Domain.ValueObjects
 
 @{
     ViewData["Title"] = "Create Ticket";
@@ -20,7 +21,7 @@
         <div class="staff-card">
             <div class="staff-card-body">
                 @(await Html.PartialAsync("_Partials/BackToList", back))
-                
+
                 <form method="post" class="mt-4">
                     <div class="row">
                         <div class="col-lg-8">
@@ -35,14 +36,14 @@
                             <div class="mb-4">
                                 <label asp-for="Form.Description" class="form-label">Description</label>
                                 <textarea asp-for="Form.Description" class="form-control" rows="5"
-                                          placeholder="Describe the issue or request in detail..."></textarea>
+                                    placeholder="Describe the issue or request in detail..."></textarea>
                                 <span asp-validation-for="Form.Description" class="text-danger small"></span>
                             </div>
 
                             <div class="mb-4">
                                 <label asp-for="Form.Tags" class="form-label">Tags</label>
-                                <input asp-for="Form.Tags" class="form-control" 
-                                       placeholder="Comma-separated tags (e.g., billing, urgent, follow-up)" />
+                                <input asp-for="Form.Tags" class="form-control"
+                                    placeholder="Comma-separated tags (e.g., billing, urgent, follow-up)" />
                                 <span asp-validation-for="Form.Tags" class="text-danger small"></span>
                             </div>
                         </div>
@@ -50,24 +51,28 @@
                         <div class="col-lg-4">
                             <div class="p-4 rounded-3" style="background: #f8fafc;">
                                 <h6 class="fw-semibold mb-3 text-muted small text-uppercase">Assignment</h6>
-                                
+
                                 <div class="mb-3">
                                     <label asp-for="Form.Priority" class="form-label">
                                         Priority <span class="text-danger">*</span>
                                     </label>
                                     <select asp-for="Form.Priority" class="form-select">
-                                        <option value="low">Low</option>
-                                        <option value="normal" selected>Normal</option>
-                                        <option value="high">High</option>
-                                        <option value="urgent">Urgent</option>
+                                        @foreach (var priority in TicketPriority.SupportedTypes.OrderBy(p =>
+                                                                                p.SortOrder))
+                                        {
+                                            <option value="@priority.DeveloperName"
+                                                selected="@(priority.DeveloperName == TicketPriority.NORMAL)">
+                                                @priority.Label
+                                            </option>
+                                        }
                                     </select>
                                     <span asp-validation-for="Form.Priority" class="text-danger small"></span>
                                 </div>
 
                                 <div class="mb-3">
                                     <label asp-for="Form.Category" class="form-label">Category</label>
-                                    <input asp-for="Form.Category" class="form-control" 
-                                           placeholder="e.g., Billing, Support" />
+                                    <input asp-for="Form.Category" class="form-control"
+                                        placeholder="e.g., Billing, Support" />
                                     <span asp-validation-for="Form.Category" class="text-danger small"></span>
                                 </div>
 
@@ -97,10 +102,11 @@
 
                                 <div class="mb-0">
                                     <label asp-for="Form.ContactId" class="form-label">Link to Contact</label>
-                                    <input asp-for="Form.ContactId" type="number" class="form-control" 
-                                           placeholder="Contact ID" />
+                                    <input asp-for="Form.ContactId" type="number" class="form-control"
+                                        placeholder="Contact ID" />
                                     <span asp-validation-for="Form.ContactId" class="text-danger small"></span>
-                                    <small class="text-muted d-block mt-1">Enter a contact ID to link this ticket</small>
+                                    <small class="text-muted d-block mt-1">Enter a contact ID to link this
+                                        ticket</small>
                                 </div>
                             </div>
                         </div>

@@ -1,6 +1,7 @@
 @page "/staff/tickets/{id:long}"
 @model App.Web.Areas.Staff.Pages.Tickets.Details
 @using App.Web.Areas.Staff.Pages.Shared.Models
+@using App.Domain.ValueObjects
 
 @{
     ViewData["Title"] = $"Ticket #{Model.Ticket.Id}";
@@ -244,38 +245,74 @@
 </div>
 
 @functions {
-    string GetStatusBadgeClass(string status) => status switch
+    string GetStatusBadgeClass(string status)
     {
-        "open" => "staff-badge-primary",
-        "in_progress" => "staff-badge-primary",
-        "pending" => "staff-badge-warning",
-        "resolved" => "staff-badge-success",
-        "closed" => "staff-badge-secondary",
-        _ => "staff-badge-secondary"
-    };
+        try
+        {
+            var statusObj = TicketStatus.From(status);
+            return statusObj.DeveloperName switch
+            {
+                TicketStatus.OPEN => "staff-badge-primary",
+                TicketStatus.IN_PROGRESS => "staff-badge-primary",
+                TicketStatus.PENDING => "staff-badge-warning",
+                TicketStatus.RESOLVED => "staff-badge-success",
+                TicketStatus.CLOSED => "staff-badge-secondary",
+                _ => "staff-badge-secondary"
+            };
+        }
+        catch
+        {
+            return "staff-badge-secondary";
+        }
+    }
 
-    string GetPriorityBadgeClass(string priority) => priority switch
+    string GetPriorityBadgeClass(string priority)
     {
-        "urgent" => "staff-badge-danger",
-        "high" => "staff-badge-warning",
-        "normal" => "staff-badge-primary",
-        "low" => "staff-badge-secondary",
-        _ => "staff-badge-secondary"
-    };
+        try
+        {
+            var priorityObj = TicketPriority.From(priority);
+            return priorityObj.DeveloperName switch
+            {
+                TicketPriority.URGENT => "staff-badge-danger",
+                TicketPriority.HIGH => "staff-badge-warning",
+                TicketPriority.NORMAL => "staff-badge-primary",
+                TicketPriority.LOW => "staff-badge-secondary",
+                _ => "staff-badge-secondary"
+            };
+        }
+        catch
+        {
+            return "staff-badge-secondary";
+        }
+    }
 
-    string GetSlaBadgeClass(string? slaStatus) => slaStatus switch
+    string GetSlaBadgeClass(string? slaStatus)
     {
-        "breached" => "staff-badge-danger",
-        "approaching_breach" => "staff-badge-warning",
-        "on_track" => "staff-badge-success",
-        "completed" => "staff-badge-secondary",
-        _ => "staff-badge-secondary"
-    };
+        if (string.IsNullOrEmpty(slaStatus))
+            return "staff-badge-secondary";
+
+        try
+        {
+            var slaStatusObj = SlaStatus.From(slaStatus);
+            return slaStatusObj.DeveloperName switch
+            {
+                SlaStatus.BREACHED => "staff-badge-danger",
+                SlaStatus.APPROACHING_BREACH => "staff-badge-warning",
+                SlaStatus.ON_TRACK => "staff-badge-success",
+                SlaStatus.COMPLETED => "staff-badge-secondary",
+                _ => "staff-badge-secondary"
+            };
+        }
+        catch
+        {
+            return "staff-badge-secondary";
+        }
+    }
 
     string GetSlaDueClass(string? slaStatus) => slaStatus switch
     {
-        "breached" => "text-danger fw-bold",
-        "approaching_breach" => "text-warning fw-bold",
+        SlaStatus.BREACHED => "text-danger fw-bold",
+        SlaStatus.APPROACHING_BREACH => "text-warning fw-bold",
         _ => ""
     };
 }

@@ -1,4 +1,5 @@
 @model IEnumerable<App.Application.Tickets.TicketListItemDto>
+@using App.Domain.ValueObjects
 
 <div class="table-responsive">
     <table class="table table-hover mb-0">
@@ -43,22 +44,44 @@
 </div>
 
 @functions {
-    string GetStatusBadgeClass(string status) => status switch
+    string GetStatusBadgeClass(string status)
     {
-        "open" => "bg-primary",
-        "in_progress" => "bg-info",
-        "pending" => "bg-warning text-dark",
-        "resolved" => "bg-success",
-        "closed" => "bg-secondary",
-        _ => "bg-light text-dark"
-    };
+        try
+        {
+            var statusObj = TicketStatus.From(status);
+            return statusObj.DeveloperName switch
+            {
+                TicketStatus.OPEN => "bg-primary",
+                TicketStatus.IN_PROGRESS => "bg-info",
+                TicketStatus.PENDING => "bg-warning text-dark",
+                TicketStatus.RESOLVED => "bg-success",
+                TicketStatus.CLOSED => "bg-secondary",
+                _ => "bg-light text-dark"
+            };
+        }
+        catch
+        {
+            return "bg-light text-dark";
+        }
+    }
 
-    string GetPriorityBadgeClass(string priority) => priority switch
+    string GetPriorityBadgeClass(string priority)
     {
-        "urgent" => "bg-danger",
-        "high" => "bg-warning text-dark",
-        "normal" => "bg-info",
-        "low" => "bg-light text-dark",
-        _ => "bg-light text-dark"
-    };
+        try
+        {
+            var priorityObj = TicketPriority.From(priority);
+            return priorityObj.DeveloperName switch
+            {
+                TicketPriority.URGENT => "bg-danger",
+                TicketPriority.HIGH => "bg-warning text-dark",
+                TicketPriority.NORMAL => "bg-info",
+                TicketPriority.LOW => "bg-light text-dark",
+                _ => "bg-light text-dark"
+            };
+        }
+        catch
+        {
+            return "bg-light text-dark";
+        }
+    }
 }

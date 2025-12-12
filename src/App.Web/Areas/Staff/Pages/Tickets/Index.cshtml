@@ -1,6 +1,7 @@
 @page "/staff/tickets"
 @model App.Web.Areas.Staff.Pages.Tickets.Index
 @using App.Web.Areas.Staff.Pages.Shared.Models
+@using App.Domain.ValueObjects
 
 @{
     ViewData["Title"] = "Tickets";
@@ -20,20 +21,20 @@
         <div class="d-flex align-items-center gap-3 flex-wrap">
             <span class="text-muted fw-semibold small">Quick Views:</span>
             <div class="staff-quick-views">
-                <a asp-page="./Index" 
-                   class="staff-quick-view-btn @(string.IsNullOrEmpty(Model.BuiltInView) && string.IsNullOrEmpty(Model.CurrentViewId) ? "active" : "")">
+                <a asp-page="./Index"
+                    class="staff-quick-view-btn @(string.IsNullOrEmpty(Model.BuiltInView) && string.IsNullOrEmpty(Model.CurrentViewId) ? "active" : "")">
                     All Tickets
                 </a>
-                <a asp-page="./Index" asp-route-builtInView="open" 
-                   class="staff-quick-view-btn @(Model.BuiltInView == "open" ? "active" : "")">
-                    Open
+                <a asp-page="./Index" asp-route-builtInView="@TicketStatus.OPEN"
+                    class="staff-quick-view-btn @(Model.BuiltInView == TicketStatus.OPEN ? "active" : "")">
+                    @TicketStatus.Open.Label
                 </a>
-                <a asp-page="./Index" asp-route-builtInView="unassigned" 
-                   class="staff-quick-view-btn @(Model.BuiltInView == "unassigned" ? "active" : "")">
+                <a asp-page="./Index" asp-route-builtInView="unassigned"
+                    class="staff-quick-view-btn @(Model.BuiltInView == "unassigned" ? "active" : "")">
                     Unassigned
                 </a>
-                <a asp-page="./Index" asp-route-builtInView="recently-closed" 
-                   class="staff-quick-view-btn @(Model.BuiltInView == "recently-closed" ? "active" : "")">
+                <a asp-page="./Index" asp-route-builtInView="recently-closed"
+                    class="staff-quick-view-btn @(Model.BuiltInView == "recently-closed" ? "active" : "")">
                     Recently Closed
                 </a>
             </div>
@@ -41,7 +42,8 @@
             {
                 <div class="vr mx-2"></div>
                 <div class="dropdown">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                        data-bs-toggle="dropdown">
                         <i class="bi bi-eye me-1"></i>
                         @if (Model.SelectedView != null)
                         {
@@ -57,11 +59,12 @@
                         {
                             <li>
                                 <a class="dropdown-item @(Model.CurrentViewId == view.Id.ToString() ? "active" : "")"
-                                   asp-page="./Index" asp-route-viewId="@view.Id">
+                                    asp-page="./Index" asp-route-viewId="@view.Id">
                                     @view.Name
                                     @if (view.IsSystem)
                                     {
-                                        <span class="staff-badge staff-badge-secondary ms-2" style="font-size: 0.65rem;">System</span>
+                                        <span class="staff-badge staff-badge-secondary ms-2"
+                                            style="font-size: 0.65rem;">System</span>
                                     }
                                 </a>
                             </li>
@@ -95,8 +98,8 @@
                         <i class="bi bi-search text-muted"></i>
                     </span>
                     <input type="text" name="search" class="form-control border-start-0 ps-0"
-                           placeholder="@(Model.SelectedView != null ? "Search visible columns..." : "Search tickets...")"
-                           value="@ViewContext.HttpContext.Request.Query["search"]" />
+                        placeholder="@(Model.SelectedView != null ? "Search visible columns..." : "Search tickets...")"
+                        value="@ViewContext.HttpContext.Request.Query["search"]" />
                 </div>
                 @if (Model.SelectedView != null && Model.SelectedView.VisibleColumns.Any())
                 {
@@ -112,26 +115,32 @@
             <div class="col-lg-2 col-md-3">
                 <select name="status" class="form-select">
                     <option value="">All Statuses</option>
-                    <option value="open" selected="@(ViewContext.HttpContext.Request.Query["status"] == "open")">Open</option>
-                    <option value="in_progress" selected="@(ViewContext.HttpContext.Request.Query["status"] == "in_progress")">In Progress</option>
-                    <option value="pending" selected="@(ViewContext.HttpContext.Request.Query["status"] == "pending")">Pending</option>
-                    <option value="resolved" selected="@(ViewContext.HttpContext.Request.Query["status"] == "resolved")">Resolved</option>
-                    <option value="closed" selected="@(ViewContext.HttpContext.Request.Query["status"] == "closed")">Closed</option>
+                    @foreach (var status in TicketStatus.SupportedTypes)
+                    {
+                        <option value="@status.DeveloperName"
+                            selected="@(ViewContext.HttpContext.Request.Query["status"] == status.DeveloperName)">
+                            @status.Label
+                        </option>
+                    }
                 </select>
             </div>
             <div class="col-lg-2 col-md-3">
                 <select name="priority" class="form-select">
                     <option value="">All Priorities</option>
-                    <option value="urgent" selected="@(ViewContext.HttpContext.Request.Query["priority"] == "urgent")">Urgent</option>
-                    <option value="high" selected="@(ViewContext.HttpContext.Request.Query["priority"] == "high")">High</option>
-                    <option value="normal" selected="@(ViewContext.HttpContext.Request.Query["priority"] == "normal")">Normal</option>
-                    <option value="low" selected="@(ViewContext.HttpContext.Request.Query["priority"] == "low")">Low</option>
+                    @foreach (var priority in TicketPriority.SupportedTypes.OrderByDescending(p => p.SortOrder))
+                    {
+                        <option value="@priority.DeveloperName"
+                            selected="@(ViewContext.HttpContext.Request.Query["priority"] == priority.DeveloperName)">
+                            @priority.Label
+                        </option>
+                    }
                 </select>
             </div>
             <div class="col-lg-2 col-md-4">
                 <div class="form-check mt-2">
                     <input type="checkbox" name="unassigned" value="true" class="form-check-input"
-                           checked="@(ViewContext.HttpContext.Request.Query["unassigned"] == "true")" id="unassignedCheck" />
+                        checked="@(ViewContext.HttpContext.Request.Query["unassigned"] == "true")"
+                        id="unassignedCheck" />
                     <label class="form-check-label" for="unassignedCheck">Unassigned only</label>
                 </div>
             </div>
@@ -176,14 +185,14 @@
                 {
                     <tr>
                         <td>
-                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" 
-                               class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
+                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
+                                class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
                                 #@ticket.Id
                             </a>
                         </td>
                         <td>
-                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" 
-                               class="text-dark text-decoration-none">
+                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
+                                class="text-dark text-decoration-none">
                                 @(ticket.Title.Length > 50 ? ticket.Title.Substring(0, 47) + "..." : ticket.Title)
                             </a>
                         </td>
@@ -213,8 +222,8 @@
                         </td>
                         <td class="text-muted small">@ticket.CreationTime</td>
                         <td class="text-end">
-                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" 
-                               class="btn btn-sm btn-outline-primary">
+                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
+                                class="btn btn-sm btn-outline-primary">
                                 View
                             </a>
                         </td>
@@ -230,24 +239,46 @@
 </div>
 
 @functions {
-    string GetStatusBadgeClass(string status) => status switch
+    string GetStatusBadgeClass(string status)
     {
-        "open" => "staff-badge-primary",
-        "in_progress" => "staff-badge-primary",
-        "pending" => "staff-badge-warning",
-        "resolved" => "staff-badge-success",
-        "closed" => "staff-badge-secondary",
-        _ => "staff-badge-secondary"
-    };
+        try
+        {
+            var statusObj = TicketStatus.From(status);
+            return statusObj.DeveloperName switch
+            {
+                TicketStatus.OPEN => "staff-badge-primary",
+                TicketStatus.IN_PROGRESS => "staff-badge-primary",
+                TicketStatus.PENDING => "staff-badge-warning",
+                TicketStatus.RESOLVED => "staff-badge-success",
+                TicketStatus.CLOSED => "staff-badge-secondary",
+                _ => "staff-badge-secondary"
+            };
+        }
+        catch
+        {
+            return "staff-badge-secondary";
+        }
+    }
 
-    string GetPriorityBadgeClass(string priority) => priority switch
+    string GetPriorityBadgeClass(string priority)
     {
-        "urgent" => "staff-badge-danger",
-        "high" => "staff-badge-warning",
-        "normal" => "staff-badge-primary",
-        "low" => "staff-badge-secondary",
-        _ => "staff-badge-secondary"
-    };
+        try
+        {
+            var priorityObj = TicketPriority.From(priority);
+            return priorityObj.DeveloperName switch
+            {
+                TicketPriority.URGENT => "staff-badge-danger",
+                TicketPriority.HIGH => "staff-badge-warning",
+                TicketPriority.NORMAL => "staff-badge-primary",
+                TicketPriority.LOW => "staff-badge-secondary",
+                _ => "staff-badge-secondary"
+            };
+        }
+        catch
+        {
+            return "staff-badge-secondary";
+        }
+    }
 
     string GetSlaBadgeClass(string slaStatus) => slaStatus switch
     {

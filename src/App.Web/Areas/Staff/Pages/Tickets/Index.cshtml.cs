@@ -1,13 +1,13 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Tickets;
 using App.Application.Tickets.Queries;
 using App.Application.TicketViews;
 using App.Application.TicketViews.Queries;
 using App.Domain.ValueObjects;
-using App.Web.Areas.Staff.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
+using App.Web.Areas.Staff.Pages.Shared.Models;
 using CSharpVitamins;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Staff.Pages.Tickets;
 
@@ -25,7 +25,8 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
     /// <summary>
     /// Available views for the view selector.
     /// </summary>
-    public IEnumerable<TicketViewDto> AvailableViews { get; set; } = Enumerable.Empty<TicketViewDto>();
+    public IEnumerable<TicketViewDto> AvailableViews { get; set; } =
+        Enumerable.Empty<TicketViewDto>();
 
     /// <summary>
     /// Currently selected view.
@@ -76,15 +77,18 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             PageSize = pageSize,
             Status = status,
             Priority = priority,
-            Unassigned = unassigned
+            Unassigned = unassigned,
         };
 
         // Apply view filters
         if (!string.IsNullOrEmpty(viewId))
         {
-            var selectedViewResponse = await Mediator.Send(new GetTicketViewById.Query { Id = viewId }, cancellationToken);
+            var selectedViewResponse = await Mediator.Send(
+                new GetTicketViewById.Query { Id = viewId },
+                cancellationToken
+            );
             SelectedView = selectedViewResponse.Result;
-            
+
             query = query with { ViewId = viewId };
         }
         else if (!string.IsNullOrEmpty(builtInView))
@@ -113,7 +117,9 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             ContactName = p.ContactName ?? "-",
             SlaDueAt = p.SlaDueAt?.ToString("MMM dd, HH:mm") ?? "-",
             SlaStatusLabel = p.SlaStatusLabel ?? "-",
-            CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(p.CreationTime)
+            CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+                p.CreationTime
+            ),
         });
 
         ListView = new ListViewModel<TicketListItemViewModel>(items, response.Result.TotalCount);
@@ -132,26 +138,41 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 Filters = new List<ViewFilterCondition>
                 {
                     new() { Field = "AssigneeId", Operator = "isnull" },
-                    new() { Field = "Status", Operator = "notin", Values = new List<string> { "CLOSED", "CANCELLED" } }
-                }
+                    new()
+                    {
+                        Field = "Status",
+                        Operator = "notin",
+                        Values = new List<string> { TicketStatus.CLOSED },
+                    },
+                },
             },
-            "open" => new ViewConditions
+            TicketStatus.OPEN => new ViewConditions
             {
                 Logic = "AND",
                 Filters = new List<ViewFilterCondition>
                 {
-                    new() { Field = "Status", Operator = "equals", Value = "OPEN" }
-                }
+                    new()
+                    {
+                        Field = "Status",
+                        Operator = "equals",
+                        Value = TicketStatus.OPEN,
+                    },
+                },
             },
             "recently-closed" => new ViewConditions
             {
                 Logic = "AND",
                 Filters = new List<ViewFilterCondition>
                 {
-                    new() { Field = "Status", Operator = "equals", Value = "CLOSED" }
-                }
+                    new()
+                    {
+                        Field = "Status",
+                        Operator = "equals",
+                        Value = TicketStatus.CLOSED,
+                    },
+                },
             },
-            _ => null
+            _ => null,
         };
     }
 

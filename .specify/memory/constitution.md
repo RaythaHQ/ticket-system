@@ -212,6 +212,21 @@ Wherever there is ambiguity, the rules below clarify expectations.
   and Save buttons as `<button type="submit" class="btn btn-success mt-4">Save changes</button>`
   at the end of the form (no Cancel button, no icons). This ensures visual and
   functional consistency across all Admin area pages.
+- **BuiltIn Value Objects Pattern**: Enumerated values like statuses, priorities, roles,
+  and permissions MUST be implemented as BuiltIn value objects following the established
+  pattern (e.g., `BuiltInRole`, `BuiltInSystemPermission`, `TicketStatus`, `TicketPriority`,
+  `SlaStatus`). These classes MUST:
+  - Inherit from `ValueObject` and be immutable
+  - Have static properties for each value (e.g., `TicketStatus.Open`, `TicketPriority.Urgent`)
+  - Provide a `From(string developerName)` method for parsing
+  - Expose `Label` (for display) and `DeveloperName` (for storage/API) properties
+  - Have a `SupportedTypes` static property returning all valid values
+  - Support implicit/explicit conversion to/from string using `DeveloperName`
+  - Override `ToString()` to return `Label` for display
+  - Throw domain-specific exceptions (e.g., `TicketStatusNotFoundException`) for invalid values
+  - NEVER be hardcoded as string literals in UI code; always reference the BuiltIn class
+  - Use `DeveloperName` for form values, database storage, and API contracts
+  - Use `Label` for display in dropdowns, badges, and user-facing text
 - **Staff Area UI Pattern**: The Staff area uses a modern, professional design with
   brand colors (primary: `rgb(0, 157, 220)`, secondary: `#FED65A`). All Staff pages
   MUST use the established layout patterns:
@@ -292,4 +307,4 @@ layering, and non‑negotiable engineering standards in the App boilerplate.
 - When conflicts arise between older docs and this constitution, this
   constitution prevails.
 
-**Version**: 1.5.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-12
+**Version**: 1.6.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-12
