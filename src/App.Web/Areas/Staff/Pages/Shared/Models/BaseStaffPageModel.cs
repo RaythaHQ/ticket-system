@@ -1,17 +1,18 @@
+using App.Application.Common.Interfaces;
+using App.Application.Common.Security;
+using App.Web.Areas.Shared.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using App.Application.Common.Interfaces;
-using App.Web.Areas.Shared.Models;
 
 namespace App.Web.Areas.Staff.Pages.Shared.Models;
 
 /// <summary>
 /// Base page model for all Staff area pages.
-/// Requires authenticated user. Permission checks for specific actions
+/// Requires admin access. Permission checks for specific actions
 /// are handled at the individual page or command level.
 /// </summary>
 [Area("Staff")]
-[Authorize]
+[Authorize(Policy = RaythaClaimTypes.IsAdmin)]
 public abstract class BaseStaffPageModel : BasePageModel
 {
     private ITicketPermissionService? _ticketPermissionService;
@@ -21,7 +22,8 @@ public abstract class BaseStaffPageModel : BasePageModel
     /// Gets the ticket permission service for checking ticketing-specific permissions.
     /// </summary>
     protected ITicketPermissionService TicketPermissionService =>
-        _ticketPermissionService ??= HttpContext.RequestServices.GetRequiredService<ITicketPermissionService>();
+        _ticketPermissionService ??=
+            HttpContext.RequestServices.GetRequiredService<ITicketPermissionService>();
 
     /// <summary>
     /// Gets the database context for direct queries.
@@ -29,4 +31,3 @@ public abstract class BaseStaffPageModel : BasePageModel
     protected IAppDbContext Db =>
         _db ??= HttpContext.RequestServices.GetRequiredService<IAppDbContext>();
 }
-
