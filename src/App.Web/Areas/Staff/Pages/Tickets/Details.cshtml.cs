@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using App.Application.Contacts;
+using App.Application.Contacts.Queries;
 using App.Application.Tickets;
 using App.Application.Tickets.Commands;
 using App.Application.Tickets.Queries;
@@ -14,6 +16,7 @@ namespace App.Web.Areas.Staff.Pages.Tickets;
 public class Details : BaseStaffPageModel
 {
     public TicketDto Ticket { get; set; } = null!;
+    public ContactDto? Contact { get; set; }
     public IEnumerable<TicketCommentDto> Comments { get; set; } =
         Enumerable.Empty<TicketCommentDto>();
     public IEnumerable<TicketChangeLogEntryDto> ChangeLog { get; set; } =
@@ -50,6 +53,16 @@ public class Details : BaseStaffPageModel
             cancellationToken
         );
         ChangeLog = changeLogResponse.Result;
+
+        // Load full contact details if contact is assigned
+        if (Ticket.ContactId.HasValue)
+        {
+            var contactResponse = await Mediator.Send(
+                new GetContactById.Query { Id = Ticket.ContactId.Value },
+                cancellationToken
+            );
+            Contact = contactResponse.Result;
+        }
 
         // Check if user can edit this specific ticket (has permission, is assigned, or is in the team)
         CanEditTicket = await TicketPermissionService.CanEditTicketAsync(

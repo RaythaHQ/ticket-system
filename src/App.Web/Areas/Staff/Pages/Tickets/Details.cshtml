@@ -149,6 +149,74 @@
 
     <!-- Sidebar -->
     <div class="col-lg-4">
+        <!-- Contact Card -->
+        @if (Model.Contact != null)
+        {
+            <div class="staff-card mb-4">
+                <div class="staff-card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-person-vcard me-2"></i>Contact</h5>
+                    <a asp-area="Staff" asp-page="@RouteNames.Contacts.Details"
+                        asp-route-id="@Model.Contact.Id" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-box-arrow-up-right me-1"></i>View Details
+                    </a>
+                </div>
+                <div class="staff-card-body">
+                    <h6 class="fw-semibold mb-3">@Model.Contact.Name</h6>
+                    <dl class="row mb-0">
+                        <dt class="col-4 text-muted fw-medium">Email</dt>
+                        <dd class="col-8">
+                            @if (!string.IsNullOrEmpty(Model.Contact.Email))
+                            {
+                                <a href="mailto:@Model.Contact.Email" style="color: var(--staff-primary);">
+                                    @Model.Contact.Email
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </dd>
+
+                        <dt class="col-4 text-muted fw-medium">Phone</dt>
+                        <dd class="col-8">
+                            @if (Model.Contact.PhoneNumbers.Any())
+                            {
+                                @foreach (var phone in Model.Contact.PhoneNumbers)
+                                {
+                                    <div>
+                                        <a href="tel:@phone" style="color: var(--staff-primary);">@phone</a>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </dd>
+
+                        <dt class="col-4 text-muted fw-medium">Address</dt>
+                        <dd class="col-8" style="white-space: pre-wrap;">@(Model.Contact.Address ?? "—")</dd>
+
+                        <dt class="col-4 text-muted fw-medium">Organization</dt>
+                        <dd class="col-8">@(Model.Contact.OrganizationAccount ?? "—")</dd>
+                    </dl>
+
+                    @if (Model.Contact.DmeIdentifiers.Any())
+                    {
+                        <hr class="my-3" />
+                        <h6 class="fw-semibold mb-2 small">DME Identifiers</h6>
+                        <dl class="row mb-0">
+                            @foreach (var kvp in Model.Contact.DmeIdentifiers)
+                            {
+                                <dt class="col-4 text-muted fw-medium small">@kvp.Key</dt>
+                                <dd class="col-8 small">@kvp.Value</dd>
+                            }
+                        </dl>
+                    }
+                </div>
+            </div>
+        }
+
         <!-- Ticket Details -->
         <div class="staff-card mb-4">
             <div class="staff-card-header">
@@ -161,21 +229,6 @@
 
                     <dt class="col-5 text-muted fw-medium">Team</dt>
                     <dd class="col-7">@(Model.Ticket.OwningTeamName ?? "—")</dd>
-
-                    <dt class="col-5 text-muted fw-medium">Contact</dt>
-                    <dd class="col-7">
-                        @if (Model.Ticket.ContactId.HasValue)
-                        {
-                            <a asp-area="Staff" asp-page="@RouteNames.Contacts.Details"
-                                asp-route-id="@Model.Ticket.ContactId" style="color: var(--staff-primary);">
-                                @Model.Ticket.ContactName
-                            </a>
-                        }
-                        else
-                        {
-                            <span>—</span>
-                        }
-                    </dd>
 
                     <dt class="col-5 text-muted fw-medium">Created by</dt>
                     <dd class="col-7">@(Model.Ticket.CreatedByStaffName ?? "—")</dd>
