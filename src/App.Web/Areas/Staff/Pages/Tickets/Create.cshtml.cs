@@ -4,6 +4,7 @@ using App.Application.Tickets.Commands;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
+using CSharpVitamins;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Web.Areas.Staff.Pages.Tickets;
@@ -99,22 +100,22 @@ public class Create : BaseStaffPageModel
 
         public string? Tags { get; set; }
 
-        public Guid? OwningTeamId { get; set; }
+        public ShortGuid? OwningTeamId { get; set; }
 
-        public Guid? AssigneeId { get; set; }
+        public ShortGuid? AssigneeId { get; set; }
 
         public long? ContactId { get; set; }
     }
 
     public record TeamSelectItem
     {
-        public Guid Id { get; init; }
+        public ShortGuid Id { get; init; }
         public string Name { get; init; } = string.Empty;
     }
 
     public record UserSelectItem
     {
-        public Guid Id { get; init; }
+        public ShortGuid Id { get; init; }
         public string Name { get; init; } = string.Empty;
     }
 }

@@ -14,7 +14,7 @@ public class CreateTicketView
     {
         public string Name { get; init; } = null!;
         public string? Description { get; init; }
-        public Guid? OwnerUserId { get; init; }
+        public ShortGuid? OwnerUserId { get; init; }
         public bool IsDefault { get; init; }
         public bool IsSystemView { get; init; }
         public ViewConditions? Conditions { get; init; }
@@ -92,7 +92,7 @@ public class CreateTicketView
                 Id = Guid.NewGuid(),
                 Name = request.Name,
                 Description = request.Description,
-                OwnerStaffId = request.OwnerUserId ?? _currentUser.UserId?.Guid,
+                OwnerStaffId = request.OwnerUserId?.Guid ?? _currentUser.UserId?.Guid,
                 IsDefault = request.IsDefault,
                 IsSystem = request.IsSystemView,
                 ConditionsJson = conditionsJson,

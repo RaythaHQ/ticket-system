@@ -11,11 +11,11 @@ public interface IRoundRobinService
     /// Gets the next assignee for a team using round-robin distribution.
     /// Returns null if the team has no eligible assignable members.
     /// </summary>
-    Task<Guid?> GetNextAssigneeAsync(Guid teamId, CancellationToken cancellationToken = default);
+    Task<ShortGuid?> GetNextAssigneeAsync(ShortGuid teamId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Records that an assignment was made to a member, updating last_assigned_at.
     /// </summary>
-    Task RecordAssignmentAsync(Guid membershipId, CancellationToken cancellationToken = default);
+    Task RecordAssignmentAsync(ShortGuid membershipId, CancellationToken cancellationToken = default);
 }
 

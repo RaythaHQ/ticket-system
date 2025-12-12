@@ -1,12 +1,13 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using App.Application.Common.Models;
 using App.Domain.Entities;
+using CSharpVitamins;
 
 namespace App.Application.Admins;
 
 public record ApiKeyDto : BaseEntityDto
 {
-    public Guid? CreatorUserId { get; init; }
+    public ShortGuid? CreatorUserId { get; init; }
     public AuditableUserDto? CreatorUser { get; init; }
     public DateTime? CreationTime { get; init; }
 

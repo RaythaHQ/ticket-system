@@ -31,12 +31,12 @@ public class GetTickets
         /// <summary>
         /// Optional filter by assignee ID.
         /// </summary>
-        public Guid? AssigneeId { get; init; }
+        public ShortGuid? AssigneeId { get; init; }
 
         /// <summary>
         /// Optional filter by team ID.
         /// </summary>
-        public Guid? TeamId { get; init; }
+        public ShortGuid? TeamId { get; init; }
 
         /// <summary>
         /// Optional filter by contact ID.
@@ -129,10 +129,10 @@ public class GetTickets
                 query = query.Where(t => t.Priority == request.Priority);
 
             if (request.AssigneeId.HasValue)
-                query = query.Where(t => t.AssigneeId == request.AssigneeId.Value);
+                query = query.Where(t => t.AssigneeId == request.AssigneeId.Value.Guid);
 
             if (request.TeamId.HasValue)
-                query = query.Where(t => t.OwningTeamId == request.TeamId.Value);
+                query = query.Where(t => t.OwningTeamId == request.TeamId.Value.Guid);
 
             if (request.ContactId.HasValue)
                 query = query.Where(t => t.ContactId == request.ContactId.Value);

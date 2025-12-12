@@ -4,6 +4,7 @@ using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Domain.Entities;
 using App.Domain.Events;
+using CSharpVitamins;
 using FluentValidation;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -15,8 +16,8 @@ public class AssignTicket
     public record Command : LoggableRequest<CommandResponseDto<long>>
     {
         public long Id { get; init; }
-        public Guid? AssigneeId { get; init; }
-        public Guid? OwningTeamId { get; init; }
+        public ShortGuid? AssigneeId { get; init; }
+        public ShortGuid? OwningTeamId { get; init; }
     }
 
     public class Validator : AbstractValidator<Command>
@@ -29,7 +30,7 @@ public class AssignTicket
                 .MustAsync(async (assigneeId, cancellationToken) =>
                 {
                     if (!assigneeId.HasValue) return true;
-                    return await db.Users.AsNoTracking().AnyAsync(u => u.Id == assigneeId.Value, cancellationToken);
+                    return await db.Users.AsNoTracking().AnyAsync(u => u.Id == assigneeId.Value.Guid, cancellationToken);
                 })
                 .WithMessage("Assignee not found.");
 
@@ -37,7 +38,7 @@ public class AssignTicket
                 .MustAsync(async (teamId, cancellationToken) =>
                 {
                     if (!teamId.HasValue) return true;
-                    return await db.Teams.AsNoTracking().AnyAsync(t => t.Id == teamId.Value, cancellationToken);
+                    return await db.Teams.AsNoTracking().AnyAsync(t => t.Id == teamId.Value.Guid, cancellationToken);
                 })
                 .WithMessage("Team not found.");
         }
@@ -81,17 +82,17 @@ public class AssignTicket
             var oldTeamId = ticket.OwningTeamId;
             var changes = new Dictionary<string, object>();
             bool wasAutoAssigned = false;
-            Guid? newAssigneeId = request.AssigneeId;
+            Guid? newAssigneeId = request.AssigneeId?.Guid;
 
             // If team is changing and new team has round-robin, and no assignee specified
             if (request.OwningTeamId.HasValue 
-                && request.OwningTeamId != oldTeamId 
+                && request.OwningTeamId.Value.Guid != oldTeamId 
                 && !request.AssigneeId.HasValue)
             {
                 var autoAssignee = await _roundRobinService.GetNextAssigneeAsync(request.OwningTeamId.Value, cancellationToken);
                 if (autoAssignee.HasValue)
                 {
-                    newAssigneeId = autoAssignee.Value;
+                    newAssigneeId = autoAssignee.Value.Guid;
                     wasAutoAssigned = true;
                 }
             }
@@ -110,10 +111,10 @@ public class AssignTicket
                 ticket.AssigneeId = newAssigneeId;
             }
 
-            if (oldTeamId != request.OwningTeamId)
+            if (oldTeamId != request.OwningTeamId?.Guid)
             {
                 changes["OwningTeamId"] = new { OldValue = oldTeamId?.ToString() ?? "", NewValue = request.OwningTeamId?.ToString() ?? "" };
-                ticket.OwningTeamId = request.OwningTeamId;
+                ticket.OwningTeamId = request.OwningTeamId?.Guid;
             }
 
             if (changes.Any())
@@ -131,13 +132,13 @@ public class AssignTicket
                 };
                 ticket.ChangeLogEntries.Add(changeLog);
 
-                ticket.AddDomainEvent(new TicketAssignedEvent(ticket, oldAssigneeId, newAssigneeId, oldTeamId, request.OwningTeamId));
+                ticket.AddDomainEvent(new TicketAssignedEvent(ticket, oldAssigneeId, newAssigneeId, oldTeamId, request.OwningTeamId?.Guid));
 
                 // Record round-robin assignment if used
                 if (wasAutoAssigned && newAssigneeId.HasValue && request.OwningTeamId.HasValue)
                 {
                     var membership = await _db.TeamMemberships
-                        .FirstOrDefaultAsync(m => m.TeamId == request.OwningTeamId.Value && m.StaffAdminId == newAssigneeId.Value, cancellationToken);
+                        .FirstOrDefaultAsync(m => m.TeamId == request.OwningTeamId.Value.Guid && m.StaffAdminId == newAssigneeId.Value, cancellationToken);
                     if (membership != null)
                     {
                         membership.LastAssignedAt = DateTime.UtcNow;

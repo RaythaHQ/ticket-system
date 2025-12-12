@@ -12,7 +12,6 @@ public record TicketViewDto : BaseAuditableEntityDto
 {
     public string Name { get; init; } = null!;
     public string? Description { get; init; }
-    public Guid? OwnerUserId { get; init; }
     public ShortGuid? OwnerStaffId { get; init; }
     public string? OwnerStaffName { get; init; }
     public bool IsDefault { get; init; }
@@ -48,7 +47,6 @@ public record TicketViewDto : BaseAuditableEntityDto
             Id = view.Id,
             Name = view.Name,
             Description = view.Description,
-            OwnerUserId = view.OwnerStaffId,
             OwnerStaffId = view.OwnerStaffId,
             OwnerStaffName = view.OwnerStaff?.FullName,
             IsDefault = view.IsDefault,

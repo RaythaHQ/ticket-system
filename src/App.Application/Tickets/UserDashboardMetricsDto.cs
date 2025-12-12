@@ -1,3 +1,5 @@
+using CSharpVitamins;
+
 namespace App.Application.Tickets;
 
 /// <summary>
@@ -20,7 +22,7 @@ public record UserDashboardMetricsDto
 
 public record TeamSummaryDto
 {
-    public Guid TeamId { get; init; }
+    public ShortGuid TeamId { get; init; }
     public string TeamName { get; init; } = string.Empty;
     public int OpenTickets { get; init; }
     public int UnassignedTickets { get; init; }

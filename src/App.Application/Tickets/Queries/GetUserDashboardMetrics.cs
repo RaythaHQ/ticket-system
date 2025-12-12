@@ -1,6 +1,7 @@
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Domain.ValueObjects;
+using CSharpVitamins;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +11,7 @@ public class GetUserDashboardMetrics
 {
     public record Query : IRequest<QueryResponseDto<UserDashboardMetricsDto>>
     {
-        public Guid UserId { get; init; }
+        public ShortGuid UserId { get; init; }
     }
 
     public class Handler : IRequestHandler<Query, QueryResponseDto<UserDashboardMetricsDto>>
@@ -31,28 +32,30 @@ public class GetUserDashboardMetrics
             var sevenDaysAgo = now.AddDays(-7);
             var thirtyDaysAgo = now.AddDays(-30);
 
+            var userIdGuid = request.UserId.Guid;
+            
             // Open tickets assigned to user
             var openTicketsAssigned = await _db.Tickets
                 .AsNoTracking()
-                .CountAsync(t => t.AssigneeId == request.UserId &&
+                .CountAsync(t => t.AssigneeId == userIdGuid &&
                     t.Status != TicketStatus.CLOSED && t.Status != TicketStatus.RESOLVED, cancellationToken);
 
             // Tickets resolved in last 7 days
             var ticketsResolvedLast7Days = await _db.Tickets
                 .AsNoTracking()
-                .CountAsync(t => t.AssigneeId == request.UserId &&
+                .CountAsync(t => t.AssigneeId == userIdGuid &&
                     t.ResolvedAt.HasValue && t.ResolvedAt.Value >= sevenDaysAgo, cancellationToken);
 
             // Tickets resolved in last 30 days
             var ticketsResolvedLast30Days = await _db.Tickets
                 .AsNoTracking()
-                .CountAsync(t => t.AssigneeId == request.UserId &&
+                .CountAsync(t => t.AssigneeId == userIdGuid &&
                     t.ResolvedAt.HasValue && t.ResolvedAt.Value >= thirtyDaysAgo, cancellationToken);
 
             // Calculate median close time for closed tickets
             var closedTickets = await _db.Tickets
                 .AsNoTracking()
-                .Where(t => t.AssigneeId == request.UserId && t.ClosedAt.HasValue)
+                .Where(t => t.AssigneeId == userIdGuid && t.ClosedAt.HasValue)
                 .Select(t => new { t.CreationTime, t.ClosedAt })
                 .ToListAsync(cancellationToken);
 
@@ -73,7 +76,7 @@ public class GetUserDashboardMetrics
             // Reopen count - count of status changes to OPEN from closed/resolved
             var reopenCount = await _db.TicketChangeLogEntries
                 .AsNoTracking()
-                .Where(e => e.Ticket.AssigneeId == request.UserId)
+                .Where(e => e.Ticket.AssigneeId == userIdGuid)
                 .Where(e => e.Message != null && e.Message.Contains("Ticket reopened"))
                 .CountAsync(cancellationToken);
 
@@ -83,19 +86,19 @@ public class GetUserDashboardMetrics
             // SLA breach count
             var slaBreachCount = await _db.Tickets
                 .AsNoTracking()
-                .CountAsync(t => t.AssigneeId == request.UserId &&
+                .CountAsync(t => t.AssigneeId == userIdGuid &&
                     t.SlaStatus == SlaStatus.BREACHED, cancellationToken);
 
             // SLA approaching count
             var slaApproachingCount = await _db.Tickets
                 .AsNoTracking()
-                .CountAsync(t => t.AssigneeId == request.UserId &&
+                .CountAsync(t => t.AssigneeId == userIdGuid &&
                     t.SlaStatus == SlaStatus.APPROACHING_BREACH, cancellationToken);
 
             // Get teams the user is a member of
             var userTeamIds = await _db.TeamMemberships
                 .AsNoTracking()
-                .Where(m => m.StaffAdminId == request.UserId)
+                .Where(m => m.StaffAdminId == userIdGuid)
                 .Select(m => m.TeamId)
                 .ToListAsync(cancellationToken);
 

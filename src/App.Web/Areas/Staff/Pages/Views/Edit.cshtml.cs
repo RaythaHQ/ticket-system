@@ -223,7 +223,7 @@ public class Edit : BaseStaffPageModel
 
         public string? StatusFilter { get; set; }
         public string? PriorityFilter { get; set; }
-        public Guid? TeamIdFilter { get; set; }
+        public ShortGuid? TeamIdFilter { get; set; }
         public bool UnassignedOnly { get; set; }
         public bool AssignedToMe { get; set; }
 

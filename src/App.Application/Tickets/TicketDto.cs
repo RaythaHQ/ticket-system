@@ -1,5 +1,6 @@
 using App.Application.Common.Models;
 using App.Domain.Entities;
+using CSharpVitamins;
 
 namespace App.Application.Tickets;
 
@@ -18,11 +19,11 @@ public record TicketDto : BaseNumericAuditableEntityDto
     public List<string> Tags { get; init; } = new();
 
     // Relationships
-    public Guid? OwningTeamId { get; init; }
+    public ShortGuid? OwningTeamId { get; init; }
     public string? OwningTeamName { get; init; }
-    public Guid? AssigneeId { get; init; }
+    public ShortGuid? AssigneeId { get; init; }
     public string? AssigneeName { get; init; }
-    public Guid? CreatedByStaffId { get; init; }
+    public ShortGuid? CreatedByStaffId { get; init; }
     public string? CreatedByStaffName { get; init; }
     public long? ContactId { get; init; }
     public string? ContactName { get; init; }
@@ -32,7 +33,7 @@ public record TicketDto : BaseNumericAuditableEntityDto
     public DateTime? ClosedAt { get; init; }
 
     // SLA
-    public Guid? SlaRuleId { get; init; }
+    public ShortGuid? SlaRuleId { get; init; }
     public string? SlaRuleName { get; init; }
     public DateTime? SlaDueAt { get; init; }
     public DateTime? SlaBreachedAt { get; init; }

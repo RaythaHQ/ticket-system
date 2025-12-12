@@ -5,6 +5,7 @@ using App.Application.Common.Models;
 using App.Domain.Entities;
 using App.Domain.Events;
 using App.Domain.ValueObjects;
+using CSharpVitamins;
 using FluentValidation;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -21,8 +22,8 @@ public class UpdateTicket
         public string Priority { get; init; } = null!;
         public string? Category { get; init; }
         public List<string>? Tags { get; init; }
-        public Guid? OwningTeamId { get; init; }
-        public Guid? AssigneeId { get; init; }
+        public ShortGuid? OwningTeamId { get; init; }
+        public ShortGuid? AssigneeId { get; init; }
         public long? ContactId { get; init; }
     }
 
@@ -97,16 +98,16 @@ public class UpdateTicket
                 ticket.Category = request.Category;
             }
 
-            if (ticket.OwningTeamId != request.OwningTeamId)
+            if (ticket.OwningTeamId != request.OwningTeamId?.Guid)
             {
                 changes["OwningTeamId"] = new { OldValue = ticket.OwningTeamId?.ToString() ?? "", NewValue = request.OwningTeamId?.ToString() ?? "" };
-                ticket.OwningTeamId = request.OwningTeamId;
+                ticket.OwningTeamId = request.OwningTeamId?.Guid;
             }
 
-            if (ticket.AssigneeId != request.AssigneeId)
+            if (ticket.AssigneeId != request.AssigneeId?.Guid)
             {
                 changes["AssigneeId"] = new { OldValue = ticket.AssigneeId?.ToString() ?? "", NewValue = request.AssigneeId?.ToString() ?? "" };
-                ticket.AssigneeId = request.AssigneeId;
+                ticket.AssigneeId = request.AssigneeId?.Guid;
             }
 
             if (ticket.ContactId != request.ContactId)
@@ -135,9 +136,9 @@ public class UpdateTicket
                 ticket.ChangeLogEntries.Add(changeLog);
 
                 // Raise assignment event if assignee or team changed
-                if (oldAssigneeId != request.AssigneeId || oldTeamId != request.OwningTeamId)
+                if (oldAssigneeId != request.AssigneeId?.Guid || oldTeamId != request.OwningTeamId?.Guid)
                 {
-                    ticket.AddDomainEvent(new TicketAssignedEvent(ticket, oldAssigneeId, request.AssigneeId, oldTeamId, request.OwningTeamId));
+                    ticket.AddDomainEvent(new TicketAssignedEvent(ticket, oldAssigneeId, request.AssigneeId?.Guid, oldTeamId, request.OwningTeamId?.Guid));
                 }
             }
 

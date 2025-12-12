@@ -1,5 +1,6 @@
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
+using CSharpVitamins;
 
 namespace App.Application.TicketViews.Services;
 
@@ -102,9 +103,23 @@ public class ViewFilterBuilder
     private IQueryable<Ticket> ApplyGuidFilter(IQueryable<Ticket> query, ViewFilterCondition filter, System.Linq.Expressions.Expression<Func<Ticket, Guid?>> fieldSelector)
     {
         var field = fieldSelector.Compile();
-        if (filter.Operator == "equals" && !string.IsNullOrEmpty(filter.Value) && Guid.TryParse(filter.Value, out var guid))
+        if (filter.Operator == "equals" && !string.IsNullOrEmpty(filter.Value))
         {
-            return query.Where(t => field(t) == guid);
+            // Try parsing as ShortGuid first (preferred), then fall back to Guid
+            Guid? guid = null;
+            if (ShortGuid.TryParse(filter.Value, out var shortGuid))
+            {
+                guid = shortGuid.Guid;
+            }
+            else if (Guid.TryParse(filter.Value, out var parsedGuid))
+            {
+                guid = parsedGuid;
+            }
+            
+            if (guid.HasValue)
+            {
+                return query.Where(t => field(t) == guid);
+            }
         }
         else if (filter.Operator == "isnull")
         {

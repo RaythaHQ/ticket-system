@@ -3,6 +3,7 @@ using App.Application.Common.Models;
 using App.Domain.Entities;
 using App.Domain.Events;
 using App.Domain.ValueObjects;
+using CSharpVitamins;
 using FluentValidation;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -18,8 +19,8 @@ public class CreateTicket
         public string Priority { get; init; } = TicketPriority.NORMAL;
         public string? Category { get; init; }
         public List<string>? Tags { get; init; }
-        public Guid? OwningTeamId { get; init; }
-        public Guid? AssigneeId { get; init; }
+        public ShortGuid? OwningTeamId { get; init; }
+        public ShortGuid? AssigneeId { get; init; }
         public long? ContactId { get; init; }
     }
 
@@ -36,7 +37,7 @@ public class CreateTicket
                 .MustAsync(async (teamId, cancellationToken) =>
                 {
                     if (!teamId.HasValue) return true;
-                    return await db.Teams.AsNoTracking().AnyAsync(t => t.Id == teamId.Value, cancellationToken);
+                    return await db.Teams.AsNoTracking().AnyAsync(t => t.Id == teamId.Value.Guid, cancellationToken);
                 })
                 .WithMessage("Team not found.");
 
@@ -44,7 +45,7 @@ public class CreateTicket
                 .MustAsync(async (assigneeId, cancellationToken) =>
                 {
                     if (!assigneeId.HasValue) return true;
-                    return await db.Users.AsNoTracking().AnyAsync(u => u.Id == assigneeId.Value, cancellationToken);
+                    return await db.Users.AsNoTracking().AnyAsync(u => u.Id == assigneeId.Value.Guid, cancellationToken);
                 })
                 .WithMessage("Assignee not found.");
 
@@ -76,7 +77,7 @@ public class CreateTicket
             CancellationToken cancellationToken
         )
         {
-            Guid? assigneeId = request.AssigneeId;
+            Guid? assigneeId = request.AssigneeId?.Guid;
             bool wasAutoAssigned = false;
 
             // If ticket is assigned to a team but no assignee specified, try round-robin
@@ -85,7 +86,7 @@ public class CreateTicket
                 var autoAssignee = await _roundRobinService.GetNextAssigneeAsync(request.OwningTeamId.Value, cancellationToken);
                 if (autoAssignee.HasValue)
                 {
-                    assigneeId = autoAssignee.Value;
+                    assigneeId = autoAssignee.Value.Guid;
                     wasAutoAssigned = true;
                 }
             }
@@ -98,7 +99,7 @@ public class CreateTicket
                 Priority = request.Priority,
                 Category = request.Category,
                 Tags = request.Tags ?? new List<string>(),
-                OwningTeamId = request.OwningTeamId,
+                OwningTeamId = request.OwningTeamId?.Guid,
                 AssigneeId = assigneeId,
                 ContactId = request.ContactId,
                 CreatedByStaffId = _currentUser.UserId?.Guid
@@ -113,7 +114,7 @@ public class CreateTicket
             if (wasAutoAssigned && assigneeId.HasValue && request.OwningTeamId.HasValue)
             {
                 var membership = await _db.TeamMemberships
-                    .FirstOrDefaultAsync(m => m.TeamId == request.OwningTeamId.Value && m.StaffAdminId == assigneeId.Value, cancellationToken);
+                    .FirstOrDefaultAsync(m => m.TeamId == request.OwningTeamId.Value.Guid && m.StaffAdminId == assigneeId.Value, cancellationToken);
                 if (membership != null)
                 {
                     membership.LastAssignedAt = DateTime.UtcNow;

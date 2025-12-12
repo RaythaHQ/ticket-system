@@ -179,6 +179,16 @@ Wherever there is ambiguity, the rules below clarify expectations.
   safety, and ensures route consistency. Hardcoded route strings in
   `RedirectToPage()`, `asp-page`, or similar attributes are prohibited except
   for error pages or special cases explicitly documented.
+- **GUID vs ShortGuid Pattern**: The codebase uses a strict separation between
+  `Guid` and `ShortGuid` types based on architectural layers. The `App.Domain`
+  layer MUST use `Guid` for all entity IDs and foreign key relationships. All
+  layers above the Domain layer (`App.Application`, `App.Web`) MUST use
+  `ShortGuid` for all ID properties in DTOs, Commands, Queries, and PageModels.
+  When converting between layers: use `.Guid` property to convert `ShortGuid` to
+  `Guid` when accessing domain entities, and use implicit conversion or
+  constructor to convert `Guid` to `ShortGuid` when mapping from domain to DTOs.
+  This pattern ensures that the domain layer remains pure and that all external
+  interfaces expose user-friendly ShortGuid values.
 
 When in doubt, follow existing well-structured examples in the codebase using
 these standards.
@@ -237,4 +247,4 @@ layering, and non‑negotiable engineering standards in the App boilerplate.
 - When conflicts arise between older docs and this constitution, this
   constitution prevails.
 
-**Version**: 1.1.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-12
+**Version**: 1.2.0 | **Ratified**: 2025-12-09 | **Last Amended**: 2025-12-12

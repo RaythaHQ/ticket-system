@@ -1,4 +1,5 @@
 using App.Application.Common.Interfaces;
+using CSharpVitamins;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Teams.Services;
@@ -15,11 +16,11 @@ public class RoundRobinService : IRoundRobinService
         _db = db;
     }
 
-    public async Task<Guid?> GetNextAssigneeAsync(Guid teamId, CancellationToken cancellationToken = default)
+    public async Task<ShortGuid?> GetNextAssigneeAsync(ShortGuid teamId, CancellationToken cancellationToken = default)
     {
         var team = await _db.Teams
             .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.Id == teamId, cancellationToken);
+            .FirstOrDefaultAsync(t => t.Id == teamId.Guid, cancellationToken);
 
         // Team doesn't exist or round-robin is not enabled
         if (team == null || !team.RoundRobinEnabled)
@@ -28,7 +29,7 @@ public class RoundRobinService : IRoundRobinService
         // Get all eligible members (assignable = true) ordered by last_assigned_at (nulls first = never assigned)
         var eligibleMembers = await _db.TeamMemberships
             .Include(m => m.StaffAdmin)
-            .Where(m => m.TeamId == teamId && m.IsAssignable)
+            .Where(m => m.TeamId == teamId.Guid && m.IsAssignable)
             .Where(m => m.StaffAdmin != null && m.StaffAdmin.IsActive) // Only active staff
             .OrderBy(m => m.LastAssignedAt ?? DateTime.MinValue) // Null = never assigned, gets priority
             .ToListAsync(cancellationToken);
@@ -40,10 +41,10 @@ public class RoundRobinService : IRoundRobinService
         return eligibleMembers.First().StaffAdminId;
     }
 
-    public async Task RecordAssignmentAsync(Guid membershipId, CancellationToken cancellationToken = default)
+    public async Task RecordAssignmentAsync(ShortGuid membershipId, CancellationToken cancellationToken = default)
     {
         var membership = await _db.TeamMemberships
-            .FirstOrDefaultAsync(m => m.Id == membershipId, cancellationToken);
+            .FirstOrDefaultAsync(m => m.Id == membershipId.Guid, cancellationToken);
 
         if (membership != null)
         {

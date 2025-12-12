@@ -4,6 +4,7 @@ using App.Application.TicketViews.Commands;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
+using CSharpVitamins;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Staff.Pages.Views;
@@ -173,7 +174,7 @@ public class Create : BaseStaffPageModel
         // Filters
         public string? StatusFilter { get; set; }
         public string? PriorityFilter { get; set; }
-        public Guid? TeamIdFilter { get; set; }
+        public ShortGuid? TeamIdFilter { get; set; }
         public bool UnassignedOnly { get; set; }
         public bool AssignedToMe { get; set; }
 
