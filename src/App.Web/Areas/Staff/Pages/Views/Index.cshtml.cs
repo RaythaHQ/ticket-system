@@ -38,10 +38,10 @@ public class Index : BaseStaffPageModel
         return Page();
     }
 
-    public async Task<IActionResult> OnPostDelete(Guid viewId, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnPostDelete(string viewId, CancellationToken cancellationToken)
     {
         var response = await Mediator.Send(
-            new App.Application.TicketViews.Commands.DeleteTicketView.Command { Id = viewId },
+            new App.Application.TicketViews.Commands.DeleteTicketView.Command { Id = new ShortGuid(viewId) },
             cancellationToken
         );
 

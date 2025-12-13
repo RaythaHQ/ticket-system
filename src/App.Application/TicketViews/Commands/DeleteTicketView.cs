@@ -57,6 +57,16 @@ public class DeleteTicketView
                     throw new ForbiddenAccessException("Cannot delete views you do not own.");
             }
 
+            // Remove any favorites associated with this view
+            var favorites = await _db.UserFavoriteViews
+                .Where(f => f.TicketViewId == view.Id)
+                .ToListAsync(cancellationToken);
+            
+            foreach (var favorite in favorites)
+            {
+                _db.UserFavoriteViews.Remove(favorite);
+            }
+
             _db.TicketViews.Remove(view);
             await _db.SaveChangesAsync(cancellationToken);
 

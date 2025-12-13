@@ -70,18 +70,16 @@
                             </td>
                             <td class="text-muted small">@item.View.CreationTime.ToString("MMM dd, yyyy")</td>
                             <td class="text-end">
-                                <div class="btn-group btn-group-sm">
-                                    <a asp-area="Staff" asp-page="@RouteNames.Views.Edit" asp-route-id="@item.View.Id"
-                                        class="btn btn-outline-secondary">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form method="post" asp-page-handler="Delete" asp-route-viewId="@item.View.Id" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-danger"
-                                            onclick="return confirm('Delete this view?')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
+                                <a asp-area="Staff" asp-page="@RouteNames.Views.Edit" asp-route-id="@item.View.Id"
+                                    class="text-muted me-3" title="Edit view" style="font-size: 1.1rem;">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="post" asp-page-handler="Delete" asp-route-viewId="@item.View.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-link p-0 border-0 text-danger"
+                                        onclick="return confirm('Delete this view?')" title="Delete view" style="font-size: 1.1rem;">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     }

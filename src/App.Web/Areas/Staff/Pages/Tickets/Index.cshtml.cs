@@ -95,17 +95,26 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         ViewData["Title"] = "Tickets";
         ViewData["ActiveMenu"] = "Tickets";
 
-        // Set active submenu based on built-in view
-        ViewData["ActiveSubMenu"] = builtInView switch
+        // Set active submenu based on built-in view, or active view ID for custom views
+        if (!string.IsNullOrEmpty(viewId))
         {
-            "unassigned" => "Unassigned",
-            "my-tickets" => "MyTickets",
-            "created-by-me" or "my-opened" => "CreatedByMe",
-            "team-tickets" => "TeamTickets",
-            "overdue" => "Overdue",
-            "all" or null or "" => "AllTickets",
-            _ => null,
-        };
+            // Custom view - set the view ID so sidebar can highlight favorited views
+            ViewData["ActiveViewId"] = viewId;
+            ViewData["ActiveSubMenu"] = null; // Don't highlight any built-in view
+        }
+        else
+        {
+            ViewData["ActiveSubMenu"] = builtInView switch
+            {
+                "unassigned" => "Unassigned",
+                "my-tickets" => "MyTickets",
+                "created-by-me" or "my-opened" => "CreatedByMe",
+                "team-tickets" => "TeamTickets",
+                "overdue" => "Overdue",
+                "all" or null or "" => "AllTickets",
+                _ => null,
+            };
+        }
 
         // Load available views
         var viewsResponse = await Mediator.Send(new GetTicketViews.Query(), cancellationToken);
