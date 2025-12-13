@@ -358,10 +358,7 @@ public class ViewFilterBuilder
             {
                 GT => Expression.GreaterThan(sortOrderExpr, Expression.Constant(threshold)),
                 LT => Expression.LessThan(sortOrderExpr, Expression.Constant(threshold)),
-                GTE => Expression.GreaterThanOrEqual(
-                    sortOrderExpr,
-                    Expression.Constant(threshold)
-                ),
+                GTE => Expression.GreaterThanOrEqual(sortOrderExpr, Expression.Constant(threshold)),
                 LTE => Expression.LessThanOrEqual(sortOrderExpr, Expression.Constant(threshold)),
                 _ => null,
             };
@@ -571,10 +568,7 @@ public class ViewFilterBuilder
             IS_BEFORE => Expression.LessThan(field, Expression.Constant(startDate)),
             IS_AFTER => Expression.GreaterThan(field, Expression.Constant(endDate)),
             IS_ON_OR_BEFORE => Expression.LessThanOrEqual(field, Expression.Constant(endDate)),
-            IS_ON_OR_AFTER => Expression.GreaterThanOrEqual(
-                field,
-                Expression.Constant(startDate)
-            ),
+            IS_ON_OR_AFTER => Expression.GreaterThanOrEqual(field, Expression.Constant(startDate)),
             // Legacy operators
             GT => Expression.GreaterThan(field, Expression.Constant(startDate)),
             GTE => Expression.GreaterThanOrEqual(field, Expression.Constant(startDate)),

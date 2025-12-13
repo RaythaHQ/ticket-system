@@ -78,6 +78,11 @@ public class GetTickets
         /// View conditions to apply (alternative to ViewId for built-in views).
         /// </summary>
         public ViewConditions? ViewConditions { get; init; }
+
+        /// <summary>
+        /// When "view", use the view's default sort order instead of query string OrderBy.
+        /// </summary>
+        public string? SortBy { get; init; }
     }
 
     public class Handler : IRequestHandler<Query, IQueryResponseDto<ListResultDto<TicketListItemDto>>>
@@ -106,6 +111,8 @@ public class GetTickets
 
             var filterBuilder = new ViewFilterBuilder();
             List<string> visibleColumns = request.VisibleColumns ?? new List<string>();
+            List<Domain.Entities.ViewSortLevel>? viewSortLevels = null;
+            bool useViewSort = request.SortBy?.ToLower() == "view";
 
             // Apply view filters if ViewId is provided
             if (request.ViewId.HasValue)
@@ -117,6 +124,7 @@ public class GetTickets
                 if (view != null)
                 {
                     visibleColumns = view.VisibleColumns;
+                    viewSortLevels = view.SortLevels;
                     
                     if (!string.IsNullOrEmpty(view.ConditionsJson))
                     {
@@ -222,14 +230,31 @@ public class GetTickets
             }
 
             var total = await query.CountAsync(cancellationToken);
-            var items = query
-                .ApplyPaginationInput(request)
-                .Select(t => TicketListItemDto.MapFrom(t))
-                .ToArray();
 
-            return new QueryResponseDto<ListResultDto<TicketListItemDto>>(
-                new ListResultDto<TicketListItemDto>(items, total)
-            );
+            // Apply sorting: use view's multi-level sort if sortBy=view, otherwise use OrderBy
+            if (useViewSort && viewSortLevels?.Any() == true)
+            {
+                query = filterBuilder.ApplySorting(query, viewSortLevels);
+                var items = query
+                    .ApplyPaginationInputWithoutSorting(request)
+                    .Select(t => TicketListItemDto.MapFrom(t))
+                    .ToArray();
+
+                return new QueryResponseDto<ListResultDto<TicketListItemDto>>(
+                    new ListResultDto<TicketListItemDto>(items, total)
+                );
+            }
+            else
+            {
+                var items = query
+                    .ApplyPaginationInput(request)
+                    .Select(t => TicketListItemDto.MapFrom(t))
+                    .ToArray();
+
+                return new QueryResponseDto<ListResultDto<TicketListItemDto>>(
+                    new ListResultDto<TicketListItemDto>(items, total)
+                );
+            }
         }
     }
 }

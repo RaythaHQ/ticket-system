@@ -87,8 +87,8 @@
 - [x] T033 [US1] Add user dropdown with staff members including suspended ones with "(deactivated)" suffix in _FilterBuilder.cshtml
 - [x] T034 [US1] Update Staff Views/Create.cshtml to use _FilterBuilder partial replacing existing filter dropdowns in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml`
 - [x] T035 [US1] Update Staff Views/Create.cshtml.cs to handle new Conditions form structure with array binding in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml.cs`
-- [ ] T036 [US1] Update Staff Views/Edit.cshtml to use _FilterBuilder partial in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml`
-- [ ] T037 [US1] Update Staff Views/Edit.cshtml.cs to load existing conditions into _FilterBuilder in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml.cs`
+- [x] T036 [US1] Update Staff Views/Edit.cshtml to use _FilterBuilder partial in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml`
+- [x] T037 [US1] Update Staff Views/Edit.cshtml.cs to load existing conditions into _FilterBuilder in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml.cs`
 - [ ] T038 [US1] Add inline validation and error display for filter conditions in _FilterBuilder.cshtml
 - [ ] T039 [US1] Include SortableJS in Staff area layout for drag-drop support in `src/App.Web/Areas/Staff/Pages/Shared/_Layout.cshtml`
 
@@ -104,8 +104,8 @@
 
 ### Backend Implementation for US2
 
-- [ ] T040 [US2] Update GetTickets query handler to apply multi-level sorting from view.SortLevels in `src/App.Application/Tickets/Queries/GetTickets.cs`
-- [ ] T041 [US2] Implement ThenBy/ThenByDescending chaining for multi-level sort in GetTickets in `src/App.Application/Tickets/Queries/GetTickets.cs`
+- [x] T040 [US2] Update GetTickets query handler to apply multi-level sorting from view.SortLevels in `src/App.Application/Tickets/Queries/GetTickets.cs`
+- [x] T041 [US2] Implement ThenBy/ThenByDescending chaining for multi-level sort in GetTickets in `src/App.Application/Tickets/Queries/GetTickets.cs`
 - [ ] T042 [US2] Add sortBy=view query parameter handling to restore view's default sort in Tickets/Index.cshtml.cs in `src/App.Web/Areas/Staff/Pages/Tickets/Index.cshtml.cs`
 
 ### UI Components for US2
@@ -115,8 +115,8 @@
 - [x] T045 [US2] Add hidden order inputs updated on drag-drop reorder in _SortConfigurator.cshtml
 - [x] T046 [US2] Update Staff Views/Create.cshtml to use _SortConfigurator partial replacing single sort dropdown in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml`
 - [x] T047 [US2] Update Staff Views/Create.cshtml.cs to handle SortLevels array binding in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml.cs`
-- [ ] T048 [US2] Update Staff Views/Edit.cshtml to use _SortConfigurator partial in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml`
-- [ ] T049 [US2] Update Staff Views/Edit.cshtml.cs to load existing SortLevels into _SortConfigurator in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml.cs`
+- [x] T048 [US2] Update Staff Views/Edit.cshtml to use _SortConfigurator partial in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml`
+- [x] T049 [US2] Update Staff Views/Edit.cshtml.cs to load existing SortLevels into _SortConfigurator in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml.cs`
 - [ ] T050 [US2] Update Tickets/Index.cshtml to show view's sort as first pill formatted as "Field1 ↓, Field2 ↑" in `src/App.Web/Areas/Staff/Pages/Tickets/Index.cshtml`
 - [ ] T051 [US2] Add sortBy=view link generation for view's default sort pill in Tickets/Index.cshtml
 - [ ] T052 [US2] Highlight active sort pill (view's sort vs override sorts) in Tickets/Index.cshtml
@@ -145,8 +145,8 @@
 - [x] T059 [US3] Add hidden order inputs updated on drag-drop reorder in _ColumnSelector.cshtml
 - [x] T060 [US3] Update Staff Views/Create.cshtml to use _ColumnSelector partial replacing checkbox list in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml`
 - [x] T061 [US3] Update Staff Views/Create.cshtml.cs to handle ordered VisibleColumns array binding in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml.cs`
-- [ ] T062 [US3] Update Staff Views/Edit.cshtml to use _ColumnSelector partial in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml`
-- [ ] T063 [US3] Update Staff Views/Edit.cshtml.cs to load existing VisibleColumns with order into _ColumnSelector in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml.cs`
+- [x] T062 [US3] Update Staff Views/Edit.cshtml to use _ColumnSelector partial in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml`
+- [x] T063 [US3] Update Staff Views/Edit.cshtml.cs to load existing VisibleColumns with order into _ColumnSelector in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml.cs`
 - [ ] T064 [US3] Update Tickets/Index.cshtml to render only columns in view.VisibleColumns in configured order in `src/App.Web/Areas/Staff/Pages/Tickets/Index.cshtml`
 - [ ] T065 [US3] Update Tickets/Index.cshtml.cs to pass VisibleColumns to view for dynamic table rendering in `src/App.Web/Areas/Staff/Pages/Tickets/Index.cshtml.cs`
 - [ ] T066 [US3] Make Ticket ID and Title columns clickable links to ticket detail with proper backToListUrl in Tickets/Index.cshtml
