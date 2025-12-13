@@ -1,15 +1,15 @@
 using System.IO;
+using App.Application.Common.Interfaces;
+using App.Application.Common.Utils;
+using App.Application.MediaItems.Commands;
+using App.Application.MediaItems.Queries;
+using App.Domain.Entities;
 using CSharpVitamins;
 using Mediator;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using App.Application.Common.Interfaces;
-using App.Application.Common.Utils;
-using App.Application.MediaItems.Commands;
-using App.Application.MediaItems.Queries;
-using App.Domain.Entities;
 
 namespace App.Web.Areas.Admin.Endpoints;
 
@@ -24,28 +24,33 @@ public static class MediaItemsEndpoints
         group
             .MapPost("/presign", CloudUploadPresignRequest)
             .WithName("mediaitemspresignuploadurl")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .ExcludeFromDescription();
 
         group
             .MapPost("/create-after-upload", CloudUploadCreateAfterUpload)
             .WithName("mediaitemscreateafterupload")
-            .RequireAuthorization();
+            .RequireAuthorization()
+            .ExcludeFromDescription();
 
         group
             .MapPost("/upload", DirectUpload)
             .WithName("mediaitemslocalstorageupload")
             .RequireAuthorization()
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            .ExcludeFromDescription();
 
         group
             .MapGet("/objectkey/{objectKey}", RedirectToFileUrlByObjectKey)
             .WithName("mediaitemsredirecttofileurlbyobjectkey")
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .ExcludeFromDescription();
 
         group
             .MapGet("/id/{id}", RedirectToFileUrlById)
             .WithName("mediaitemsredirecttofileurlbyid")
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .ExcludeFromDescription();
 
         return endpoints;
     }
@@ -266,4 +271,3 @@ public record MediaItemCreateAfterUpload(
     long Length,
     string? ContentDisposition
 );
-

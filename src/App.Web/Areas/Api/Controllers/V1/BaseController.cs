@@ -10,7 +10,7 @@ namespace App.Web.Areas.Api.Controllers.V1;
 [Area("Api")]
 [ApiExplorerSettings(IgnoreApi = false, GroupName = "v1")]
 [ApiController]
-[Route("api/v1/[controller]")]
+[Route("app/api/v1/[controller]")]
 public class BaseController : Controller
 {
     private ISender _mediator;
