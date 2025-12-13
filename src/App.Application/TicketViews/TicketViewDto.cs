@@ -151,10 +151,10 @@ public record ViewFilterCondition
     /// <summary>
     /// Operator to apply. Valid operators depend on field type.
     /// String: eq, neq, contains, not_contains, starts_with, not_starts_with, ends_with, not_ends_with, is_empty, is_not_empty
-    /// Date: is, is_within, is_before, is_after, is_on_or_before, is_on_or_after, is_empty, is_not_empty
+    /// Date: is, is_within_past_hours/days/months, is_within_next_hours/days/months, is_before, is_after, is_on_or_before, is_on_or_after, is_empty, is_not_empty
     /// Boolean: is_true, is_false
     /// Numeric: eq, neq, gt, lt, gte, lte, is_empty, is_not_empty
-    /// Selection: is, is_not, is_any_of, is_none_of
+    /// Selection: is, is_not
     /// Priority: is, is_not, gt, lt, gte, lte (based on SortOrder)
     /// User: is, is_not, is_any_of, is_none_of, is_empty, is_not_empty
     /// </summary>

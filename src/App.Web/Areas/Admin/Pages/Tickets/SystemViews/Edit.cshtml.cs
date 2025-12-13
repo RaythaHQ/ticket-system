@@ -125,10 +125,14 @@ public class Edit : BaseAdminPageModel
         // Build sort levels from form
         var sortLevels = ParseSortLevelsFromForm();
 
-        // Get selected columns
-        var selectedColumns = columnList.Any()
-            ? columnList
-            : new List<string> { "Id", "Title", "Status", "Priority", "CreationTime" };
+        // Validate at least one column is selected
+        if (!columnList.Any())
+        {
+            SetErrorMessage("You must select at least one column.");
+            await LoadOptionsAsync(cancellationToken);
+            await LoadAdvancedViewModelsAsync(null, cancellationToken);
+            return Page();
+        }
 
         var response = await Mediator.Send(
             new UpdateTicketView.Command
@@ -139,7 +143,7 @@ public class Edit : BaseAdminPageModel
                 IsDefault = Form.IsDefault,
                 Conditions = conditions,
                 SortLevels = sortLevels,
-                VisibleColumns = selectedColumns,
+                VisibleColumns = columnList,
             },
             cancellationToken
         );

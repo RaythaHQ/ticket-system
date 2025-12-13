@@ -54,12 +54,14 @@ public class ViewFilterBuilder
             return query;
 
         // Use new AndFilters/OrFilters if present, otherwise fall back to legacy Filters
-        var andFilters = conditions.AndFilters?.Any() == true
-            ? conditions.AndFilters
-            : (conditions.Logic != "OR" ? conditions.Filters : new List<ViewFilterCondition>());
-        var orFilters = conditions.OrFilters?.Any() == true
-            ? conditions.OrFilters
-            : (conditions.Logic == "OR" ? conditions.Filters : new List<ViewFilterCondition>());
+        var andFilters =
+            conditions.AndFilters?.Any() == true
+                ? conditions.AndFilters
+                : (conditions.Logic != "OR" ? conditions.Filters : new List<ViewFilterCondition>());
+        var orFilters =
+            conditions.OrFilters?.Any() == true
+                ? conditions.OrFilters
+                : (conditions.Logic == "OR" ? conditions.Filters : new List<ViewFilterCondition>());
 
         // Step 1: Apply all AND filters (each must match)
         foreach (var filter in andFilters)
@@ -79,7 +81,10 @@ public class ViewFilterBuilder
     /// <summary>
     /// Apply OR filters: at least one must match.
     /// </summary>
-    private IQueryable<Ticket> ApplyOrFilters(IQueryable<Ticket> query, List<ViewFilterCondition> filters)
+    private IQueryable<Ticket> ApplyOrFilters(
+        IQueryable<Ticket> query,
+        List<ViewFilterCondition> filters
+    )
     {
         Expression<Func<Ticket, bool>>? combined = null;
 
@@ -95,7 +100,10 @@ public class ViewFilterBuilder
             }
             else
             {
-                var replacer = new ParameterReplacer(filterExpr.Parameters[0], combined.Parameters[0]);
+                var replacer = new ParameterReplacer(
+                    filterExpr.Parameters[0],
+                    combined.Parameters[0]
+                );
                 var newBody = replacer.Visit(filterExpr.Body);
                 var orExpr = Expression.OrElse(combined.Body, newBody);
                 combined = Expression.Lambda<Func<Ticket, bool>>(orExpr, combined.Parameters[0]);
@@ -567,15 +575,22 @@ public class ViewFilterBuilder
     )
     {
         var field = Expression.Invoke(selector, param);
+        
+        // Handle "is within" operators with number value
+        if (filter.Operator.StartsWith("is_within_"))
+        {
+            var (withinStart, withinEnd) = ResolveWithinDateRange(filter);
+            return Expression.AndAlso(
+                Expression.GreaterThanOrEqual(field, Expression.Constant(withinStart)),
+                Expression.LessThanOrEqual(field, Expression.Constant(withinEnd))
+            );
+        }
+        
         var (startDate, endDate) = ResolveDateValue(filter);
 
         return filter.Operator switch
         {
             "is" => Expression.AndAlso(
-                Expression.GreaterThanOrEqual(field, Expression.Constant(startDate)),
-                Expression.LessThanOrEqual(field, Expression.Constant(endDate))
-            ),
-            IS_WITHIN => Expression.AndAlso(
                 Expression.GreaterThanOrEqual(field, Expression.Constant(startDate)),
                 Expression.LessThanOrEqual(field, Expression.Constant(endDate))
             ),
@@ -614,11 +629,27 @@ public class ViewFilterBuilder
             return Expression.NotEqual(field, Expression.Constant(null, typeof(DateTime?)));
         }
 
+        // Handle "is within" operators with number value
+        if (filter.Operator.StartsWith("is_within_"))
+        {
+            var (withinStart, withinEnd) = ResolveWithinDateRange(filter);
+            return Expression.AndAlso(
+                Expression.GreaterThanOrEqual(
+                    field,
+                    Expression.Constant((DateTime?)withinStart, typeof(DateTime?))
+                ),
+                Expression.LessThanOrEqual(
+                    field,
+                    Expression.Constant((DateTime?)withinEnd, typeof(DateTime?))
+                )
+            );
+        }
+
         var (startDate, endDate) = ResolveDateValue(filter);
 
         return filter.Operator switch
         {
-            IS or IS_WITHIN => Expression.AndAlso(
+            IS => Expression.AndAlso(
                 Expression.GreaterThanOrEqual(
                     field,
                     Expression.Constant((DateTime?)startDate, typeof(DateTime?))
@@ -696,6 +727,27 @@ public class ViewFilterBuilder
         // Default to today
         var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _timezone);
         return (now.Date, now.Date.AddDays(1).AddTicks(-1));
+    }
+
+    /// <summary>
+    /// Resolve date range for "is_within_past/next_hours/days/months" operators.
+    /// The Value field contains the number (e.g., "7" for 7 days).
+    /// </summary>
+    private (DateTime Start, DateTime End) ResolveWithinDateRange(ViewFilterCondition filter)
+    {
+        var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _timezone);
+        var amount = int.TryParse(filter.Value, out var val) ? val : 1;
+
+        return filter.Operator switch
+        {
+            IS_WITHIN_PAST_HOURS => (now.AddHours(-amount), now),
+            IS_WITHIN_PAST_DAYS => (now.AddDays(-amount), now),
+            IS_WITHIN_PAST_MONTHS => (now.AddMonths(-amount), now),
+            IS_WITHIN_NEXT_HOURS => (now, now.AddHours(amount)),
+            IS_WITHIN_NEXT_DAYS => (now, now.AddDays(amount)),
+            IS_WITHIN_NEXT_MONTHS => (now, now.AddMonths(amount)),
+            _ => (now.AddDays(-1), now) // fallback
+        };
     }
 
     #endregion

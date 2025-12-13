@@ -20,7 +20,12 @@ public class FilterOperator : ValueObject
 
     // Date operators
     public const string IS = "is";
-    public const string IS_WITHIN = "is_within";
+    public const string IS_WITHIN_PAST_HOURS = "is_within_past_hours";
+    public const string IS_WITHIN_PAST_DAYS = "is_within_past_days";
+    public const string IS_WITHIN_PAST_MONTHS = "is_within_past_months";
+    public const string IS_WITHIN_NEXT_HOURS = "is_within_next_hours";
+    public const string IS_WITHIN_NEXT_DAYS = "is_within_next_days";
+    public const string IS_WITHIN_NEXT_MONTHS = "is_within_next_months";
     public const string IS_BEFORE = "is_before";
     public const string IS_AFTER = "is_after";
     public const string IS_ON_OR_BEFORE = "is_on_or_before";
@@ -107,7 +112,12 @@ public class FilterOperator : ValueObject
 
     // Date operators
     public static FilterOperator Is => new("is", IS, true, false);
-    public static FilterOperator IsWithin => new("is within", IS_WITHIN, true, false);
+    public static FilterOperator IsWithinPastHours => new("within the past (hours)", IS_WITHIN_PAST_HOURS, true, false);
+    public static FilterOperator IsWithinPastDays => new("within the past (days)", IS_WITHIN_PAST_DAYS, true, false);
+    public static FilterOperator IsWithinPastMonths => new("within the past (months)", IS_WITHIN_PAST_MONTHS, true, false);
+    public static FilterOperator IsWithinNextHours => new("within the next (hours)", IS_WITHIN_NEXT_HOURS, true, false);
+    public static FilterOperator IsWithinNextDays => new("within the next (days)", IS_WITHIN_NEXT_DAYS, true, false);
+    public static FilterOperator IsWithinNextMonths => new("within the next (months)", IS_WITHIN_NEXT_MONTHS, true, false);
     public static FilterOperator IsBefore => new("is before", IS_BEFORE, true, false);
     public static FilterOperator IsAfter => new("is after", IS_AFTER, true, false);
     public static FilterOperator IsOnOrBefore => new("is on or before", IS_ON_OR_BEFORE, true, false);
@@ -159,7 +169,12 @@ public class FilterOperator : ValueObject
             yield return IsNotEmpty;
             // Date
             yield return Is;
-            yield return IsWithin;
+            yield return IsWithinPastHours;
+            yield return IsWithinPastDays;
+            yield return IsWithinPastMonths;
+            yield return IsWithinNextHours;
+            yield return IsWithinNextDays;
+            yield return IsWithinNextMonths;
             yield return IsBefore;
             yield return IsAfter;
             yield return IsOnOrBefore;
@@ -174,8 +189,6 @@ public class FilterOperator : ValueObject
             yield return Lte;
             // Selection
             yield return IsNot;
-            yield return IsAnyOf;
-            yield return IsNoneOf;
         }
     }
 
@@ -207,7 +220,12 @@ public class FilterOperator : ValueObject
         get
         {
             yield return Is;
-            yield return IsWithin;
+            yield return IsWithinPastHours;
+            yield return IsWithinPastDays;
+            yield return IsWithinPastMonths;
+            yield return IsWithinNextHours;
+            yield return IsWithinNextDays;
+            yield return IsWithinNextMonths;
             yield return IsBefore;
             yield return IsAfter;
             yield return IsOnOrBefore;
@@ -256,8 +274,6 @@ public class FilterOperator : ValueObject
         {
             yield return Is;
             yield return IsNot;
-            yield return IsAnyOf;
-            yield return IsNoneOf;
         }
     }
 
@@ -270,7 +286,6 @@ public class FilterOperator : ValueObject
         {
             yield return Is;
             yield return IsNot;
-            yield return IsAnyOf;
             yield return Gt;
             yield return Lt;
             yield return Gte;
@@ -287,8 +302,6 @@ public class FilterOperator : ValueObject
         {
             yield return Is;
             yield return IsNot;
-            yield return IsAnyOf;
-            yield return IsNoneOf;
             yield return IsEmpty;
             yield return IsNotEmpty;
         }

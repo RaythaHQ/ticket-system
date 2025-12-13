@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using App.Application.Common.Interfaces;
 using App.Application.Teams.Queries;
 using App.Application.TicketViews;
 using App.Application.TicketViews.Commands;
@@ -13,6 +14,13 @@ namespace App.Web.Areas.Staff.Pages.Views;
 
 public class Create : BaseStaffPageModel
 {
+    private readonly ITicketConfigService _configService;
+
+    public Create(ITicketConfigService configService)
+    {
+        _configService = configService;
+    }
+
     [BindProperty]
     public CreateViewForm Form { get; set; } = new();
 
@@ -64,10 +72,12 @@ public class Create : BaseStaffPageModel
             ? formColumns.ToList()
             : VisibleColumns;
 
-        // Default columns if none selected
+        // Validate at least one column is selected
         if (!columnList.Any())
         {
-            columnList = new List<string> { "Id", "Title", "Status", "Priority", "CreationTime" };
+            SetErrorMessage("You must select at least one column.");
+            await LoadOptionsAsync(cancellationToken);
+            return Page();
         }
 
         // Parse sort levels from form
@@ -154,19 +164,21 @@ public class Create : BaseStaffPageModel
             Name = t.Name
         }).ToList();
 
-        // Load statuses and priorities
-        FilterBuilderModel.Statuses = TicketStatus.SupportedTypes.Select(s => new SelectOption
+        // Load statuses and priorities dynamically from config service
+        var statuses = await _configService.GetAllStatusesAsync(includeInactive: true, cancellationToken);
+        FilterBuilderModel.Statuses = statuses.Select(s => new SelectOption
         {
             Value = s.DeveloperName,
-            Label = s.Label
+            Label = s.IsActive ? s.Label : $"{s.Label} (inactive)"
         }).ToList();
 
-        FilterBuilderModel.Priorities = TicketPriority.SupportedTypes
+        var priorities = await _configService.GetAllPrioritiesAsync(includeInactive: true, cancellationToken);
+        FilterBuilderModel.Priorities = priorities
             .OrderBy(p => p.SortOrder)
             .Select(p => new SelectOption
             {
                 Value = p.DeveloperName,
-                Label = p.Label
+                Label = p.IsActive ? p.Label : $"{p.Label} (inactive)"
             }).ToList();
 
         // Load sort configurator data

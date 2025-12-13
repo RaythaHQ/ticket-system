@@ -451,6 +451,24 @@
             border-bottom: none;
         }
 
+        /* Sticky Actions Column */
+        .staff-table th:last-child,
+        .staff-table td:last-child {
+            position: sticky;
+            right: 0;
+            background: #fff;
+            box-shadow: -4px 0 8px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        .staff-table thead th:last-child {
+            background: #f8fafc;
+            z-index: 2;
+        }
+
+        .staff-table tbody tr:hover td:last-child {
+            background: rgba(0, 157, 220, 0.05);
+        }
+
         /* Badge Styles */
         .staff-badge {
             display: inline-flex;
