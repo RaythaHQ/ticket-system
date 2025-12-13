@@ -2,6 +2,8 @@ using System.Linq.Expressions;
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
 using CSharpVitamins;
+using static App.Domain.ValueObjects.FilterOperator;
+using static App.Domain.ValueObjects.RelativeDatePreset;
 
 namespace App.Application.TicketViews.Services;
 
@@ -229,45 +231,45 @@ public class ViewFilterBuilder
 
         return filter.Operator switch
         {
-            "eq" or "equals" => Expression.AndAlso(
+            EQ or EQUALS => Expression.AndAlso(
                 notNullCheck,
                 Expression.Equal(fieldLower, valueConst)
             ),
-            "neq" => Expression.OrElse(
+            NEQ => Expression.OrElse(
                 Expression.Equal(field, Expression.Constant(null, typeof(string))),
                 Expression.NotEqual(fieldLower, valueConst)
             ),
-            "contains" => Expression.AndAlso(
+            CONTAINS => Expression.AndAlso(
                 notNullCheck,
                 Expression.Call(fieldLower, containsMethod, valueConst)
             ),
-            "not_contains" => Expression.OrElse(
+            NOT_CONTAINS => Expression.OrElse(
                 Expression.Equal(field, Expression.Constant(null, typeof(string))),
                 Expression.Not(Expression.Call(fieldLower, containsMethod, valueConst))
             ),
-            "starts_with" => Expression.AndAlso(
+            STARTS_WITH => Expression.AndAlso(
                 notNullCheck,
                 Expression.Call(fieldLower, startsWithMethod, valueConst)
             ),
-            "not_starts_with" => Expression.OrElse(
+            NOT_STARTS_WITH => Expression.OrElse(
                 Expression.Equal(field, Expression.Constant(null, typeof(string))),
                 Expression.Not(Expression.Call(fieldLower, startsWithMethod, valueConst))
             ),
-            "ends_with" => Expression.AndAlso(
+            ENDS_WITH => Expression.AndAlso(
                 notNullCheck,
                 Expression.Call(fieldLower, endsWithMethod, valueConst)
             ),
-            "not_ends_with" => Expression.OrElse(
+            NOT_ENDS_WITH => Expression.OrElse(
                 Expression.Equal(field, Expression.Constant(null, typeof(string))),
                 Expression.Not(Expression.Call(fieldLower, endsWithMethod, valueConst))
             ),
-            "is_empty" => isNullable
+            IS_EMPTY => isNullable
                 ? Expression.OrElse(
                     Expression.Equal(field, Expression.Constant(null, typeof(string))),
                     Expression.Equal(field, Expression.Constant(""))
                 )
                 : Expression.Equal(field, Expression.Constant("")),
-            "is_not_empty" => Expression.AndAlso(
+            IS_NOT_EMPTY => Expression.AndAlso(
                 Expression.NotEqual(field, Expression.Constant(null, typeof(string))),
                 Expression.NotEqual(field, Expression.Constant(""))
             ),
@@ -314,13 +316,13 @@ public class ViewFilterBuilder
 
         return filter.Operator switch
         {
-            "is" or "eq" or "equals" => Expression.Equal(statusLower, valueConst),
-            "is_not" or "neq" => Expression.NotEqual(statusLower, valueConst),
-            "is_any_of" or "in" when filter.Values?.Any() == true => BuildContainsExpression(
+            IS or EQ or EQUALS => Expression.Equal(statusLower, valueConst),
+            IS_NOT or NEQ => Expression.NotEqual(statusLower, valueConst),
+            IS_ANY_OF or IN when filter.Values?.Any() == true => BuildContainsExpression(
                 statusLower,
                 filter.Values
             ),
-            "is_none_of" or "notin" when filter.Values?.Any() == true => Expression.Not(
+            IS_NONE_OF or NOT_IN when filter.Values?.Any() == true => Expression.Not(
                 BuildContainsExpression(statusLower, filter.Values)
             ),
             _ => null,
@@ -344,7 +346,7 @@ public class ViewFilterBuilder
         var valueConst = Expression.Constant(value);
 
         // For comparison operators, we need to use SortOrder
-        if (filter.Operator is "gt" or "lt" or "gte" or "lte")
+        if (filter.Operator is GT or LT or GTE or LTE)
         {
             var threshold = TicketPriority.From(filter.Value ?? "normal").SortOrder;
 
@@ -354,26 +356,26 @@ public class ViewFilterBuilder
 
             return filter.Operator switch
             {
-                "gt" => Expression.GreaterThan(sortOrderExpr, Expression.Constant(threshold)),
-                "lt" => Expression.LessThan(sortOrderExpr, Expression.Constant(threshold)),
-                "gte" => Expression.GreaterThanOrEqual(
+                GT => Expression.GreaterThan(sortOrderExpr, Expression.Constant(threshold)),
+                LT => Expression.LessThan(sortOrderExpr, Expression.Constant(threshold)),
+                GTE => Expression.GreaterThanOrEqual(
                     sortOrderExpr,
                     Expression.Constant(threshold)
                 ),
-                "lte" => Expression.LessThanOrEqual(sortOrderExpr, Expression.Constant(threshold)),
+                LTE => Expression.LessThanOrEqual(sortOrderExpr, Expression.Constant(threshold)),
                 _ => null,
             };
         }
 
         return filter.Operator switch
         {
-            "is" or "eq" or "equals" => Expression.Equal(priorityLower, valueConst),
-            "is_not" or "neq" => Expression.NotEqual(priorityLower, valueConst),
-            "is_any_of" or "in" when filter.Values?.Any() == true => BuildContainsExpression(
+            IS or EQ or EQUALS => Expression.Equal(priorityLower, valueConst),
+            IS_NOT or NEQ => Expression.NotEqual(priorityLower, valueConst),
+            IS_ANY_OF or IN when filter.Values?.Any() == true => BuildContainsExpression(
                 priorityLower,
                 filter.Values
             ),
-            "is_none_of" or "notin" when filter.Values?.Any() == true => Expression.Not(
+            IS_NONE_OF or NOT_IN when filter.Values?.Any() == true => Expression.Not(
                 BuildContainsExpression(priorityLower, filter.Values)
             ),
             _ => null,
@@ -410,12 +412,12 @@ public class ViewFilterBuilder
     {
         var field = Expression.Invoke(selector, param);
 
-        if (filter.Operator is "is_empty" or "isnull")
+        if (filter.Operator is IS_EMPTY or IS_NULL)
         {
             return Expression.Equal(field, Expression.Constant(null, typeof(Guid?)));
         }
 
-        if (filter.Operator is "is_not_empty" or "isnotnull")
+        if (filter.Operator is IS_NOT_EMPTY or IS_NOT_NULL)
         {
             return Expression.NotEqual(field, Expression.Constant(null, typeof(Guid?)));
         }
@@ -423,17 +425,17 @@ public class ViewFilterBuilder
         // Parse value as Guid
         Guid? guid = ParseGuid(filter.Value);
 
-        if (filter.Operator is "is" or "eq" or "equals" && guid.HasValue)
+        if (filter.Operator is IS or EQ or EQUALS && guid.HasValue)
         {
             return Expression.Equal(field, Expression.Constant(guid, typeof(Guid?)));
         }
 
-        if (filter.Operator is "is_not" or "neq" && guid.HasValue)
+        if (filter.Operator is IS_NOT or NEQ && guid.HasValue)
         {
             return Expression.NotEqual(field, Expression.Constant(guid, typeof(Guid?)));
         }
 
-        if (filter.Operator is "is_any_of" && filter.Values?.Any() == true)
+        if (filter.Operator is IS_ANY_OF && filter.Values?.Any() == true)
         {
             var guids = filter
                 .Values.Select(ParseGuid)
@@ -445,7 +447,7 @@ public class ViewFilterBuilder
             return BuildGuidContainsExpression(field, guids);
         }
 
-        if (filter.Operator is "is_none_of" && filter.Values?.Any() == true)
+        if (filter.Operator is IS_NONE_OF && filter.Values?.Any() == true)
         {
             var guids = filter
                 .Values.Select(ParseGuid)
@@ -501,10 +503,10 @@ public class ViewFilterBuilder
         {
             "eq" or "equals" => Expression.Equal(field, valueConst),
             "neq" => Expression.NotEqual(field, valueConst),
-            "gt" => Expression.GreaterThan(field, valueConst),
-            "lt" => Expression.LessThan(field, valueConst),
-            "gte" => Expression.GreaterThanOrEqual(field, valueConst),
-            "lte" => Expression.LessThanOrEqual(field, valueConst),
+            GT => Expression.GreaterThan(field, valueConst),
+            LT => Expression.LessThan(field, valueConst),
+            GTE => Expression.GreaterThanOrEqual(field, valueConst),
+            LTE => Expression.LessThanOrEqual(field, valueConst),
             _ => null,
         };
     }
@@ -517,12 +519,12 @@ public class ViewFilterBuilder
     {
         var field = Expression.Invoke(selector, param);
 
-        if (filter.Operator is "is_empty" or "isnull")
+        if (filter.Operator is IS_EMPTY or IS_NULL)
         {
             return Expression.Equal(field, Expression.Constant(null, typeof(long?)));
         }
 
-        if (filter.Operator is "is_not_empty" or "isnotnull")
+        if (filter.Operator is IS_NOT_EMPTY or IS_NOT_NULL)
         {
             return Expression.NotEqual(field, Expression.Constant(null, typeof(long?)));
         }
@@ -535,10 +537,10 @@ public class ViewFilterBuilder
         {
             "eq" or "equals" => Expression.Equal(field, valueConst),
             "neq" => Expression.NotEqual(field, valueConst),
-            "gt" => Expression.GreaterThan(field, valueConst),
-            "lt" => Expression.LessThan(field, valueConst),
-            "gte" => Expression.GreaterThanOrEqual(field, valueConst),
-            "lte" => Expression.LessThanOrEqual(field, valueConst),
+            GT => Expression.GreaterThan(field, valueConst),
+            LT => Expression.LessThan(field, valueConst),
+            GTE => Expression.GreaterThanOrEqual(field, valueConst),
+            LTE => Expression.LessThanOrEqual(field, valueConst),
             _ => null,
         };
     }
@@ -562,22 +564,22 @@ public class ViewFilterBuilder
                 Expression.GreaterThanOrEqual(field, Expression.Constant(startDate)),
                 Expression.LessThanOrEqual(field, Expression.Constant(endDate))
             ),
-            "is_within" => Expression.AndAlso(
+            IS_WITHIN => Expression.AndAlso(
                 Expression.GreaterThanOrEqual(field, Expression.Constant(startDate)),
                 Expression.LessThanOrEqual(field, Expression.Constant(endDate))
             ),
-            "is_before" => Expression.LessThan(field, Expression.Constant(startDate)),
-            "is_after" => Expression.GreaterThan(field, Expression.Constant(endDate)),
-            "is_on_or_before" => Expression.LessThanOrEqual(field, Expression.Constant(endDate)),
-            "is_on_or_after" => Expression.GreaterThanOrEqual(
+            IS_BEFORE => Expression.LessThan(field, Expression.Constant(startDate)),
+            IS_AFTER => Expression.GreaterThan(field, Expression.Constant(endDate)),
+            IS_ON_OR_BEFORE => Expression.LessThanOrEqual(field, Expression.Constant(endDate)),
+            IS_ON_OR_AFTER => Expression.GreaterThanOrEqual(
                 field,
                 Expression.Constant(startDate)
             ),
             // Legacy operators
-            "gt" => Expression.GreaterThan(field, Expression.Constant(startDate)),
-            "gte" => Expression.GreaterThanOrEqual(field, Expression.Constant(startDate)),
-            "lt" => Expression.LessThan(field, Expression.Constant(startDate)),
-            "lte" => Expression.LessThanOrEqual(field, Expression.Constant(startDate)),
+            GT => Expression.GreaterThan(field, Expression.Constant(startDate)),
+            GTE => Expression.GreaterThanOrEqual(field, Expression.Constant(startDate)),
+            LT => Expression.LessThan(field, Expression.Constant(startDate)),
+            LTE => Expression.LessThanOrEqual(field, Expression.Constant(startDate)),
             "equals" => Expression.AndAlso(
                 Expression.GreaterThanOrEqual(field, Expression.Constant(startDate)),
                 Expression.LessThanOrEqual(field, Expression.Constant(endDate))
@@ -594,12 +596,12 @@ public class ViewFilterBuilder
     {
         var field = Expression.Invoke(selector, param);
 
-        if (filter.Operator is "is_empty" or "isnull")
+        if (filter.Operator is IS_EMPTY or IS_NULL)
         {
             return Expression.Equal(field, Expression.Constant(null, typeof(DateTime?)));
         }
 
-        if (filter.Operator is "is_not_empty" or "isnotnull")
+        if (filter.Operator is IS_NOT_EMPTY or IS_NOT_NULL)
         {
             return Expression.NotEqual(field, Expression.Constant(null, typeof(DateTime?)));
         }
@@ -608,7 +610,7 @@ public class ViewFilterBuilder
 
         return filter.Operator switch
         {
-            "is" or "is_within" => Expression.AndAlso(
+            IS or IS_WITHIN => Expression.AndAlso(
                 Expression.GreaterThanOrEqual(
                     field,
                     Expression.Constant((DateTime?)startDate, typeof(DateTime?))
@@ -618,36 +620,36 @@ public class ViewFilterBuilder
                     Expression.Constant((DateTime?)endDate, typeof(DateTime?))
                 )
             ),
-            "is_before" => Expression.LessThan(
+            IS_BEFORE => Expression.LessThan(
                 field,
                 Expression.Constant((DateTime?)startDate, typeof(DateTime?))
             ),
-            "is_after" => Expression.GreaterThan(
+            IS_AFTER => Expression.GreaterThan(
                 field,
                 Expression.Constant((DateTime?)endDate, typeof(DateTime?))
             ),
-            "is_on_or_before" => Expression.LessThanOrEqual(
+            IS_ON_OR_BEFORE => Expression.LessThanOrEqual(
                 field,
                 Expression.Constant((DateTime?)endDate, typeof(DateTime?))
             ),
-            "is_on_or_after" => Expression.GreaterThanOrEqual(
+            IS_ON_OR_AFTER => Expression.GreaterThanOrEqual(
                 field,
                 Expression.Constant((DateTime?)startDate, typeof(DateTime?))
             ),
             // Legacy operators
-            "gt" => Expression.GreaterThan(
+            GT => Expression.GreaterThan(
                 field,
                 Expression.Constant((DateTime?)startDate, typeof(DateTime?))
             ),
-            "gte" => Expression.GreaterThanOrEqual(
+            GTE => Expression.GreaterThanOrEqual(
                 field,
                 Expression.Constant((DateTime?)startDate, typeof(DateTime?))
             ),
-            "lt" => Expression.LessThan(
+            LT => Expression.LessThan(
                 field,
                 Expression.Constant((DateTime?)startDate, typeof(DateTime?))
             ),
-            "lte" => Expression.LessThanOrEqual(
+            LTE => Expression.LessThanOrEqual(
                 field,
                 Expression.Constant((DateTime?)startDate, typeof(DateTime?))
             ),
@@ -702,8 +704,8 @@ public class ViewFilterBuilder
 
         return filter.Operator switch
         {
-            "is_true" => field,
-            "is_false" => Expression.Not(field),
+            IS_TRUE => field,
+            IS_FALSE => Expression.Not(field),
             _ => null,
         };
     }

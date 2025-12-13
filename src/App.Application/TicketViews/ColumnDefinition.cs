@@ -8,12 +8,12 @@ public record ColumnDefinition
     public string Field { get; init; } = null!;
     public string Label { get; init; } = null!;
     public bool IsClickable { get; init; }
-    
+
     /// <summary>
     /// Target for clickable columns: "ticket", "contact", or null.
     /// </summary>
     public string? ClickTarget { get; init; }
-    
+
     /// <summary>
     /// Whether this column is searchable.
     /// </summary>
@@ -27,14 +27,32 @@ public static class ColumnRegistry
 {
     public static readonly IReadOnlyList<ColumnDefinition> Columns = new List<ColumnDefinition>
     {
-        new() { Field = "Id", Label = "Ticket ID", IsClickable = true, ClickTarget = "ticket" },
-        new() { Field = "Title", Label = "Title", IsClickable = true, ClickTarget = "ticket" },
+        new()
+        {
+            Field = "Id",
+            Label = "Ticket ID",
+            IsClickable = true,
+            ClickTarget = "ticket",
+        },
+        new()
+        {
+            Field = "Title",
+            Label = "Title",
+            IsClickable = true,
+            ClickTarget = "ticket",
+        },
         new() { Field = "Status", Label = "Status" },
         new() { Field = "Priority", Label = "Priority" },
         new() { Field = "Category", Label = "Category" },
         new() { Field = "AssigneeName", Label = "Assignee" },
         new() { Field = "OwningTeamName", Label = "Team" },
-        new() { Field = "ContactId", Label = "Contact ID", IsClickable = true, ClickTarget = "contact" },
+        new()
+        {
+            Field = "ContactId",
+            Label = "Contact ID",
+            IsClickable = true,
+            ClickTarget = "contact",
+        },
         new() { Field = "ContactName", Label = "Contact" },
         new() { Field = "SlaStatus", Label = "SLA Status" },
         new() { Field = "SlaDueAt", Label = "SLA Due" },
@@ -43,7 +61,12 @@ public static class ColumnRegistry
         new() { Field = "ClosedAt", Label = "Closed" },
         new() { Field = "Tags", Label = "Tags" },
         new() { Field = "CreatedByName", Label = "Created By" },
-        new() { Field = "Description", Label = "Description", IsSearchable = true },
+        new()
+        {
+            Field = "Description",
+            Label = "Description",
+            IsSearchable = true,
+        },
     };
 
     /// <summary>
@@ -51,7 +74,9 @@ public static class ColumnRegistry
     /// </summary>
     public static ColumnDefinition? GetByField(string field)
     {
-        return Columns.FirstOrDefault(c => c.Field.Equals(field, StringComparison.OrdinalIgnoreCase));
+        return Columns.FirstOrDefault(c =>
+            c.Field.Equals(field, StringComparison.OrdinalIgnoreCase)
+        );
     }
 
     /// <summary>
@@ -70,4 +95,3 @@ public static class ColumnRegistry
         return Columns.Where(c => c.IsClickable);
     }
 }
-

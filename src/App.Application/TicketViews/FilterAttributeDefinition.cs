@@ -7,23 +7,15 @@ public record FilterAttributeDefinition
 {
     public string Field { get; init; } = null!;
     public string Label { get; init; } = null!;
-    
+
     /// <summary>
     /// Attribute type: string, date, boolean, numeric, selection, priority, user, team.
     /// </summary>
     public string Type { get; init; } = null!;
-    
-    public List<FilterOperator> Operators { get; init; } = new();
+
+    public List<FilterOperatorDto> Operators { get; init; } = new();
     public bool IsSortable { get; init; } = true;
     public bool IsColumnVisible { get; init; } = true;
-}
-
-public record FilterOperator
-{
-    public string Value { get; init; } = null!;
-    public string Label { get; init; } = null!;
-    public bool RequiresValue { get; init; } = true;
-    public bool AllowsMultipleValues { get; init; } = false;
 }
 
 /// <summary>
