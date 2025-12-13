@@ -8,6 +8,103 @@
 
 <partial name="_Partials/PageHeading" model='"Welcome back!"' />
 
+<!-- Quick Lookup -->
+<div class="row g-4 mb-4">
+    <!-- Tickets Section -->
+    <div class="col-lg-6">
+        <div class="staff-card">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-ticket-detailed me-2"></i>Tickets</h5>
+            </div>
+            <div class="staff-card-body">
+                <!-- Fast Open by ID -->
+                <form method="post" asp-page-handler="QuickLookupTicketId" class="mb-3">
+                    <label asp-for="QuickLookupTicketId.TicketId" class="form-label small">Ticket ID</label>
+                    <input asp-for="QuickLookupTicketId.TicketId" type="number" class="form-control" placeholder="Ticket ID" />
+                    <span asp-validation-for="QuickLookupTicketId.TicketId" class="text-danger small"></span>
+                    <button type="submit" class="btn btn-primary mt-2 w-100">Go</button>
+                </form>
+
+                <hr class="my-4" />
+
+                <!-- Search Tickets -->
+                <form method="post" asp-page-handler="QuickSearchTickets">
+                    <div class="mb-3">
+                        <label asp-for="QuickSearchTickets.ContactId" class="form-label small">Contact ID</label>
+                        <input asp-for="QuickSearchTickets.ContactId" type="number" class="form-control form-control-sm" placeholder="Contact ID" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="QuickSearchTickets.ContactPhone" class="form-label small">Contact Phone</label>
+                        <input asp-for="QuickSearchTickets.ContactPhone" type="text" class="form-control form-control-sm" placeholder="Phone number" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="QuickSearchTickets.TicketTitle" class="form-label small">Ticket Title</label>
+                        <input asp-for="QuickSearchTickets.TicketTitle" type="text" class="form-control form-control-sm" placeholder="Title contains..." />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="QuickSearchTickets.AssigneeId" class="form-label small">Assignee</label>
+                        <select asp-for="QuickSearchTickets.AssigneeId" class="form-select form-select-sm">
+                            <option value="">-- Any --</option>
+                            @foreach (var assignee in Model.AvailableAssignees)
+                            {
+                                <option value="@assignee.AssigneeId">@assignee.DisplayText</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="QuickSearchTickets.CreatedById" class="form-label small">Created By</label>
+                        <select asp-for="QuickSearchTickets.CreatedById" class="form-select form-select-sm">
+                            <option value="">-- Any --</option>
+                            @foreach (var user in Model.AvailableCreatedByUsers)
+                            {
+                                <option value="@user.AssigneeId">@user.DisplayText</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Search Tickets</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contacts Section -->
+    <div class="col-lg-6">
+        <div class="staff-card">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-person-vcard me-2"></i>Contacts</h5>
+            </div>
+            <div class="staff-card-body">
+                <!-- Fast Open by ID -->
+                <form method="post" asp-page-handler="QuickLookupContactId" class="mb-3">
+                    <label asp-for="QuickLookupContactId.ContactId" class="form-label small">Contact ID</label>
+                    <input asp-for="QuickLookupContactId.ContactId" type="number" class="form-control" placeholder="Contact ID" />
+                    <span asp-validation-for="QuickLookupContactId.ContactId" class="text-danger small"></span>
+                    <button type="submit" class="btn btn-primary mt-2 w-100">Go</button>
+                </form>
+
+                <hr class="my-4" />
+
+                <!-- Search Contacts -->
+                <form method="post" asp-page-handler="QuickSearchContacts">
+                    <div class="mb-3">
+                        <label asp-for="QuickSearchContacts.FirstName" class="form-label small">First Name</label>
+                        <input asp-for="QuickSearchContacts.FirstName" type="text" class="form-control form-control-sm" placeholder="First name contains..." />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="QuickSearchContacts.LastName" class="form-label small">Last Name</label>
+                        <input asp-for="QuickSearchContacts.LastName" type="text" class="form-control form-control-sm" placeholder="Last name contains..." />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="QuickSearchContacts.Phone" class="form-label small">Phone</label>
+                        <input asp-for="QuickSearchContacts.Phone" type="text" class="form-control form-control-sm" placeholder="Phone number" />
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary w-100">Search Contacts</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Key Metrics -->
 <div class="row g-4 mb-4">
     <div class="col-lg-3 col-md-6">
@@ -170,34 +267,3 @@
     </div>
 }
 
-<!-- Quick Actions -->
-<div class="staff-card">
-    <div class="staff-card-header">
-        <h5><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
-    </div>
-    <div class="staff-card-body">
-        <div class="row g-3">
-            <div class="col-lg-3 col-md-6">
-                <a asp-page="@RouteNames.Tickets.Create" class="btn btn-primary w-100 py-3">
-                    <i class="bi bi-plus-circle me-2"></i>Create Ticket
-                </a>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <a asp-page="@RouteNames.Tickets.Index" asp-route-assigneeId="@Model.UserId"
-                    class="btn btn-outline-primary w-100 py-3">
-                    <i class="bi bi-person me-2"></i>My Tickets
-                </a>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <a asp-page="@RouteNames.Contacts.Index" class="btn btn-outline-secondary w-100 py-3">
-                    <i class="bi bi-people me-2"></i>Contacts
-                </a>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <a asp-page="@RouteNames.Tickets.Index" class="btn btn-outline-secondary w-100 py-3">
-                    <i class="bi bi-list-task me-2"></i>All Tickets
-                </a>
-            </div>
-        </div>
-    </div>
-</div>

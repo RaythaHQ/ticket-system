@@ -60,6 +60,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         string? status = null,
         string? priority = null,
         string? assigneeId = null,
+        long? contactId = null,
         string? viewId = null,
         string? builtInView = null,
         CancellationToken cancellationToken = default
@@ -159,6 +160,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             Priority = priority,
             AssigneeId = parsedAssigneeId,
             TeamId = parsedTeamId,
+            ContactId = contactId,
             Unassigned = unassigned,
             TeamTickets = builtInView == "team-tickets",
         };
