@@ -3,6 +3,8 @@
 @using App.Web.Areas.Staff.Pages.Shared.Models
 @using App.Domain.ValueObjects
 
+@inject Microsoft.AspNetCore.Mvc.IUrlHelper Url
+
 @{
     ViewData["Title"] = $"Contact #{Model.Contact.Id}";
     ViewData["ActiveMenu"] = "Contacts";
@@ -14,6 +16,9 @@
         Text = "Back to Contacts",
         Href = !string.IsNullOrEmpty(backToListUrl) ? backToListUrl : null
     };
+    
+    // URL to return to this contact page from ticket details
+    var backToContactUrl = Url.Page(RouteNames.Contacts.Details, new { id = Model.Contact.Id });
 }
 
 <!-- Header -->
@@ -70,12 +75,14 @@
                                 <tr>
                                     <td>
                                         <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
+                                            asp-route-backToListUrl="@backToContactUrl"
                                             style="color: var(--staff-primary);">
                                             #@ticket.Id
                                         </a>
                                     </td>
                                     <td>
                                         <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id"
+                                            asp-route-backToListUrl="@backToContactUrl"
                                             class="text-dark text-decoration-none">
                                             @(ticket.Title.Length > 40 ? ticket.Title.Substring(0, 37) + "..." : ticket.Title)
                                         </a>

@@ -136,6 +136,17 @@ public class GetAssigneeFilterOptions
                         foreach (var team in userTeams)
                         {
                             var teamShortGuid = new ShortGuid(team.Id);
+                            
+                            // Team/Unassigned - tickets assigned to this team but with no individual
+                            assignees.Add(
+                                new AssigneeFilterOptionDto
+                                {
+                                    Value = $"team:{teamShortGuid}:unassigned",
+                                    DisplayText = $"{team.Name}/Unassigned",
+                                }
+                            );
+                            
+                            // Team/Anyone - all tickets for this team regardless of individual assignment
                             assignees.Add(
                                 new AssigneeFilterOptionDto
                                 {
@@ -193,6 +204,17 @@ public class GetAssigneeFilterOptions
                     foreach (var team in allTeams)
                     {
                         var teamShortGuid = new ShortGuid(team.Id);
+                        
+                        // Team/Unassigned - tickets assigned to this team but with no individual
+                        assignees.Add(
+                            new AssigneeFilterOptionDto
+                            {
+                                Value = $"team:{teamShortGuid}:unassigned",
+                                DisplayText = $"{team.Name}/Unassigned",
+                            }
+                        );
+                        
+                        // Team/Anyone - all tickets for this team regardless of individual assignment
                         assignees.Add(
                             new AssigneeFilterOptionDto
                             {

@@ -55,5 +55,10 @@ public interface ITicketPermissionService
     /// Throws ForbiddenAccessException if user cannot edit the specified ticket.
     /// </summary>
     Task RequireCanEditTicketAsync(Guid? assigneeId, Guid? owningTeamId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the IDs of all teams the current user belongs to.
+    /// </summary>
+    Task<HashSet<Guid>> GetUserTeamIdsAsync(CancellationToken cancellationToken = default);
 }
 

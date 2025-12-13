@@ -14,7 +14,9 @@ public record TicketListItemDto : BaseNumericEntityDto
     public string Priority { get; init; } = null!;
     public string PriorityLabel { get; init; } = null!;
     public string? Category { get; init; }
+    public Guid? AssigneeId { get; init; }
     public string? AssigneeName { get; init; }
+    public Guid? OwningTeamId { get; init; }
     public string? OwningTeamName { get; init; }
     public string? ContactName { get; init; }
     public long? ContactId { get; init; }
@@ -35,7 +37,9 @@ public record TicketListItemDto : BaseNumericEntityDto
             Priority = ticket.Priority,
             PriorityLabel = ticket.PriorityValue.Label,
             Category = ticket.Category,
+            AssigneeId = ticket.AssigneeId,
             AssigneeName = ticket.Assignee?.FullName,
+            OwningTeamId = ticket.OwningTeamId,
             OwningTeamName = ticket.OwningTeam?.Name,
             ContactName = ticket.Contact?.Name,
             ContactId = ticket.ContactId,

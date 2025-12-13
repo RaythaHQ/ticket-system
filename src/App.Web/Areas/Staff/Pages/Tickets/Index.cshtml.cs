@@ -174,8 +174,13 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                         parsedTeamId = assigneeTeamGuid;
                     }
 
-                    // Check if there's an assignee part
-                    if (
+                    // Check if there's an assignee part or unassigned
+                    if (parts.Length >= 3 && parts[2] == "unassigned")
+                    {
+                        // "team:guid:unassigned" means Team/Unassigned - tickets for this team with no individual
+                        unassigned = true;
+                    }
+                    else if (
                         parts.Length >= 4
                         && parts[2] == "assignee"
                         && ShortGuid.TryParse(parts[3], out ShortGuid assigneeGuid)
@@ -209,13 +214,29 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             parsedCreatedById = createdByGuid;
         }
 
+        // Parse status filter - could be "type:open", "type:closed", or a specific status
+        string? statusFilter = null;
+        string? statusTypeFilter = null;
+        if (!string.IsNullOrEmpty(status))
+        {
+            if (status.StartsWith("type:"))
+            {
+                statusTypeFilter = status.Substring(5); // "open" or "closed"
+            }
+            else
+            {
+                statusFilter = status;
+            }
+        }
+
         var query = new GetTickets.Query
         {
             Search = search,
             OrderBy = orderBy,
             PageNumber = pageNumber,
             PageSize = pageSize,
-            Status = status,
+            Status = statusFilter,
+            StatusType = statusTypeFilter,
             Priority = priority,
             AssigneeId = parsedAssigneeId,
             TeamId = parsedTeamId,
@@ -248,6 +269,11 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
 
         var response = await Mediator.Send(query, cancellationToken);
 
+        // Get user's team IDs for edit permission check
+        var canManageTickets = TicketPermissionService.CanManageTickets();
+        var currentUserId = CurrentUser.UserId?.Guid;
+        var userTeamIds = await TicketPermissionService.GetUserTeamIdsAsync(cancellationToken);
+
         var items = response.Result.Items.Select(p => new TicketListItemViewModel
         {
             Id = p.Id,
@@ -267,6 +293,9 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
                 p.CreationTime
             ),
+            CanEdit = canManageTickets 
+                || (currentUserId.HasValue && p.AssigneeId == currentUserId.Value)
+                || (p.OwningTeamId.HasValue && userTeamIds.Contains(p.OwningTeamId.Value)),
         });
 
         ListView = new ListViewModel<TicketListItemViewModel>(items, response.Result.TotalCount)
@@ -305,12 +334,25 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         var filters = new List<Application.Exports.Models.ExportFilter>();
         if (!string.IsNullOrEmpty(status))
         {
-            filters.Add(new Application.Exports.Models.ExportFilter
+            if (status.StartsWith("type:"))
             {
-                Field = "status",
-                Operator = "equals",
-                Value = status
-            });
+                // Status type filter
+                filters.Add(new Application.Exports.Models.ExportFilter
+                {
+                    Field = "statustype",
+                    Operator = "equals",
+                    Value = status.Substring(5) // "open" or "closed"
+                });
+            }
+            else
+            {
+                filters.Add(new Application.Exports.Models.ExportFilter
+                {
+                    Field = "status",
+                    Operator = "equals",
+                    Value = status
+                });
+            }
         }
         if (!string.IsNullOrEmpty(priority))
         {
@@ -565,6 +607,11 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
 
         [Display(Name = "Created")]
         public string CreationTime { get; init; } = string.Empty;
+        
+        /// <summary>
+        /// Whether the current user can edit this ticket.
+        /// </summary>
+        public bool CanEdit { get; init; }
     }
 
     /// <summary>

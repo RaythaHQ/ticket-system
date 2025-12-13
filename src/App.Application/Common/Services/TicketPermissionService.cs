@@ -109,4 +109,19 @@ public class TicketPermissionService : ITicketPermissionService
         if (!await CanEditTicketAsync(assigneeId, owningTeamId, cancellationToken))
             throw new ForbiddenAccessException("You do not have permission to edit this ticket.");
     }
+
+    public async Task<HashSet<Guid>> GetUserTeamIdsAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
+            return new HashSet<Guid>();
+
+        var userId = _currentUser.UserId.Value.Guid;
+        var teamIds = await _db.TeamMemberships
+            .AsNoTracking()
+            .Where(m => m.StaffAdminId == userId)
+            .Select(m => m.TeamId)
+            .ToListAsync(cancellationToken);
+
+        return teamIds.ToHashSet();
+    }
 }

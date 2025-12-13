@@ -34,7 +34,12 @@ public class UpdateTicket
             RuleFor(x => x.Id).GreaterThan(0);
             RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
             RuleFor(x => x.Priority)
-                .Must(p => TicketPriority.SupportedTypes.Any(t => t.DeveloperName == p))
+                .MustAsync(async (priority, cancellationToken) =>
+                {
+                    return await db.TicketPriorityConfigs
+                        .AsNoTracking()
+                        .AnyAsync(p => p.DeveloperName == priority && p.IsActive, cancellationToken);
+                })
                 .WithMessage("Invalid priority value.");
 
             RuleFor(x => x.OwningTeamId)
@@ -93,18 +98,24 @@ public class UpdateTicket
         private readonly ICurrentUser _currentUser;
         private readonly ITicketPermissionService _permissionService;
         private readonly ISlaService _slaService;
+        private readonly IRoundRobinService _roundRobinService;
+        private readonly ITicketConfigService _ticketConfigService;
 
         public Handler(
             IAppDbContext db,
             ICurrentUser currentUser,
             ITicketPermissionService permissionService,
-            ISlaService slaService
+            ISlaService slaService,
+            IRoundRobinService roundRobinService,
+            ITicketConfigService ticketConfigService
         )
         {
             _db = db;
             _currentUser = currentUser;
             _permissionService = permissionService;
             _slaService = slaService;
+            _roundRobinService = roundRobinService;
+            _ticketConfigService = ticketConfigService;
         }
 
         public async ValueTask<CommandResponseDto<long>> Handle(
@@ -130,6 +141,24 @@ public class UpdateTicket
             var changes = new Dictionary<string, object>();
             var oldAssigneeId = ticket.AssigneeId;
             var oldTeamId = ticket.OwningTeamId;
+            bool wasAutoAssigned = false;
+            
+            // Handle round-robin auto-assignment:
+            // If team is being set/changed AND no assignee is specified, try round-robin
+            Guid? effectiveAssigneeId = request.AssigneeId?.Guid;
+            if (request.OwningTeamId.HasValue && !request.AssigneeId.HasValue)
+            {
+                // Only trigger round-robin if team is new or changing
+                if (ticket.OwningTeamId != request.OwningTeamId.Value.Guid)
+                {
+                    var autoAssignee = await _roundRobinService.GetNextAssigneeAsync(request.OwningTeamId.Value, cancellationToken);
+                    if (autoAssignee.HasValue)
+                    {
+                        effectiveAssigneeId = autoAssignee.Value.Guid;
+                        wasAutoAssigned = true;
+                    }
+                }
+            }
 
             // Track changes
             if (ticket.Title != request.Title)
@@ -178,14 +207,14 @@ public class UpdateTicket
                 ticket.OwningTeamId = request.OwningTeamId?.Guid;
             }
 
-            if (ticket.AssigneeId != request.AssigneeId?.Guid)
+            if (ticket.AssigneeId != effectiveAssigneeId)
             {
                 changes["AssigneeId"] = new
                 {
                     OldValue = ticket.AssigneeId?.ToString() ?? "",
-                    NewValue = request.AssigneeId?.Guid.ToString() ?? "",
+                    NewValue = effectiveAssigneeId?.ToString() ?? "",
                 };
-                ticket.AssigneeId = request.AssigneeId?.Guid;
+                ticket.AssigneeId = effectiveAssigneeId;
             }
 
             if (ticket.ContactId != request.ContactId)
@@ -247,6 +276,7 @@ public class UpdateTicket
                             newValue,
                             oldAssigneeTeamId,
                             newAssigneeTeamId,
+                            wasAutoAssigned,
                             cancellationToken
                         ),
                         "ContactId" => await GetContactChangeDescription(
@@ -271,7 +301,7 @@ public class UpdateTicket
 
                 // Raise assignment event if assignee or team changed
                 if (
-                    oldAssigneeId != request.AssigneeId?.Guid
+                    oldAssigneeId != effectiveAssigneeId
                     || oldTeamId != request.OwningTeamId?.Guid
                 )
                 {
@@ -279,11 +309,22 @@ public class UpdateTicket
                         new TicketAssignedEvent(
                             ticket,
                             oldAssigneeId,
-                            request.AssigneeId?.Guid,
+                            effectiveAssigneeId,
                             oldTeamId,
                             request.OwningTeamId?.Guid
                         )
                     );
+                }
+
+                // Record round-robin assignment if used
+                if (wasAutoAssigned && effectiveAssigneeId.HasValue && request.OwningTeamId.HasValue)
+                {
+                    var membership = await _db.TeamMemberships
+                        .FirstOrDefaultAsync(m => m.TeamId == request.OwningTeamId.Value.Guid && m.StaffAdminId == effectiveAssigneeId.Value, cancellationToken);
+                    if (membership != null)
+                    {
+                        membership.LastAssignedAt = DateTime.UtcNow;
+                    }
                 }
             }
 
@@ -317,12 +358,14 @@ public class UpdateTicket
             CancellationToken cancellationToken
         )
         {
-            var oldLabel = string.IsNullOrEmpty(oldValue)
-                ? "None"
-                : TicketPriority.From(oldValue).Label;
-            var newLabel = string.IsNullOrEmpty(newValue)
-                ? "None"
-                : TicketPriority.From(newValue).Label;
+            var priorities = await _ticketConfigService.GetAllPrioritiesAsync(true, cancellationToken);
+            
+            var oldPriority = priorities.FirstOrDefault(p => p.DeveloperName == oldValue);
+            var newPriority = priorities.FirstOrDefault(p => p.DeveloperName == newValue);
+            
+            var oldLabel = oldPriority?.Label ?? oldValue ?? "None";
+            var newLabel = newPriority?.Label ?? newValue ?? "None";
+            
             return $"Priority changed from {oldLabel} to {newLabel}";
         }
 
@@ -358,6 +401,7 @@ public class UpdateTicket
             string newValue,
             Guid? oldTeamId,
             Guid? newTeamId,
+            bool wasAutoAssigned,
             CancellationToken cancellationToken
         )
         {
@@ -423,7 +467,8 @@ public class UpdateTicket
                 newDisplay = $"{newTeam?.Name ?? "Unknown"} / Anyone";
             }
 
-            return $"Assignee changed from {oldDisplay} to {newDisplay}";
+            var suffix = wasAutoAssigned ? " (auto-assigned via round-robin)" : "";
+            return $"Assignee changed from {oldDisplay} to {newDisplay}{suffix}";
         }
 
         private async Task<string> GetContactChangeDescription(

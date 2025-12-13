@@ -172,6 +172,15 @@
             <div class="col-lg-2 col-md-3">
                 <select name="status" class="form-select">
                     <option value="">All Statuses</option>
+                    <option value="type:open"
+                        selected="@(ViewContext.HttpContext.Request.Query["status"] == "type:open")">
+                        Open (any)
+                    </option>
+                    <option value="type:closed"
+                        selected="@(ViewContext.HttpContext.Request.Query["status"] == "type:closed")">
+                        Closed (any)
+                    </option>
+                    <option disabled>───────────</option>
                     @foreach (var status in Model.AvailableStatuses)
                     {
                         var displayLabel = status.Label + (!status.IsActive ? " (inactive)" : "");
@@ -326,10 +335,19 @@
                         </td>
                         <td class="text-muted small">@ticket.CreationTime</td>
                         <td class="text-end">
-                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
-                                class="btn btn-sm btn-outline-primary">
-                                View
-                            </a>
+                            <div class="btn-group btn-group-sm">
+                                <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
+                                    class="btn btn-outline-primary">
+                                    View
+                                </a>
+                                @if (ticket.CanEdit)
+                                {
+                                    <a asp-page="@RouteNames.Tickets.Edit" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
+                                        class="btn btn-outline-secondary">
+                                        Edit
+                                    </a>
+                                }
+                            </div>
                         </td>
                     </tr>
                 }

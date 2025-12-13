@@ -7,79 +7,332 @@
     ViewData["Title"] = $"Edit Ticket #{Model.Form.Id}";
     ViewData["ActiveMenu"] = "Tickets";
 
+    var backToListUrl = ViewData["BackToListUrl"]?.ToString();
     var back = new BackLinkOptions
     {
         Page = RouteNames.Tickets.Details,
         RouteValues = new Microsoft.AspNetCore.Routing.RouteValueDictionary { { "id", Model.Form.Id } },
-        Text = "Back to Details"
+        Text = "Back",
+        Href = !string.IsNullOrEmpty(backToListUrl) ? backToListUrl : null
     };
+    
+    var isClosedStatus = Model.CurrentStatus?.IsClosedType ?? false;
+    var openStatuses = Model.AvailableStatuses.Where(s => s.IsOpenType).ToList();
+    var closedStatuses = Model.AvailableStatuses.Where(s => s.IsClosedType).ToList();
 }
+
+<style>
+    /* Status/Priority Picker Styles */
+    .status-priority-picker {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .status-priority-option {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--staff-border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+    }
+    
+    .status-priority-option:hover {
+        border-color: var(--staff-primary);
+        background: rgba(0, 157, 220, 0.05);
+    }
+    
+    .status-priority-option.selected {
+        border-color: var(--staff-primary);
+        background: rgba(0, 157, 220, 0.1);
+        box-shadow: 0 0 0 3px rgba(0, 157, 220, 0.15);
+    }
+    
+    .status-priority-option input[type="radio"] {
+        display: none;
+    }
+    
+    .status-priority-option .color-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+        flex-shrink: 0;
+    }
+    
+    .status-priority-option .option-label {
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    /* Color dots for Bootstrap colors */
+    .color-dot.bg-primary { background-color: #0d6efd; }
+    .color-dot.bg-secondary { background-color: #6c757d; }
+    .color-dot.bg-success { background-color: #198754; }
+    .color-dot.bg-danger { background-color: #dc3545; }
+    .color-dot.bg-warning { background-color: #ffc107; }
+    .color-dot.bg-info { background-color: #0dcaf0; }
+    .color-dot.bg-light { background-color: #f8f9fa; border: 1px solid #dee2e6; }
+    .color-dot.bg-dark { background-color: #212529; }
+    
+    /* Current Status Card */
+    .current-status-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid var(--staff-border);
+        margin-bottom: 0.75rem;
+    }
+    
+    .current-status-card .label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .current-status-card .value {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    /* Quick Action Buttons */
+    .quick-action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .quick-action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0.6rem 0.5rem;
+        border: 1px solid var(--staff-border);
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        color: inherit;
+        width: 100%;
+    }
+    
+    .quick-action-btn:hover {
+        border-color: var(--staff-primary);
+        background: rgba(0, 157, 220, 0.05);
+        transform: translateY(-1px);
+    }
+    
+    .quick-action-btn .action-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-bottom: 0.4rem;
+    }
+    
+    .quick-action-btn .action-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-align: center;
+        line-height: 1.2;
+    }
+    
+    .quick-action-btn.current {
+        opacity: 0.5;
+        pointer-events: none;
+        background: #f8f9fa;
+    }
+    
+    /* Edit Form Section Headers */
+    .edit-section-header {
+        display: flex !important;
+        align-items: center !important;
+        margin: 1rem 0 0.5rem 0 !important;
+        padding: 0 0 0.5rem 0 !important;
+        border-bottom: 1px solid var(--staff-border) !important;
+    }
+    
+    .edit-section-header:first-child {
+        margin-top: 0 !important;
+    }
+    
+    .edit-section-header .section-icon {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-right: 0.5rem !important;
+    }
+    
+    .edit-section-header h6 {
+        margin: 0 !important;
+        line-height: 1 !important;
+    }
+    
+    .section-header h6 {
+        margin: 0;
+        font-weight: 600;
+        color: #333;
+        font-size: 0.9rem;
+    }
+    
+    .section-header .section-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.6rem;
+        font-size: 0.85rem;
+    }
+    
+    .section-header .section-icon.status { background: rgba(13, 110, 253, 0.1); color: #0d6efd; }
+    .section-header .section-icon.priority { background: rgba(220, 53, 69, 0.1); color: #dc3545; }
+    .section-header .section-icon.details { background: rgba(25, 135, 84, 0.1); color: #198754; }
+    .section-header .section-icon.assignment { background: rgba(108, 117, 125, 0.1); color: #6c757d; }
+    
+    /* Closed Banner */
+    .closed-banner {
+        background: linear-gradient(135deg, #d1e7dd 0%, #badbcc 100%);
+        border: 1px solid #badbcc;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .closed-banner .banner-content {
+        display: flex;
+        align-items: center;
+    }
+    
+    .closed-banner .banner-icon {
+        font-size: 1.25rem;
+        margin-right: 0.75rem;
+        color: #0f5132;
+    }
+    
+    .closed-banner .banner-text h6 {
+        margin: 0 0 0.15rem 0;
+        color: #0f5132;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    .closed-banner .banner-text p {
+        margin: 0;
+        color: #0f5132;
+        font-size: 0.8rem;
+        opacity: 0.85;
+    }
+    
+    /* Contact Card */
+    .contact-card {
+        border: 2px solid #198754;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        background: rgba(25, 135, 84, 0.03);
+    }
+    
+    .contact-card .contact-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .contact-card .contact-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #198754;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+    }
+    
+    .contact-card .contact-details h6 {
+        margin: 0 0 0.15rem 0;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+    
+    .contact-card .contact-details small {
+        color: #6c757d;
+    }
+    
+    /* Contact Search */
+    #contact-search-results {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    #contact-search-results .list-group-item {
+        border-left: none;
+        border-right: none;
+    }
+    #contact-search-results .list-group-item:first-child {
+        border-top: none;
+    }
+    #contact-search-results .list-group-item:last-child {
+        border-bottom: none;
+    }
+    #contact-search-results .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+</style>
 
 <partial name="_Partials/PageHeading" model='$"Edit Ticket #{Model.Form.Id}"' />
 
 <div class="row">
+    <!-- Main Content -->
     <div class="col-lg-8">
-        <div class="staff-card">
+        <div class="staff-card mb-4">
             <div class="staff-card-body">
                 @(await Html.PartialAsync("_Partials/BackToList", back))
+                
+                @if (isClosedStatus)
+                {
+                    <div class="closed-banner mt-3">
+                        <div class="banner-content">
+                            <i class="bi bi-check-circle-fill banner-icon"></i>
+                            <div class="banner-text">
+                                <h6>This ticket is closed</h6>
+                                <p>Reopen to change the status.</p>
+                            </div>
+                        </div>
+                        <form method="post" asp-page-handler="Reopen" asp-route-id="@Model.Form.Id" class="mb-0">
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i>Reopen
+                            </button>
+                        </form>
+                    </div>
+                }
 
-                <form method="post" class="mt-4">
+                <form method="post" class="mt-3">
                     <input type="hidden" asp-for="Form.Id" />
+                    <input type="hidden" asp-for="Form.Status" id="status-input" />
 
-                    <div class="mb-4">
-                        <label asp-for="Form.Title" class="form-label">
-                            Title <span class="text-danger">*</span>
-                        </label>
-                        <input asp-for="Form.Title" class="form-control" />
-                        <span asp-validation-for="Form.Title" class="text-danger small"></span>
-                    </div>
-
-                    <div class="mb-4">
-                        <label asp-for="Form.Description" class="form-label">Description</label>
-                        <textarea asp-for="Form.Description" class="form-control" rows="5"></textarea>
-                        <span asp-validation-for="Form.Description" class="text-danger small"></span>
+                    <!-- Assignment (First Section) -->
+                    <div class="edit-section-header">
+                        <div class="section-icon assignment">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <h6>Assignment</h6>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label asp-for="Form.Status" class="form-label">Status</label>
-                            <select asp-for="Form.Status" class="form-select">
-                                @foreach (var status in TicketStatus.SupportedTypes)
-                                {
-                                    <option value="@status.DeveloperName">@status.Label</option>
-                                }
-                            </select>
-                            <span asp-validation-for="Form.Status" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="Form.Priority" class="form-label">Priority</label>
-                            <select asp-for="Form.Priority" class="form-select">
-                                @foreach (var priority in TicketPriority.SupportedTypes.OrderBy(p => p.SortOrder))
-                                {
-                                    <option value="@priority.DeveloperName">@priority.Label</option>
-                                }
-                            </select>
-                            <span asp-validation-for="Form.Priority" class="text-danger small"></span>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="Form.Category" class="form-label">Category</label>
-                            <input asp-for="Form.Category" class="form-control" />
-                            <span asp-validation-for="Form.Category" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="Form.Tags" class="form-label">Tags</label>
-                            <input asp-for="Form.Tags" class="form-control" placeholder="Comma-separated" />
-                            <span asp-validation-for="Form.Tags" class="text-danger small"></span>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
                             <label class="form-label">Assignee</label>
                             <select id="assignee-dropdown" class="form-select">
                                 @foreach (var assignee in Model.AvailableAssignees)
@@ -102,18 +355,115 @@
                             </select>
                             <input type="hidden" asp-for="Form.OwningTeamId" id="owning-team-id" />
                             <input type="hidden" asp-for="Form.AssigneeId" id="assignee-id" />
-                            <span asp-validation-for="Form.OwningTeamId" class="text-danger small"></span>
-                            <span asp-validation-for="Form.AssigneeId" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Contact</label>
+                            @if (Model.SelectedContact != null)
+                            {
+                                <div class="contact-card" id="contact-card">
+                                    <div class="contact-info">
+                                        <div class="contact-avatar">
+                                            @(Model.SelectedContact.Name?.Substring(0, 1).ToUpper() ?? "?")
+                                        </div>
+                                        <div class="contact-details flex-grow-1">
+                                            <h6>@Model.SelectedContact.Name</h6>
+                                            <small>
+                                                @if (!string.IsNullOrEmpty(Model.SelectedContact.Email))
+                                                {
+                                                    @Model.SelectedContact.Email
+                                                }
+                                                else if (!string.IsNullOrEmpty(Model.SelectedContact.Phone))
+                                                {
+                                                    @Model.SelectedContact.Phone
+                                                }
+                                                else
+                                                {
+                                                    <text>ID: @Model.SelectedContact.Id</text>
+                                                }
+                                            </small>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="change-contact-btn">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                            <div id="contact-search-section" class="position-relative" style="@(Model.SelectedContact != null ? "display: none;" : "")">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="text" 
+                                           id="contact-search" 
+                                           class="form-control" 
+                                           placeholder="Search contact..."
+                                           autocomplete="off" />
+                                    <button type="button" class="btn btn-outline-secondary" id="clear-contact-btn" style="display: none;">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                                <div id="contact-search-results" class="list-group position-absolute w-100" style="z-index: 1000; max-height: 250px; overflow-y: auto; display: none; top: 100%; margin-top: 2px;"></div>
+                            </div>
+                            <input type="hidden" asp-for="Form.ContactId" id="contact-id-input" />
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label asp-for="Form.ContactId" class="form-label">Contact ID</label>
-                        <input asp-for="Form.ContactId" type="number" class="form-control" />
-                        <span asp-validation-for="Form.ContactId" class="text-danger small"></span>
+                    <!-- Ticket Details -->
+                    <div class="edit-section-header">
+                        <div class="section-icon details">
+                            <i class="bi bi-file-text"></i>
+                        </div>
+                        <h6>Ticket Details</h6>
                     </div>
 
-                    <hr class="my-4" />
+                    <div class="mb-3">
+                        <label asp-for="Form.Title" class="form-label">
+                            Title <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Form.Title" class="form-control form-control-lg" placeholder="Enter a descriptive title" />
+                        <span asp-validation-for="Form.Title" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-2">
+                        <label asp-for="Form.Description" class="form-label">Description</label>
+                        <textarea asp-for="Form.Description" class="form-control" rows="4" placeholder="Provide additional details..."></textarea>
+                        <span asp-validation-for="Form.Description" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Priority Picker -->
+                    <div class="edit-section-header">
+                        <div class="section-icon priority">
+                            <i class="bi bi-flag"></i>
+                        </div>
+                        <h6>Priority</h6>
+                    </div>
+
+                    <div class="status-priority-picker mb-2">
+                        @foreach (var priority in Model.AvailablePriorities)
+                        {
+                            var isSelected = Model.Form.Priority == priority.DeveloperName;
+                            <label class="status-priority-option @(isSelected ? "selected" : "")" data-priority="@priority.DeveloperName">
+                                <input type="radio" name="Form.Priority" value="@priority.DeveloperName" @(isSelected ? "checked" : "") />
+                                <span class="color-dot bg-@priority.ColorName"></span>
+                                <span class="option-label">@priority.Label</span>
+                            </label>
+                        }
+                    </div>
+
+                    <!-- Category & Tags -->
+                    <div class="row">
+                        <div class="col-md-6 mb-2">
+                            <label asp-for="Form.Category" class="form-label">Category</label>
+                            <input asp-for="Form.Category" class="form-control" placeholder="e.g., Billing, Support" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label asp-for="Form.Tags" class="form-label">Tags</label>
+                            <input asp-for="Form.Tags" class="form-control" placeholder="Comma-separated" />
+                        </div>
+                    </div>
+
+                    <hr class="my-3" />
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-success">
@@ -127,44 +477,97 @@
         </div>
     </div>
 
+    <!-- Sidebar -->
     <div class="col-lg-4">
-        <div class="staff-card">
-            <div class="staff-card-header">
-                <h5><i class="bi bi-lightning me-2"></i>Quick Actions</h5>
+        <!-- Current Status -->
+        <div class="staff-card mb-3">
+            <div class="staff-card-header py-2">
+                <h6 class="mb-0"><i class="bi bi-circle-fill me-2" style="font-size: 0.5rem; color: var(--staff-primary);"></i>Current Status</h6>
             </div>
-            <div class="staff-card-body">
-                @if (Model.Form.Status == TicketStatus.CLOSED)
-                {
-                    <form method="post" asp-page-handler="Reopen" asp-route-id="@Model.Form.Id">
-                        <button type="submit" class="btn btn-success w-100 mb-3">
-                            <i class="bi bi-arrow-counterclockwise me-2"></i>Reopen Ticket
-                        </button>
-                    </form>
-                }
-                else
-                {
-                    <form method="post" asp-page-handler="Close" asp-route-id="@Model.Form.Id">
-                        <button type="submit" class="btn btn-outline-danger w-100 mb-3">
-                            <i class="bi bi-x-circle me-2"></i>Close Ticket
-                        </button>
-                    </form>
-                }
+            <div class="staff-card-body py-2">
+                <div class="current-status-card">
+                    <div class="label">Status</div>
+                    <div class="value d-flex align-items-center">
+                        <span class="color-dot bg-@(Model.CurrentStatus?.ColorName ?? "secondary") me-2"></span>
+                        @(Model.CurrentStatus?.Label ?? Model.Form.Status)
+                        <span class="badge @(isClosedStatus ? "bg-secondary" : "bg-primary") ms-2" style="font-size: 0.6rem;">
+                            @(isClosedStatus ? "Closed" : "Open")
+                        </span>
+                    </div>
+                </div>
+                <div class="current-status-card mb-0">
+                    <div class="label">Priority</div>
+                    <div class="value d-flex align-items-center">
+                        <span class="color-dot bg-@(Model.CurrentPriority?.ColorName ?? "secondary") me-2"></span>
+                        @(Model.CurrentPriority?.Label ?? Model.Form.Priority)
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                <hr />
-
-                <p class="text-muted small mb-2 fw-medium">Change Status:</p>
-                <div class="d-flex flex-wrap gap-2">
-                    @foreach (var status in TicketStatus.SupportedTypes.Where(s => s.DeveloperName !=
-                                        TicketStatus.CLOSED))
-                    {
-                        if (Model.Form.Status != status.DeveloperName)
+        <!-- Quick Status Change -->
+        @if (!isClosedStatus)
+        {
+            <div class="staff-card mb-3">
+                <div class="staff-card-header py-2">
+                    <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Status</h6>
+                </div>
+                <div class="staff-card-body py-2">
+                    <p class="text-muted small mb-2">Open statuses:</p>
+                    <div class="quick-action-grid mb-3">
+                        @foreach (var status in openStatuses)
                         {
-                            <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@Model.Form.Id"
-                                asp-route-status="@status.DeveloperName" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-secondary">@status.Label</button>
+                            var isCurrent = status.DeveloperName == Model.Form.Status;
+                            <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@Model.Form.Id" asp-route-status="@status.DeveloperName" class="mb-0">
+                                <button type="submit" class="quick-action-btn @(isCurrent ? "current" : "")" @(isCurrent ? "disabled" : "")>
+                                    <span class="action-dot bg-@status.ColorName"></span>
+                                    <span class="action-label">@status.Label</span>
+                                </button>
                             </form>
                         }
+                    </div>
+
+                    @if (closedStatuses.Any())
+                    {
+                        <p class="text-muted small mb-2">Close as:</p>
+                        <div class="quick-action-grid">
+                            @foreach (var status in closedStatuses)
+                            {
+                                <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@Model.Form.Id" asp-route-status="@status.DeveloperName" class="mb-0">
+                                    <button type="submit" class="quick-action-btn">
+                                        <span class="action-dot bg-@status.ColorName"></span>
+                                        <span class="action-label">@status.Label</span>
+                                    </button>
+                                </form>
+                            }
+                        </div>
                     }
+                </div>
+            </div>
+        }
+
+        <!-- Ticket Info -->
+        <div class="staff-card">
+            <div class="staff-card-header py-2">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Ticket Info</h6>
+            </div>
+            <div class="staff-card-body py-2">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small">Ticket ID</span>
+                    <span class="fw-medium">#@Model.Form.Id</span>
+                </div>
+                @if (Model.SelectedContact != null)
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-muted small">Contact</span>
+                        <span class="fw-medium">@Model.SelectedContact.Name</span>
+                    </div>
+                }
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">Status Type</span>
+                    <span class="badge @(isClosedStatus ? "bg-secondary" : "bg-success") bg-opacity-75">
+                        @(isClosedStatus ? "Closed" : "Open")
+                    </span>
                 </div>
             </div>
         </div>
@@ -174,14 +577,12 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Assignee dropdown handling
             const assigneeDropdown = document.getElementById('assignee-dropdown');
             const owningTeamIdInput = document.getElementById('owning-team-id');
             const assigneeIdInput = document.getElementById('assignee-id');
 
-            // Initialize hidden fields based on current selection
             updateHiddenFields();
-
-            // Update hidden fields when dropdown changes
             assigneeDropdown.addEventListener('change', updateHiddenFields);
 
             function updateHiddenFields() {
@@ -193,15 +594,126 @@
                 } else if (value.startsWith('team:')) {
                     const parts = value.split(':');
                     if (parts.length === 2) {
-                        // Team only: "team:{teamId}" - parts[1] is the ShortGuid string
+                        owningTeamIdInput.value = parts[1];
+                        assigneeIdInput.value = '';
+                    } else if (parts.length >= 3 && parts[2] === 'unassigned') {
                         owningTeamIdInput.value = parts[1];
                         assigneeIdInput.value = '';
                     } else if (parts.length === 4 && parts[2] === 'assignee') {
-                        // Team and assignee: "team:{teamId}:assignee:{assigneeId}" - parts[1] and parts[3] are ShortGuid strings
                         owningTeamIdInput.value = parts[1];
                         assigneeIdInput.value = parts[3];
                     }
                 }
+            }
+
+            // Priority picker handling
+            const priorityOptions = document.querySelectorAll('.status-priority-option[data-priority]');
+            priorityOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    priorityOptions.forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+
+            // Contact search handling
+            const contactSearch = document.getElementById('contact-search');
+            const contactSearchResults = document.getElementById('contact-search-results');
+            const contactIdInput = document.getElementById('contact-id-input');
+            const contactCard = document.getElementById('contact-card');
+            const contactSearchSection = document.getElementById('contact-search-section');
+            const changeContactBtn = document.getElementById('change-contact-btn');
+            const clearContactBtn = document.getElementById('clear-contact-btn');
+
+            let searchTimeout;
+
+            if (contactSearch) {
+                contactSearch.addEventListener('input', function() {
+                    const query = this.value.trim();
+                    
+                    clearTimeout(searchTimeout);
+                    
+                    if (query.length < 2) {
+                        contactSearchResults.style.display = 'none';
+                        clearContactBtn.style.display = 'none';
+                        return;
+                    }
+
+                    clearContactBtn.style.display = 'block';
+
+                    searchTimeout = setTimeout(() => {
+                        fetch(`?handler=SearchContact&searchTerm=${encodeURIComponent(query)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const results = data.results || [];
+                                if (results.length === 0) {
+                                    contactSearchResults.innerHTML = '<div class="list-group-item text-muted">No contacts found</div>';
+                                } else {
+                                    contactSearchResults.innerHTML = results.map(contact => `
+                                        <button type="button" class="list-group-item list-group-item-action" 
+                                                data-contact-id="${contact.id}"
+                                                data-contact-name="${contact.name || ''}"
+                                                data-contact-email="${contact.email || ''}"
+                                                data-contact-phone="${contact.phone || ''}">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: #198754; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">
+                                                        ${(contact.name || '?').charAt(0).toUpperCase()}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-medium">${contact.name || 'Unknown'}</div>
+                                                    <small class="text-muted">${contact.email || contact.phone || 'ID: ' + contact.id}</small>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    `).join('');
+                                }
+                                contactSearchResults.style.display = 'block';
+                            })
+                            .catch(err => {
+                                console.error('Contact search error:', err);
+                            });
+                    }, 300);
+                });
+
+                // Handle contact selection
+                contactSearchResults.addEventListener('click', function(e) {
+                    const item = e.target.closest('.list-group-item-action');
+                    if (item) {
+                        const contactId = item.dataset.contactId;
+                        contactIdInput.value = contactId;
+                        contactSearch.value = item.dataset.contactName || 'Contact #' + contactId;
+                        contactSearchResults.style.display = 'none';
+                        clearContactBtn.style.display = 'block';
+                    }
+                });
+
+                // Clear contact
+                if (clearContactBtn) {
+                    clearContactBtn.addEventListener('click', function() {
+                        contactSearch.value = '';
+                        contactIdInput.value = '';
+                        contactSearchResults.style.display = 'none';
+                        this.style.display = 'none';
+                    });
+                }
+
+                // Hide results when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!contactSearch.contains(e.target) && !contactSearchResults.contains(e.target)) {
+                        contactSearchResults.style.display = 'none';
+                    }
+                });
+            }
+
+            // Change contact button
+            if (changeContactBtn) {
+                changeContactBtn.addEventListener('click', function() {
+                    if (contactCard) contactCard.style.display = 'none';
+                    if (contactSearchSection) contactSearchSection.style.display = 'block';
+                    contactIdInput.value = '';
+                    if (contactSearch) contactSearch.focus();
+                });
             }
         });
     </script>

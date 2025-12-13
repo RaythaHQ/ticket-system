@@ -19,9 +19,15 @@ public class GetTickets
         public override string OrderBy { get; init; } = $"CreationTime {SortOrder.DESCENDING}";
 
         /// <summary>
-        /// Optional filter by status.
+        /// Optional filter by status (exact status developer name).
         /// </summary>
         public string? Status { get; init; }
+
+        /// <summary>
+        /// Optional filter by status type ("open" or "closed").
+        /// When set, filters tickets by all statuses of this type.
+        /// </summary>
+        public string? StatusType { get; init; }
 
         /// <summary>
         /// Optional filter by priority.
@@ -136,6 +142,19 @@ public class GetTickets
             if (!string.IsNullOrEmpty(request.Status))
                 query = query.Where(t => t.Status == request.Status);
 
+            // Apply status type filter (filters by all statuses of that type)
+            if (!string.IsNullOrEmpty(request.StatusType))
+            {
+                var statusTypeValue = request.StatusType.ToLower();
+                var statusesOfType = await _db.TicketStatusConfigs
+                    .AsNoTracking()
+                    .Where(s => s.StatusType == statusTypeValue)
+                    .Select(s => s.DeveloperName)
+                    .ToListAsync(cancellationToken);
+                
+                query = query.Where(t => statusesOfType.Contains(t.Status));
+            }
+
             if (!string.IsNullOrEmpty(request.Priority))
                 query = query.Where(t => t.Priority == request.Priority);
 
@@ -153,8 +172,10 @@ public class GetTickets
 
             if (request.Unassigned == true)
             {
-                // Completely unassigned (no team, no individual)
-                query = query.Where(t => t.OwningTeamId == null && t.AssigneeId == null);
+                // Show tickets with no individual assigned
+                // If TeamId is also set, the TeamId filter already restricts to that team
+                // This just ensures no individual assignee
+                query = query.Where(t => t.AssigneeId == null);
             }
 
             // Filter by user's teams if TeamTickets is requested

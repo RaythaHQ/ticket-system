@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using App.Application.Tickets;
 using App.Application.Tickets.Commands;
 using App.Application.Tickets.Queries;
+using App.Application.TicketConfig;
+using App.Application.TicketConfig.Queries;
+using App.Application.Contacts;
+using App.Application.Contacts.Queries;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
@@ -11,7 +15,7 @@ using CSharpVitamins;
 namespace App.Web.Areas.Staff.Pages.Tickets;
 
 /// <summary>
-/// Page model for editing a ticket. Requires CanManageTickets permission.
+/// Page model for editing a ticket with configurable statuses and priorities.
 /// </summary>
 public class Edit : BaseStaffPageModel
 {
@@ -21,11 +25,37 @@ public class Edit : BaseStaffPageModel
     public EditTicketViewModel Form { get; set; } = new();
 
     public List<AssigneeSelectItem> AvailableAssignees { get; set; } = new();
+    
+    /// <summary>
+    /// Available statuses from configuration, ordered by sort order.
+    /// </summary>
+    public IReadOnlyList<TicketStatusConfigDto> AvailableStatuses { get; set; } = new List<TicketStatusConfigDto>();
+    
+    /// <summary>
+    /// Available priorities from configuration, ordered by sort order.
+    /// </summary>
+    public IReadOnlyList<TicketPriorityConfigDto> AvailablePriorities { get; set; } = new List<TicketPriorityConfigDto>();
+    
+    /// <summary>
+    /// The current status configuration for this ticket.
+    /// </summary>
+    public TicketStatusConfigDto? CurrentStatus { get; set; }
+    
+    /// <summary>
+    /// The current priority configuration for this ticket.
+    /// </summary>
+    public TicketPriorityConfigDto? CurrentPriority { get; set; }
+    
+    /// <summary>
+    /// The selected contact for this ticket (if any).
+    /// </summary>
+    public ContactSummaryDto? SelectedContact { get; set; }
 
-    public async Task<IActionResult> OnGet(long id, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnGet(long id, string? backToListUrl = null, CancellationToken cancellationToken = default)
     {
         ViewData["Title"] = "Edit Ticket";
         ViewData["ActiveMenu"] = "Tickets";
+        ViewData["BackToListUrl"] = backToListUrl;
 
         var response = await Mediator.Send(new GetTicketById.Query { Id = id }, cancellationToken);
         Ticket = response.Result;
@@ -67,6 +97,7 @@ public class Edit : BaseStaffPageModel
 
         if (!ModelState.IsValid)
         {
+            Ticket = ticket;
             await LoadSelectListsAsync(cancellationToken);
             return Page();
         }
@@ -93,6 +124,7 @@ public class Edit : BaseStaffPageModel
         }
 
         SetErrorMessage(response.GetErrors());
+        Ticket = ticket;
         await LoadSelectListsAsync(cancellationToken);
         return Page();
     }
@@ -104,14 +136,17 @@ public class Edit : BaseStaffPageModel
 
         if (response.Success)
         {
-            SetSuccessMessage($"Status changed to {TicketStatus.From(status).Label}.");
+            // Get the status label from config
+            var statusesResponse = await Mediator.Send(new GetTicketStatuses.Query { IncludeInactive = false }, cancellationToken);
+            var statusConfig = statusesResponse.Result.Items.FirstOrDefault(s => s.DeveloperName == status);
+            SetSuccessMessage($"Status changed to {statusConfig?.Label ?? status}.");
         }
         else
         {
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+        return RedirectToPage(RouteNames.Tickets.Edit, new { id });
     }
 
     public async Task<IActionResult> OnPostClose(long id, CancellationToken cancellationToken)
@@ -122,13 +157,11 @@ public class Edit : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage("Ticket closed.");
+            return RedirectToPage(RouteNames.Tickets.Details, new { id });
         }
-        else
-        {
-            SetErrorMessage(response.GetErrors());
-        }
-
-        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+        
+        SetErrorMessage(response.GetErrors());
+        return RedirectToPage(RouteNames.Tickets.Edit, new { id });
     }
 
     public async Task<IActionResult> OnPostReopen(long id, CancellationToken cancellationToken)
@@ -145,13 +178,41 @@ public class Edit : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+        return RedirectToPage(RouteNames.Tickets.Edit, new { id });
+    }
+
+    /// <summary>
+    /// Handler for contact search/lookup.
+    /// </summary>
+    public async Task<IActionResult> OnGetSearchContact(string searchTerm, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return new JsonResult(new { results = Array.Empty<object>() });
+        }
+
+        var response = await Mediator.Send(
+            new SearchContacts.Query { SearchTerm = searchTerm, MaxResults = 10 },
+            cancellationToken
+        );
+
+        var results = response.Result.Select(c => new
+        {
+            id = c.Id,
+            name = c.Name,
+            email = c.Email,
+            phone = c.PrimaryPhone,
+            organizationAccount = c.OrganizationAccount,
+            ticketCount = c.TicketCount
+        });
+
+        return new JsonResult(new { results });
     }
 
     private async Task LoadSelectListsAsync(CancellationToken cancellationToken)
     {
+        // Load assignees
         var canManageTickets = TicketPermissionService.CanManageTickets();
-        
         var assigneeOptionsResponse = await Mediator.Send(
             new GetAssigneeSelectOptions.Query
             {
@@ -168,6 +229,39 @@ public class Edit : BaseStaffPageModel
             TeamId = a.TeamId,
             AssigneeId = a.AssigneeId
         }).ToList();
+        
+        // Load statuses from configuration
+        var statusesResponse = await Mediator.Send(new GetTicketStatuses.Query { IncludeInactive = false }, cancellationToken);
+        AvailableStatuses = statusesResponse.Result.Items.ToList();
+        CurrentStatus = AvailableStatuses.FirstOrDefault(s => s.DeveloperName == Form.Status);
+        
+        // Load priorities from configuration
+        var prioritiesResponse = await Mediator.Send(new GetTicketPriorities.Query { IncludeInactive = false }, cancellationToken);
+        AvailablePriorities = prioritiesResponse.Result.Items.ToList();
+        CurrentPriority = AvailablePriorities.FirstOrDefault(p => p.DeveloperName == Form.Priority);
+        
+        // Load selected contact if there's a ContactId
+        if (Form.ContactId.HasValue)
+        {
+            try
+            {
+                var contactResponse = await Mediator.Send(new GetContactById.Query { Id = Form.ContactId.Value }, cancellationToken);
+                if (contactResponse.Result != null)
+                {
+                    SelectedContact = new ContactSummaryDto
+                    {
+                        Id = contactResponse.Result.Id,
+                        Name = contactResponse.Result.Name,
+                        Email = contactResponse.Result.Email,
+                        Phone = contactResponse.Result.PhoneNumbers.FirstOrDefault()
+                    };
+                }
+            }
+            catch
+            {
+                // Contact not found, leave as null
+            }
+        }
     }
 
     public record EditTicketViewModel
@@ -181,10 +275,10 @@ public class Edit : BaseStaffPageModel
         public string? Description { get; set; }
 
         [Required]
-        public string Status { get; set; } = TicketStatus.OPEN;
+        public string Status { get; set; } = string.Empty;
 
         [Required]
-        public string Priority { get; set; } = TicketPriority.NORMAL;
+        public string Priority { get; set; } = string.Empty;
 
         public string? Category { get; set; }
 
@@ -204,5 +298,12 @@ public class Edit : BaseStaffPageModel
         public ShortGuid? TeamId { get; init; }
         public ShortGuid? AssigneeId { get; init; }
     }
+    
+    public record ContactSummaryDto
+    {
+        public long Id { get; init; }
+        public string Name { get; init; } = string.Empty;
+        public string? Email { get; init; }
+        public string? Phone { get; init; }
+    }
 }
-
