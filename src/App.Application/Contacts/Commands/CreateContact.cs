@@ -13,6 +13,9 @@ public class CreateContact
 {
     public record Command : LoggableRequest<CommandResponseDto<long>>
     {
+        /// <summary>
+        /// Optional custom ID. If not specified, an ID will be auto-generated (min 7 digits).
+        /// </summary>
         public long? Id { get; init; }
         public string Name { get; init; } = null!;
         public string? Email { get; init; }
@@ -31,15 +34,17 @@ public class CreateContact
             RuleFor(x => x.Id)
                 .GreaterThan(0)
                 .When(x => x.Id.HasValue)
+                .WithMessage("Contact ID must be a positive number.");
+            RuleFor(x => x.Id)
                 .MustAsync(
                     async (id, cancellationToken) =>
                     {
                         if (!id.HasValue)
                             return true;
-                        var exists = await db.Contacts.AnyAsync(
-                            c => c.Id == id.Value,
-                            cancellationToken
-                        );
+                        // Check both active and soft-deleted contacts
+                        var exists = await db.Contacts
+                            .IgnoreQueryFilters()
+                            .AnyAsync(c => c.Id == id.Value, cancellationToken);
                         return !exists;
                     }
                 )
@@ -52,11 +57,13 @@ public class CreateContact
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUser _currentUser;
+        private readonly INumericIdGenerator _idGenerator;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser)
+        public Handler(IAppDbContext db, ICurrentUser currentUser, INumericIdGenerator idGenerator)
         {
             _db = db;
             _currentUser = currentUser;
+            _idGenerator = idGenerator;
         }
 
         public async ValueTask<CommandResponseDto<long>> Handle(
@@ -64,19 +71,27 @@ public class CreateContact
             CancellationToken cancellationToken
         )
         {
-            // If ID is specified, check if it already exists
+            // Determine the ID: use specified ID or generate one
+            long contactId;
             if (request.Id.HasValue)
             {
-                var exists = await _db.Contacts.AnyAsync(
-                    c => c.Id == request.Id.Value,
-                    cancellationToken
-                );
+                // Double-check the ID doesn't exist (belt and suspenders)
+                var exists = await _db.Contacts
+                    .IgnoreQueryFilters()
+                    .AnyAsync(c => c.Id == request.Id.Value, cancellationToken);
                 if (exists)
                     throw new BusinessException("A contact with this ID already exists.");
+                contactId = request.Id.Value;
+            }
+            else
+            {
+                // Auto-generate ID (minimum 7 digits)
+                contactId = await _idGenerator.GetNextContactIdAsync(cancellationToken);
             }
 
             var contact = new Contact
             {
+                Id = contactId,
                 Name = request.Name,
                 Email = request.Email?.Trim().ToLower(),
                 PhoneNumbers = PhoneNumberNormalizer.NormalizeMany(request.PhoneNumbers),
@@ -84,13 +99,6 @@ public class CreateContact
                 OrganizationAccount = request.OrganizationAccount,
                 DmeIdentifiers = request.DmeIdentifiers ?? new Dictionary<string, string>(),
             };
-
-            // If ID is specified, attempt to set it
-            // Note: This may not work with identity columns without additional database configuration
-            if (request.Id.HasValue)
-            {
-                contact.Id = request.Id.Value;
-            }
 
             _db.Contacts.Add(contact);
             await _db.SaveChangesAsync(cancellationToken);

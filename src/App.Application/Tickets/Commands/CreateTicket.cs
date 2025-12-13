@@ -1,3 +1,4 @@
+using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Domain.Entities;
@@ -14,6 +15,10 @@ public class CreateTicket
 {
     public record Command : LoggableRequest<CommandResponseDto<long>>
     {
+        /// <summary>
+        /// Optional custom ID. If not specified, an ID will be auto-generated (min 7 digits).
+        /// </summary>
+        public long? Id { get; init; }
         public string Title { get; init; } = null!;
         public string? Description { get; init; }
         /// <summary>
@@ -32,6 +37,23 @@ public class CreateTicket
         public Validator(IAppDbContext db)
         {
             RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
+
+            RuleFor(x => x.Id)
+                .GreaterThan(0)
+                .When(x => x.Id.HasValue)
+                .WithMessage("Ticket ID must be a positive number.");
+            RuleFor(x => x.Id)
+                .MustAsync(async (id, cancellationToken) =>
+                {
+                    if (!id.HasValue) return true;
+                    // Check both active and soft-deleted tickets
+                    var exists = await db.Tickets
+                        .IgnoreQueryFilters()
+                        .AnyAsync(t => t.Id == id.Value, cancellationToken);
+                    return !exists;
+                })
+                .WithMessage("A ticket with this ID already exists.")
+                .When(x => x.Id.HasValue);
 
             // Validate priority against configured active priorities
             RuleFor(x => x.Priority)
@@ -85,13 +107,20 @@ public class CreateTicket
         private readonly ICurrentUser _currentUser;
         private readonly IRoundRobinService _roundRobinService;
         private readonly ITicketConfigService _configService;
+        private readonly INumericIdGenerator _idGenerator;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser, IRoundRobinService roundRobinService, ITicketConfigService configService)
+        public Handler(
+            IAppDbContext db,
+            ICurrentUser currentUser,
+            IRoundRobinService roundRobinService,
+            ITicketConfigService configService,
+            INumericIdGenerator idGenerator)
         {
             _db = db;
             _currentUser = currentUser;
             _roundRobinService = roundRobinService;
             _configService = configService;
+            _idGenerator = idGenerator;
         }
 
         public async ValueTask<CommandResponseDto<long>> Handle(
@@ -99,6 +128,24 @@ public class CreateTicket
             CancellationToken cancellationToken
         )
         {
+            // Determine the ID: use specified ID or generate one
+            long ticketId;
+            if (request.Id.HasValue)
+            {
+                // Double-check the ID doesn't exist (belt and suspenders)
+                var exists = await _db.Tickets
+                    .IgnoreQueryFilters()
+                    .AnyAsync(t => t.Id == request.Id.Value, cancellationToken);
+                if (exists)
+                    throw new BusinessException("A ticket with this ID already exists.");
+                ticketId = request.Id.Value;
+            }
+            else
+            {
+                // Auto-generate ID (minimum 7 digits)
+                ticketId = await _idGenerator.GetNextTicketIdAsync(cancellationToken);
+            }
+
             Guid? assigneeId = request.AssigneeId?.Guid;
             bool wasAutoAssigned = false;
 
@@ -119,6 +166,7 @@ public class CreateTicket
 
             var ticket = new Ticket
             {
+                Id = ticketId,
                 Title = request.Title,
                 Description = request.Description,
                 Status = defaultStatus.DeveloperName,

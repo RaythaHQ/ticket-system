@@ -34,6 +34,7 @@ public static class RouteNames
         public const string Create = "/Contacts/Create";
         public const string Edit = "/Contacts/Edit";
         public const string Details = "/Contacts/Details";
+        public const string ChangeId = "/Contacts/ChangeId";
     }
 
     /// <summary>

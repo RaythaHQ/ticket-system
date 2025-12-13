@@ -104,6 +104,7 @@ public static class ConfigureServices
         services.AddScoped<IRoundRobinService, RoundRobinService>();
         services.AddScoped<ISlaService, SlaService>();
         services.AddScoped<ITicketConfigService, TicketConfigService>();
+        services.AddScoped<INumericIdGenerator, NumericIdGenerator>();
 
         return services;
     }

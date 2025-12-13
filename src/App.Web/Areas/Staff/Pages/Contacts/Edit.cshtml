@@ -25,8 +25,16 @@
                 <form method="post" class="mt-4">
                     <div class="mb-4">
                         <label asp-for="Form.Id" class="form-label">Contact ID</label>
-                        <input asp-for="Form.Id" type="number" class="form-control" readonly />
-                        <small class="text-muted d-block mt-1">Contact ID cannot be changed after creation.</small>
+                        <div class="input-group">
+                            <input asp-for="Form.Id" type="number" class="form-control" readonly />
+                            <a asp-page="@RouteNames.Contacts.ChangeId" asp-route-id="@Model.Form.Id"
+                                class="btn btn-outline-warning" title="Change this contact's ID number">
+                                <i class="bi bi-arrow-repeat me-1"></i>Change ID
+                            </a>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            Need to correct this ID? Use "Change ID" to assign a new number.
+                        </small>
                     </div>
 
                     <div class="mb-4">
