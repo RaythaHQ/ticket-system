@@ -44,28 +44,46 @@ public class ViewFilterBuilder
     }
 
     /// <summary>
-    /// Apply view filter conditions to a ticket query with AND/OR logic support.
+    /// Apply view filter conditions to a ticket query.
+    /// Logic: (all AndFilters must match) AND (if OrFilters exist, at least one must match).
+    /// Falls back to legacy Filters field if AndFilters/OrFilters are empty.
     /// </summary>
     public IQueryable<Ticket> ApplyFilters(IQueryable<Ticket> query, ViewConditions? conditions)
     {
-        if (conditions == null || !conditions.Filters.Any())
+        if (conditions == null)
             return query;
 
-        // AND logic: apply each filter sequentially (current behavior)
-        if (conditions.Logic != "OR")
+        // Use new AndFilters/OrFilters if present, otherwise fall back to legacy Filters
+        var andFilters = conditions.AndFilters?.Any() == true
+            ? conditions.AndFilters
+            : (conditions.Logic != "OR" ? conditions.Filters : new List<ViewFilterCondition>());
+        var orFilters = conditions.OrFilters?.Any() == true
+            ? conditions.OrFilters
+            : (conditions.Logic == "OR" ? conditions.Filters : new List<ViewFilterCondition>());
+
+        // Step 1: Apply all AND filters (each must match)
+        foreach (var filter in andFilters)
         {
-            foreach (var filter in conditions.Filters)
-            {
-                query = ApplyFilter(query, filter);
-            }
-            return query;
+            query = ApplyFilter(query, filter);
         }
 
-        // OR logic: build combined predicate
-        Expression<Func<Ticket, bool>>? combined = null;
-        var parameter = Expression.Parameter(typeof(Ticket), "t");
+        // Step 2: Apply OR filters (at least one must match) - only if there are any
+        if (orFilters.Any())
+        {
+            query = ApplyOrFilters(query, orFilters);
+        }
 
-        foreach (var filter in conditions.Filters)
+        return query;
+    }
+
+    /// <summary>
+    /// Apply OR filters: at least one must match.
+    /// </summary>
+    private IQueryable<Ticket> ApplyOrFilters(IQueryable<Ticket> query, List<ViewFilterCondition> filters)
+    {
+        Expression<Func<Ticket, bool>>? combined = null;
+
+        foreach (var filter in filters)
         {
             var filterExpr = BuildFilterExpression(filter);
             if (filterExpr == null)
@@ -77,11 +95,7 @@ public class ViewFilterBuilder
             }
             else
             {
-                // Combine with OR
-                var replacer = new ParameterReplacer(
-                    filterExpr.Parameters[0],
-                    combined.Parameters[0]
-                );
+                var replacer = new ParameterReplacer(filterExpr.Parameters[0], combined.Parameters[0]);
                 var newBody = replacer.Visit(filterExpr.Body);
                 var orExpr = Expression.OrElse(combined.Body, newBody);
                 combined = Expression.Lambda<Func<Ticket, bool>>(orExpr, combined.Parameters[0]);

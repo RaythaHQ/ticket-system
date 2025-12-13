@@ -123,8 +123,19 @@ public record ViewSortLevelDto
 /// </summary>
 public record ViewConditions
 {
-    public string Logic { get; init; } = "AND"; // AND or OR
-    public List<ViewFilterCondition> Filters { get; init; } = new();
+    public string Logic { get; init; } = "AND"; // Legacy, kept for backward compat
+    public List<ViewFilterCondition> Filters { get; init; } = new(); // Legacy
+
+    /// <summary>
+    /// Conditions that must ALL match (AND logic).
+    /// </summary>
+    public List<ViewFilterCondition> AndFilters { get; init; } = new();
+
+    /// <summary>
+    /// Conditions where at least ONE must match (OR logic).
+    /// Only applied after AndFilters. Result: (ANDs) && (any OR).
+    /// </summary>
+    public List<ViewFilterCondition> OrFilters { get; init; } = new();
 }
 
 /// <summary>
