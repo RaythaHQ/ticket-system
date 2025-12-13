@@ -157,3 +157,99 @@ li.nav-item.disabled {
 .input-group .custom-file {
     margin-bottom: 0;
 }
+
+/* ===== Advanced Views - Drag & Drop Polish ===== */
+
+/* Touch-friendly drag handles */
+.drag-handle {
+    padding: 0.5rem;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+    border-radius: 0.25rem;
+}
+
+.drag-handle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: #495057;
+}
+
+.drag-handle:active {
+    background-color: rgba(0, 0, 0, 0.1);
+    cursor: grabbing;
+}
+
+/* Smooth animation for drag-drop sorting */
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: #e3f2fd !important;
+}
+
+.sortable-chosen {
+    background-color: #fff;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+}
+
+.sortable-drag {
+    background-color: #fff;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+}
+
+/* Filter/Sort/Column items - smooth transitions */
+.filter-condition,
+.sort-level,
+.column-item {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.filter-condition:hover,
+.sort-level:hover,
+.column-item:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Remove button hover state */
+.remove-condition:hover,
+.remove-sort:hover {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+    border-color: #dc3545 !important;
+}
+
+/* AND/OR toggle button styling */
+[data-filter-logic] {
+    min-width: 3.5rem;
+    font-weight: 600;
+    transition: all 0.15s ease;
+}
+
+[data-filter-logic]:hover {
+    transform: scale(1.05);
+}
+
+/* Mobile responsiveness for filter builder */
+@media (max-width: 768px) {
+    .filter-condition,
+    .sort-level {
+        flex-wrap: wrap;
+    }
+    
+    .filter-condition .attribute-select,
+    .filter-condition .operator-select,
+    .filter-condition .value-input-container {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+    
+    .sort-level select {
+        width: 100% !important;
+    }
+    
+    .drag-handle {
+        min-width: 3rem;
+        min-height: 3rem;
+    }
+}

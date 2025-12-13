@@ -186,11 +186,11 @@
 - [ ] T078 [P] Add structured logging for view filter evaluation in ViewFilterBuilder
 - [ ] T079 [P] Handle edge case: filter references deleted status/priority - ignore with visual indicator
 - [ ] T080 [P] Handle edge case: filter references deleted user - show "(Deleted User)" and filter by ID
-- [ ] T081 [P] Add touch-friendly drag handle sizing for mobile devices in CSS
-- [ ] T082 [P] Add smooth animation transitions for drag-drop operations in CSS
+- [x] T081 [P] Add touch-friendly drag handle sizing for mobile devices in CSS
+- [x] T082 [P] Add smooth animation transitions for drag-drop operations in CSS
 - [ ] T083 Performance optimization: ensure 20 conditions on 100k tickets queries in <2s
 - [ ] T084 Update quickstart.md with any implementation learnings
-- [ ] T085 Final testing: verify all 4 user stories work together without conflicts
+- [x] T085 Final testing: verify all 4 user stories work together without conflicts
 
 ---
 
