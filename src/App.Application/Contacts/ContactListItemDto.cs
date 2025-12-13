@@ -8,7 +8,16 @@ namespace App.Application.Contacts;
 /// </summary>
 public record ContactListItemDto : BaseNumericEntityDto
 {
-    public string Name { get; init; } = null!;
+    public string FirstName { get; init; } = null!;
+    public string? LastName { get; init; }
+
+    /// <summary>
+    /// Combined first and last name for display purposes.
+    /// </summary>
+    public string Name => string.IsNullOrWhiteSpace(LastName)
+        ? FirstName
+        : $"{FirstName} {LastName}";
+
     public string? Email { get; init; }
     public string? PrimaryPhone { get; init; }
     public string? OrganizationAccount { get; init; }
@@ -21,7 +30,8 @@ public record ContactListItemDto : BaseNumericEntityDto
         return new ContactListItemDto
         {
             Id = contact.Id,
-            Name = contact.Name,
+            FirstName = contact.FirstName,
+            LastName = contact.LastName,
             Email = contact.Email,
             PrimaryPhone = contact.PhoneNumbers.FirstOrDefault(),
             OrganizationAccount = contact.OrganizationAccount,

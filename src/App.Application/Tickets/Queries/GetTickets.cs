@@ -215,7 +215,8 @@ public class GetTickets
                         t.Title.ToLower().Contains(searchQuery)
                         || (t.Description != null && t.Description.ToLower().Contains(searchQuery))
                         || t.Id.ToString().Contains(searchQuery)
-                        || (t.Contact != null && t.Contact.Name.ToLower().Contains(searchQuery))
+                        || (t.Contact != null && (t.Contact.FirstName.ToLower().Contains(searchQuery)
+                            || (t.Contact.LastName != null && t.Contact.LastName.ToLower().Contains(searchQuery))))
                     );
                 }
             }

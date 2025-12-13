@@ -15,7 +15,8 @@ public class UpdateContact
     public record Command : LoggableRequest<CommandResponseDto<long>>
     {
         public long Id { get; init; }
-        public string Name { get; init; } = null!;
+        public string FirstName { get; init; } = null!;
+        public string? LastName { get; init; }
         public string? Email { get; init; }
         public List<string>? PhoneNumbers { get; init; }
         public string? Address { get; init; }
@@ -28,7 +29,8 @@ public class UpdateContact
         public Validator()
         {
             RuleFor(x => x.Id).GreaterThan(0);
-            RuleFor(x => x.Name).NotEmpty().MaximumLength(500);
+            RuleFor(x => x.FirstName).NotEmpty().MaximumLength(250);
+            RuleFor(x => x.LastName).MaximumLength(250);
             RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrEmpty(x.Email));
         }
     }
@@ -57,10 +59,18 @@ public class UpdateContact
 
             var changes = new Dictionary<string, object>();
 
-            if (contact.Name != request.Name)
+            var newFirstName = request.FirstName.Trim();
+            if (contact.FirstName != newFirstName)
             {
-                changes["Name"] = new { OldValue = contact.Name, NewValue = request.Name };
-                contact.Name = request.Name;
+                changes["FirstName"] = new { OldValue = contact.FirstName, NewValue = newFirstName };
+                contact.FirstName = newFirstName;
+            }
+
+            var newLastName = request.LastName?.Trim();
+            if (contact.LastName != newLastName)
+            {
+                changes["LastName"] = new { OldValue = contact.LastName ?? "", NewValue = newLastName ?? "" };
+                contact.LastName = newLastName;
             }
 
             var newEmail = request.Email?.Trim().ToLower();
@@ -106,7 +116,8 @@ public class UpdateContact
                     
                     string description = fieldName switch
                     {
-                        "Name" => $"Name changed from \"{oldValue}\" to \"{newValue}\"",
+                        "FirstName" => $"First name changed from \"{oldValue}\" to \"{newValue}\"",
+                        "LastName" => $"Last name changed from \"{oldValue}\" to \"{newValue}\"",
                         "Email" => $"Email changed from \"{oldValue}\" to \"{newValue}\"",
                         "PhoneNumbers" => $"Phone numbers updated",
                         "Address" => $"Address changed from \"{oldValue}\" to \"{newValue}\"",

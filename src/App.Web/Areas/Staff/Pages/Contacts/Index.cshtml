@@ -98,7 +98,7 @@
                             </a>
                         </td>
                         <td class="text-muted">@(contact.Email ?? "—")</td>
-                        <td class="text-muted">@(contact.PrimaryPhone ?? "—")</td>
+                        <td class="text-muted">@(contact.PrimaryPhone != null ? PhoneNumberFormatter.FormatForDisplay(contact.PrimaryPhone) : "—")</td>
                         <td class="text-muted">@(contact.OrganizationAccount ?? "—")</td>
                         <td class="text-center">
                             @if (contact.TicketCount > 0)

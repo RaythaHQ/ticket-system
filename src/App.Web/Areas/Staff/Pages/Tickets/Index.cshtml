@@ -39,7 +39,7 @@
                 </button>
             </form>
         }
-        <a asp-page="@RouteNames.Tickets.Create" class="btn btn-primary">
+        <a asp-page="@RouteNames.Tickets.Create" asp-route-backToListUrl="@backToListUrl" class="btn btn-primary">
             <i class="bi bi-plus-lg me-2"></i>New Ticket
         </a>
     </div>

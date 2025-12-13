@@ -14,7 +14,8 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
 
         builder.HasKey(c => c.Id);
 
-        builder.Property(c => c.Name).IsRequired().HasMaxLength(500);
+        builder.Property(c => c.FirstName).IsRequired().HasMaxLength(250);
+        builder.Property(c => c.LastName).HasMaxLength(250);
 
         builder.Property(c => c.Email).HasMaxLength(500);
 
@@ -28,7 +29,8 @@ public class ContactConfiguration : IEntityTypeConfiguration<Contact>
 
         // Indexes
         builder.HasIndex(c => c.Email);
-        builder.HasIndex(c => c.Name);
+        builder.HasIndex(c => c.FirstName);
+        builder.HasIndex(c => c.LastName);
         builder.HasIndex(c => c.CreationTime);
     }
 }

@@ -19,6 +19,7 @@ using App.Application.Common.Interfaces;
 using App.Application.Common.Utils;
 using App.Infrastructure.Persistence;
 using App.Web.Areas.Admin.Endpoints;
+using App.Web.Areas.Staff.Endpoints;
 using App.Web.Middlewares;
 using Scalar.AspNetCore;
 
@@ -135,6 +136,7 @@ public class Startup
             endpoints.MapRazorPages();
             endpoints.MapControllers();
             endpoints.MapMediaItemsEndpoints();
+            endpoints.MapStaffAttachmentEndpoints();
             endpoints.MapOpenApi("/app/api/{documentName}/swagger.json");
 
             endpoints.MapScalarApiReference(

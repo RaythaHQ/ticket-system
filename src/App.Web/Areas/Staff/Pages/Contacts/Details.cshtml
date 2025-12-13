@@ -4,6 +4,7 @@
 @using App.Domain.ValueObjects
 
 @inject Microsoft.AspNetCore.Mvc.IUrlHelper Url
+@inject App.Application.Common.Interfaces.IFileStorageProviderSettings FileStorageProviderSettings
 
 @{
     ViewData["Title"] = $"Contact #{Model.Contact.Id}";
@@ -45,7 +46,7 @@
             <div class="staff-card-header">
                 <h5><i class="bi bi-ticket-detailed me-2"></i>Tickets (@Model.Tickets.Count())</h5>
                 <a asp-area="Staff" asp-page="@RouteNames.Tickets.Create" asp-route-contactId="@Model.Contact.Id"
-                    class="btn btn-sm btn-primary">
+                    asp-route-backToListUrl="@backToContactUrl" class="btn btn-sm btn-primary">
                     <i class="bi bi-plus me-1"></i>New Ticket
                 </a>
             </div>
@@ -99,6 +100,24 @@
                     </table>
                 </div>
             }
+        </div>
+
+        <!-- File Attachments -->
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-paperclip me-2"></i>Attachments</h5>
+            </div>
+            <div class="staff-card-body">
+                @{
+                    var attachmentOptions = new FileAttachmentOptions
+                    {
+                        EntityType = "contact",
+                        EntityId = Model.Contact.Id.ToString(),
+                        UniqueId = "contact-attachments"
+                    };
+                }
+                <partial name="_Partials/FileAttachments" model="attachmentOptions" />
+            </div>
         </div>
 
         <!-- Notes -->
@@ -218,7 +237,7 @@
                             @foreach (var phone in Model.Contact.PhoneNumbers)
                             {
                                 <div>
-                                    <a href="tel:@phone" style="color: var(--staff-primary);">@phone</a>
+                                    <a href="tel:@phone" style="color: var(--staff-primary);">@PhoneNumberFormatter.FormatForDisplay(phone)</a>
                                 </div>
                             }
                         }

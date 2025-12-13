@@ -7,10 +7,12 @@
     ViewData["Title"] = "Create Ticket";
     ViewData["ActiveMenu"] = "Tickets";
 
+    var backToListUrl = ViewData["BackToListUrl"]?.ToString();
     var back = new BackLinkOptions
     {
         Page = RouteNames.Tickets.Index,
-        Text = "Back to Tickets"
+        Text = "Back to Tickets",
+        Href = !string.IsNullOrEmpty(backToListUrl) ? backToListUrl : null
     };
 }
 
@@ -95,13 +97,21 @@
                                     <div class="row g-3">
                                         <div class="col-md-6">
                                             <label class="form-label">
-                                                Name <span class="text-danger">*</span>
+                                                First Name <span class="text-danger">*</span>
                                             </label>
                                             <input type="text" 
-                                                   asp-for="Form.NewContactName" 
+                                                   asp-for="Form.NewContactFirstName" 
                                                    class="form-control" 
-                                                   placeholder="Contact name" />
-                                            <span asp-validation-for="Form.NewContactName" class="text-danger small"></span>
+                                                   placeholder="First name" />
+                                            <span asp-validation-for="Form.NewContactFirstName" class="text-danger small"></span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Last Name</label>
+                                            <input type="text" 
+                                                   asp-for="Form.NewContactLastName" 
+                                                   class="form-control" 
+                                                   placeholder="Last name" />
+                                            <span asp-validation-for="Form.NewContactLastName" class="text-danger small"></span>
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Phone Number</label>
@@ -111,7 +121,7 @@
                                                    placeholder="(555) 123-4567" />
                                             <span asp-validation-for="Form.NewContactPhone" class="text-danger small"></span>
                                         </div>
-                                        <div class="col-md-12">
+                                        <div class="col-md-6">
                                             <label class="form-label">Email</label>
                                             <input type="email" 
                                                    asp-for="Form.NewContactEmail" 
@@ -228,8 +238,16 @@
                         <button type="submit" class="btn btn-success">
                             <i class="bi bi-check-lg me-2"></i>Create Ticket
                         </button>
-                        <a asp-page="@RouteNames.Tickets.Index" class="btn btn-outline-secondary">Cancel</a>
+                        @if (!string.IsNullOrEmpty(backToListUrl))
+                        {
+                            <a href="@backToListUrl" class="btn btn-outline-secondary">Cancel</a>
+                        }
+                        else
+                        {
+                            <a asp-page="@RouteNames.Tickets.Index" class="btn btn-outline-secondary">Cancel</a>
+                        }
                     </div>
+                    <input type="hidden" name="BackToListUrl" value="@backToListUrl" />
                 </form>
             </div>
         </div>
@@ -469,7 +487,7 @@
                 const isEmail = searchTerm.indexOf('@@') !== -1;
                 const isNumeric = /^\d+$/.test(searchTerm);
                 if (searchTerm && !isNumeric && !isEmail) {
-                    document.querySelector('[name="Form.NewContactName"]').value = searchTerm;
+                    document.querySelector('[name="Form.NewContactFirstName"]').value = searchTerm;
                 }
             }
 
@@ -527,11 +545,11 @@
                 }
                 
                 if (createNew) {
-                    const newContactName = document.querySelector('[name="Form.NewContactName"]').value.trim();
-                    if (!newContactName) {
+                    const newContactFirstName = document.querySelector('[name="Form.NewContactFirstName"]').value.trim();
+                    if (!newContactFirstName) {
                         e.preventDefault();
-                        alert('Please enter a name for the new contact.');
-                        document.querySelector('[name="Form.NewContactName"]').focus();
+                        alert('Please enter a first name for the new contact.');
+                        document.querySelector('[name="Form.NewContactFirstName"]').focus();
                         return false;
                     }
                 }

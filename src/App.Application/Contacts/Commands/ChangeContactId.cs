@@ -109,7 +109,8 @@ public class ChangeContactId
             var newContact = new Contact
             {
                 Id = request.NewId,
-                Name = existingContact.Name,
+                FirstName = existingContact.FirstName,
+                LastName = existingContact.LastName,
                 Email = existingContact.Email,
                 PhoneNumbersJson = existingContact.PhoneNumbersJson,
                 Address = existingContact.Address,

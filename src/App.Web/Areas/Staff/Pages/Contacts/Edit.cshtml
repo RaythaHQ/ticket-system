@@ -37,12 +37,19 @@
                         </small>
                     </div>
 
-                    <div class="mb-4">
-                        <label asp-for="Form.Name" class="form-label">
-                            Name <span class="text-danger">*</span>
-                        </label>
-                        <input asp-for="Form.Name" class="form-control" />
-                        <span asp-validation-for="Form.Name" class="text-danger small"></span>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Form.FirstName" class="form-label">
+                                First Name <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Form.FirstName" class="form-control" />
+                            <span asp-validation-for="Form.FirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.LastName" class="form-label">Last Name</label>
+                            <input asp-for="Form.LastName" class="form-control" />
+                            <span asp-validation-for="Form.LastName" class="text-danger small"></span>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -52,10 +59,7 @@
                     </div>
 
                     <div class="mb-4">
-                        <label asp-for="Form.PhoneNumbers" class="form-label">Phone Numbers</label>
-                        <textarea asp-for="Form.PhoneNumbers" class="form-control" rows="3"></textarea>
-                        <span asp-validation-for="Form.PhoneNumbers" class="text-danger small"></span>
-                        <small class="text-muted d-block mt-1">One phone number per line</small>
+                        <partial name="_PhoneNumbersEditor" model="Model.Form.PhoneNumbersList" />
                     </div>
 
                     <div class="mb-4">

@@ -1,0 +1,164 @@
+@model List<string>
+@{
+    var phoneNumbers = Model ?? new List<string>();
+    // Ensure at least one empty input
+    if (!phoneNumbers.Any())
+    {
+        phoneNumbers.Add("");
+    }
+}
+
+<div id="phone-numbers-editor">
+    <label class="form-label">Phone Numbers</label>
+    <small class="text-muted d-block mb-3">The first phone number is used as the primary contact number.</small>
+    
+    <div id="phone-list">
+        @for (var i = 0; i < phoneNumbers.Count; i++)
+        {
+            <div class="phone-row d-flex align-items-center gap-2 mb-2" data-phone-row>
+                <div class="flex-grow-1 position-relative">
+                    <input type="tel" 
+                           name="Form.PhoneNumbersList[@i]" 
+                           value="@phoneNumbers[i]" 
+                           class="form-control @(i == 0 ? "pe-5" : "")" 
+                           placeholder="@(i == 0 ? "(555) 123-4567" : "Additional phone number")"
+                           data-phone-input />
+                    @if (i == 0)
+                    {
+                        <span class="position-absolute top-50 end-0 translate-middle-y me-3">
+                            <span class="badge bg-primary rounded-pill" style="font-size: 0.65rem;">Primary</span>
+                        </span>
+                    }
+                </div>
+                <button type="button" 
+                        class="btn btn-outline-danger btn-sm" 
+                        onclick="removePhoneRow(this)"
+                        title="Remove this phone number"
+                        data-remove-btn
+                        @(phoneNumbers.Count == 1 && string.IsNullOrEmpty(phoneNumbers[0]) ? "style=visibility:hidden" : "")>
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        }
+    </div>
+
+    <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="addPhoneRow()">
+        <i class="bi bi-plus-lg me-1"></i>Add another phone
+    </button>
+</div>
+
+<script>
+    function addPhoneRow() {
+        const phoneList = document.getElementById('phone-list');
+        const rows = phoneList.querySelectorAll('[data-phone-row]');
+        const newIndex = rows.length;
+        
+        const newRow = document.createElement('div');
+        newRow.className = 'phone-row d-flex align-items-center gap-2 mb-2';
+        newRow.setAttribute('data-phone-row', '');
+        newRow.innerHTML = `
+            <div class="flex-grow-1 position-relative">
+                <input type="tel" 
+                       name="Form.PhoneNumbersList[${newIndex}]" 
+                       value="" 
+                       class="form-control" 
+                       placeholder="Additional phone number"
+                       data-phone-input />
+            </div>
+            <button type="button" 
+                    class="btn btn-outline-danger btn-sm" 
+                    onclick="removePhoneRow(this)"
+                    title="Remove this phone number"
+                    data-remove-btn>
+                <i class="bi bi-x-lg"></i>
+            </button>
+        `;
+        
+        phoneList.appendChild(newRow);
+        updatePhoneIndices();
+        updateRemoveButtonVisibility();
+        
+        // Focus the new input
+        newRow.querySelector('input').focus();
+    }
+
+    function removePhoneRow(button) {
+        const row = button.closest('[data-phone-row]');
+        const phoneList = document.getElementById('phone-list');
+        const rows = phoneList.querySelectorAll('[data-phone-row]');
+        
+        // Don't remove if it's the only row
+        if (rows.length <= 1) {
+            // Just clear the input instead
+            row.querySelector('input').value = '';
+            return;
+        }
+        
+        row.remove();
+        updatePhoneIndices();
+        updateRemoveButtonVisibility();
+    }
+
+    function updatePhoneIndices() {
+        const phoneList = document.getElementById('phone-list');
+        const rows = phoneList.querySelectorAll('[data-phone-row]');
+        
+        rows.forEach((row, index) => {
+            const input = row.querySelector('[data-phone-input]');
+            input.name = `Form.PhoneNumbersList[${index}]`;
+            
+            // Update primary badge and placeholder
+            const wrapper = input.closest('.position-relative');
+            const existingBadge = wrapper.querySelector('.badge');
+            
+            if (index === 0) {
+                input.classList.add('pe-5');
+                input.placeholder = '(555) 123-4567';
+                if (!existingBadge) {
+                    const badgeSpan = document.createElement('span');
+                    badgeSpan.className = 'position-absolute top-50 end-0 translate-middle-y me-3';
+                    badgeSpan.innerHTML = '<span class="badge bg-primary rounded-pill" style="font-size: 0.65rem;">Primary</span>';
+                    wrapper.appendChild(badgeSpan);
+                }
+            } else {
+                input.classList.remove('pe-5');
+                input.placeholder = 'Additional phone number';
+                if (existingBadge) {
+                    existingBadge.closest('.position-absolute').remove();
+                }
+            }
+        });
+    }
+
+    function updateRemoveButtonVisibility() {
+        const phoneList = document.getElementById('phone-list');
+        const rows = phoneList.querySelectorAll('[data-phone-row]');
+        
+        rows.forEach((row) => {
+            const removeBtn = row.querySelector('[data-remove-btn]');
+            if (removeBtn) {
+                // Always show remove buttons when there's more than one row
+                // For single row, hide if empty
+                if (rows.length === 1) {
+                    const input = row.querySelector('input');
+                    removeBtn.style.visibility = input.value.trim() ? 'visible' : 'hidden';
+                } else {
+                    removeBtn.style.visibility = 'visible';
+                }
+            }
+        });
+    }
+
+    // Initialize visibility on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateRemoveButtonVisibility();
+        
+        // Add input event listeners to show/hide remove button on single row
+        document.getElementById('phone-list').addEventListener('input', function(e) {
+            if (e.target.matches('[data-phone-input]')) {
+                updateRemoveButtonVisibility();
+            }
+        });
+    });
+</script>
+

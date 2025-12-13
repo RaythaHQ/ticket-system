@@ -9,7 +9,17 @@ namespace App.Domain.Entities;
 /// </summary>
 public class Contact : BaseNumericFullAuditableEntity
 {
-    public string Name { get; set; } = null!;
+    public string FirstName { get; set; } = null!;
+    public string? LastName { get; set; }
+
+    /// <summary>
+    /// Gets the full name by combining first and last name.
+    /// </summary>
+    [NotMapped]
+    public string FullName => string.IsNullOrWhiteSpace(LastName)
+        ? FirstName
+        : $"{FirstName} {LastName}";
+
     public string? Email { get; set; }
     public string? PhoneNumbersJson { get; set; } // E.164 normalized, stored as JSON array
     public string? Address { get; set; }
@@ -38,5 +48,6 @@ public class Contact : BaseNumericFullAuditableEntity
     public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
     public virtual ICollection<ContactChangeLogEntry> ChangeLogEntries { get; set; } = new List<ContactChangeLogEntry>();
     public virtual ICollection<ContactComment> Comments { get; set; } = new List<ContactComment>();
+    public virtual ICollection<ContactAttachment> Attachments { get; set; } = new List<ContactAttachment>();
 }
 

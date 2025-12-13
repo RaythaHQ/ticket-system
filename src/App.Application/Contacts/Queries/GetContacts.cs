@@ -67,7 +67,8 @@ public class GetContacts
                     var standardMatches = await _db.Contacts
                         .AsNoTracking()
                         .Where(c =>
-                            c.Name.ToLower().Contains(searchQuery)
+                            c.FirstName.ToLower().Contains(searchQuery)
+                            || (c.LastName != null && c.LastName.ToLower().Contains(searchQuery))
                             || (c.Email != null && c.Email.ToLower().Contains(searchQuery))
                             || (c.OrganizationAccount != null && c.OrganizationAccount.ToLower().Contains(searchQuery))
                             || c.Id.ToString().Contains(searchQuery)
@@ -92,7 +93,8 @@ public class GetContacts
                 {
                     // Standard text search (not a phone number)
                     query = query.Where(c =>
-                        c.Name.ToLower().Contains(searchQuery)
+                        c.FirstName.ToLower().Contains(searchQuery)
+                        || (c.LastName != null && c.LastName.ToLower().Contains(searchQuery))
                         || (c.Email != null && c.Email.ToLower().Contains(searchQuery))
                         || (c.OrganizationAccount != null && c.OrganizationAccount.ToLower().Contains(searchQuery))
                         || c.Id.ToString().Contains(searchQuery)

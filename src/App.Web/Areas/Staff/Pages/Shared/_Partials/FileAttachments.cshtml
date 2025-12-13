@@ -1,0 +1,484 @@
+@using App.Application.Common.Interfaces
+@inject IFileStorageProviderSettings FileStorageProviderSettings
+@inject IFileStorageProvider FileStorageProvider
+@model FileAttachmentOptions
+
+@{
+    Layout = null;
+    var uniqueId = Model.UniqueId ?? Guid.NewGuid().ToString("N")[..8];
+    var useDirectUpload = !FileStorageProviderSettings.UseDirectUploadToCloud;
+}
+
+<style>
+    /* File Attachments Container */
+    .file-attachments-container-@(uniqueId) {
+        --fa-primary: rgb(0, 157, 220);
+        --fa-primary-light: rgba(0, 157, 220, 0.1);
+        --fa-success: #10b981;
+        --fa-danger: #ef4444;
+        --fa-warning: #f59e0b;
+        --fa-border: #e2e8f0;
+        --fa-text-muted: #64748b;
+    }
+
+    /* Uppy Dashboard Customization */
+    .file-attachments-container-@(uniqueId) .uppy-Dashboard-inner {
+        border: 2px dashed var(--fa-border) !important;
+        border-radius: 12px !important;
+        background: linear-gradient(135deg, #f8fafc 0%, #fff 100%) !important;
+    }
+
+    .file-attachments-container-@(uniqueId) .uppy-Dashboard-AddFiles {
+        border: none !important;
+    }
+
+    .file-attachments-container-@(uniqueId) .uppy-Dashboard-AddFiles-title {
+        color: #1e293b !important;
+        font-weight: 600 !important;
+    }
+
+    .file-attachments-container-@(uniqueId) .uppy-Dashboard-browse {
+        color: var(--fa-primary) !important;
+    }
+
+    /* File List */
+    .file-list-@(uniqueId) {
+        margin-top: 1.5rem;
+    }
+
+    .file-list-@(uniqueId) .file-list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--fa-border);
+    }
+
+    .file-list-@(uniqueId) .file-list-header h6 {
+        margin: 0;
+        font-weight: 600;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .file-list-@(uniqueId) .file-list-header .file-count {
+        background: var(--fa-primary-light);
+        color: var(--fa-primary);
+        padding: 0.2rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .file-list-@(uniqueId) .file-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+
+    /* File Card */
+    .file-card-@(uniqueId) {
+        background: white;
+        border: 1px solid var(--fa-border);
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        gap: 1rem;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .file-card-@(uniqueId):hover {
+        border-color: var(--fa-primary);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
+    }
+
+    .file-card-@(uniqueId) .file-preview {
+        width: 56px;
+        height: 56px;
+        border-radius: 10px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        overflow: hidden;
+    }
+
+    .file-card-@(uniqueId) .file-preview.image-preview {
+        background: #f1f5f9;
+    }
+
+    .file-card-@(uniqueId) .file-preview.image-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .file-card-@(uniqueId) .file-preview.pdf { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+    .file-card-@(uniqueId) .file-preview.doc { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+    .file-card-@(uniqueId) .file-preview.xls { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+    .file-card-@(uniqueId) .file-preview.default { background: linear-gradient(135deg, #64748b, #475569); color: white; }
+
+    .file-card-@(uniqueId) .file-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .file-card-@(uniqueId) .file-name {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .file-card-@(uniqueId) .file-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        font-size: 0.75rem;
+        color: var(--fa-text-muted);
+    }
+
+    .file-card-@(uniqueId) .file-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .file-card-@(uniqueId) .file-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .file-card-@(uniqueId) .file-action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid var(--fa-border);
+        background: white;
+        color: var(--fa-text-muted);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+    .file-card-@(uniqueId) .file-action-btn:hover {
+        background: var(--fa-primary-light);
+        border-color: var(--fa-primary);
+        color: var(--fa-primary);
+    }
+
+    .file-card-@(uniqueId) .file-action-btn.delete:hover {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: var(--fa-danger);
+        color: var(--fa-danger);
+    }
+
+    /* Empty State */
+    .empty-attachments-@(uniqueId) {
+        text-align: center;
+        padding: 2rem;
+        color: var(--fa-text-muted);
+    }
+
+    .empty-attachments-@(uniqueId) i {
+        font-size: 2.5rem;
+        margin-bottom: 0.75rem;
+        opacity: 0.5;
+    }
+</style>
+
+<div class="file-attachments-container-@uniqueId" id="file-attachments-@uniqueId" 
+     data-entity-type="@Model.EntityType" 
+     data-entity-id="@Model.EntityId">
+    
+    <!-- Uppy Dashboard -->
+    <div id="uppy-dashboard-@uniqueId"></div>
+
+    <!-- File List -->
+    <div class="file-list-@uniqueId" id="file-list-container-@uniqueId" style="display: none;">
+        <div class="file-list-header">
+            <h6>
+                <i class="bi bi-paperclip"></i>
+                Attachments
+                <span class="file-count" id="file-count-@uniqueId">0</span>
+            </h6>
+        </div>
+        <div class="file-grid" id="file-grid-@uniqueId"></div>
+    </div>
+
+    <!-- Empty State (hidden when files present) -->
+    <div class="empty-attachments-@uniqueId" id="empty-state-@uniqueId" style="display: none;">
+        <i class="bi bi-folder2-open"></i>
+        <p>No files attached yet</p>
+    </div>
+</div>
+
+<link href="~/admin/lib/uppy/dist/uppy.min.css" rel="stylesheet">
+
+<script type="module">
+    import { Uppy, Dashboard, @(useDirectUpload ? "XHRUpload" : "AwsS3") } from "/admin/lib/uppy/dist/uppy.min.mjs"
+
+    const uniqueId = '@uniqueId';
+    const entityType = '@Model.EntityType';
+    const entityId = '@Model.EntityId';
+    const useDirectUpload = @(useDirectUpload ? "true" : "false");
+
+    const PRESIGN_URL = '/staff/attachments/presign';
+    const CREATE_AFTER_UPLOAD_URL = '/staff/attachments/create-after-upload';
+    const DIRECT_UPLOAD_URL = '/staff/attachments/upload';
+    const ADD_ATTACHMENT_URL = `/staff/attachments/${entityType}/${entityId}`;
+    const LIST_ATTACHMENTS_URL = `/staff/attachments/${entityType}/${entityId}`;
+    const REMOVE_ATTACHMENT_URL = `/staff/attachments/${entityType}/remove`;
+
+    const fileListContainer = document.getElementById(`file-list-container-${uniqueId}`);
+    const fileGrid = document.getElementById(`file-grid-${uniqueId}`);
+    const fileCount = document.getElementById(`file-count-${uniqueId}`);
+    const emptyState = document.getElementById(`empty-state-${uniqueId}`);
+    const uppyDashboard = document.getElementById(`uppy-dashboard-${uniqueId}`);
+
+    let attachments = [];
+
+    // Initialize Uppy
+    const uppy = new Uppy({
+        autoProceed: true,
+        allowMultipleUploads: true,
+        restrictions: {
+            maxFileSize: @FileStorageProviderSettings.MaxFileSize,
+        }
+    });
+
+    uppy.use(Dashboard, {
+        inline: true,
+        target: uppyDashboard,
+        height: 180,
+        width: '100%',
+        hideUploadButton: true,
+        proudlyDisplayPoweredByUppy: false,
+        showProgressDetails: true,
+        note: 'Images, documents, PDFs, and more'
+    });
+
+    @if (useDirectUpload)
+    {
+        <text>
+    uppy.use(XHRUpload, {
+        endpoint: DIRECT_UPLOAD_URL,
+        fieldName: 'file',
+        formData: true
+    });
+        </text>
+    }
+    else
+    {
+        <text>
+    uppy.use(AwsS3, {
+        getUploadParameters: async (file) => {
+            const res = await fetch(PRESIGN_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: file.name,
+                    contentType: file.type,
+                    extension: getFileExtension(file.name)
+                })
+            });
+            const data = await res.json();
+            if (data && data.fields) {
+                uppy.setFileMeta(file.id, {
+                    mediaItemId: data.fields.id,
+                    objectKey: data.fields.objectKey,
+                    fileName: data.fields.fileName
+                });
+            }
+            return {
+                method: 'PUT',
+                url: data.url,
+                fields: data.fields,
+                headers: { 'x-ms-blob-type': 'BlockBlob' }
+            };
+        }
+    });
+        </text>
+    }
+
+    uppy.on('upload-success', async (file, response) => {
+        let mediaItemId, fileName, contentType, objectKey, length;
+
+        if (useDirectUpload) {
+            const body = response?.body || {};
+            mediaItemId = body.mediaItemId;
+            fileName = body.fileName || file.name;
+            contentType = body.contentType || file.type;
+            objectKey = body.objectKey;
+            length = body.length || file.size;
+        } else {
+            // Cloud upload - need to call create-after-upload
+            mediaItemId = file.meta?.mediaItemId;
+            objectKey = file.meta?.objectKey;
+            fileName = file.name;
+            contentType = file.type;
+            length = file.size;
+
+            const createRes = await fetch(CREATE_AFTER_UPLOAD_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: mediaItemId,
+                    filename: fileName,
+                    contentType,
+                    extension: getFileExtension(fileName),
+                    objectKey,
+                    length
+                })
+            });
+            const createData = await createRes.json();
+            if (!createData.success) {
+                console.error('Failed to create media item:', createData.error);
+                return;
+            }
+        }
+
+        // Add attachment to entity
+        const addRes = await fetch(ADD_ATTACHMENT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                mediaItemId,
+                displayName: fileName,
+                description: null
+            })
+        });
+        const addData = await addRes.json();
+        if (addData.success) {
+            await loadAttachments();
+        } else {
+            console.error('Failed to add attachment:', addData.error);
+        }
+    });
+
+    uppy.on('upload-error', (file, error) => {
+        console.error('Upload error:', file?.name, error);
+    });
+
+    function getFileExtension(name) {
+        const i = (name || '').lastIndexOf('.');
+        return i >= 0 ? name.substring(i + 1) : '';
+    }
+
+    function getFileTypeClass(contentType, extension) {
+        if (contentType.startsWith('image/')) return 'image-preview';
+        if (contentType === 'application/pdf' || extension === 'pdf') return 'pdf';
+        if (contentType.includes('word') || ['doc', 'docx'].includes(extension)) return 'doc';
+        if (contentType.includes('excel') || contentType.includes('spreadsheet') || ['xls', 'xlsx'].includes(extension)) return 'xls';
+        return 'default';
+    }
+
+    function renderFileCard(attachment) {
+        const typeClass = getFileTypeClass(attachment.contentType, attachment.fileExtension);
+        
+        let previewContent;
+        if (attachment.isImage) {
+            previewContent = `<img src="${attachment.downloadUrl}" alt="${attachment.displayName}" loading="lazy">`;
+        } else {
+            previewContent = `<span>${attachment.fileExtension.substring(0, 3)}</span>`;
+        }
+
+        return `
+            <div class="file-card-${uniqueId}" data-attachment-id="${attachment.id}">
+                <div class="file-preview ${typeClass}">
+                    ${previewContent}
+                </div>
+                <div class="file-info">
+                    <div class="file-name" title="${attachment.displayName}">${attachment.displayName}</div>
+                    <div class="file-meta">
+                        <span><i class="bi bi-hdd"></i> ${attachment.fileSizeDisplay}</span>
+                        <span><i class="bi bi-clock"></i> ${attachment.createdAt}</span>
+                    </div>
+                </div>
+                <div class="file-actions">
+                    <a href="${attachment.downloadUrl}" target="_blank" class="file-action-btn" title="Download">
+                        <i class="bi bi-download"></i>
+                    </a>
+                    <button type="button" class="file-action-btn delete" data-delete-id="${attachment.id}" title="Remove">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    async function loadAttachments() {
+        try {
+            const res = await fetch(LIST_ATTACHMENTS_URL);
+            const data = await res.json();
+            if (data.success) {
+                attachments = data.attachments || [];
+                renderAttachments();
+            }
+        } catch (err) {
+            console.error('Failed to load attachments:', err);
+        }
+    }
+
+    function renderAttachments() {
+        if (attachments.length === 0) {
+            fileListContainer.style.display = 'none';
+            emptyState.style.display = 'block';
+        } else {
+            fileListContainer.style.display = 'block';
+            emptyState.style.display = 'none';
+            fileCount.textContent = attachments.length;
+            fileGrid.innerHTML = attachments.map(renderFileCard).join('');
+        }
+    }
+
+    async function removeAttachment(attachmentId) {
+        if (!confirm('Are you sure you want to remove this file?')) return;
+        
+        try {
+            const res = await fetch(`${REMOVE_ATTACHMENT_URL}/${attachmentId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (data.success) {
+                await loadAttachments();
+            } else {
+                alert('Failed to remove file: ' + (data.error || 'Unknown error'));
+            }
+        } catch (err) {
+            console.error('Failed to remove attachment:', err);
+            alert('Failed to remove file. Please try again.');
+        }
+    }
+
+    // Event delegation for delete buttons
+    fileGrid.addEventListener('click', (e) => {
+        const deleteBtn = e.target.closest('[data-delete-id]');
+        if (deleteBtn) {
+            e.preventDefault();
+            const attachmentId = deleteBtn.dataset.deleteId;
+            removeAttachment(attachmentId);
+        }
+    });
+
+    // Initial load
+    @if (Model.EntityId != null)
+    {
+        <text>
+    loadAttachments();
+        </text>
+    }
+</script>

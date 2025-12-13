@@ -17,7 +17,8 @@ public class CreateContact
         /// Optional custom ID. If not specified, an ID will be auto-generated (min 7 digits).
         /// </summary>
         public long? Id { get; init; }
-        public string Name { get; init; } = null!;
+        public string FirstName { get; init; } = null!;
+        public string? LastName { get; init; }
         public string? Email { get; init; }
         public List<string>? PhoneNumbers { get; init; }
         public string? Address { get; init; }
@@ -29,7 +30,8 @@ public class CreateContact
     {
         public Validator(IAppDbContext db)
         {
-            RuleFor(x => x.Name).NotEmpty().MaximumLength(500);
+            RuleFor(x => x.FirstName).NotEmpty().MaximumLength(250);
+            RuleFor(x => x.LastName).MaximumLength(250);
             RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrEmpty(x.Email));
             RuleFor(x => x.Id)
                 .GreaterThan(0)
@@ -92,7 +94,8 @@ public class CreateContact
             var contact = new Contact
             {
                 Id = contactId,
-                Name = request.Name,
+                FirstName = request.FirstName.Trim(),
+                LastName = request.LastName?.Trim(),
                 Email = request.Email?.Trim().ToLower(),
                 PhoneNumbers = PhoneNumberNormalizer.NormalizeMany(request.PhoneNumbers),
                 Address = request.Address,

@@ -483,7 +483,7 @@ public class UpdateTicket
                 var oldContact = await _db
                     .Contacts.AsNoTracking()
                     .FirstOrDefaultAsync(c => c.Id == oldId, cancellationToken);
-                oldName = oldContact?.Name ?? "Unknown";
+                oldName = oldContact?.FullName ?? "Unknown";
             }
 
             var newName = "None";
@@ -492,7 +492,7 @@ public class UpdateTicket
                 var newContact = await _db
                     .Contacts.AsNoTracking()
                     .FirstOrDefaultAsync(c => c.Id == newId, cancellationToken);
-                newName = newContact?.Name ?? "Unknown";
+                newName = newContact?.FullName ?? "Unknown";
             }
 
             return $"Contact changed from {oldName} to {newName}";

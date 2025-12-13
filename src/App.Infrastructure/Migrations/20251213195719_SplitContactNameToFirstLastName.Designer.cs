@@ -3,6 +3,7 @@ using System;
 using App.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251213195719_SplitContactNameToFirstLastName")]
+    partial class SplitContactNameToFirstLastName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -283,57 +286,6 @@ namespace App.Infrastructure.Migrations
                     b.HasIndex("LastName");
 
                     b.ToTable("Contacts");
-                });
-
-            modelBuilder.Entity("App.Domain.Entities.ContactAttachment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("ContactId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatorUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("LastModifierUserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("MediaItemId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UploadedByUserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ContactId");
-
-                    b.HasIndex("CreatorUserId");
-
-                    b.HasIndex("LastModifierUserId");
-
-                    b.HasIndex("MediaItemId");
-
-                    b.HasIndex("UploadedByUserId");
-
-                    b.ToTable("ContactAttachments");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.ContactChangeLogEntry", b =>
@@ -1104,20 +1056,25 @@ namespace App.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("CreatorUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
-
-                    b.Property<string>("DisplayName")
+                    b.Property<string>("FileName")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("timestamp with time zone");
@@ -1125,13 +1082,13 @@ namespace App.Infrastructure.Migrations
                     b.Property<Guid?>("LastModifierUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("MediaItemId")
-                        .HasColumnType("uuid");
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("TicketId")
                         .HasColumnType("bigint");
 
-                    b.Property<Guid>("UploadedByUserId")
+                    b.Property<Guid>("UploadedByStaffId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -1140,11 +1097,9 @@ namespace App.Infrastructure.Migrations
 
                     b.HasIndex("LastModifierUserId");
 
-                    b.HasIndex("MediaItemId");
-
                     b.HasIndex("TicketId");
 
-                    b.HasIndex("UploadedByUserId");
+                    b.HasIndex("UploadedByStaffId");
 
                     b.ToTable("TicketAttachments");
                 });
@@ -1681,45 +1636,6 @@ namespace App.Infrastructure.Migrations
                     b.Navigation("LastModifierUser");
                 });
 
-            modelBuilder.Entity("App.Domain.Entities.ContactAttachment", b =>
-                {
-                    b.HasOne("App.Domain.Entities.Contact", "Contact")
-                        .WithMany("Attachments")
-                        .HasForeignKey("ContactId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
-                        .WithMany()
-                        .HasForeignKey("CreatorUserId");
-
-                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
-                        .WithMany()
-                        .HasForeignKey("LastModifierUserId");
-
-                    b.HasOne("App.Domain.Entities.MediaItem", "MediaItem")
-                        .WithMany()
-                        .HasForeignKey("MediaItemId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("App.Domain.Entities.User", "UploadedByUser")
-                        .WithMany()
-                        .HasForeignKey("UploadedByUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Contact");
-
-                    b.Navigation("CreatorUser");
-
-                    b.Navigation("LastModifierUser");
-
-                    b.Navigation("MediaItem");
-
-                    b.Navigation("UploadedByUser");
-                });
-
             modelBuilder.Entity("App.Domain.Entities.ContactChangeLogEntry", b =>
                 {
                     b.HasOne("App.Domain.Entities.User", "ActorStaff")
@@ -2029,21 +1945,15 @@ namespace App.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("LastModifierUserId");
 
-                    b.HasOne("App.Domain.Entities.MediaItem", "MediaItem")
-                        .WithMany()
-                        .HasForeignKey("MediaItemId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
                     b.HasOne("App.Domain.Entities.Ticket", "Ticket")
                         .WithMany("Attachments")
                         .HasForeignKey("TicketId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("App.Domain.Entities.User", "UploadedByUser")
+                    b.HasOne("App.Domain.Entities.User", "UploadedByStaff")
                         .WithMany()
-                        .HasForeignKey("UploadedByUserId")
+                        .HasForeignKey("UploadedByStaffId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
@@ -2051,11 +1961,9 @@ namespace App.Infrastructure.Migrations
 
                     b.Navigation("LastModifierUser");
 
-                    b.Navigation("MediaItem");
-
                     b.Navigation("Ticket");
 
-                    b.Navigation("UploadedByUser");
+                    b.Navigation("UploadedByStaff");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.TicketChangeLogEntry", b =>
@@ -2243,8 +2151,6 @@ namespace App.Infrastructure.Migrations
 
             modelBuilder.Entity("App.Domain.Entities.Contact", b =>
                 {
-                    b.Navigation("Attachments");
-
                     b.Navigation("ChangeLogEntries");
 
                     b.Navigation("Comments");

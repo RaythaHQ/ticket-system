@@ -63,7 +63,8 @@ public class ContactsController : BaseController
         var command = new CreateContact.Command
         {
             Id = request.Id,
-            Name = request.Name,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
             Email = request.Email,
             PhoneNumbers = request.PhoneNumbers,
             Address = request.Address,
@@ -99,7 +100,8 @@ public class ContactsController : BaseController
         var command = new UpdateContact.Command
         {
             Id = id,
-            Name = request.Name,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
             Email = request.Email,
             PhoneNumbers = request.PhoneNumbers,
             Address = request.Address,
@@ -140,7 +142,8 @@ public class ContactsController : BaseController
 public record CreateContactRequest
 {
     public long? Id { get; init; }
-    public string Name { get; init; } = null!;
+    public string FirstName { get; init; } = null!;
+    public string? LastName { get; init; }
     public string? Email { get; init; }
     public List<string>? PhoneNumbers { get; init; }
     public string? Address { get; init; }
@@ -150,7 +153,8 @@ public record CreateContactRequest
 
 public record UpdateContactRequest
 {
-    public string Name { get; init; } = null!;
+    public string FirstName { get; init; } = null!;
+    public string? LastName { get; init; }
     public string? Email { get; init; }
     public List<string>? PhoneNumbers { get; init; }
     public string? Address { get; init; }

@@ -41,7 +41,7 @@ public record TicketListItemDto : BaseNumericEntityDto
             AssigneeName = ticket.Assignee?.FullName,
             OwningTeamId = ticket.OwningTeamId,
             OwningTeamName = ticket.OwningTeam?.Name,
-            ContactName = ticket.Contact?.Name,
+            ContactName = ticket.Contact?.FullName,
             ContactId = ticket.ContactId,
             CommentCount = ticket.Comments?.Count ?? 0,
             SlaDueAt = ticket.SlaDueAt,

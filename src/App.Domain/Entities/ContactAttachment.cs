@@ -1,13 +1,13 @@
 namespace App.Domain.Entities;
 
 /// <summary>
-/// File attached to a ticket.
+/// File attached to a contact.
 /// Links to a MediaItem for actual file storage.
 /// </summary>
-public class TicketAttachment : BaseAuditableEntity
+public class ContactAttachment : BaseAuditableEntity
 {
-    public long TicketId { get; set; }
-    public virtual Ticket Ticket { get; set; } = null!;
+    public long ContactId { get; set; }
+    public virtual Contact Contact { get; set; } = null!;
 
     /// <summary>
     /// Reference to the MediaItem containing the actual file.

@@ -2,6 +2,7 @@
 @model App.Web.Areas.Staff.Pages.Tickets.Details
 @using App.Web.Areas.Staff.Pages.Shared.Models
 @using App.Domain.ValueObjects
+@inject App.Application.Common.Interfaces.IFileStorageProviderSettings FileStorageProviderSettings
 
 @{
     ViewData["Title"] = $"Ticket #{Model.Ticket.Id}";
@@ -69,6 +70,24 @@
                 {
                     <p class="text-muted mb-0 fst-italic">No description provided.</p>
                 }
+            </div>
+        </div>
+
+        <!-- File Attachments -->
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-paperclip me-2"></i>Attachments</h5>
+            </div>
+            <div class="staff-card-body">
+                @{
+                    var attachmentOptions = new FileAttachmentOptions
+                    {
+                        EntityType = "ticket",
+                        EntityId = Model.Ticket.Id.ToString(),
+                        UniqueId = "ticket-attachments"
+                    };
+                }
+                <partial name="_Partials/FileAttachments" model="attachmentOptions" />
             </div>
         </div>
 
@@ -193,7 +212,7 @@
                                 @foreach (var phone in Model.Contact.PhoneNumbers)
                                 {
                                     <div>
-                                        <a href="tel:@phone" style="color: var(--staff-primary);">@phone</a>
+                                        <a href="tel:@phone" style="color: var(--staff-primary);">@PhoneNumberFormatter.FormatForDisplay(phone)</a>
                                     </div>
                                 }
                             }

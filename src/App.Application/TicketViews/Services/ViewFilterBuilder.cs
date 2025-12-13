@@ -452,7 +452,8 @@ public class ViewFilterBuilder
             || (
                 normalizedColumns.Contains("contactname")
                 && t.Contact != null
-                && t.Contact.Name.ToLower().Contains(term)
+                && (t.Contact.FirstName.ToLower().Contains(term)
+                    || (t.Contact.LastName != null && t.Contact.LastName.ToLower().Contains(term)))
             )
             || (
                 normalizedColumns.Contains("assigneename")

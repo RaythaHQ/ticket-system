@@ -31,12 +31,12 @@ public class Create : BaseStaffPageModel
         var command = new CreateContact.Command
         {
             Id = Form.Id,
-            Name = Form.Name,
+            FirstName = Form.FirstName,
+            LastName = Form.LastName,
             Email = Form.Email,
-            PhoneNumbers = Form
-                .PhoneNumbers?.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            PhoneNumbers = Form.PhoneNumbersList?
+                .Where(p => !string.IsNullOrWhiteSpace(p))
                 .Select(p => p.Trim())
-                .Where(p => !string.IsNullOrEmpty(p))
                 .ToList(),
             Address = Form.Address,
             OrganizationAccount = Form.OrganizationAccount,
@@ -59,16 +59,21 @@ public class Create : BaseStaffPageModel
         public long? Id { get; set; }
 
         [Required]
-        [MaxLength(500)]
-        public string Name { get; set; } = string.Empty;
+        [MaxLength(250)]
+        [Display(Name = "First Name")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [MaxLength(250)]
+        [Display(Name = "Last Name")]
+        public string? LastName { get; set; }
 
         [EmailAddress]
         public string? Email { get; set; }
 
         /// <summary>
-        /// Phone numbers, one per line.
+        /// Phone numbers as a list for the interactive editor.
         /// </summary>
-        public string? PhoneNumbers { get; set; }
+        public List<string>? PhoneNumbersList { get; set; }
 
         public string? Address { get; set; }
 

@@ -8,7 +8,16 @@ namespace App.Application.Contacts;
 /// </summary>
 public record ContactDto : BaseNumericAuditableEntityDto
 {
-    public string Name { get; init; } = null!;
+    public string FirstName { get; init; } = null!;
+    public string? LastName { get; init; }
+
+    /// <summary>
+    /// Combined first and last name for display purposes.
+    /// </summary>
+    public string Name => string.IsNullOrWhiteSpace(LastName)
+        ? FirstName
+        : $"{FirstName} {LastName}";
+
     public string? Email { get; init; }
     public List<string> PhoneNumbers { get; init; } = new();
     public string? Address { get; init; }
@@ -22,7 +31,8 @@ public record ContactDto : BaseNumericAuditableEntityDto
         return new ContactDto
         {
             Id = contact.Id,
-            Name = contact.Name,
+            FirstName = contact.FirstName,
+            LastName = contact.LastName,
             Email = contact.Email,
             PhoneNumbers = contact.PhoneNumbers,
             Address = contact.Address,

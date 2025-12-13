@@ -50,8 +50,12 @@ public class SearchContacts
                 .ToListAsync(cancellationToken);
 
             var results = contacts.Where(c =>
-                // Match by name
-                c.Name.ToLower().Contains(searchTerm)
+                // Match by first name
+                c.FirstName.ToLower().Contains(searchTerm)
+                // Match by last name
+                || (c.LastName != null && c.LastName.ToLower().Contains(searchTerm))
+                // Match by full name
+                || c.FullName.ToLower().Contains(searchTerm)
                 // Match by email
                 || (c.Email != null && c.Email.ToLower().Contains(searchTerm))
                 // Match by organization

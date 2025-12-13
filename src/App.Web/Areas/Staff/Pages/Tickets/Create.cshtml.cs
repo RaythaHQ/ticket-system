@@ -28,14 +28,18 @@ public class Create : BaseStaffPageModel
     [BindProperty]
     public CreateTicketViewModel Form { get; set; } = new();
 
+    [BindProperty(SupportsGet = true)]
+    public string? BackToListUrl { get; set; }
+
     public List<AssigneeSelectItem> AvailableAssignees { get; set; } = new();
     public IReadOnlyList<TicketPriorityConfigDto> AvailablePriorities { get; set; } = new List<TicketPriorityConfigDto>();
     public string DefaultPriority { get; set; } = "normal";
 
-    public async Task<IActionResult> OnGet(long? contactId, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnGet(long? contactId, string? backToListUrl, CancellationToken cancellationToken)
     {
         ViewData["Title"] = "Create Ticket";
         ViewData["ActiveMenu"] = "Tickets";
+        ViewData["BackToListUrl"] = backToListUrl;
 
         // Pre-populate contact if provided
         if (contactId.HasValue)
@@ -109,7 +113,7 @@ public class Create : BaseStaffPageModel
     public async Task<IActionResult> OnPost(CancellationToken cancellationToken)
     {
         // If we need to create a new contact, do that first
-        if (Form.CreateNewContact && !string.IsNullOrWhiteSpace(Form.NewContactName))
+        if (Form.CreateNewContact && !string.IsNullOrWhiteSpace(Form.NewContactFirstName))
         {
             var phoneNumbers = new List<string>();
             if (!string.IsNullOrWhiteSpace(Form.NewContactPhone))
@@ -120,7 +124,8 @@ public class Create : BaseStaffPageModel
             var createContactResponse = await Mediator.Send(
                 new CreateContact.Command
                 {
-                    Name = Form.NewContactName,
+                    FirstName = Form.NewContactFirstName,
+                    LastName = Form.NewContactLastName,
                     Email = Form.NewContactEmail,
                     PhoneNumbers = phoneNumbers
                 },
@@ -162,7 +167,7 @@ public class Create : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage($"Ticket #{response.Result} created successfully.");
-            return RedirectToPage(RouteNames.Tickets.Details, new { id = response.Result });
+            return RedirectToPage(RouteNames.Tickets.Details, new { id = response.Result, backToListUrl = BackToListUrl });
         }
 
         SetErrorMessage(response.GetErrors());
@@ -223,8 +228,11 @@ public class Create : BaseStaffPageModel
 
         public bool SkipContact { get; set; }
 
-        [MaxLength(500)]
-        public string? NewContactName { get; set; }
+        [MaxLength(250)]
+        public string? NewContactFirstName { get; set; }
+
+        [MaxLength(250)]
+        public string? NewContactLastName { get; set; }
 
         [EmailAddress]
         [MaxLength(500)]

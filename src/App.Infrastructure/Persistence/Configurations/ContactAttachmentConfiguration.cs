@@ -4,13 +4,13 @@ using App.Domain.Entities;
 
 namespace App.Infrastructure.Persistence.Configurations;
 
-public class TicketAttachmentConfiguration : IEntityTypeConfiguration<TicketAttachment>
+public class ContactAttachmentConfiguration : IEntityTypeConfiguration<ContactAttachment>
 {
-    public void Configure(EntityTypeBuilder<TicketAttachment> builder)
+    public void Configure(EntityTypeBuilder<ContactAttachment> builder)
     {
-        builder.HasOne(a => a.Ticket)
-            .WithMany(t => t.Attachments)
-            .HasForeignKey(a => a.TicketId)
+        builder.HasOne(a => a.Contact)
+            .WithMany(c => c.Attachments)
+            .HasForeignKey(a => a.ContactId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(a => a.MediaItem)
@@ -33,7 +33,7 @@ public class TicketAttachmentConfiguration : IEntityTypeConfiguration<TicketAtta
         builder.HasOne(b => b.CreatorUser).WithMany().HasForeignKey(b => b.CreatorUserId);
         builder.HasOne(b => b.LastModifierUser).WithMany().HasForeignKey(b => b.LastModifierUserId);
 
-        builder.HasIndex(a => a.TicketId);
+        builder.HasIndex(a => a.ContactId);
         builder.HasIndex(a => a.MediaItemId);
     }
 }

@@ -30,6 +30,7 @@ public interface IAppDbContext
     public DbSet<TicketComment> TicketComments { get; }
     public DbSet<TicketAttachment> TicketAttachments { get; }
     public DbSet<ContactChangeLogEntry> ContactChangeLogEntries { get; }
+    public DbSet<ContactAttachment> ContactAttachments { get; }
     public DbSet<ContactComment> ContactComments { get; }
     public DbSet<SlaRule> SlaRules { get; }
     public DbSet<TicketView> TicketViews { get; }

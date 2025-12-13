@@ -29,12 +29,19 @@
                         <small class="text-muted d-block mt-1">Optional. Leave blank to auto-generate an ID.</small>
                     </div>
 
-                    <div class="mb-4">
-                        <label asp-for="Form.Name" class="form-label">
-                            Name <span class="text-danger">*</span>
-                        </label>
-                        <input asp-for="Form.Name" class="form-control" placeholder="Full name" />
-                        <span asp-validation-for="Form.Name" class="text-danger small"></span>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Form.FirstName" class="form-label">
+                                First Name <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Form.FirstName" class="form-control" placeholder="First name" />
+                            <span asp-validation-for="Form.FirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.LastName" class="form-label">Last Name</label>
+                            <input asp-for="Form.LastName" class="form-control" placeholder="Last name" />
+                            <span asp-validation-for="Form.LastName" class="text-danger small"></span>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -44,12 +51,7 @@
                     </div>
 
                     <div class="mb-4">
-                        <label asp-for="Form.PhoneNumbers" class="form-label">Phone Numbers</label>
-                        <textarea asp-for="Form.PhoneNumbers" class="form-control" rows="3"
-                            placeholder="One phone number per line&#10;(555) 123-4567&#10;+1 555-987-6543"></textarea>
-                        <span asp-validation-for="Form.PhoneNumbers" class="text-danger small"></span>
-                        <small class="text-muted d-block mt-1">Enter one phone number per line. Any format is
-                            accepted.</small>
+                        <partial name="_PhoneNumbersEditor" model="Model.Form.PhoneNumbersList" />
                     </div>
 
                     <div class="mb-4">

@@ -349,7 +349,7 @@ public class TicketExportBackgroundTask : TicketExportJob
             "category" => ticket.Category ?? "",
             "slastatus" => ticket.SlaStatus ?? "",
             "sladueat" => ticket.SlaDueAt?.ToString("O") ?? "",
-            "contactname" => ticket.Contact?.Name ?? "",
+            "contactname" => ticket.Contact?.FullName ?? "",
             "contactemail" => ticket.Contact?.Email ?? "",
             "assigneename" => ticket.Assignee != null
                 ? $"{ticket.Assignee.FirstName} {ticket.Assignee.LastName}".Trim()

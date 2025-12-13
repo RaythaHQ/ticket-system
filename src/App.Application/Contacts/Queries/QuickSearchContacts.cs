@@ -57,7 +57,7 @@ public class QuickSearchContacts
             {
                 var firstNameLower = request.FirstName.ToLower();
                 var firstNameContacts = await baseQuery
-                    .Where(c => c.Name.ToLower().Contains(firstNameLower))
+                    .Where(c => c.FirstName.ToLower().Contains(firstNameLower))
                     .ToListAsync(cancellationToken);
                 contactResults.AddRange(firstNameContacts);
             }
@@ -67,7 +67,7 @@ public class QuickSearchContacts
             {
                 var lastNameLower = request.LastName.ToLower();
                 var lastNameContacts = await baseQuery
-                    .Where(c => c.Name.ToLower().Contains(lastNameLower))
+                    .Where(c => c.LastName != null && c.LastName.ToLower().Contains(lastNameLower))
                     .ToListAsync(cancellationToken);
                 contactResults.AddRange(lastNameContacts);
             }

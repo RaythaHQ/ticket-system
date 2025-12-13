@@ -60,7 +60,7 @@ public record TicketDto : BaseNumericAuditableEntityDto
             CreatedByStaffId = ticket.CreatedByStaffId,
             CreatedByStaffName = ticket.CreatedByStaff?.FullName,
             ContactId = ticket.ContactId,
-            ContactName = ticket.Contact?.Name,
+            ContactName = ticket.Contact?.FullName,
             ResolvedAt = ticket.ResolvedAt,
             ClosedAt = ticket.ClosedAt,
             SlaRuleId = ticket.SlaRuleId,

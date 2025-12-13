@@ -29,9 +29,10 @@ public class Edit : BaseStaffPageModel
         Form = new EditContactViewModel
         {
             Id = Contact.Id,
-            Name = Contact.Name,
+            FirstName = Contact.FirstName,
+            LastName = Contact.LastName,
             Email = Contact.Email,
-            PhoneNumbers = string.Join("\n", Contact.PhoneNumbers),
+            PhoneNumbersList = Contact.PhoneNumbers.ToList(),
             Address = Contact.Address,
             OrganizationAccount = Contact.OrganizationAccount
         };
@@ -49,10 +50,13 @@ public class Edit : BaseStaffPageModel
         var command = new UpdateContact.Command
         {
             Id = Form.Id,
-            Name = Form.Name,
+            FirstName = Form.FirstName,
+            LastName = Form.LastName,
             Email = Form.Email,
-            PhoneNumbers = Form.PhoneNumbers?.Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                .Select(p => p.Trim()).Where(p => !string.IsNullOrEmpty(p)).ToList(),
+            PhoneNumbers = Form.PhoneNumbersList?
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .Select(p => p.Trim())
+                .ToList(),
             Address = Form.Address,
             OrganizationAccount = Form.OrganizationAccount
         };
@@ -74,13 +78,21 @@ public class Edit : BaseStaffPageModel
         public long Id { get; set; }
 
         [Required]
-        [MaxLength(500)]
-        public string Name { get; set; } = string.Empty;
+        [MaxLength(250)]
+        [Display(Name = "First Name")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [MaxLength(250)]
+        [Display(Name = "Last Name")]
+        public string? LastName { get; set; }
 
         [EmailAddress]
         public string? Email { get; set; }
 
-        public string? PhoneNumbers { get; set; }
+        /// <summary>
+        /// Phone numbers as a list for the interactive editor.
+        /// </summary>
+        public List<string>? PhoneNumbersList { get; set; }
 
         public string? Address { get; set; }
 

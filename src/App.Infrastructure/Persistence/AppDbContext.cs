@@ -55,6 +55,7 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     public DbSet<TicketAttachment> TicketAttachments => Set<TicketAttachment>();
     public DbSet<ContactChangeLogEntry> ContactChangeLogEntries => Set<ContactChangeLogEntry>();
     public DbSet<ContactComment> ContactComments => Set<ContactComment>();
+    public DbSet<ContactAttachment> ContactAttachments => Set<ContactAttachment>();
     public DbSet<SlaRule> SlaRules => Set<SlaRule>();
     public DbSet<TicketView> TicketViews => Set<TicketView>();
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
