@@ -198,6 +198,8 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             AssigneeName = p.AssigneeName ?? "Unassigned",
             OwningTeamName = p.OwningTeamName ?? "-",
             ContactName = p.ContactName ?? "-",
+            ContactId = p.ContactId,
+            CommentCount = p.CommentCount,
             SlaDueAt = p.SlaDueAt?.ToString("MMM dd, HH:mm") ?? "-",
             SlaStatusLabel = p.SlaStatusLabel ?? "-",
             CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
@@ -349,6 +351,10 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
 
         [Display(Name = "Contact")]
         public string ContactName { get; init; } = string.Empty;
+
+        public long? ContactId { get; init; }
+
+        public int CommentCount { get; init; }
 
         [Display(Name = "SLA Due")]
         public string SlaDueAt { get; init; } = string.Empty;

@@ -230,10 +230,18 @@
                 {
                     <tr>
                         <td>
-                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
-                                class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
-                                #@ticket.Id
-                            </a>
+                            <div class="d-flex align-items-center gap-2">
+                                <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
+                                    class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
+                                    #@ticket.Id
+                                </a>
+                                @if (ticket.CommentCount > 0)
+                                {
+                                    <span class="badge bg-primary rounded-pill" style="font-size: 0.75rem; padding: 2px 6px;">
+                                        @ticket.CommentCount
+                                    </span>
+                                }
+                            </div>
                         </td>
                         <td>
                             <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
@@ -273,7 +281,19 @@
                                 <span>—</span>
                             }
                         </td>
-                        <td class="text-muted">@(ticket.ContactName ?? "—")</td>
+                        <td class="text-muted">
+                            @if (ticket.ContactId.HasValue && !string.IsNullOrEmpty(ticket.ContactName))
+                            {
+                                <a asp-area="Staff" asp-page="@RouteNames.Contacts.Details" asp-route-id="@ticket.ContactId.Value"
+                                    class="text-decoration-none" style="color: var(--staff-primary);">
+                                    @ticket.ContactName
+                                </a>
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </td>
                         <td>
                             @if (ticket.SlaDueAt != "-")
                             {

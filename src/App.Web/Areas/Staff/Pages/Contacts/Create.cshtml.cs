@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Contacts.Commands;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Staff.Pages.Contacts;
 
@@ -30,12 +30,16 @@ public class Create : BaseStaffPageModel
 
         var command = new CreateContact.Command
         {
+            Id = Form.Id,
             Name = Form.Name,
             Email = Form.Email,
-            PhoneNumbers = Form.PhoneNumbers?.Split('\n', StringSplitOptions.RemoveEmptyEntries)
-                .Select(p => p.Trim()).Where(p => !string.IsNullOrEmpty(p)).ToList(),
+            PhoneNumbers = Form
+                .PhoneNumbers?.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Trim())
+                .Where(p => !string.IsNullOrEmpty(p))
+                .ToList(),
             Address = Form.Address,
-            OrganizationAccount = Form.OrganizationAccount
+            OrganizationAccount = Form.OrganizationAccount,
         };
 
         var response = await Mediator.Send(command, cancellationToken);
@@ -52,6 +56,8 @@ public class Create : BaseStaffPageModel
 
     public record CreateContactViewModel
     {
+        public long? Id { get; set; }
+
         [Required]
         [MaxLength(500)]
         public string Name { get; set; } = string.Empty;
@@ -69,4 +75,3 @@ public class Create : BaseStaffPageModel
         public string? OrganizationAccount { get; set; }
     }
 }
-

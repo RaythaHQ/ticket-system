@@ -26,6 +26,7 @@ public class Details : BaseStaffPageModel
     public AddCommentViewModel CommentForm { get; set; } = new();
 
     public bool CanEditTicket { get; set; }
+    public bool CanDeleteTicket { get; set; }
 
     public async Task<IActionResult> OnGet(
         long id,
@@ -71,10 +72,30 @@ public class Details : BaseStaffPageModel
             cancellationToken
         );
 
+        // Check if user can delete tickets (requires Can Manage Tickets permission)
+        CanDeleteTicket = TicketPermissionService.CanManageTickets();
+
         // Store back URL for the view
         ViewData["BackToListUrl"] = backToListUrl;
 
         return Page();
+    }
+
+    public async Task<IActionResult> OnPostDelete(long id, CancellationToken cancellationToken)
+    {
+        var command = new DeleteTicket.Command { Id = id };
+        var response = await Mediator.Send(command, cancellationToken);
+
+        if (response.Success)
+        {
+            SetSuccessMessage("Ticket deleted successfully.");
+            return RedirectToPage(RouteNames.Tickets.Index);
+        }
+        else
+        {
+            SetErrorMessage(response.GetErrors());
+            return await OnGet(id, null, cancellationToken);
+        }
     }
 
     public async Task<IActionResult> OnPostAddComment(long id, CancellationToken cancellationToken)

@@ -94,12 +94,34 @@ public class UpdateContact
 
             if (changes.Any())
             {
+                // Build descriptive message with before/after values
+                var messageParts = new List<string>();
+                
+                foreach (var change in changes)
+                {
+                    var fieldName = change.Key;
+                    var changeObj = JsonSerializer.Deserialize<JsonElement>(JsonSerializer.Serialize(change.Value));
+                    var oldValue = changeObj.GetProperty("OldValue").GetString() ?? "";
+                    var newValue = changeObj.GetProperty("NewValue").GetString() ?? "";
+                    
+                    string description = fieldName switch
+                    {
+                        "Name" => $"Name changed from \"{oldValue}\" to \"{newValue}\"",
+                        "Email" => $"Email changed from \"{oldValue}\" to \"{newValue}\"",
+                        "PhoneNumbers" => $"Phone numbers updated",
+                        "Address" => $"Address changed from \"{oldValue}\" to \"{newValue}\"",
+                        "OrganizationAccount" => $"Organization changed from \"{oldValue}\" to \"{newValue}\"",
+                        _ => $"{fieldName} changed from \"{oldValue}\" to \"{newValue}\""
+                    };
+                    messageParts.Add(description);
+                }
+                
                 var changeLog = new ContactChangeLogEntry
                 {
                     ContactId = contact.Id,
                     ActorStaffId = _currentUser.UserId?.Guid,
                     FieldChangesJson = JsonSerializer.Serialize(changes),
-                    Message = $"Contact updated: {string.Join(", ", changes.Keys)}"
+                    Message = string.Join("; ", messageParts)
                 };
                 contact.ChangeLogEntries.Add(changeLog);
             }

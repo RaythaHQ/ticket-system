@@ -21,9 +21,13 @@
         <div class="staff-card">
             <div class="staff-card-body">
                 @(await Html.PartialAsync("_Partials/BackToList", back))
-                
+
                 <form method="post" class="mt-4">
-                    <input type="hidden" asp-for="Form.Id" />
+                    <div class="mb-4">
+                        <label asp-for="Form.Id" class="form-label">Contact ID</label>
+                        <input asp-for="Form.Id" type="number" class="form-control" readonly />
+                        <small class="text-muted d-block mt-1">Contact ID cannot be changed after creation.</small>
+                    </div>
 
                     <div class="mb-4">
                         <label asp-for="Form.Name" class="form-label">
@@ -64,8 +68,8 @@
                         <button type="submit" class="btn btn-success">
                             <i class="bi bi-check-lg me-2"></i>Save Changes
                         </button>
-                        <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@Model.Form.Id" 
-                           class="btn btn-outline-secondary">Cancel</a>
+                        <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@Model.Form.Id"
+                            class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>
             </div>

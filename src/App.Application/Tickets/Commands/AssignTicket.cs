@@ -129,9 +129,86 @@ public class AssignTicket
 
             if (changes.Any())
             {
-                var message = wasAutoAssigned
-                    ? "Ticket assignment changed (auto-assigned via round-robin)"
-                    : "Ticket assignment changed";
+                var messageParts = new List<string>();
+                
+                // Determine team IDs for assignee change description
+                var oldAssigneeTeamId = oldTeamId;
+                var newAssigneeTeamId = request.OwningTeamId?.Guid;
+                
+                if (oldAssigneeId != newAssigneeId)
+                {
+                    var oldDisplay = "Unassigned";
+                    if (oldAssigneeId.HasValue)
+                    {
+                        var oldAssignee = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == oldAssigneeId.Value, cancellationToken);
+                        if (oldAssignee != null)
+                        {
+                            if (oldAssigneeTeamId.HasValue)
+                            {
+                                var oldTeam = await _db.Teams.AsNoTracking().FirstOrDefaultAsync(t => t.Id == oldAssigneeTeamId.Value, cancellationToken);
+                                oldDisplay = $"{oldTeam?.Name ?? "Unknown"} / {oldAssignee.FullName}";
+                            }
+                            else
+                            {
+                                oldDisplay = oldAssignee.FullName;
+                            }
+                        }
+                    }
+                    else if (oldAssigneeTeamId.HasValue)
+                    {
+                        var oldTeam = await _db.Teams.AsNoTracking().FirstOrDefaultAsync(t => t.Id == oldAssigneeTeamId.Value, cancellationToken);
+                        oldDisplay = $"{oldTeam?.Name ?? "Unknown"} / Anyone";
+                    }
+                    
+                    var newDisplay = "Unassigned";
+                    if (newAssigneeId.HasValue)
+                    {
+                        var newAssignee = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == newAssigneeId.Value, cancellationToken);
+                        if (newAssignee != null)
+                        {
+                            if (newAssigneeTeamId.HasValue)
+                            {
+                                var newTeam = await _db.Teams.AsNoTracking().FirstOrDefaultAsync(t => t.Id == newAssigneeTeamId.Value, cancellationToken);
+                                newDisplay = $"{newTeam?.Name ?? "Unknown"} / {newAssignee.FullName}";
+                            }
+                            else
+                            {
+                                newDisplay = newAssignee.FullName;
+                            }
+                        }
+                    }
+                    else if (newAssigneeTeamId.HasValue)
+                    {
+                        var newTeam = await _db.Teams.AsNoTracking().FirstOrDefaultAsync(t => t.Id == newAssigneeTeamId.Value, cancellationToken);
+                        newDisplay = $"{newTeam?.Name ?? "Unknown"} / Anyone";
+                    }
+                    
+                    var assigneeChange = wasAutoAssigned
+                        ? $"Assignee changed from {oldDisplay} to {newDisplay} (auto-assigned via round-robin)"
+                        : $"Assignee changed from {oldDisplay} to {newDisplay}";
+                    messageParts.Add(assigneeChange);
+                }
+                
+                if (oldTeamId != request.OwningTeamId?.Guid)
+                {
+                    var oldName = "None";
+                    if (oldTeamId.HasValue)
+                    {
+                        var oldTeam = await _db.Teams.AsNoTracking().FirstOrDefaultAsync(t => t.Id == oldTeamId.Value, cancellationToken);
+                        oldName = oldTeam?.Name ?? "Unknown";
+                    }
+                    
+                    var newName = "None";
+                    if (request.OwningTeamId.HasValue)
+                    {
+                        var newTeam = await _db.Teams.AsNoTracking().FirstOrDefaultAsync(t => t.Id == request.OwningTeamId.Value.Guid, cancellationToken);
+                        newName = newTeam?.Name ?? "Unknown";
+                    }
+                    
+                    messageParts.Add($"Team changed from {oldName} to {newName}");
+                }
+                
+                var message = messageParts.Any() ? string.Join("; ", messageParts) : "Ticket assignment changed";
 
                 var changeLog = new TicketChangeLogEntry
                 {

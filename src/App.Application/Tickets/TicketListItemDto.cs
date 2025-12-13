@@ -17,6 +17,8 @@ public record TicketListItemDto : BaseNumericEntityDto
     public string? AssigneeName { get; init; }
     public string? OwningTeamName { get; init; }
     public string? ContactName { get; init; }
+    public long? ContactId { get; init; }
+    public int CommentCount { get; init; }
     public DateTime? SlaDueAt { get; init; }
     public string? SlaStatus { get; init; }
     public string? SlaStatusLabel { get; init; }
@@ -36,6 +38,8 @@ public record TicketListItemDto : BaseNumericEntityDto
             AssigneeName = ticket.Assignee?.FullName,
             OwningTeamName = ticket.OwningTeam?.Name,
             ContactName = ticket.Contact?.Name,
+            ContactId = ticket.ContactId,
+            CommentCount = ticket.Comments?.Count ?? 0,
             SlaDueAt = ticket.SlaDueAt,
             SlaStatus = ticket.SlaStatus,
             SlaStatusLabel = ticket.SlaStatusValue?.Label,
