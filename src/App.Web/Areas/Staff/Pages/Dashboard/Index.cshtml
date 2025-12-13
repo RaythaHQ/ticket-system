@@ -1,12 +1,18 @@
 @page "/staff/dashboard"
 @model App.Web.Areas.Staff.Pages.Dashboard.Index
+@using App.Web.Areas.Staff.Pages.Shared
 
 @{
     ViewData["Title"] = "Dashboard";
     ViewData["ActiveMenu"] = "Dashboard";
 }
 
-<partial name="_Partials/PageHeading" model='"Welcome back!"' />
+<div class="staff-page-heading mb-4">
+    <h1 class="h3 mb-0">Welcome back!</h1>
+    <a asp-page="@RouteNames.Tickets.Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>New Ticket
+    </a>
+</div>
 
 <!-- Quick Lookup -->
 <div class="row g-4 mb-4">

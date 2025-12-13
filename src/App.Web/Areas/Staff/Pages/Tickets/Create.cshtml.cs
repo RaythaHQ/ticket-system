@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using App.Application.Tickets.Commands;
 using App.Application.Tickets.Queries;
+using App.Application.Contacts.Queries;
+using App.Application.Contacts.Commands;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
@@ -34,8 +36,98 @@ public class Create : BaseStaffPageModel
         return Page();
     }
 
+    // Handler for contact search/lookup
+    public async Task<IActionResult> OnGetSearchContact(string searchTerm, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return new JsonResult(new { results = Array.Empty<object>() });
+        }
+
+        var response = await Mediator.Send(
+            new SearchContacts.Query { SearchTerm = searchTerm, MaxResults = 10 },
+            cancellationToken
+        );
+
+        var results = response.Result.Select(c => new
+        {
+            id = c.Id,
+            name = c.Name,
+            email = c.Email,
+            phone = c.PrimaryPhone,
+            organizationAccount = c.OrganizationAccount,
+            ticketCount = c.TicketCount
+        });
+
+        return new JsonResult(new { results });
+    }
+
+    // Handler for getting contact by ID
+    public async Task<IActionResult> OnGetContactById(long id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await Mediator.Send(
+                new GetContactById.Query { Id = id },
+                cancellationToken
+            );
+
+            var contact = response.Result;
+            return new JsonResult(new
+            {
+                success = true,
+                contact = new
+                {
+                    id = contact.Id,
+                    name = contact.Name,
+                    email = contact.Email,
+                    phoneNumbers = contact.PhoneNumbers,
+                    primaryPhone = contact.PhoneNumbers.FirstOrDefault(),
+                    address = contact.Address,
+                    organizationAccount = contact.OrganizationAccount,
+                    ticketCount = contact.TicketCount
+                }
+            });
+        }
+        catch
+        {
+            return new JsonResult(new { success = false, message = "Contact not found" });
+        }
+    }
+
     public async Task<IActionResult> OnPost(CancellationToken cancellationToken)
     {
+        // If we need to create a new contact, do that first
+        if (Form.CreateNewContact && !string.IsNullOrWhiteSpace(Form.NewContactName))
+        {
+            var phoneNumbers = new List<string>();
+            if (!string.IsNullOrWhiteSpace(Form.NewContactPhone))
+            {
+                phoneNumbers.Add(Form.NewContactPhone);
+            }
+
+            var createContactResponse = await Mediator.Send(
+                new CreateContact.Command
+                {
+                    Name = Form.NewContactName,
+                    Email = Form.NewContactEmail,
+                    PhoneNumbers = phoneNumbers
+                },
+                cancellationToken
+            );
+
+            if (createContactResponse.Success)
+            {
+                Form.ContactId = createContactResponse.Result;
+            }
+            else
+            {
+                SetErrorMessage(createContactResponse.GetErrors());
+                await LoadSelectListsAsync(cancellationToken);
+                return Page();
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadSelectListsAsync(cancellationToken);
@@ -109,6 +201,21 @@ public class Create : BaseStaffPageModel
         public ShortGuid? AssigneeId { get; set; }
 
         public long? ContactId { get; set; }
+
+        // New contact creation fields
+        public bool CreateNewContact { get; set; }
+
+        public bool SkipContact { get; set; }
+
+        [MaxLength(500)]
+        public string? NewContactName { get; set; }
+
+        [EmailAddress]
+        [MaxLength(500)]
+        public string? NewContactEmail { get; set; }
+
+        [MaxLength(50)]
+        public string? NewContactPhone { get; set; }
     }
 
     public record AssigneeSelectItem

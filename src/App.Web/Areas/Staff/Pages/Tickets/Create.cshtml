@@ -17,12 +17,129 @@
 <partial name="_Partials/PageHeading" model='"Create Ticket"' />
 
 <div class="row">
-    <div class="col-xl-8 col-lg-10">
+    <div class="col-xl-10 col-lg-12">
         <div class="staff-card">
             <div class="staff-card-body">
                 @(await Html.PartialAsync("_Partials/BackToList", back))
 
-                <form method="post" class="mt-4">
+                <form method="post" class="mt-4" id="create-ticket-form">
+                    <!-- Contact Section - Most Prominent -->
+                    <div class="mb-5">
+                        <div class="d-flex align-items-center mb-3">
+                            <h5 class="mb-0 me-2">Contact</h5>
+                            <span class="badge bg-primary">Required</span>
+                        </div>
+                        
+                        <div id="contact-search-section" class="position-relative">
+                            <div class="input-group input-group-lg mb-3">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" 
+                                       id="contact-search" 
+                                       class="form-control" 
+                                       placeholder="Search by Contact ID, Name, Email, or Phone Number..."
+                                       autocomplete="off" />
+                                <button type="button" class="btn btn-outline-secondary" id="clear-contact-btn" style="display: none;">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Search Results Dropdown -->
+                            <div id="contact-search-results" class="list-group position-absolute w-100" style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none; top: 100%; margin-top: -0.5rem;"></div>
+                            
+                            <!-- Contact Card (shown when contact is selected) -->
+                            <div id="contact-card" class="card border-success mb-3" style="display: none;">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="card-title mb-2">
+                                                <i class="bi bi-person-circle me-2"></i>
+                                                <span id="contact-name"></span>
+                                                <span class="badge bg-secondary ms-2" id="contact-id-badge"></span>
+                                            </h6>
+                                            <div class="row g-2 small">
+                                                <div class="col-12" id="contact-email-row" style="display: none;">
+                                                    <i class="bi bi-envelope me-2 text-muted"></i>
+                                                    <span id="contact-email"></span>
+                                                </div>
+                                                <div class="col-12" id="contact-phone-row" style="display: none;">
+                                                    <i class="bi bi-telephone me-2 text-muted"></i>
+                                                    <span id="contact-phone"></span>
+                                                </div>
+                                                <div class="col-12" id="contact-org-row" style="display: none;">
+                                                    <i class="bi bi-building me-2 text-muted"></i>
+                                                    <span id="contact-org"></span>
+                                                </div>
+                                                <div class="col-12">
+                                                    <i class="bi bi-ticket-perforated me-2 text-muted"></i>
+                                                    <span id="contact-ticket-count"></span> ticket(s)
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="change-contact-btn">
+                                            <i class="bi bi-pencil me-1"></i>Change
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- New Contact Creation Form (shown when no contact found) -->
+                            <div id="new-contact-form" class="card border-warning mb-3" style="display: none;">
+                                <div class="card-header bg-warning bg-opacity-10">
+                                    <h6 class="mb-0">
+                                        <i class="bi bi-person-plus me-2"></i>Create New Contact
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">
+                                                Name <span class="text-danger">*</span>
+                                            </label>
+                                            <input type="text" 
+                                                   asp-for="Form.NewContactName" 
+                                                   class="form-control" 
+                                                   placeholder="Contact name" />
+                                            <span asp-validation-for="Form.NewContactName" class="text-danger small"></span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Phone Number</label>
+                                            <input type="tel" 
+                                                   asp-for="Form.NewContactPhone" 
+                                                   class="form-control" 
+                                                   placeholder="(555) 123-4567" />
+                                            <span asp-validation-for="Form.NewContactPhone" class="text-danger small"></span>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <label class="form-label">Email</label>
+                                            <input type="email" 
+                                                   asp-for="Form.NewContactEmail" 
+                                                   class="form-control" 
+                                                   placeholder="email@example.com" />
+                                            <span asp-validation-for="Form.NewContactEmail" class="text-danger small"></span>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" asp-for="Form.CreateNewContact" id="create-new-contact-flag" />
+                                </div>
+                            </div>
+                            
+                            <!-- Skip Contact Option -->
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-link text-muted p-0" id="skip-contact-btn">
+                                    <i class="bi bi-x-circle me-1"></i>Skip - Create ticket without a contact
+                                </button>
+                            </div>
+                            
+                            <input type="hidden" asp-for="Form.ContactId" id="contact-id-input" />
+                            <input type="hidden" asp-for="Form.SkipContact" id="skip-contact-flag" />
+                            <span asp-validation-for="Form.ContactId" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <!-- Ticket Details Section -->
                     <div class="row">
                         <div class="col-lg-8">
                             <div class="mb-4">
@@ -57,8 +174,7 @@
                                         Priority <span class="text-danger">*</span>
                                     </label>
                                     <select asp-for="Form.Priority" class="form-select">
-                                        @foreach (var priority in TicketPriority.SupportedTypes.OrderBy(p =>
-                                                                                p.SortOrder))
+                                        @foreach (var priority in TicketPriority.SupportedTypes.OrderBy(p => p.SortOrder))
                                         {
                                             <option value="@priority.DeveloperName"
                                                 selected="@(priority.DeveloperName == TicketPriority.NORMAL)">
@@ -76,7 +192,7 @@
                                     <span asp-validation-for="Form.Category" class="text-danger small"></span>
                                 </div>
 
-                                <div class="mb-3">
+                                <div class="mb-0">
                                     <label class="form-label">Assignee</label>
                                     <select id="assignee-dropdown" class="form-select">
                                         @foreach (var assignee in Model.AvailableAssignees)
@@ -102,15 +218,6 @@
                                     <span asp-validation-for="Form.OwningTeamId" class="text-danger small"></span>
                                     <span asp-validation-for="Form.AssigneeId" class="text-danger small"></span>
                                 </div>
-
-                                <div class="mb-0">
-                                    <label asp-for="Form.ContactId" class="form-label">Link to Contact</label>
-                                    <input asp-for="Form.ContactId" type="number" class="form-control"
-                                        placeholder="Contact ID" />
-                                    <span asp-validation-for="Form.ContactId" class="text-danger small"></span>
-                                    <small class="text-muted d-block mt-1">Enter a contact ID to link this
-                                        ticket</small>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -130,16 +237,262 @@
 </div>
 
 @section Scripts {
+    <style>
+        #contact-search-results {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        #contact-search-results .list-group-item {
+            border-left: none;
+            border-right: none;
+        }
+        #contact-search-results .list-group-item:first-child {
+            border-top: none;
+        }
+        #contact-search-results .list-group-item:last-child {
+            border-bottom: none;
+        }
+        #contact-search-results .list-group-item:hover {
+            background-color: #f8f9fa;
+        }
+        #contact-card {
+            border-width: 2px;
+        }
+        #new-contact-form {
+            border-width: 2px;
+        }
+    </style>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Contact search functionality
+            const contactSearch = document.getElementById('contact-search');
+            const contactSearchResults = document.getElementById('contact-search-results');
+            const contactCard = document.getElementById('contact-card');
+            const newContactForm = document.getElementById('new-contact-form');
+            const contactIdInput = document.getElementById('contact-id-input');
+            const createNewContactFlag = document.getElementById('create-new-contact-flag');
+            const skipContactFlag = document.getElementById('skip-contact-flag');
+            const clearContactBtn = document.getElementById('clear-contact-btn');
+            const changeContactBtn = document.getElementById('change-contact-btn');
+            const skipContactBtn = document.getElementById('skip-contact-btn');
+            const contactSearchSection = document.getElementById('contact-search-section');
+            
+            let searchTimeout;
+            let selectedContact = null;
+
+            // Initialize with pre-populated contact if available
+            @if (Model.Form.ContactId.HasValue)
+            {
+                <text>
+                loadContactById(@Model.Form.ContactId.Value);
+                </text>
+            }
+
+            // Contact search with debounce
+            contactSearch.addEventListener('input', function() {
+                const searchTerm = this.value.trim();
+                
+                clearTimeout(searchTimeout);
+                
+                if (searchTerm.length < 2) {
+                    contactSearchResults.style.display = 'none';
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    searchContacts(searchTerm);
+                }, 300);
+            });
+
+            // Clear contact
+            clearContactBtn.addEventListener('click', function() {
+                resetContactSection();
+            });
+
+            // Change contact
+            changeContactBtn.addEventListener('click', function() {
+                resetContactSection();
+                contactSearch.focus();
+            });
+
+            // Skip contact
+            skipContactBtn.addEventListener('click', function() {
+                resetContactSection();
+                skipContactFlag.value = 'true';
+                contactSearchSection.style.opacity = '0.5';
+                skipContactBtn.style.display = 'none';
+            });
+
+            function resetContactSection() {
+                contactSearch.value = '';
+                contactSearchResults.style.display = 'none';
+                contactCard.style.display = 'none';
+                newContactForm.style.display = 'none';
+                contactIdInput.value = '';
+                createNewContactFlag.value = 'false';
+                skipContactFlag.value = 'false';
+                clearContactBtn.style.display = 'none';
+                selectedContact = null;
+                contactSearchSection.style.opacity = '1';
+                skipContactBtn.style.display = 'block';
+            }
+
+            function searchContacts(searchTerm) {
+                fetch(`?handler=SearchContact&searchTerm=${encodeURIComponent(searchTerm)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        displaySearchResults(data.results);
+                    })
+                    .catch(error => {
+                        console.error('Error searching contacts:', error);
+                    });
+            }
+
+            function displaySearchResults(results) {
+                contactSearchResults.innerHTML = '';
+                
+                if (results.length === 0) {
+                    contactSearchResults.innerHTML = `
+                        <div class="list-group-item">
+                            <div class="text-muted text-center py-2">
+                                <i class="bi bi-exclamation-circle me-2"></i>No contacts found. 
+                                <a href="#" id="create-new-link" class="text-decoration-none">Create a new contact</a>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById('create-new-link').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        showNewContactForm();
+                    });
+                } else {
+                    results.forEach(contact => {
+                        const item = document.createElement('a');
+                        item.href = '#';
+                        item.className = 'list-group-item list-group-item-action';
+                        item.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${escapeHtml(contact.name)}</strong>
+                                    <span class="badge bg-secondary ms-2">ID: ${contact.id}</span>
+                                    ${contact.email ? `<div class="small text-muted"><i class="bi bi-envelope me-1"></i>${escapeHtml(contact.email)}</div>` : ''}
+                                    ${contact.phone ? `<div class="small text-muted"><i class="bi bi-telephone me-1"></i>${escapeHtml(contact.phone)}</div>` : ''}
+                                </div>
+                                <i class="bi bi-chevron-right"></i>
+                            </div>
+                        `;
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            selectContact(contact.id);
+                        });
+                        contactSearchResults.appendChild(item);
+                    });
+                }
+                
+                contactSearchResults.style.display = 'block';
+            }
+
+            function selectContact(contactId) {
+                contactSearchResults.style.display = 'none';
+                loadContactById(contactId);
+            }
+
+            function loadContactById(contactId) {
+                fetch(`?handler=ContactById&id=${contactId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            displayContactCard(data.contact);
+                        } else {
+                            showNewContactForm();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading contact:', error);
+                        showNewContactForm();
+                    });
+            }
+
+            function displayContactCard(contact) {
+                selectedContact = contact;
+                contactIdInput.value = contact.id;
+                createNewContactFlag.value = 'false';
+                skipContactFlag.value = 'false';
+                
+                document.getElementById('contact-name').textContent = contact.name;
+                document.getElementById('contact-id-badge').textContent = `ID: ${contact.id}`;
+                
+                if (contact.email) {
+                    document.getElementById('contact-email').textContent = contact.email;
+                    document.getElementById('contact-email-row').style.display = 'block';
+                } else {
+                    document.getElementById('contact-email-row').style.display = 'none';
+                }
+                
+                if (contact.primaryPhone) {
+                    document.getElementById('contact-phone').textContent = contact.primaryPhone;
+                    document.getElementById('contact-phone-row').style.display = 'block';
+                } else {
+                    document.getElementById('contact-phone-row').style.display = 'none';
+                }
+                
+                if (contact.organizationAccount) {
+                    document.getElementById('contact-org').textContent = contact.organizationAccount;
+                    document.getElementById('contact-org-row').style.display = 'block';
+                } else {
+                    document.getElementById('contact-org-row').style.display = 'none';
+                }
+                
+                document.getElementById('contact-ticket-count').textContent = contact.ticketCount || 0;
+                
+                contactCard.style.display = 'block';
+                newContactForm.style.display = 'none';
+                clearContactBtn.style.display = 'block';
+                contactSearch.value = '';
+                contactSearchSection.style.opacity = '1';
+                skipContactBtn.style.display = 'block';
+            }
+
+            function showNewContactForm() {
+                contactSearchResults.style.display = 'none';
+                contactCard.style.display = 'none';
+                newContactForm.style.display = 'block';
+                createNewContactFlag.value = 'true';
+                skipContactFlag.value = 'false';
+                contactIdInput.value = '';
+                clearContactBtn.style.display = 'block';
+                contactSearchSection.style.opacity = '1';
+                skipContactBtn.style.display = 'block';
+                
+                // Pre-fill name if search term looks like a name
+                const searchTerm = contactSearch.value.trim();
+                const isEmail = searchTerm.indexOf('@@') !== -1;
+                const isNumeric = /^\d+$/.test(searchTerm);
+                if (searchTerm && !isNumeric && !isEmail) {
+                    document.querySelector('[name="Form.NewContactName"]').value = searchTerm;
+                }
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Close search results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!contactSearchSection.contains(e.target)) {
+                    contactSearchResults.style.display = 'none';
+                }
+            });
+
+            // Assignee dropdown handling
             const assigneeDropdown = document.getElementById('assignee-dropdown');
             const owningTeamIdInput = document.getElementById('owning-team-id');
             const assigneeIdInput = document.getElementById('assignee-id');
 
-            // Initialize hidden fields based on current selection
             updateHiddenFields();
 
-            // Update hidden fields when dropdown changes
             assigneeDropdown.addEventListener('change', updateHiddenFields);
 
             function updateHiddenFields() {
@@ -151,16 +504,38 @@
                 } else if (value.startsWith('team:')) {
                     const parts = value.split(':');
                     if (parts.length === 2) {
-                        // Team only: "team:{teamId}" - parts[1] is the ShortGuid string
                         owningTeamIdInput.value = parts[1];
                         assigneeIdInput.value = '';
                     } else if (parts.length === 4 && parts[2] === 'assignee') {
-                        // Team and assignee: "team:{teamId}:assignee:{assigneeId}" - parts[1] and parts[3] are ShortGuid strings
                         owningTeamIdInput.value = parts[1];
                         assigneeIdInput.value = parts[3];
                     }
                 }
             }
+
+            // Form validation
+            document.getElementById('create-ticket-form').addEventListener('submit', function(e) {
+                const contactId = contactIdInput.value;
+                const createNew = createNewContactFlag.value === 'true';
+                const skipContact = skipContactFlag.value === 'true';
+                
+                if (!contactId && !createNew && !skipContact) {
+                    e.preventDefault();
+                    alert('Please select a contact, create a new contact, or choose to skip the contact.');
+                    contactSearch.focus();
+                    return false;
+                }
+                
+                if (createNew) {
+                    const newContactName = document.querySelector('[name="Form.NewContactName"]').value.trim();
+                    if (!newContactName) {
+                        e.preventDefault();
+                        alert('Please enter a name for the new contact.');
+                        document.querySelector('[name="Form.NewContactName"]').focus();
+                        return false;
+                    }
+                }
+            });
         });
     </script>
 }
