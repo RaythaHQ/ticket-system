@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using App.Application.Teams.Queries;
+using App.Application.TicketViews;
 using App.Application.TicketViews.Commands;
+using App.Application.Users.Queries;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
@@ -15,12 +17,18 @@ public class Create : BaseStaffPageModel
     public CreateViewForm Form { get; set; } = new();
 
     [BindProperty]
-    public List<string> SelectedColumnNames { get; set; } = new();
+    public ViewConditions? Conditions { get; set; }
 
-    public List<TeamSelectItem> AvailableTeams { get; set; } = new();
-    public List<ColumnOption> AvailableColumns { get; set; } = new();
-    public List<string> AvailableStatuses { get; set; } = new();
-    public List<string> AvailablePriorities { get; set; } = new();
+    [BindProperty]
+    public List<SortLevelInput> SortLevels { get; set; } = new();
+
+    [BindProperty]
+    public List<string> VisibleColumns { get; set; } = new();
+
+    // View model data for partials
+    public FilterBuilderViewModel FilterBuilderModel { get; set; } = null!;
+    public SortConfiguratorViewModel SortConfiguratorModel { get; set; } = null!;
+    public ColumnSelectorViewModel ColumnSelectorModel { get; set; } = null!;
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
@@ -28,6 +36,9 @@ public class Create : BaseStaffPageModel
         ViewData["ActiveMenu"] = "Views";
 
         await LoadOptionsAsync(cancellationToken);
+
+        // Set default columns
+        VisibleColumns = new List<string> { "Id", "Title", "Status", "Priority", "CreationTime", "AssigneeName" };
 
         return Page();
     }
@@ -47,69 +58,20 @@ public class Create : BaseStaffPageModel
         if (!userId.HasValue)
             return RedirectToPage(RouteNames.Error.Index);
 
-        // Get columns from form directly (model binding for List<string> can be unreliable)
-        var formColumns = Request.Form["SelectedColumnNames"];
-        var columnList = formColumns.Count > 0 
-            ? formColumns.ToList() 
-            : SelectedColumnNames;
+        // Get visible columns from form
+        var formColumns = Request.Form["VisibleColumns"];
+        var columnList = formColumns.Count > 0
+            ? formColumns.ToList()
+            : VisibleColumns;
 
-        // Build filters
-        var filters = new List<CreateTicketView.FilterCondition>();
-        
-        if (!string.IsNullOrEmpty(Form.StatusFilter))
+        // Default columns if none selected
+        if (!columnList.Any())
         {
-            filters.Add(new CreateTicketView.FilterCondition
-            {
-                Field = "Status",
-                Operator = "equals",
-                Value = Form.StatusFilter
-            });
+            columnList = new List<string> { "Id", "Title", "Status", "Priority", "CreationTime" };
         }
 
-        if (!string.IsNullOrEmpty(Form.PriorityFilter))
-        {
-            filters.Add(new CreateTicketView.FilterCondition
-            {
-                Field = "Priority",
-                Operator = "equals",
-                Value = Form.PriorityFilter
-            });
-        }
-
-        if (Form.TeamIdFilter.HasValue)
-        {
-            filters.Add(new CreateTicketView.FilterCondition
-            {
-                Field = "OwningTeamId",
-                Operator = "equals",
-                Value = Form.TeamIdFilter.Value.ToString()
-            });
-        }
-
-        if (Form.UnassignedOnly)
-        {
-            filters.Add(new CreateTicketView.FilterCondition
-            {
-                Field = "AssigneeId",
-                Operator = "is_null",
-                Value = "true"
-            });
-        }
-
-        if (Form.AssignedToMe)
-        {
-            filters.Add(new CreateTicketView.FilterCondition
-            {
-                Field = "AssigneeId",
-                Operator = "equals",
-                Value = userId.Value.ToString()
-            });
-        }
-
-        // Get selected columns - use the form values, or defaults if none selected
-        var selectedColumns = columnList.Any() 
-            ? columnList 
-            : new List<string> { "Id", "Title", "Status", "Priority", "CreationTime" };
+        // Parse sort levels from form
+        var sortLevelInputs = ParseSortLevelsFromForm();
 
         var response = await Mediator.Send(new CreateTicketView.Command
         {
@@ -117,10 +79,9 @@ public class Create : BaseStaffPageModel
             Description = Form.Description,
             OwnerUserId = userId.Value,
             IsSystemView = false,
-            Filters = filters,
-            VisibleColumns = selectedColumns,
-            SortField = Form.SortField ?? "CreationTime",
-            SortDirection = Form.SortDescending ? "desc" : "asc"
+            Conditions = Conditions,
+            SortLevels = sortLevelInputs,
+            VisibleColumns = columnList
         }, cancellationToken);
 
         if (response.Success)
@@ -134,32 +95,102 @@ public class Create : BaseStaffPageModel
         return Page();
     }
 
+    private List<CreateTicketView.SortLevelInput> ParseSortLevelsFromForm()
+    {
+        var sortLevels = new List<CreateTicketView.SortLevelInput>();
+        var i = 0;
+
+        while (Request.Form.ContainsKey($"SortLevels[{i}].Field"))
+        {
+            var field = Request.Form[$"SortLevels[{i}].Field"].ToString();
+            var direction = Request.Form[$"SortLevels[{i}].Direction"].ToString();
+            var orderStr = Request.Form[$"SortLevels[{i}].Order"].ToString();
+
+            if (!string.IsNullOrEmpty(field))
+            {
+                sortLevels.Add(new CreateTicketView.SortLevelInput
+                {
+                    Order = int.TryParse(orderStr, out var order) ? order : i,
+                    Field = field,
+                    Direction = direction ?? "asc"
+                });
+            }
+            i++;
+        }
+
+        // Default sort if none provided
+        if (!sortLevels.Any())
+        {
+            sortLevels.Add(new CreateTicketView.SortLevelInput
+            {
+                Order = 0,
+                Field = "CreationTime",
+                Direction = "desc"
+            });
+        }
+
+        return sortLevels;
+    }
+
     private async Task LoadOptionsAsync(CancellationToken cancellationToken)
     {
-        var teamsResponse = await Mediator.Send(new GetTeams.Query(), cancellationToken);
-        AvailableTeams = teamsResponse.Result.Items.Select(t => new TeamSelectItem
+        // Load filter builder data
+        FilterBuilderModel = FilterBuilderViewModel.CreateWithDefaults();
+
+        // Load users for assignee filter
+        var usersResponse = await Mediator.Send(new GetUsers.Query(), cancellationToken);
+        FilterBuilderModel.Users = usersResponse.Result.Items.Select(u => new UserOption
         {
-            Id = t.Id,
+            Id = u.Id.ToString(),
+            Name = u.FullName,
+            IsDeactivated = !u.IsActive
+        }).ToList();
+
+        // Load teams
+        var teamsResponse = await Mediator.Send(new GetTeams.Query(), cancellationToken);
+        FilterBuilderModel.Teams = teamsResponse.Result.Items.Select(t => new TeamOption
+        {
+            Id = t.Id.ToString(),
             Name = t.Name
         }).ToList();
 
-        AvailableStatuses = TicketStatus.SupportedTypes.Select(s => s.DeveloperName).ToList();
-        AvailablePriorities = TicketPriority.SupportedTypes.Select(p => p.DeveloperName).ToList();
-
-        AvailableColumns = new List<ColumnOption>
+        // Load statuses and priorities
+        FilterBuilderModel.Statuses = TicketStatus.SupportedTypes.Select(s => new SelectOption
         {
-            new() { Name = "Id", Label = "ID", Selected = true },
-            new() { Name = "Title", Label = "Title", Selected = true },
-            new() { Name = "Status", Label = "Status", Selected = true },
-            new() { Name = "Priority", Label = "Priority", Selected = true },
-            new() { Name = "Category", Label = "Category", Selected = false },
-            new() { Name = "AssigneeName", Label = "Assignee", Selected = true },
-            new() { Name = "OwningTeamName", Label = "Team", Selected = false },
-            new() { Name = "ContactName", Label = "Contact", Selected = false },
-            new() { Name = "CreationTime", Label = "Created", Selected = true },
-            new() { Name = "SlaDueAt", Label = "SLA Due", Selected = false },
-            new() { Name = "SlaStatus", Label = "SLA Status", Selected = false }
-        };
+            Value = s.DeveloperName,
+            Label = s.Label
+        }).ToList();
+
+        FilterBuilderModel.Priorities = TicketPriority.SupportedTypes
+            .OrderBy(p => p.SortOrder)
+            .Select(p => new SelectOption
+            {
+                Value = p.DeveloperName,
+                Label = p.Label
+            }).ToList();
+
+        // Load sort configurator data
+        SortConfiguratorModel = SortConfiguratorViewModel.CreateWithDefaults();
+        if (!SortLevels.Any())
+        {
+            SortConfiguratorModel.SortLevels = new List<SortLevelModel>
+            {
+                new() { Order = 0, Field = "CreationTime", Direction = "desc" }
+            };
+        }
+        else
+        {
+            SortConfiguratorModel.SortLevels = SortLevels.Select(s => new SortLevelModel
+            {
+                Order = s.Order,
+                Field = s.Field,
+                Direction = s.Direction
+            }).ToList();
+        }
+
+        // Load column selector data
+        ColumnSelectorModel = ColumnSelectorViewModel.CreateWithDefaults();
+        ColumnSelectorModel.SelectedColumns = VisibleColumns;
     }
 
     public class CreateViewForm
@@ -170,30 +201,12 @@ public class Create : BaseStaffPageModel
 
         [MaxLength(500)]
         public string? Description { get; set; }
-
-        // Filters
-        public string? StatusFilter { get; set; }
-        public string? PriorityFilter { get; set; }
-        public ShortGuid? TeamIdFilter { get; set; }
-        public bool UnassignedOnly { get; set; }
-        public bool AssignedToMe { get; set; }
-
-        // Sorting
-        public string? SortField { get; set; } = "CreationTime";
-        public bool SortDescending { get; set; } = true;
     }
 
-    public class ColumnOption
+    public class SortLevelInput
     {
-        public string Name { get; set; } = string.Empty;
-        public string Label { get; set; } = string.Empty;
-        public bool Selected { get; set; }
-    }
-
-    public class TeamSelectItem
-    {
-        public ShortGuid Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+        public int Order { get; set; }
+        public string Field { get; set; } = null!;
+        public string Direction { get; set; } = "asc";
     }
 }
-

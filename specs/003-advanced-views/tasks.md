@@ -85,8 +85,8 @@
 - [x] T031 [US1] Add relative date preset dropdown that appears when "is within" operator is selected in _FilterBuilder.cshtml
 - [x] T032 [US1] Add status options with "Open (all non-closed)" and "Closed (resolved/cancelled)" meta-groups in _FilterBuilder.cshtml
 - [x] T033 [US1] Add user dropdown with staff members including suspended ones with "(deactivated)" suffix in _FilterBuilder.cshtml
-- [ ] T034 [US1] Update Staff Views/Create.cshtml to use _FilterBuilder partial replacing existing filter dropdowns in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml`
-- [ ] T035 [US1] Update Staff Views/Create.cshtml.cs to handle new Conditions form structure with array binding in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml.cs`
+- [x] T034 [US1] Update Staff Views/Create.cshtml to use _FilterBuilder partial replacing existing filter dropdowns in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml`
+- [x] T035 [US1] Update Staff Views/Create.cshtml.cs to handle new Conditions form structure with array binding in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml.cs`
 - [ ] T036 [US1] Update Staff Views/Edit.cshtml to use _FilterBuilder partial in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml`
 - [ ] T037 [US1] Update Staff Views/Edit.cshtml.cs to load existing conditions into _FilterBuilder in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml.cs`
 - [ ] T038 [US1] Add inline validation and error display for filter conditions in _FilterBuilder.cshtml
@@ -113,8 +113,8 @@
 - [x] T043 [P] [US2] Create sort-configurator.js with add/remove sort level and SortableJS initialization in `src/App.Web/wwwroot/admin/js/shared/sort-configurator.js`
 - [x] T044 [US2] Create _SortConfigurator.cshtml partial with add sort level, field select, direction toggle, drag handles, remove button in `src/App.Web/Areas/Staff/Pages/Shared/_Partials/_SortConfigurator.cshtml`
 - [x] T045 [US2] Add hidden order inputs updated on drag-drop reorder in _SortConfigurator.cshtml
-- [ ] T046 [US2] Update Staff Views/Create.cshtml to use _SortConfigurator partial replacing single sort dropdown in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml`
-- [ ] T047 [US2] Update Staff Views/Create.cshtml.cs to handle SortLevels array binding in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml.cs`
+- [x] T046 [US2] Update Staff Views/Create.cshtml to use _SortConfigurator partial replacing single sort dropdown in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml`
+- [x] T047 [US2] Update Staff Views/Create.cshtml.cs to handle SortLevels array binding in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml.cs`
 - [ ] T048 [US2] Update Staff Views/Edit.cshtml to use _SortConfigurator partial in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml`
 - [ ] T049 [US2] Update Staff Views/Edit.cshtml.cs to load existing SortLevels into _SortConfigurator in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml.cs`
 - [ ] T050 [US2] Update Tickets/Index.cshtml to show view's sort as first pill formatted as "Field1 ↓, Field2 ↑" in `src/App.Web/Areas/Staff/Pages/Tickets/Index.cshtml`
@@ -143,8 +143,8 @@
 - [x] T057 [P] [US3] Create _ColumnSelector.cshtml partial with checkboxes, drag handles, and SortableJS initialization in `src/App.Web/Areas/Staff/Pages/Shared/_Partials/_ColumnSelector.cshtml`
 - [x] T058 [US3] Add visual distinction between selected and unselected columns (checkbox + opacity/color) in _ColumnSelector.cshtml
 - [x] T059 [US3] Add hidden order inputs updated on drag-drop reorder in _ColumnSelector.cshtml
-- [ ] T060 [US3] Update Staff Views/Create.cshtml to use _ColumnSelector partial replacing checkbox list in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml`
-- [ ] T061 [US3] Update Staff Views/Create.cshtml.cs to handle ordered VisibleColumns array binding in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml.cs`
+- [x] T060 [US3] Update Staff Views/Create.cshtml to use _ColumnSelector partial replacing checkbox list in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml`
+- [x] T061 [US3] Update Staff Views/Create.cshtml.cs to handle ordered VisibleColumns array binding in `src/App.Web/Areas/Staff/Pages/Views/Create.cshtml.cs`
 - [ ] T062 [US3] Update Staff Views/Edit.cshtml to use _ColumnSelector partial in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml`
 - [ ] T063 [US3] Update Staff Views/Edit.cshtml.cs to load existing VisibleColumns with order into _ColumnSelector in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml.cs`
 - [ ] T064 [US3] Update Tickets/Index.cshtml to render only columns in view.VisibleColumns in configured order in `src/App.Web/Areas/Staff/Pages/Tickets/Index.cshtml`

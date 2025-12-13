@@ -1,7 +1,6 @@
 @page "/staff/views/create"
 @model App.Web.Areas.Staff.Pages.Views.Create
 @using App.Web.Areas.Staff.Pages.Shared.Models
-@using App.Domain.ValueObjects
 
 @{
     ViewData["Title"] = "Create View";
@@ -35,7 +34,10 @@
             <!-- View Details -->
             <div class="staff-card mb-4">
                 <div class="staff-card-header">
-                    <h5><i class="bi bi-info-circle me-2"></i>View Details</h5>
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2 text-primary"></i>
+                        View Details
+                    </h6>
                 </div>
                 <div class="staff-card-body">
                     @(await Html.PartialAsync("_Partials/BackToList", back))
@@ -57,131 +59,30 @@
                 </div>
             </div>
 
-            <!-- Filters -->
-            <div class="staff-card mb-4">
-                <div class="staff-card-header">
-                    <h5><i class="bi bi-funnel me-2"></i>Filters</h5>
-                </div>
-                <div class="staff-card-body">
-                    <p class="text-muted small mb-4">Define which tickets should appear in this view.</p>
+            <!-- Advanced Filter Builder -->
+            <partial name="_Partials/_FilterBuilder" model="Model.FilterBuilderModel" />
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="Form.StatusFilter" class="form-label">Status</label>
-                            <select asp-for="Form.StatusFilter" class="form-select">
-                                <option value="">Any Status</option>
-                                @foreach (var status in TicketStatus.SupportedTypes)
-                                {
-                                    <option value="@status.DeveloperName">@status.Label</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="Form.PriorityFilter" class="form-label">Priority</label>
-                            <select asp-for="Form.PriorityFilter" class="form-select">
-                                <option value="">Any Priority</option>
-                                @foreach (var priority in TicketPriority.SupportedTypes.OrderBy(p => p.SortOrder))
-                                {
-                                    <option value="@priority.DeveloperName">@priority.Label</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="Form.TeamIdFilter" class="form-label">Team</label>
-                            <select asp-for="Form.TeamIdFilter" class="form-select">
-                                <option value="">Any Team</option>
-                                @foreach (var team in Model.AvailableTeams)
-                                {
-                                    <option value="@team.Id">@team.Name</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-check mb-2">
-                                <input asp-for="Form.AssignedToMe" class="form-check-input" type="checkbox" />
-                                <label asp-for="Form.AssignedToMe" class="form-check-label">
-                                    Only tickets assigned to me
-                                </label>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check mb-2">
-                                <input asp-for="Form.UnassignedOnly" class="form-check-input" type="checkbox" />
-                                <label asp-for="Form.UnassignedOnly" class="form-check-label">
-                                    Only unassigned tickets
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Sorting -->
-            <div class="staff-card mb-4">
-                <div class="staff-card-header">
-                    <h5><i class="bi bi-sort-down me-2"></i>Sorting</h5>
-                </div>
-                <div class="staff-card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="Form.SortField" class="form-label">Sort By</label>
-                            <select asp-for="Form.SortField" class="form-select">
-                                <option value="CreationTime">Created Date</option>
-                                <option value="LastModificationTime">Last Updated</option>
-                                <option value="Priority">Priority</option>
-                                <option value="Status">Status</option>
-                                <option value="Title">Title</option>
-                                <option value="SlaDueAt">SLA Due Date</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Direction</label>
-                            <div class="form-check mt-2">
-                                <input asp-for="Form.SortDescending" class="form-check-input" type="checkbox" />
-                                <label asp-for="Form.SortDescending" class="form-check-label">
-                                    Descending (newest first)
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Multi-Level Sort Configurator -->
+            <partial name="_Partials/_SortConfigurator" model="Model.SortConfiguratorModel" />
         </div>
 
         <div class="col-lg-4">
-            <!-- Columns -->
-            <div class="staff-card mb-4">
-                <div class="staff-card-header">
-                    <h5><i class="bi bi-layout-three-columns me-2"></i>Visible Columns</h5>
-                </div>
-                <div class="staff-card-body">
-                    <p class="text-muted small mb-3">Select which columns to display.</p>
-                    @foreach (var col in Model.AvailableColumns)
-                    {
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="SelectedColumnNames"
-                                value="@col.Name" id="col_@col.Name" @(col.Selected ? "checked" : "") />
-                            <label class="form-check-label" for="col_@col.Name">
-                                @col.Label
-                            </label>
-                        </div>
-                    }
-                </div>
-            </div>
+            <!-- Column Selector -->
+            <partial name="_Partials/_ColumnSelector" model="Model.ColumnSelectorModel" />
 
             <!-- Submit -->
-            <div class="d-grid gap-2">
+            <div class="d-grid gap-2 mt-4">
                 <button type="submit" class="btn btn-success btn-lg">
-                    <i class="bi bi-check-lg me-2"></i>Create View
+                    <i class="fas fa-check me-2"></i>Create View
                 </button>
                 <a asp-area="Staff" asp-page="@RouteNames.Views.Index" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </div>
     </div>
 </form>
+
+@section Scripts {
+    <script src="~/admin/js/shared/filter-builder.js"></script>
+    <script src="~/admin/js/shared/sort-configurator.js"></script>
+    <script src="~/admin/js/shared/column-selector.js"></script>
+}
