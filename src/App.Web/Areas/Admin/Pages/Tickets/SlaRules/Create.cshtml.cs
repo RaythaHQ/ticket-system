@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using App.Application.Common.Interfaces;
 using App.Application.SlaRules;
 using App.Application.SlaRules.Commands;
+using App.Application.TicketConfig;
+using App.Application.TicketConfig.Queries;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
@@ -21,13 +23,22 @@ public class Create : BaseAdminPageModel
         _permissionService = permissionService;
     }
 
+    public List<TicketPriorityConfigDto> AvailablePriorities { get; set; } = new();
+
     [BindProperty]
     public CreateSlaRuleViewModel Form { get; set; } = new();
 
-    public IActionResult OnGet()
+    public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
         if (!_permissionService.CanManageTickets())
             return Forbid();
+
+        // Load available priorities for dropdown
+        var prioritiesResponse = await Mediator.Send(
+            new GetTicketPriorities.Query { IncludeInactive = false },
+            cancellationToken
+        );
+        AvailablePriorities = prioritiesResponse.Result.Items.ToList();
 
         // Set breadcrumbs for navigation
         SetBreadcrumbs(
@@ -39,7 +50,7 @@ public class Create : BaseAdminPageModel
             },
             new BreadcrumbNode
             {
-                Label = "Create SLA rule",
+                Label = "Create SLA Rule",
                 RouteName = RouteNames.SlaRules.Create,
                 IsActive = true,
             }
@@ -52,6 +63,13 @@ public class Create : BaseAdminPageModel
     {
         if (!_permissionService.CanManageTickets())
             return Forbid();
+
+        // Load available priorities for dropdown (in case of validation error)
+        var prioritiesResponse = await Mediator.Send(
+            new GetTicketPriorities.Query { IncludeInactive = false },
+            cancellationToken
+        );
+        AvailablePriorities = prioritiesResponse.Result.Items.ToList();
 
         if (!ModelState.IsValid)
             return Page();
@@ -83,7 +101,6 @@ public class Create : BaseAdminPageModel
             TargetResolutionMinutes = targetMinutes,
             BusinessHoursEnabled = Form.BusinessHoursEnabled,
             BusinessHoursConfig = businessHours,
-            Priority = Form.Priority,
             BreachBehavior = new BreachBehavior
             {
                 UiMarkers = true,
@@ -117,33 +134,34 @@ public class Create : BaseAdminPageModel
     public record CreateSlaRuleViewModel
     {
         [Required]
+        [Display(Name = "Rule Name")]
         [MaxLength(200)]
         public string Name { get; set; } = string.Empty;
 
+        [Display(Name = "Description")]
         [MaxLength(1000)]
         public string? Description { get; set; }
 
         [Required]
-        [Display(Name = "Target Resolution")]
+        [Display(Name = "Resolution Target")]
         [Range(1, 10000)]
         public int TargetResolutionValue { get; set; } = 4;
 
         public string TargetResolutionUnit { get; set; } = "hours";
 
-        [Display(Name = "Priority (lower = evaluated first)")]
-        [Range(0, 1000)]
-        public int Priority { get; set; } = 0;
-
-        [Display(Name = "Use Business Hours")]
+        [Display(Name = "Count Business Hours Only")]
         public bool BusinessHoursEnabled { get; set; }
 
+        [Display(Name = "Start Time")]
         public string? BusinessHoursStart { get; set; } = "08:00";
+
+        [Display(Name = "End Time")]
         public string? BusinessHoursEnd { get; set; } = "18:00";
 
-        [Display(Name = "Priority Condition")]
+        [Display(Name = "Ticket Priority")]
         public string? ConditionPriority { get; set; }
 
-        [Display(Name = "Category Condition")]
+        [Display(Name = "Ticket Category")]
         public string? ConditionCategory { get; set; }
 
         [Display(Name = "Notify Assignee on Breach")]

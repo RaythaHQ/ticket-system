@@ -3,6 +3,8 @@ using App.Application.Common.Interfaces;
 using App.Application.SlaRules;
 using App.Application.SlaRules.Commands;
 using App.Application.SlaRules.Queries;
+using App.Application.TicketConfig;
+using App.Application.TicketConfig.Queries;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
@@ -23,6 +25,7 @@ public class Edit : BaseAdminPageModel
     }
 
     public SlaRuleDto Rule { get; set; } = null!;
+    public List<TicketPriorityConfigDto> AvailablePriorities { get; set; } = new();
 
     [BindProperty]
     public EditSlaRuleViewModel Form { get; set; } = new();
@@ -35,6 +38,13 @@ public class Edit : BaseAdminPageModel
         var response = await Mediator.Send(new GetSlaRuleById.Query { Id = id }, cancellationToken);
         Rule = response.Result;
 
+        // Load available priorities for dropdown
+        var prioritiesResponse = await Mediator.Send(
+            new GetTicketPriorities.Query { IncludeInactive = false },
+            cancellationToken
+        );
+        AvailablePriorities = prioritiesResponse.Result.Items.ToList();
+
         // Set breadcrumbs for navigation
         SetBreadcrumbs(
             new BreadcrumbNode
@@ -45,7 +55,7 @@ public class Edit : BaseAdminPageModel
             },
             new BreadcrumbNode
             {
-                Label = "Edit SLA rule",
+                Label = Rule.Name,
                 RouteName = RouteNames.SlaRules.Edit,
                 IsActive = true,
                 RouteValues = new Dictionary<string, string> { { "id", id } },
@@ -61,7 +71,6 @@ public class Edit : BaseAdminPageModel
             Description = Rule.Description,
             TargetResolutionValue = value,
             TargetResolutionUnit = unit,
-            Priority = Rule.Priority,
             BusinessHoursEnabled = Rule.BusinessHoursEnabled,
             BusinessHoursStart = Rule.BusinessHoursConfig?.StartTime ?? "08:00",
             BusinessHoursEnd = Rule.BusinessHoursConfig?.EndTime ?? "18:00",
@@ -82,6 +91,17 @@ public class Edit : BaseAdminPageModel
     {
         if (!_permissionService.CanManageTickets())
             return Forbid();
+
+        // Reload rule to get current priority
+        var ruleResponse = await Mediator.Send(new GetSlaRuleById.Query { Id = Form.Id }, cancellationToken);
+        Rule = ruleResponse.Result;
+
+        // Load available priorities for dropdown (in case of validation error)
+        var prioritiesResponse = await Mediator.Send(
+            new GetTicketPriorities.Query { IncludeInactive = false },
+            cancellationToken
+        );
+        AvailablePriorities = prioritiesResponse.Result.Items.ToList();
 
         if (!ModelState.IsValid)
             return Page();
@@ -114,7 +134,7 @@ public class Edit : BaseAdminPageModel
             TargetResolutionMinutes = targetMinutes,
             BusinessHoursEnabled = Form.BusinessHoursEnabled,
             BusinessHoursConfig = businessHours,
-            Priority = Form.Priority,
+            Priority = Rule.Priority, // Preserve existing priority
             BreachBehavior = new BreachBehavior
             {
                 UiMarkers = true,
@@ -178,29 +198,40 @@ public class Edit : BaseAdminPageModel
         public string Id { get; set; } = string.Empty;
 
         [Required]
+        [Display(Name = "Rule Name")]
         [MaxLength(200)]
         public string Name { get; set; } = string.Empty;
 
+        [Display(Name = "Description")]
         [MaxLength(1000)]
         public string? Description { get; set; }
 
         [Required]
+        [Display(Name = "Resolution Target")]
         [Range(1, 10000)]
         public int TargetResolutionValue { get; set; } = 4;
 
         public string TargetResolutionUnit { get; set; } = "hours";
 
-        [Range(0, 1000)]
-        public int Priority { get; set; }
-
+        [Display(Name = "Count Business Hours Only")]
         public bool BusinessHoursEnabled { get; set; }
+
+        [Display(Name = "Start Time")]
         public string? BusinessHoursStart { get; set; }
+
+        [Display(Name = "End Time")]
         public string? BusinessHoursEnd { get; set; }
 
+        [Display(Name = "Ticket Priority")]
         public string? ConditionPriority { get; set; }
+
+        [Display(Name = "Ticket Category")]
         public string? ConditionCategory { get; set; }
 
+        [Display(Name = "Notify Assignee on Breach")]
         public bool NotifyAssignee { get; set; } = true;
+
+        [Display(Name = "Active")]
         public bool IsActive { get; set; } = true;
     }
 }

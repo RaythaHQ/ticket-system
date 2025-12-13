@@ -4,6 +4,7 @@ using App.Domain.Entities;
 using CSharpVitamins;
 using FluentValidation;
 using Mediator;
+using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
 namespace App.Application.SlaRules.Commands;
@@ -19,7 +20,6 @@ public class CreateSlaRule
         public int? TargetCloseMinutes { get; init; }
         public bool BusinessHoursEnabled { get; init; }
         public BusinessHoursConfig? BusinessHoursConfig { get; init; }
-        public int Priority { get; init; }
         public BreachBehavior? BreachBehavior { get; init; }
     }
 
@@ -29,7 +29,6 @@ public class CreateSlaRule
         {
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.TargetResolutionMinutes).GreaterThan(0);
-            RuleFor(x => x.Priority).GreaterThanOrEqualTo(0);
         }
     }
 
@@ -52,6 +51,10 @@ public class CreateSlaRule
             // SLA configuration requires CanManageTickets permission
             _permissionService.RequireCanManageTickets();
 
+            // Auto-calculate priority: new rules go to the end of the list
+            var maxPriority = await _db.SlaRules
+                .MaxAsync(r => (int?)r.Priority, cancellationToken) ?? 0;
+
             var rule = new SlaRule
             {
                 Id = Guid.NewGuid(),
@@ -62,7 +65,7 @@ public class CreateSlaRule
                 TargetCloseMinutes = request.TargetCloseMinutes,
                 BusinessHoursEnabled = request.BusinessHoursEnabled,
                 BusinessHoursConfigJson = request.BusinessHoursConfig != null ? JsonSerializer.Serialize(request.BusinessHoursConfig) : null,
-                Priority = request.Priority,
+                Priority = maxPriority + 1,
                 BreachBehaviorJson = request.BreachBehavior != null ? JsonSerializer.Serialize(request.BreachBehavior) : null,
                 IsActive = true
             };

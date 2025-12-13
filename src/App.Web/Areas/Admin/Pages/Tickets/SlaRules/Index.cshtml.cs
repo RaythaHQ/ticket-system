@@ -1,11 +1,13 @@
-using System.ComponentModel.DataAnnotations;
-using App.Application.Common.Interfaces;
 using App.Application.SlaRules;
+using App.Application.SlaRules.Commands;
 using App.Application.SlaRules.Queries;
+using App.Domain.Entities;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
+using CSharpVitamins;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Admin.Pages.SlaRules;
@@ -13,29 +15,13 @@ namespace App.Web.Areas.Admin.Pages.SlaRules;
 /// <summary>
 /// Page model for displaying a list of SLA rules.
 /// </summary>
-public class Index : BaseAdminPageModel, IHasListView<Index.SlaRuleListItemViewModel>
+[Authorize(Policy = BuiltInSystemPermission.MANAGE_SYSTEM_SETTINGS_PERMISSION)]
+public class Index : BaseAdminPageModel
 {
-    private readonly ITicketPermissionService _permissionService;
+    public List<SlaRuleDto> SlaRules { get; set; } = new();
 
-    public Index(ITicketPermissionService permissionService)
+    public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
-        _permissionService = permissionService;
-    }
-
-    public ListViewModel<SlaRuleListItemViewModel> ListView { get; set; } =
-        new(Enumerable.Empty<SlaRuleListItemViewModel>(), 0);
-
-    public bool CanManageTickets { get; set; }
-
-    public async Task<IActionResult> OnGet(
-        string search = "",
-        string orderBy = $"Priority {SortOrder.ASCENDING}",
-        int pageNumber = 1,
-        int pageSize = 50,
-        CancellationToken cancellationToken = default
-    )
-    {
-        // Set breadcrumbs for navigation
         SetBreadcrumbs(
             new BreadcrumbNode
             {
@@ -45,59 +31,70 @@ public class Index : BaseAdminPageModel, IHasListView<Index.SlaRuleListItemViewM
             }
         );
 
-        CanManageTickets = _permissionService.CanManageTickets();
+        var response = await Mediator.Send(
+            new GetSlaRules.Query
+            {
+                OrderBy = $"Priority {SortOrder.ASCENDING}",
+                PageSize = 1000, // Get all for drag/drop
+            },
+            cancellationToken
+        );
 
-        var input = new GetSlaRules.Query
-        {
-            Search = search,
-            OrderBy = orderBy,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-        };
-
-        var response = await Mediator.Send(input, cancellationToken);
-
-        var items = response.Result.Items.Select(r => new SlaRuleListItemViewModel
-        {
-            Id = r.Id.ToString(),
-            Name = r.Name,
-            Description = r.Description ?? "-",
-            TargetResolutionTime = r.ResolutionTimeLabel,
-            BusinessHours = r.BusinessHoursEnabled ? "Yes" : "No",
-            Priority = r.Priority,
-            IsActive = r.IsActive,
-            CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
-                r.CreationTime
-            ),
-        });
-
-        ListView = new ListViewModel<SlaRuleListItemViewModel>(items, response.Result.TotalCount);
+        SlaRules = response.Result.Items.ToList();
 
         return Page();
     }
 
-    public record SlaRuleListItemViewModel
+    public async Task<IActionResult> OnPostReorder(
+        [FromBody] ReorderRequest request,
+        CancellationToken cancellationToken
+    )
     {
-        public string Id { get; init; } = string.Empty;
+        if (request.OrderedIds == null || !request.OrderedIds.Any())
+        {
+            return BadRequest("No IDs provided");
+        }
 
-        [Display(Name = "Name")]
-        public string Name { get; init; } = string.Empty;
+        var orderedIds = request.OrderedIds.Select(id => ((ShortGuid)id).Guid).ToList();
+        var response = await Mediator.Send(
+            new ReorderSlaRules.Command { OrderedRuleIds = orderedIds },
+            cancellationToken
+        );
 
-        [Display(Name = "Description")]
-        public string Description { get; init; } = string.Empty;
+        if (response.Success)
+        {
+            return new JsonResult(new { success = true });
+        }
 
-        [Display(Name = "Target Resolution")]
-        public string TargetResolutionTime { get; init; } = string.Empty;
+        return BadRequest(response.GetErrors());
+    }
 
-        [Display(Name = "Business Hours")]
-        public string BusinessHours { get; init; } = string.Empty;
+    public async Task<IActionResult> OnPostToggleActive(
+        [FromBody] ToggleActiveRequest request,
+        CancellationToken cancellationToken
+    )
+    {
+        var response = await Mediator.Send(
+            new ToggleSlaRuleActive.Command { Id = request.Id, IsActive = request.IsActive },
+            cancellationToken
+        );
 
-        [Display(Name = "Priority")]
-        public int Priority { get; init; }
+        if (response.Success)
+        {
+            return new JsonResult(new { success = true });
+        }
 
-        public bool IsActive { get; init; }
+        return BadRequest(response.GetErrors());
+    }
 
-        [Display(Name = "Created")]
-        public string CreationTime { get; init; } = string.Empty;
+    public class ReorderRequest
+    {
+        public List<string> OrderedIds { get; set; } = new();
+    }
+
+    public class ToggleActiveRequest
+    {
+        public ShortGuid Id { get; set; }
+        public bool IsActive { get; set; }
     }
 }

@@ -2,7 +2,7 @@
 @model App.Web.Areas.Admin.Pages.SlaRules.Edit
 
 @{
-    var pageTitle = "Edit SLA rule";
+    var pageTitle = "Edit SLA Rule";
     Layout = "SidebarLayout";
     ViewData["Title"] = pageTitle;
     ViewData["ActiveMenu"] = "SlaRules";
@@ -18,168 +18,201 @@
     <div class="row mb-4">
         <partial name="_Partials/PageHeading" model='ViewData["Title"]' />
         <div class="col-xxl-7 col-xl-8 col-lg-9 col-md-12">
-            <div class="card border-0 shadow mb-4">
-                <div class="card-body">
-                    @(await Html.PartialAsync("_Partials/BackToList", back))
-                    <form asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@Model.Form.Id" method="post" class="py-4"
-                        novalidate>
-                        <input type="hidden" asp-for="Form.Id" />
+            @(await Html.PartialAsync("_Partials/BackToList", back))
 
-                        <div class="col-lg-12">
-                            <div class="mb-3">
-                                <label class="form-label raytha-required" asp-for="Form.Name"></label>
-                                <input type="text" class="form-control @Model.HasError("Name")" asp-for="Form.Name"
-                                    required>
-                                <div class="invalid-feedback">@Model.ErrorMessageFor("Name")</div>
-                            </div>
+            <form asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@Model.Form.Id" method="post" novalidate>
+                <input type="hidden" asp-for="Form.Id" />
+
+                <!-- Basic Information -->
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Basic Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label raytha-required" asp-for="Form.Name"></label>
+                            <input type="text" class="form-control @Model.HasError("Name")" asp-for="Form.Name" 
+                                placeholder="e.g., Urgent Priority SLA" required>
+                            <div class="invalid-feedback">@Model.ErrorMessageFor("Name")</div>
                         </div>
 
-                        <div class="col-lg-12">
-                            <div class="mb-3">
-                                <label class="form-label" asp-for="Form.Description"></label>
-                                <textarea class="form-control @Model.HasError("Description")" asp-for="Form.Description"
-                                    rows="2"></textarea>
-                                <div class="invalid-feedback">@Model.ErrorMessageFor("Description")</div>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="Form.Description"></label>
+                            <textarea class="form-control @Model.HasError("Description")" asp-for="Form.Description"
+                                rows="2" placeholder="Optional description of when this rule applies"></textarea>
+                            <div class="invalid-feedback">@Model.ErrorMessageFor("Description")</div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-lg-6">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input @Model.HasError("IsActive")" type="checkbox"
+                                asp-for="Form.IsActive" role="switch">
+                            <label class="form-check-label" asp-for="Form.IsActive">
+                                <strong>Active</strong> — Rule will be evaluated for matching tickets
+                            </label>
+                            <div class="invalid-feedback">@Model.ErrorMessageFor("IsActive")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resolution Target -->
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-clock me-2"></i>Resolution Target</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label raytha-required" asp-for="Form.TargetResolutionValue">
+                                Time to Resolve
+                            </label>
+                            <div class="input-group" style="max-width: 300px;">
+                                <input type="number"
+                                    class="form-control @Model.HasError("TargetResolutionValue")"
+                                    asp-for="Form.TargetResolutionValue" min="1" required>
+                                <select class="form-select" asp-for="Form.TargetResolutionUnit" style="max-width: 120px;">
+                                    <option value="minutes">Minutes</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="days">Days</option>
+                                </select>
+                            </div>
+                            <div class="form-text">The maximum time allowed to resolve tickets matching this rule</div>
+                            <div class="invalid-feedback">@Model.ErrorMessageFor("TargetResolutionValue")</div>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input @Model.HasError("BusinessHoursEnabled")" type="checkbox"
+                                asp-for="Form.BusinessHoursEnabled" role="switch" id="businessHoursToggle">
+                            <label class="form-check-label" asp-for="Form.BusinessHoursEnabled">
+                                <strong>Business Hours Only</strong> — Time only counts during working hours
+                            </label>
+                            <div class="invalid-feedback">@Model.ErrorMessageFor("BusinessHoursEnabled")</div>
+                        </div>
+
+                        <div class="row" id="businessHoursConfig">
+                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label raytha-required"
-                                        asp-for="Form.TargetResolutionValue"></label>
-                                    <div class="input-group">
-                                        <input type="number"
-                                            class="form-control @Model.HasError("TargetResolutionValue")"
-                                            asp-for="Form.TargetResolutionValue" min="1" required>
-                                        <select class="form-select" asp-for="Form.TargetResolutionUnit"
-                                            style="max-width: 120px;">
-                                            <option value="minutes">Minutes</option>
-                                            <option value="hours">Hours</option>
-                                            <option value="days">Days</option>
-                                        </select>
-                                    </div>
-                                    <div class="invalid-feedback">@Model.ErrorMessageFor("TargetResolutionValue")</div>
+                                    <label class="form-label" asp-for="Form.BusinessHoursStart"></label>
+                                    <input type="time" class="form-control @Model.HasError("BusinessHoursStart")"
+                                        asp-for="Form.BusinessHoursStart" style="max-width: 150px;">
+                                    <div class="invalid-feedback">@Model.ErrorMessageFor("BusinessHoursStart")</div>
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label" asp-for="Form.Priority"></label>
-                                    <input type="number" class="form-control @Model.HasError("Priority")"
-                                        asp-for="Form.Priority" min="0">
-                                    <div class="invalid-feedback">@Model.ErrorMessageFor("Priority")</div>
-                                    <div class="form-text">Lower numbers are evaluated first</div>
+                                    <label class="form-label" asp-for="Form.BusinessHoursEnd"></label>
+                                    <input type="time" class="form-control @Model.HasError("BusinessHoursEnd")"
+                                        asp-for="Form.BusinessHoursEnd" style="max-width: 150px;">
+                                    <div class="invalid-feedback">@Model.ErrorMessageFor("BusinessHoursEnd")</div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <div class="col-lg-12">
-                            <div class="form-check">
-                                <input class="form-check-input @Model.HasError("IsActive")" type="checkbox"
-                                    asp-for="Form.IsActive">
-                                <label class="form-check-label" asp-for="Form.IsActive">
-                                    Active (rule will be evaluated for new tickets)
-                                </label>
-                                <div class="invalid-feedback">@Model.ErrorMessageFor("IsActive")</div>
-                            </div>
-                        </div>
-
+                <!-- Matching Conditions -->
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Matching Conditions</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">
+                            Define which tickets this SLA rule applies to. Leave blank to match all tickets.
+                        </p>
                         <div class="row">
-                            <div class="col-lg-6">
+                            <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label" asp-for="Form.ConditionPriority"></label>
                                     <select class="form-select @Model.HasError("ConditionPriority")"
                                         asp-for="Form.ConditionPriority">
                                         <option value="">Any Priority</option>
-                                        <option value="urgent">Urgent</option>
-                                        <option value="high">High</option>
-                                        <option value="normal">Normal</option>
-                                        <option value="low">Low</option>
+                                        @foreach (var priority in Model.AvailablePriorities)
+                                        {
+                                            <option value="@priority.DeveloperName">@priority.Label</option>
+                                        }
                                     </select>
                                     <div class="invalid-feedback">@Model.ErrorMessageFor("ConditionPriority")</div>
                                 </div>
                             </div>
-                            <div class="col-lg-6">
+                            <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label" asp-for="Form.ConditionCategory"></label>
                                     <input type="text" class="form-control @Model.HasError("ConditionCategory")"
-                                        asp-for="Form.ConditionCategory">
+                                        asp-for="Form.ConditionCategory" placeholder="e.g., Billing">
                                     <div class="invalid-feedback">@Model.ErrorMessageFor("ConditionCategory")</div>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="col-lg-12">
-                            <div class="form-check">
-                                <input class="form-check-input @Model.HasError("BusinessHoursEnabled")" type="checkbox"
-                                    asp-for="Form.BusinessHoursEnabled">
-                                <label class="form-check-label" asp-for="Form.BusinessHoursEnabled">
-                                    Only count business hours
-                                </label>
-                                <div class="invalid-feedback">@Model.ErrorMessageFor("BusinessHoursEnabled")</div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-lg-6">
-                                <div class="mb-3">
-                                    <label class="form-label" asp-for="Form.BusinessHoursStart"></label>
-                                    <input type="time" class="form-control @Model.HasError("BusinessHoursStart")"
-                                        asp-for="Form.BusinessHoursStart">
-                                    <div class="invalid-feedback">@Model.ErrorMessageFor("BusinessHoursStart")</div>
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="mb-3">
-                                    <label class="form-label" asp-for="Form.BusinessHoursEnd"></label>
-                                    <input type="time" class="form-control @Model.HasError("BusinessHoursEnd")"
-                                        asp-for="Form.BusinessHoursEnd">
-                                    <div class="invalid-feedback">@Model.ErrorMessageFor("BusinessHoursEnd")</div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-lg-12">
-                            <div class="form-check">
-                                <input class="form-check-input @Model.HasError("NotifyAssignee")" type="checkbox"
-                                    asp-for="Form.NotifyAssignee">
-                                <label class="form-check-label" asp-for="Form.NotifyAssignee">
-                                    Notify assignee when SLA is breached
-                                </label>
-                                <div class="invalid-feedback">@Model.ErrorMessageFor("NotifyAssignee")</div>
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn btn-success mt-4">Save changes</button>
-                    </form>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Breach Notifications -->
+                <div class="card border-0 shadow mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-bell me-2"></i>Breach Notifications</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input @Model.HasError("NotifyAssignee")" type="checkbox"
+                                asp-for="Form.NotifyAssignee" role="switch">
+                            <label class="form-check-label" asp-for="Form.NotifyAssignee">
+                                <strong>Notify Assignee</strong> — Send notification when SLA is breached
+                            </label>
+                            <div class="invalid-feedback">@Model.ErrorMessageFor("NotifyAssignee")</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success mt-2">Save changes</button>
+            </form>
         </div>
 
         <div class="col-lg-3 col-md-12">
             <div class="card border-0 shadow mb-4">
-                <div class="card-body">
-                    <div class="nav-wrapper position-relative">
-                        <ul class="nav nav-pills square nav-fill flex-column vertical-tab">
-                            <li class="nav-item">
-                                <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Form.Id"
-                                    onsubmit="return confirm('Are you sure you want to delete?');">
-                                    <button
-                                        class="nav-link d-inline-flex align-items-center justify-content-center text-danger">
-                                        <svg class="icon icon-sm mx-2" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                            </path>
-                                        </svg>
-                                        Delete SLA rule
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Actions</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Form.Id"
+                            onsubmit="return confirm('Are you sure you want to delete this SLA rule?');">
+                            <button type="submit" class="list-group-item list-group-item-action text-danger border-0">
+                                <i class="bi bi-trash me-2"></i>Delete SLA Rule
+                            </button>
+                        </form>
                     </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Tips</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-2">
+                        <i class="bi bi-lightbulb me-1"></i>
+                        <strong>Priority Order:</strong> Use drag & drop on the list page to change which rules are evaluated first.
+                    </p>
+                    <p class="small text-muted mb-0">
+                        <i class="bi bi-lightbulb me-1"></i>
+                        <strong>First Match Wins:</strong> Only the first matching active rule applies to each ticket.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggle = document.getElementById('businessHoursToggle');
+            const config = document.getElementById('businessHoursConfig');
+            
+            function updateVisibility() {
+                config.style.display = toggle.checked ? 'flex' : 'none';
+            }
+            
+            toggle.addEventListener('change', updateVisibility);
+            updateVisibility();
+        });
+    </script>
+}

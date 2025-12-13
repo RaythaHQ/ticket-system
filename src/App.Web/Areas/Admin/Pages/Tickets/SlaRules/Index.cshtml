@@ -1,6 +1,5 @@
 @page "/admin/tickets/sla-rules"
 @model App.Web.Areas.Admin.Pages.SlaRules.Index
-@using App.Web.Areas.Shared.Models
 
 @{
     var pageTitle = "SLA Rules";
@@ -13,144 +12,249 @@
 <div>
     <partial name="_Partials/PageHeading" model="pageTitle" />
 
-    @if (Model.CanManageTickets)
-    {
-        @(await Html.PartialAsync("_Partials/TableCreateAndSearchBar", new BaseTableCreateAndSearchBarViewModel
-        {
-            Pagination = Model.ListView,
-            EntityName = "SLA rule",
-            CreateActionName = RouteNames.SlaRules.Create
-        }))
-        }
-    else
-    {
-        @(await Html.PartialAsync("_Partials/TableCreateAndSearchBar", new BaseTableCreateAndSearchBarViewModel
-        {
-            Pagination = Model.ListView,
-            EntityName = "SLA rule",
-            CreateActionName = ""
-        }))
-        }
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <p class="text-muted mb-1">
+                Drag and drop to reorder SLA rules. Higher priority rules (first in list) are evaluated first when matching tickets.
+            </p>
+            <p class="text-muted mb-0">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>Tip:</strong> The first matching active rule will be applied to each ticket.
+            </p>
+        </div>
+        <a asp-page="@RouteNames.SlaRules.Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Add SLA Rule
+        </a>
+    </div>
 
-    <div class="raytha-data-card mb-4">
-        <div class="card-body">
+    <div class="card border-0 shadow">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-centered table-nowrap mb-0 rounded">
-                    <thead class="thead-light">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
                         <tr>
-                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
-                                                        BaseTableColumnHeaderViewModel()
-                            {
-                                Pagination = Model.ListView,
-                                PropertyName = "Priority",
-                                IsFirst = true,
-                                DisplayName =
-                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.SlaRules.Index.SlaRuleListItemViewModel>(p
-                                                        => p.Priority)
-                            }))
-                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
-                                                        BaseTableColumnHeaderViewModel()
-                            {
-                                Pagination = Model.ListView,
-                                PropertyName = "Name",
-                                DisplayName =
-                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.SlaRules.Index.SlaRuleListItemViewModel>(p
-                                                        => p.Name)
-                            }))
-                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
-                                                        BaseTableColumnHeaderViewModel()
-                            {
-                                Pagination = Model.ListView,
-                                PropertyName = "TargetResolutionTime",
-                                DisplayName =
-                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.SlaRules.Index.SlaRuleListItemViewModel>(p
-                                                        => p.TargetResolutionTime)
-                            }))
-                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
-                                                        BaseTableColumnHeaderViewModel()
-                            {
-                                Pagination = Model.ListView,
-                                PropertyName = "BusinessHours",
-                                DisplayName =
-                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.SlaRules.Index.SlaRuleListItemViewModel>(p
-                                                        => p.BusinessHours)
-                            }))
-                            <th class="border-0">Status</th>
-                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new
-                                                        BaseTableColumnHeaderViewModel()
-                            {
-                                Pagination = Model.ListView,
-                                PropertyName = "CreationTime",
-                                DisplayName =
-                                                        ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.SlaRules.Index.SlaRuleListItemViewModel>(p
-                                                        => p.CreationTime)
-                            }))
-                            <th class="border-0 rounded-end text-end">Action</th>
+                            <th style="width: 50px;"></th>
+                            <th>Rule</th>
+                            <th>Target Resolution</th>
+                            <th class="text-center">Business Hours</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @if (!Model.ListView.Items.Any())
+                    <tbody id="sla-rules-list">
+                        @if (!Model.SlaRules.Any())
                         {
                             <tr>
-                                <td colspan="7" class="text-center py-4 text-muted">
+                                <td colspan="6" class="text-center py-5 text-muted">
                                     <i class="bi bi-hourglass-split fs-1 d-block mb-2"></i>
-                                    No SLA rules found
+                                    <p class="mb-2">No SLA rules configured yet</p>
+                                    <a asp-page="@RouteNames.SlaRules.Create" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-plus-lg me-1"></i> Create your first SLA rule
+                                    </a>
                                 </td>
                             </tr>
                         }
-                        @foreach (var rule in Model.ListView.Items.OrderBy(r => r.Priority))
+                        @foreach (var rule in Model.SlaRules)
                         {
-                            <tr class="@(!rule.IsActive ? "table-secondary" : "")">
-                                <td>
-                                    <span class="badge bg-info">@rule.Priority</span>
+                            <tr data-id="@rule.Id" class="@(!rule.IsActive ? "table-secondary" : "")">
+                                <td class="text-center">
+                                    <i class="bi bi-grip-vertical drag-handle" style="cursor: grab; color: #adb5bd;"></i>
                                 </td>
                                 <td>
-                                    <a asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@rule.Id" class="fw-semibold">
+                                    <a asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@rule.Id" class="fw-semibold text-decoration-none">
                                         @rule.Name
                                     </a>
-                                    <br>
-                                    <small class="text-muted">@(rule.Description.Length > 50 ? rule.Description.Substring(0,
-                                                                            47) + "..." : rule.Description)</small>
-                            </td>
-                            <td>@rule.TargetResolutionTime</td>
-                            <td>
-                                @if (rule.BusinessHours == "Yes")
+                                    @if (!string.IsNullOrEmpty(rule.Description))
                                     {
-                                        <span class="badge bg-success">Yes</span>
+                                        <br>
+                                        <small class="text-muted">@(rule.Description.Length > 60 ? rule.Description.Substring(0, 57) + "..." : rule.Description)</small>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        <i class="bi bi-clock me-1"></i>@rule.ResolutionTimeLabel
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    @if (rule.BusinessHoursEnabled)
+                                    {
+                                        <span class="badge bg-success" title="Counts only during business hours">
+                                            <i class="bi bi-building me-1"></i>Yes
+                                        </span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary">No</span>
+                                        <span class="badge bg-secondary" title="Counts 24/7">
+                                            <i class="bi bi-clock-history me-1"></i>24/7
+                                        </span>
                                     }
                                 </td>
-                                <td>
+                                <td class="text-center">
                                     @if (rule.IsActive)
                                     {
                                         <span class="badge bg-success">Active</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-warning">Inactive</span>
+                                        <span class="badge bg-secondary">Inactive</span>
                                     }
                                 </td>
-                                <td>@rule.CreationTime</td>
                                 <td class="text-end">
-                                    @if (Model.CanManageTickets)
-                                    {
-                                        <div class="btn-group btn-group-sm">
-                                            <a asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@rule.Id"
-                                                class="btn btn-outline-secondary">
-                                                Edit
-                                            </a>
-                                        </div>
-                                    }
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-page="@RouteNames.SlaRules.Edit" asp-route-id="@rule.Id"
+                                            class="btn btn-outline-secondary">
+                                            Edit
+                                        </a>
+                                        @if (rule.IsActive)
+                                        {
+                                            <button type="button" class="btn btn-outline-warning toggle-active-btn"
+                                                    data-id="@rule.Id" data-active="false"
+                                                    title="Deactivate">
+                                                <i class="bi bi-pause-fill"></i>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-outline-success toggle-active-btn"
+                                                    data-id="@rule.Id" data-active="true"
+                                                    title="Activate">
+                                                <i class="bi bi-play-fill"></i>
+                                            </button>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
-                <partial name="_Partials/TablePagination" model="@Model.ListView" />
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-hourglass-split me-2"></i>How SLA Rules Work</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Priority Order:</strong> Rules are evaluated in order (first = highest priority). The first matching active rule is applied.</p>
+                    <p class="mb-2"><strong>Target Resolution:</strong> The time within which a ticket should be resolved after SLA start.</p>
+                    <p class="mb-0"><strong>Business Hours:</strong> When enabled, time is only counted during configured working hours.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>SLA Status Indicators</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <span class="badge bg-success me-2">On Track</span>
+                        Ticket is within the SLA target time
+                    </p>
+                    <p class="mb-2">
+                        <span class="badge bg-warning text-dark me-2">At Risk</span>
+                        Ticket is approaching the SLA deadline
+                    </p>
+                    <p class="mb-0">
+                        <span class="badge bg-danger me-2">Breached</span>
+                        Ticket has exceeded the SLA target time
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/admin/lib/sortablejs/Sortable.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const list = document.getElementById('sla-rules-list');
+            
+            // Only initialize if there are items
+            if (list && list.querySelectorAll('tr[data-id]').length > 0) {
+                // Initialize Sortable
+                const sortable = new Sortable(list, {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'table-primary',
+                    onEnd: function(evt) {
+                        saveOrder();
+                    }
+                });
+            }
+
+            function saveOrder() {
+                const rows = list.querySelectorAll('tr[data-id]');
+                const orderedIds = Array.from(rows).map(row => row.dataset.id);
+
+                fetch('?handler=Reorder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({ orderedIds: orderedIds })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.text().then(text => {
+                            throw new Error(text || 'Failed to save order');
+                        });
+                    }
+                })
+                .then(data => {
+                    if (!data.success) {
+                        alert('Failed to save order');
+                        location.reload();
+                    } else {
+                        location.reload(); // Refresh to update priority numbers
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to save order: ' + error.message);
+                    location.reload();
+                });
+            }
+
+            // Toggle active handlers
+            document.querySelectorAll('.toggle-active-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const isActive = this.dataset.active === 'true';
+
+                    fetch('?handler=ToggleActive', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        },
+                        body: JSON.stringify({ id: id, isActive: isActive })
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            return response.text().then(text => {
+                                alert('Failed: ' + text);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to update status');
+                    });
+                });
+            });
+        });
+    </script>
+    <form method="post">
+        @Html.AntiForgeryToken()
+    </form>
+}
