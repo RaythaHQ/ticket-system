@@ -1,6 +1,7 @@
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Domain.Entities;
+using CSharpVitamins;
 using FluentValidation;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ public class UpdateNotificationPreferences
 {
     public record Command : LoggableRequest<CommandResponseDto<bool>>
     {
-        public Guid StaffAdminId { get; init; }
+        public ShortGuid StaffAdminId { get; init; }
         public List<PreferenceUpdate> Preferences { get; init; } = new();
     }
 
@@ -48,13 +49,13 @@ public class UpdateNotificationPreferences
         )
         {
             // Users can only update their own preferences
-            if (_currentUser.UserId?.Guid != request.StaffAdminId)
+            if (_currentUser.UserId?.Guid != request.StaffAdminId.Guid)
             {
                 throw new UnauthorizedAccessException("Cannot update preferences for another user.");
             }
 
             var existingPrefs = await _db.NotificationPreferences
-                .Where(p => p.StaffAdminId == request.StaffAdminId)
+                .Where(p => p.StaffAdminId == request.StaffAdminId.Guid)
                 .ToListAsync(cancellationToken);
 
             foreach (var update in request.Preferences)
@@ -71,7 +72,7 @@ public class UpdateNotificationPreferences
                     _db.NotificationPreferences.Add(new NotificationPreference
                     {
                         Id = Guid.NewGuid(),
-                        StaffAdminId = request.StaffAdminId,
+                        StaffAdminId = request.StaffAdminId.Guid,
                         EventType = update.EventType,
                         EmailEnabled = update.EmailEnabled,
                         WebhookEnabled = update.WebhookEnabled

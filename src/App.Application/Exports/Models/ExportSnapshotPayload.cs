@@ -1,3 +1,5 @@
+using CSharpVitamins;
+
 namespace App.Application.Exports.Models;
 
 /// <summary>
@@ -5,7 +7,7 @@ namespace App.Application.Exports.Models;
 /// </summary>
 public record ExportSnapshotPayload
 {
-    public Guid? ViewId { get; init; }
+    public ShortGuid? ViewId { get; init; }
     public List<ExportFilter> Filters { get; init; } = new();
     public string? SearchTerm { get; init; }
     public string? SortField { get; init; }
@@ -29,7 +31,7 @@ public record ExportFilter
 /// </summary>
 public record ExportScope
 {
-    public Guid? TeamId { get; init; }
-    public Guid? AssignedToUserId { get; init; }
+    public ShortGuid? TeamId { get; init; }
+    public ShortGuid? AssignedToUserId { get; init; }
 }
 

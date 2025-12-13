@@ -5,6 +5,7 @@ using App.Application.Tickets.Queries;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
+using CSharpVitamins;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Admin.Pages.Reports;
@@ -66,7 +67,7 @@ public class Index : BaseAdminPageModel
 
         var teamsResponse = await Mediator.Send(new GetTeams.Query(), cancellationToken);
         Teams = teamsResponse
-            .Result.Items.Select(t => new TeamSelectItem { Id = t.Id.Guid, Name = t.Name })
+            .Result.Items.Select(t => new TeamSelectItem { Id = t.Id, Name = t.Name })
             .ToList();
 
         return Page();
@@ -74,7 +75,7 @@ public class Index : BaseAdminPageModel
 
     public record TeamSelectItem
     {
-        public Guid Id { get; init; }
+        public ShortGuid Id { get; init; }
         public string Name { get; init; } = string.Empty;
     }
 }

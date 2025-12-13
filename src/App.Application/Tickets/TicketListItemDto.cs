@@ -1,5 +1,6 @@
 using App.Application.Common.Models;
 using App.Domain.Entities;
+using CSharpVitamins;
 
 namespace App.Application.Tickets;
 
@@ -14,9 +15,9 @@ public record TicketListItemDto : BaseNumericEntityDto
     public string Priority { get; init; } = null!;
     public string PriorityLabel { get; init; } = null!;
     public string? Category { get; init; }
-    public Guid? AssigneeId { get; init; }
+    public ShortGuid? AssigneeId { get; init; }
     public string? AssigneeName { get; init; }
-    public Guid? OwningTeamId { get; init; }
+    public ShortGuid? OwningTeamId { get; init; }
     public string? OwningTeamName { get; init; }
     public string? ContactName { get; init; }
     public long? ContactId { get; init; }

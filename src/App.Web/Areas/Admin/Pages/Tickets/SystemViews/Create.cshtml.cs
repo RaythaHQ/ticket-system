@@ -164,7 +164,7 @@ public class Create : BaseAdminPageModel
         // Load teams
         var teamsResponse = await Mediator.Send(new GetTeams.Query(), cancellationToken);
         AvailableTeams = teamsResponse
-            .Result.Items.Select(t => new TeamSelectItem { Id = t.Id.Guid, Name = t.Name })
+            .Result.Items.Select(t => new TeamSelectItem { Id = t.Id, Name = t.Name })
             .ToList();
 
         // Status options from config
@@ -286,7 +286,7 @@ public class Create : BaseAdminPageModel
 
     public class TeamSelectItem
     {
-        public Guid Id { get; set; }
+        public ShortGuid Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 }

@@ -15,7 +15,7 @@ public class Edit : BaseStaffPageModel
     [BindProperty]
     public EditViewForm Form { get; set; } = new();
 
-    public Guid ViewId { get; set; }
+    public ShortGuid ViewId { get; set; }
     public List<TeamSelectItem> AvailableTeams { get; set; } = new();
     public List<ColumnOption> AvailableColumns { get; set; } = new();
     public List<string> AvailableStatuses { get; set; } = new();
@@ -26,10 +26,10 @@ public class Edit : BaseStaffPageModel
         ViewData["Title"] = "Edit View";
         ViewData["ActiveMenu"] = "Views";
 
-        ViewId = new ShortGuid(id).Guid;
+        ViewId = new ShortGuid(id);
 
         var response = await Mediator.Send(
-            new GetTicketViewById.Query { Id = ViewId },
+            new GetTicketViewById.Query { Id = ViewId.Guid },
             cancellationToken
         );
         if (!response.Success || response.Result == null)
@@ -97,7 +97,7 @@ public class Edit : BaseStaffPageModel
         ViewData["Title"] = "Edit View";
         ViewData["ActiveMenu"] = "Views";
 
-        ViewId = new ShortGuid(id).Guid;
+        ViewId = new ShortGuid(id);
 
         if (!ModelState.IsValid)
         {
@@ -179,7 +179,7 @@ public class Edit : BaseStaffPageModel
         var response = await Mediator.Send(
             new UpdateTicketView.Command
             {
-                Id = ViewId,
+                Id = ViewId.Guid,
                 Name = Form.Name,
                 Description = Form.Description,
                 Filters = filters,
@@ -205,7 +205,7 @@ public class Edit : BaseStaffPageModel
     {
         var teamsResponse = await Mediator.Send(new GetTeams.Query(), cancellationToken);
         AvailableTeams = teamsResponse
-            .Result.Items.Select(t => new TeamSelectItem { Id = t.Id.Guid, Name = t.Name })
+            .Result.Items.Select(t => new TeamSelectItem { Id = t.Id, Name = t.Name })
             .ToList();
 
         AvailableStatuses = TicketStatus.SupportedTypes.Select(s => s.DeveloperName).ToList();
@@ -312,7 +312,7 @@ public class Edit : BaseStaffPageModel
 
     public class TeamSelectItem
     {
-        public Guid Id { get; set; }
+        public ShortGuid Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 }

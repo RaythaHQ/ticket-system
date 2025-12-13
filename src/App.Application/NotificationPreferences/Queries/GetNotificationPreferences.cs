@@ -11,7 +11,7 @@ public class GetNotificationPreferences
 {
     public record Query : IRequest<QueryResponseDto<List<NotificationPreferenceDto>>>
     {
-        public Guid StaffAdminId { get; init; }
+        public ShortGuid StaffAdminId { get; init; }
     }
 
     public class Handler : IRequestHandler<Query, QueryResponseDto<List<NotificationPreferenceDto>>>
@@ -31,7 +31,7 @@ public class GetNotificationPreferences
             // Get existing preferences
             var existingPrefs = await _db.NotificationPreferences
                 .AsNoTracking()
-                .Where(p => p.StaffAdminId == request.StaffAdminId)
+                .Where(p => p.StaffAdminId == request.StaffAdminId.Guid)
                 .ToListAsync(cancellationToken);
 
             // Build list with all event types, using defaults if no preference exists

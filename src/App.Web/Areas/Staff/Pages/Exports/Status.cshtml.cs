@@ -2,6 +2,7 @@ using App.Application.Exports;
 using App.Application.Exports.Queries;
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using CSharpVitamins;
 using Microsoft.AspNetCore.Mvc;
@@ -63,7 +64,7 @@ public class Status : BaseStaffPageModel
         if (ExportJob == null)
         {
             SetErrorMessage("Export job not found.");
-            return RedirectToPage("/Tickets/Index");
+            return RedirectToPage(RouteNames.Tickets.Index);
         }
 
         // Check download permissions: must be Admin AND have ImportExportTickets permission

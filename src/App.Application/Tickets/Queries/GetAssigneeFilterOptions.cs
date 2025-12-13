@@ -11,7 +11,7 @@ public class GetAssigneeFilterOptions
     public record Query : IRequest<IQueryResponseDto<IEnumerable<AssigneeFilterOptionDto>>>
     {
         public string? BuiltInView { get; init; }
-        public Guid? CurrentUserId { get; init; }
+        public ShortGuid? CurrentUserId { get; init; }
     }
 
     public class Handler
@@ -37,7 +37,7 @@ public class GetAssigneeFilterOptions
             {
                 userTeamIds = await _db
                     .TeamMemberships.AsNoTracking()
-                    .Where(m => m.StaffAdminId == request.CurrentUserId.Value)
+                    .Where(m => m.StaffAdminId == request.CurrentUserId.Value.Guid)
                     .Select(m => m.TeamId)
                     .ToHashSetAsync(cancellationToken);
             }
@@ -85,7 +85,7 @@ public class GetAssigneeFilterOptions
                             .ThenInclude(m => m.StaffAdmin)
                             .Where(t =>
                                 t.Memberships.Any(m =>
-                                    m.StaffAdminId == request.CurrentUserId.Value
+                                    m.StaffAdminId == request.CurrentUserId.Value.Guid
                                 )
                             )
                             .OrderBy(t => t.Name)
@@ -94,7 +94,7 @@ public class GetAssigneeFilterOptions
                         foreach (var team in userTeams)
                         {
                             var membership = team.Memberships.FirstOrDefault(m =>
-                                m.StaffAdminId == request.CurrentUserId.Value
+                                m.StaffAdminId == request.CurrentUserId.Value.Guid
                             );
                             if (membership?.StaffAdmin != null)
                             {

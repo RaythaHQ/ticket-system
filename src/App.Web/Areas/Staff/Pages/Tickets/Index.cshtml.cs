@@ -7,6 +7,7 @@ using App.Application.TicketViews;
 using App.Application.TicketViews.Queries;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Shared.Models;
+using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using CSharpVitamins;
 using Microsoft.AspNetCore.Mvc;
@@ -435,7 +436,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
 
         if (response.Success)
         {
-            return RedirectToPage("/Exports/Status", new { id = response.Result });
+            return RedirectToPage(RouteNames.Exports.Status, new { id = response.Result });
         }
         else
         {

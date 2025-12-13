@@ -139,7 +139,7 @@ public class Create : BaseStaffPageModel
         var teamsResponse = await Mediator.Send(new GetTeams.Query(), cancellationToken);
         AvailableTeams = teamsResponse.Result.Items.Select(t => new TeamSelectItem
         {
-            Id = t.Id.Guid,
+            Id = t.Id,
             Name = t.Name
         }).ToList();
 
@@ -192,7 +192,7 @@ public class Create : BaseStaffPageModel
 
     public class TeamSelectItem
     {
-        public Guid Id { get; set; }
+        public ShortGuid Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 }

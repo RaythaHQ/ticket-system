@@ -219,7 +219,7 @@ public class Index : BaseAdminPageModel
             SetSuccessMessage("All audit logs have been cleared successfully.");
         }
 
-        return RedirectToPage("Index");
+        return RedirectToPage(RouteNames.AuditLogs.Index);
     }
 
     private static string PrettyPrintJson(string json)

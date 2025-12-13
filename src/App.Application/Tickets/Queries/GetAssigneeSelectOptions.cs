@@ -11,7 +11,7 @@ public class GetAssigneeSelectOptions
     public record Query : IRequest<IQueryResponseDto<IEnumerable<AssigneeSelectOptionDto>>>
     {
         public bool CanManageTickets { get; init; }
-        public Guid? CurrentUserId { get; init; }
+        public ShortGuid? CurrentUserId { get; init; }
     }
 
     public class Handler : IRequestHandler<Query, IQueryResponseDto<IEnumerable<AssigneeSelectOptionDto>>>
@@ -36,7 +36,7 @@ public class GetAssigneeSelectOptions
             {
                 userTeamIds = await _db
                     .TeamMemberships.AsNoTracking()
-                    .Where(m => m.StaffAdminId == request.CurrentUserId.Value)
+                    .Where(m => m.StaffAdminId == request.CurrentUserId.Value.Guid)
                     .Select(m => m.TeamId)
                     .ToHashSetAsync(cancellationToken);
             }
