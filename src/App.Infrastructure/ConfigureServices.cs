@@ -14,6 +14,7 @@ using App.Infrastructure.Persistence.Interceptors;
 using App.Infrastructure.Services;
 using App.Application.Teams.Services;
 using App.Application.SlaRules.Services;
+using App.Application.TicketViews;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -105,6 +106,7 @@ public static class ConfigureServices
         services.AddScoped<ISlaService, SlaService>();
         services.AddScoped<ITicketConfigService, TicketConfigService>();
         services.AddScoped<INumericIdGenerator, NumericIdGenerator>();
+        services.AddScoped<IFavoriteViewsService, FavoriteViewsService>();
 
         return services;
     }

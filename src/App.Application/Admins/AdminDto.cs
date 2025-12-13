@@ -21,6 +21,13 @@ public record AdminDto : BaseFullAuditableEntityDto
     public bool IsAdmin { get; init; }
 
     public IEnumerable<RoleDto> Roles { get; init; } = new List<RoleDto>();
+    
+    // Custom attributes
+    public string? CustomAttribute1 { get; init; }
+    public string? CustomAttribute2 { get; init; }
+    public string? CustomAttribute3 { get; init; }
+    public string? CustomAttribute4 { get; init; }
+    public string? CustomAttribute5 { get; init; }
 
     public static Expression<Func<User, AdminDto>> GetProjection()
     {
@@ -43,6 +50,11 @@ public record AdminDto : BaseFullAuditableEntityDto
             LastModifierUserId = entity.LastModifierUserId,
             Roles = entity.Roles.AsQueryable().Select(RoleDto.GetProjection()),
             IsAdmin = entity.IsAdmin,
+            CustomAttribute1 = entity.CustomAttribute1,
+            CustomAttribute2 = entity.CustomAttribute2,
+            CustomAttribute3 = entity.CustomAttribute3,
+            CustomAttribute4 = entity.CustomAttribute4,
+            CustomAttribute5 = entity.CustomAttribute5,
         };
     }
 }

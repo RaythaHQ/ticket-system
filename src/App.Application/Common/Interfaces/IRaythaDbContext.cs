@@ -34,6 +34,7 @@ public interface IAppDbContext
     public DbSet<ContactComment> ContactComments { get; }
     public DbSet<SlaRule> SlaRules { get; }
     public DbSet<TicketView> TicketViews { get; }
+    public DbSet<UserFavoriteView> UserFavoriteViews { get; }
     public DbSet<NotificationPreference> NotificationPreferences { get; }
     public DbSet<ExportJob> ExportJobs { get; }
 

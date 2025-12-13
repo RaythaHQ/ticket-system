@@ -29,6 +29,13 @@ public class User : BaseAuditableEntity, IPassivable
     public virtual ICollection<UserGroup> UserGroups { get; set; }
     public virtual ICollection<ApiKey> ApiKeys { get; set; }
     
+    // Custom attributes (only editable via Admin area)
+    public string? CustomAttribute1 { get; set; }
+    public string? CustomAttribute2 { get; set; }
+    public string? CustomAttribute3 { get; set; }
+    public string? CustomAttribute4 { get; set; }
+    public string? CustomAttribute5 { get; set; }
+
     // Ticketing system navigation properties
     public virtual ICollection<TeamMembership> TeamMemberships { get; set; } = new List<TeamMembership>();
     public virtual ICollection<Ticket> AssignedTickets { get; set; } = new List<Ticket>();

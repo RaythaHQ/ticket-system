@@ -16,6 +16,13 @@ public class EditAdmin
         public string LastName { get; init; } = null!;
         public string EmailAddress { get; init; } = null!;
         public IEnumerable<ShortGuid> Roles { get; init; } = null!;
+        
+        // Custom attributes
+        public string? CustomAttribute1 { get; init; }
+        public string? CustomAttribute2 { get; init; }
+        public string? CustomAttribute3 { get; init; }
+        public string? CustomAttribute4 { get; init; }
+        public string? CustomAttribute5 { get; init; }
     }
 
     public class Validator : AbstractValidator<Command>
@@ -81,6 +88,13 @@ public class EditAdmin
             entity.FirstName = request.FirstName;
             entity.LastName = request.LastName;
             entity.EmailAddress = request.EmailAddress;
+            
+            // Update custom attributes
+            entity.CustomAttribute1 = request.CustomAttribute1?.Trim();
+            entity.CustomAttribute2 = request.CustomAttribute2?.Trim();
+            entity.CustomAttribute3 = request.CustomAttribute3?.Trim();
+            entity.CustomAttribute4 = request.CustomAttribute4?.Trim();
+            entity.CustomAttribute5 = request.CustomAttribute5?.Trim();
 
             var currentRoleIds = entity.Roles.Select(p => (ShortGuid)p.Id);
 

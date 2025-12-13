@@ -35,6 +35,7 @@
             <table class="table staff-table mb-0">
                 <thead>
                     <tr>
+                        <th style="width: 40px;"></th>
                         <th>Name</th>
                         <th>Filters</th>
                         <th>Columns</th>
@@ -43,29 +44,38 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var view in Model.MyViews)
+                    @foreach (var item in Model.MyViews)
                     {
                         <tr>
+                            <td class="text-center">
+                                <form method="post" asp-page-handler="ToggleFavorite" asp-route-viewId="@item.View.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-link p-0 border-0" 
+                                        title="@(item.IsFavorited ? "Remove from favorites" : "Add to favorites")"
+                                        style="color: @(item.IsFavorited ? "#ffc107" : "#6c757d"); font-size: 1.1rem;">
+                                        <i class="bi @(item.IsFavorited ? "bi-star-fill" : "bi-star")"></i>
+                                    </button>
+                                </form>
+                            </td>
                             <td>
-                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@view.Id"
+                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@item.View.Id"
                                     class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
-                                    @view.Name
+                                    @item.View.Name
                                 </a>
                             </td>
                             <td>
-                                <span class="staff-badge staff-badge-secondary">@view.FilterCount filters</span>
+                                <span class="staff-badge staff-badge-secondary">@item.View.FilterCount filters</span>
                             </td>
                             <td>
-                                <span class="staff-badge staff-badge-secondary">@view.ColumnCount columns</span>
+                                <span class="staff-badge staff-badge-secondary">@item.View.ColumnCount columns</span>
                             </td>
-                            <td class="text-muted small">@view.CreationTime.ToString("MMM dd, yyyy")</td>
+                            <td class="text-muted small">@item.View.CreationTime.ToString("MMM dd, yyyy")</td>
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
-                                    <a asp-area="Staff" asp-page="@RouteNames.Views.Edit" asp-route-id="@view.Id"
+                                    <a asp-area="Staff" asp-page="@RouteNames.Views.Edit" asp-route-id="@item.View.Id"
                                         class="btn btn-outline-secondary">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <form method="post" asp-page-handler="Delete" asp-route-viewId="@view.Id" class="d-inline">
+                                    <form method="post" asp-page-handler="Delete" asp-route-viewId="@item.View.Id" class="d-inline">
                                         <button type="submit" class="btn btn-outline-danger"
                                             onclick="return confirm('Delete this view?')">
                                             <i class="bi bi-trash"></i>
@@ -98,24 +108,34 @@
             <table class="table staff-table mb-0">
                 <thead>
                     <tr>
+                        <th style="width: 40px;"></th>
                         <th>Name</th>
                         <th>Description</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var view in Model.SystemViews)
+                    @foreach (var item in Model.SystemViews)
                     {
                         <tr>
+                            <td class="text-center">
+                                <form method="post" asp-page-handler="ToggleFavorite" asp-route-viewId="@item.View.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-link p-0 border-0" 
+                                        title="@(item.IsFavorited ? "Remove from favorites" : "Add to favorites")"
+                                        style="color: @(item.IsFavorited ? "#ffc107" : "#6c757d"); font-size: 1.1rem;">
+                                        <i class="bi @(item.IsFavorited ? "bi-star-fill" : "bi-star")"></i>
+                                    </button>
+                                </form>
+                            </td>
                             <td>
-                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@view.Id"
+                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@item.View.Id"
                                     class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
-                                    <i class="bi bi-lock me-1 small text-muted"></i>@view.Name
+                                    <i class="bi bi-lock me-1 small text-muted"></i>@item.View.Name
                                 </a>
                             </td>
-                            <td class="text-muted">@view.Description</td>
+                            <td class="text-muted">@item.View.Description</td>
                             <td class="text-end">
-                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@view.Id"
+                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@item.View.Id"
                                     class="btn btn-sm btn-outline-primary">
                                     Use View
                                 </a>

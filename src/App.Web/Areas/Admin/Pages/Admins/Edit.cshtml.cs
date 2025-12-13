@@ -64,6 +64,11 @@ public class Edit : BaseAdminPageModel, ISubActionViewModel
             FirstName = response.Result.FirstName,
             LastName = response.Result.LastName,
             EmailAddress = response.Result.EmailAddress,
+            CustomAttribute1 = response.Result.CustomAttribute1,
+            CustomAttribute2 = response.Result.CustomAttribute2,
+            CustomAttribute3 = response.Result.CustomAttribute3,
+            CustomAttribute4 = response.Result.CustomAttribute4,
+            CustomAttribute5 = response.Result.CustomAttribute5,
         };
 
         Id = id;
@@ -80,6 +85,11 @@ public class Edit : BaseAdminPageModel, ISubActionViewModel
             LastName = Form.LastName,
             EmailAddress = Form.EmailAddress,
             Roles = Form.Roles.Where(p => p.Selected).Select(p => (ShortGuid)p.Id),
+            CustomAttribute1 = Form.CustomAttribute1,
+            CustomAttribute2 = Form.CustomAttribute2,
+            CustomAttribute3 = Form.CustomAttribute3,
+            CustomAttribute4 = Form.CustomAttribute4,
+            CustomAttribute5 = Form.CustomAttribute5,
         };
 
         var response = await Mediator.Send(input);
@@ -116,6 +126,21 @@ public class Edit : BaseAdminPageModel, ISubActionViewModel
         public string EmailAddress { get; set; }
 
         public RoleCheckboxItem_ViewModel[] Roles { get; set; }
+        
+        [Display(Name = "Custom Attribute 1")]
+        public string? CustomAttribute1 { get; set; }
+        
+        [Display(Name = "Custom Attribute 2")]
+        public string? CustomAttribute2 { get; set; }
+        
+        [Display(Name = "Custom Attribute 3")]
+        public string? CustomAttribute3 { get; set; }
+        
+        [Display(Name = "Custom Attribute 4")]
+        public string? CustomAttribute4 { get; set; }
+        
+        [Display(Name = "Custom Attribute 5")]
+        public string? CustomAttribute5 { get; set; }
 
         public class RoleCheckboxItem_ViewModel
         {

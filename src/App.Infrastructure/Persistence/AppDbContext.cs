@@ -58,6 +58,7 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     public DbSet<ContactAttachment> ContactAttachments => Set<ContactAttachment>();
     public DbSet<SlaRule> SlaRules => Set<SlaRule>();
     public DbSet<TicketView> TicketViews => Set<TicketView>();
+    public DbSet<UserFavoriteView> UserFavoriteViews => Set<UserFavoriteView>();
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
     public DbSet<ExportJob> ExportJobs => Set<ExportJob>();
 
