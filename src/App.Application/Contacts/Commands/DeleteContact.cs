@@ -25,10 +25,12 @@ public class DeleteContact
     public class Handler : IRequestHandler<Command, CommandResponseDto<long>>
     {
         private readonly IAppDbContext _db;
+        private readonly ICurrentUser _currentUser;
 
-        public Handler(IAppDbContext db)
+        public Handler(IAppDbContext db, ICurrentUser currentUser)
         {
             _db = db;
+            _currentUser = currentUser;
         }
 
         public async ValueTask<CommandResponseDto<long>> Handle(
@@ -36,29 +38,18 @@ public class DeleteContact
             CancellationToken cancellationToken
         )
         {
-            var contact = await _db
-                .Contacts.Include(c => c.Comments)
-                .Include(c => c.ChangeLogEntries)
-                .Include(c => c.Tickets)
-                .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
+            var contact = await _db.Contacts.FirstOrDefaultAsync(
+                c => c.Id == request.Id,
+                cancellationToken
+            );
 
             if (contact == null)
                 throw new NotFoundException("Contact", request.Id);
 
-            // Check if contact has tickets - don't delete if so
-            if (contact.Tickets.Any())
-            {
-                throw new BusinessException(
-                    $"Cannot delete contact with {contact.Tickets.Count} associated ticket(s). Please reassign or delete the tickets first."
-                );
-            }
-
-            // Remove related entities
-            _db.ContactComments.RemoveRange(contact.Comments);
-            _db.ContactChangeLogEntries.RemoveRange(contact.ChangeLogEntries);
-
-            // Remove the contact
-            _db.Contacts.Remove(contact);
+            // Soft-delete: mark as deleted but preserve the record for historical reference
+            contact.IsDeleted = true;
+            contact.DeletionTime = DateTime.UtcNow;
+            contact.DeleterUserId = _currentUser.UserId?.Guid;
 
             await _db.SaveChangesAsync(cancellationToken);
 
@@ -66,4 +57,3 @@ public class DeleteContact
         }
     }
 }
-

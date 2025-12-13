@@ -264,8 +264,34 @@
         @if (Model.Ticket.SlaRuleId.HasValue)
         {
             <div class="staff-card mb-4">
-                <div class="staff-card-header">
+                <div class="staff-card-header d-flex justify-content-between align-items-center">
                     <h5><i class="bi bi-hourglass-split me-2"></i>SLA</h5>
+                    @if (Model.CanManageTickets && Model.Ticket.Status != TicketStatus.CLOSED && Model.Ticket.Status != TicketStatus.RESOLVED)
+                    {
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <form method="post" asp-page-handler="RefreshSla" asp-route-id="@Model.Ticket.Id" asp-route-restartFromNow="true" class="d-inline">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="bi bi-arrow-counterclockwise me-2"></i>Restart SLA from now
+                                            <small class="d-block text-muted">Recalculates due date from current time</small>
+                                        </button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form method="post" asp-page-handler="RefreshSla" asp-route-id="@Model.Ticket.Id" asp-route-restartFromNow="false" class="d-inline">
+                                        <button type="submit" class="dropdown-item">
+                                            <i class="bi bi-arrow-repeat me-2"></i>Re-evaluate SLA rules
+                                            <small class="d-block text-muted">Keeps original creation time</small>
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    }
                 </div>
                 <div class="staff-card-body">
                     <dl class="row mb-0">

@@ -28,7 +28,6 @@ public static class RouteNames
         public const string Index = "/Admins/Index";
         public const string Create = "/Admins/Create";
         public const string Edit = "/Admins/Edit";
-        public const string Delete = "/Admins/Delete";
         public const string Suspend = "/Admins/Suspend";
         public const string Restore = "/Admins/Restore";
         public const string RemoveAccess = "/Admins/RemoveAccess";

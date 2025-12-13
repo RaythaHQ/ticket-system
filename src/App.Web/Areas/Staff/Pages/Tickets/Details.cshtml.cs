@@ -27,6 +27,7 @@ public class Details : BaseStaffPageModel
 
     public bool CanEditTicket { get; set; }
     public bool CanDeleteTicket { get; set; }
+    public bool CanManageTickets { get; set; }
 
     public async Task<IActionResult> OnGet(
         long id,
@@ -74,6 +75,7 @@ public class Details : BaseStaffPageModel
 
         // Check if user can delete tickets (requires Can Manage Tickets permission)
         CanDeleteTicket = TicketPermissionService.CanManageTickets();
+        CanManageTickets = TicketPermissionService.CanManageTickets();
 
         // Store back URL for the view
         ViewData["BackToListUrl"] = backToListUrl;
@@ -124,6 +126,38 @@ public class Details : BaseStaffPageModel
         if (!string.IsNullOrEmpty(backToListUrl))
         {
             return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl });
+        }
+
+        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+    }
+
+    public async Task<IActionResult> OnPostRefreshSla(
+        long id,
+        bool restartFromNow,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var command = new RefreshTicketSla.Command { Id = id, RestartFromNow = restartFromNow };
+
+            var response = await Mediator.Send(command, cancellationToken);
+
+            if (response.Success)
+            {
+                var message = restartFromNow
+                    ? "SLA restarted from current time."
+                    : "SLA rules re-evaluated.";
+                SetSuccessMessage(message);
+            }
+            else
+            {
+                SetErrorMessage(response.GetErrors());
+            }
+        }
+        catch (Application.Common.Exceptions.BusinessException ex)
+        {
+            SetErrorMessage(ex.Message);
         }
 
         return RedirectToPage(RouteNames.Tickets.Details, new { id });

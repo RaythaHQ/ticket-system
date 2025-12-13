@@ -38,7 +38,6 @@ public class Index : BaseAdminPageModel
                 //Admins
                 new CreateAdmin.Command().GetLogName(),
                 new CreateApiKey.Command().GetLogName(),
-                new DeleteAdmin.Command().GetLogName(),
                 new DeleteApiKey.Command().GetLogName(),
                 new EditAdmin.Command().GetLogName(),
                 new RemoveAdminAccess.Command().GetLogName(),

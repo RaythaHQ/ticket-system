@@ -236,6 +236,33 @@ public class TicketsController : BaseController
 
         return Ok(new UpdateTicketResponse { Id = response.Result });
     }
+
+    /// <summary>
+    /// Refresh/restart the SLA for a ticket.
+    /// </summary>
+    [HttpPost("{id:long}/refresh-sla", Name = "RefreshTicketSla")]
+    [ProducesResponseType(typeof(UpdateTicketResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UpdateTicketResponse>> RefreshTicketSla(
+        long id,
+        [FromBody] RefreshSlaRequest request
+    )
+    {
+        var command = new RefreshTicketSla.Command
+        {
+            Id = id,
+            RestartFromNow = request.RestartFromNow,
+        };
+
+        var response = await Mediator.Send(command);
+        if (!response.Success)
+        {
+            return BadRequest(new { error = response.Error });
+        }
+
+        return Ok(new UpdateTicketResponse { Id = response.Result });
+    }
 }
 
 // Request/Response DTOs
@@ -277,6 +304,15 @@ public record ChangeStatusRequest
 public record ChangePriorityRequest
 {
     public string Priority { get; init; } = null!;
+}
+
+public record RefreshSlaRequest
+{
+    /// <summary>
+    /// If true (default), recalculates SLA due date from current time (restarts the clock).
+    /// If false, re-evaluates SLA rules but keeps calculation from original creation time.
+    /// </summary>
+    public bool RestartFromNow { get; init; } = true;
 }
 
 public record CreateTicketResponse
