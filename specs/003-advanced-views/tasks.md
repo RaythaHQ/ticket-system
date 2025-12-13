@@ -90,7 +90,7 @@
 - [x] T036 [US1] Update Staff Views/Edit.cshtml to use _FilterBuilder partial in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml`
 - [x] T037 [US1] Update Staff Views/Edit.cshtml.cs to load existing conditions into _FilterBuilder in `src/App.Web/Areas/Staff/Pages/Views/Edit.cshtml.cs`
 - [ ] T038 [US1] Add inline validation and error display for filter conditions in _FilterBuilder.cshtml
-- [ ] T039 [US1] Include SortableJS in Staff area layout for drag-drop support in `src/App.Web/Areas/Staff/Pages/Shared/_Layout.cshtml`
+- [x] T039 [US1] Include SortableJS in Staff area layout for drag-drop support in `src/App.Web/Areas/Staff/Pages/Shared/_Layout.cshtml`
 
 **Checkpoint**: User Story 1 (Advanced Filter Builder) is fully functional and testable independently
 
