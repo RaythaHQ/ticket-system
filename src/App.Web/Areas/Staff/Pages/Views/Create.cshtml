@@ -30,31 +30,29 @@
     }
 
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-lg-10 col-xl-8">
+            @(await Html.PartialAsync("_Partials/BackToList", back))
+
             <!-- View Details -->
-            <div class="staff-card mb-4">
+            <div class="staff-card mb-4 mt-4">
                 <div class="staff-card-header">
                     <h6 class="mb-0">
-                        <i class="fas fa-info-circle me-2 text-primary"></i>
+                        <i class="bi bi-info-circle me-2 text-primary"></i>
                         View Details
                     </h6>
                 </div>
                 <div class="staff-card-body">
-                    @(await Html.PartialAsync("_Partials/BackToList", back))
-
-                    <div class="mt-4">
-                        <div class="mb-4">
-                            <label asp-for="Form.Name" class="form-label">
-                                View Name <span class="text-danger">*</span>
-                            </label>
-                            <input asp-for="Form.Name" class="form-control" placeholder="e.g., My Open Tickets" />
-                            <span asp-validation-for="Form.Name" class="text-danger small"></span>
-                        </div>
-                        <div class="mb-0">
-                            <label asp-for="Form.Description" class="form-label">Description</label>
-                            <textarea asp-for="Form.Description" class="form-control" rows="2"
-                                placeholder="Optional description for this view"></textarea>
-                        </div>
+                    <div class="mb-4">
+                        <label asp-for="Form.Name" class="form-label">
+                            View Name <span class="text-danger">*</span>
+                        </label>
+                        <input asp-for="Form.Name" class="form-control" placeholder="e.g., My Open Tickets" />
+                        <span asp-validation-for="Form.Name" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-0">
+                        <label asp-for="Form.Description" class="form-label">Description</label>
+                        <textarea asp-for="Form.Description" class="form-control" rows="2"
+                            placeholder="Optional description for this view"></textarea>
                     </div>
                 </div>
             </div>
@@ -64,16 +62,14 @@
 
             <!-- Multi-Level Sort Configurator -->
             <partial name="_Partials/_SortConfigurator" model="Model.SortConfiguratorModel" />
-        </div>
 
-        <div class="col-lg-4">
             <!-- Column Selector -->
             <partial name="_Partials/_ColumnSelector" model="Model.ColumnSelectorModel" />
 
             <!-- Submit -->
-            <div class="d-grid gap-2 mt-4">
-                <button type="submit" class="btn btn-success btn-lg">
-                    <i class="fas fa-check me-2"></i>Create View
+            <div class="d-flex gap-3 mt-4 mb-5">
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-lg me-2"></i>Save changes
                 </button>
                 <a asp-area="Staff" asp-page="@RouteNames.Views.Index" class="btn btn-outline-secondary">Cancel</a>
             </div>
@@ -82,7 +78,244 @@
 </form>
 
 @section Scripts {
-    <script src="~/admin/js/shared/filter-builder.js"></script>
-    <script src="~/admin/js/shared/sort-configurator.js"></script>
-    <script src="~/admin/js/shared/column-selector.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize filter builder
+        initFilterBuilder();
+        // Initialize sort configurator
+        initSortConfigurator();
+    });
+    
+    function initFilterBuilder() {
+        const builder = document.querySelector('[data-filter-builder]');
+        if (!builder) return;
+        
+        const attributes = JSON.parse(builder.dataset.attributes || '[]');
+        const statuses = JSON.parse(builder.dataset.statuses || '[]');
+        const priorities = JSON.parse(builder.dataset.priorities || '[]');
+        const users = JSON.parse(builder.dataset.users || '[]');
+        const teams = JSON.parse(builder.dataset.teams || '[]');
+        
+        let andIndex = builder.querySelectorAll('#andConditions .filter-condition').length;
+        let orIndex = builder.querySelectorAll('#orConditions .filter-condition').length;
+        
+        // Add AND condition
+        const addAndBtn = builder.querySelector('[data-add-and-condition]');
+        if (addAndBtn) {
+            addAndBtn.addEventListener('click', function() {
+                addCondition('AND', andIndex++);
+            });
+        }
+        
+        // Add OR condition
+        const addOrBtn = builder.querySelector('[data-add-or-condition]');
+        if (addOrBtn) {
+            addOrBtn.addEventListener('click', function() {
+                addCondition('OR', orIndex++);
+            });
+        }
+        
+        function addCondition(logic, index) {
+            const container = logic === 'AND' 
+                ? document.getElementById('andConditions') 
+                : document.getElementById('orConditions');
+            
+            // Remove empty message if present
+            const emptyMsg = container.querySelector('.empty-message');
+            if (emptyMsg) emptyMsg.remove();
+            
+            const prefix = logic === 'AND' ? 'AndConditions' : 'OrConditions';
+            const row = document.createElement('div');
+            row.className = 'filter-condition d-flex gap-2 align-items-start mb-2';
+            row.dataset.index = index;
+            row.dataset.logic = logic;
+            
+            row.innerHTML = `
+                <select name="${prefix}[${index}].Field" class="form-select form-select-sm attribute-select" style="width: 200px;">
+                    <option value="">Select field...</option>
+                    ${attributes.map(a => `<option value="${a.field}" data-type="${a.type}">${a.label}</option>`).join('')}
+                </select>
+                <select name="${prefix}[${index}].Operator" class="form-select form-select-sm operator-select" style="width: 180px;">
+                    <option value="">Select operator...</option>
+                </select>
+                <div class="value-input-container flex-grow-1" style="min-width: 200px;">
+                    <input type="text" name="${prefix}[${index}].Value" class="form-control form-control-sm value-input" placeholder="Value...">
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-condition" title="Remove">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            `;
+            
+            container.appendChild(row);
+            attachConditionHandlers(row);
+        }
+        
+        function attachConditionHandlers(row) {
+            const attrSelect = row.querySelector('.attribute-select');
+            const opSelect = row.querySelector('.operator-select');
+            const removeBtn = row.querySelector('.remove-condition');
+            
+            attrSelect.addEventListener('change', function() {
+                const attr = attributes.find(a => a.field === this.value);
+                if (attr && attr.operators) {
+                    opSelect.innerHTML = attr.operators.map(op => 
+                        `<option value="${op.value}">${op.label}</option>`
+                    ).join('');
+                } else {
+                    opSelect.innerHTML = '<option value="">Select operator...</option>';
+                }
+                updateValueInput(row, attr);
+            });
+            
+            removeBtn.addEventListener('click', function() {
+                row.remove();
+            });
+        }
+        
+        function updateValueInput(row, attr) {
+            const container = row.querySelector('.value-input-container');
+            const prefix = row.dataset.logic === 'AND' ? 'AndConditions' : 'OrConditions';
+            const index = row.dataset.index;
+            
+            if (!attr) {
+                container.innerHTML = `<input type="text" name="${prefix}[${index}].Value" class="form-control form-control-sm" placeholder="Value...">`;
+                return;
+            }
+            
+            switch (attr.type) {
+                case 'status':
+                    container.innerHTML = `<select name="${prefix}[${index}].Value" class="form-select form-select-sm">
+                        <option value="">Select status...</option>
+                        ${statuses.map(s => `<option value="${s.value}">${s.label}</option>`).join('')}
+                    </select>`;
+                    break;
+                case 'priority':
+                    container.innerHTML = `<select name="${prefix}[${index}].Value" class="form-select form-select-sm">
+                        <option value="">Select priority...</option>
+                        ${priorities.map(p => `<option value="${p.value}">${p.label}</option>`).join('')}
+                    </select>`;
+                    break;
+                case 'user':
+                    container.innerHTML = `<select name="${prefix}[${index}].Value" class="form-select form-select-sm">
+                        <option value="">Select user...</option>
+                        ${users.map(u => `<option value="${u.id}">${u.name}${u.isDeactivated ? ' (deactivated)' : ''}</option>`).join('')}
+                    </select>`;
+                    break;
+                case 'boolean':
+                    container.innerHTML = `<select name="${prefix}[${index}].Value" class="form-select form-select-sm">
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                    </select>`;
+                    break;
+                case 'date':
+                    container.innerHTML = `<input type="date" name="${prefix}[${index}].Value" class="form-control form-control-sm">`;
+                    break;
+                default:
+                    container.innerHTML = `<input type="text" name="${prefix}[${index}].Value" class="form-control form-control-sm" placeholder="Value...">`;
+            }
+        }
+        
+        // Attach handlers to existing conditions
+        builder.querySelectorAll('.filter-condition').forEach(row => {
+            attachConditionHandlers(row);
+        });
+    }
+    
+    function initSortConfigurator() {
+        const container = document.querySelector('[data-sort-configurator]');
+        if (!container) return;
+        
+        const fieldsData = container.dataset.sortFields;
+        const fields = fieldsData ? JSON.parse(fieldsData) : [];
+        const sortList = document.getElementById('sortLevelsList');
+        
+        let sortIndex = sortList ? sortList.querySelectorAll('.sort-level').length : 0;
+        
+        // Initialize SortableJS
+        if (typeof Sortable !== 'undefined' && sortList) {
+            new Sortable(sortList, {
+                handle: '.drag-handle',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: updateSortOrders
+            });
+        }
+        
+        // Add sort level button
+        const addBtn = container.querySelector('[data-add-sort-level]');
+        if (addBtn) {
+            addBtn.addEventListener('click', function() {
+                addSortLevel();
+            });
+        }
+        
+        function addSortLevel() {
+            if (!sortList) return;
+            
+            // Remove empty message
+            const emptyMsg = sortList.querySelector('.empty-message');
+            if (emptyMsg) emptyMsg.remove();
+            
+            const row = document.createElement('div');
+            row.className = 'sort-level d-flex gap-2 align-items-center mb-2 p-2 bg-light rounded';
+            row.dataset.index = sortIndex;
+            
+            row.innerHTML = `
+                <span class="drag-handle text-muted" style="cursor: grab;">
+                    <i class="bi bi-grip-vertical"></i>
+                </span>
+                <input type="hidden" name="SortLevels[${sortIndex}].Order" class="order-input" value="${sortIndex}">
+                <select name="SortLevels[${sortIndex}].Field" class="form-select form-select-sm field-select" style="flex: 1;">
+                    <option value="">Select field...</option>
+                    ${fields.map(f => `<option value="${f.field}">${f.label}</option>`).join('')}
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-secondary direction-toggle" data-direction="desc">
+                    <i class="bi bi-arrow-down"></i> <span class="ms-1">DESC</span>
+                </button>
+                <input type="hidden" name="SortLevels[${sortIndex}].Direction" class="direction-input" value="desc">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-level">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            `;
+            
+            sortList.appendChild(row);
+            sortIndex++;
+            
+            attachSortHandlers(row);
+            updateSortOrders();
+        }
+        
+        function attachSortHandlers(row) {
+            const dirBtn = row.querySelector('.direction-toggle');
+            const dirInput = row.querySelector('.direction-input');
+            const removeBtn = row.querySelector('.remove-level');
+            
+            dirBtn?.addEventListener('click', function() {
+                const current = this.dataset.direction;
+                const next = current === 'desc' ? 'asc' : 'desc';
+                this.dataset.direction = next;
+                this.innerHTML = `<i class="bi bi-arrow-${next === 'desc' ? 'down' : 'up'}"></i> <span class="ms-1">${next.toUpperCase()}</span>`;
+                if (dirInput) dirInput.value = next;
+            });
+            
+            removeBtn?.addEventListener('click', function() {
+                row.remove();
+                updateSortOrders();
+            });
+        }
+        
+        function updateSortOrders() {
+            if (!sortList) return;
+            sortList.querySelectorAll('.sort-level').forEach((row, idx) => {
+                const orderInput = row.querySelector('.order-input');
+                if (orderInput) orderInput.value = idx;
+            });
+        }
+        
+        // Attach handlers to existing sort levels
+        sortList?.querySelectorAll('.sort-level').forEach(row => {
+            attachSortHandlers(row);
+        });
+    }
+    </script>
 }

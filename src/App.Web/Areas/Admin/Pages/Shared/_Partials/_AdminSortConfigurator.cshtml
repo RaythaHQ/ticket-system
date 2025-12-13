@@ -4,41 +4,42 @@
 
 @{
     Layout = null;
-    var fieldsJson = JsonSerializer.Serialize(Model.SortableFields);
+    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var fieldsJson = JsonSerializer.Serialize(Model.SortableFields, jsonOptions);
 }
 
-<div class="card mb-4">
+<div class="card mb-4" id="sortConfiguratorCard">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Sort Order</h5>
-        <button type="button" class="btn btn-sm btn-outline-primary" data-add-sort>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="addSortLevelBtn">
             <i class="bi bi-plus-lg me-1"></i> Add Sort Level
         </button>
     </div>
     <div class="card-body">
-        <div data-sort-configurator data-fields="@fieldsJson">
-            <div class="sort-levels" id="sortLevelsList">
+        <div data-sort-configurator data-sort-fields="@fieldsJson">
+            <div id="sortLevelsList" class="mb-3">
                 @if (Model.SortLevels?.Any() == true)
                 {
                     var index = 0;
                     foreach (var level in Model.SortLevels.OrderBy(l => l.Order))
                     {
-                        <div class="sort-level d-flex gap-2 align-items-center mb-2" data-index="@index">
+                        <div class="sort-level d-flex gap-2 align-items-center mb-2 p-2 bg-light rounded" data-index="@index">
                             <span class="drag-handle text-muted" style="cursor: grab;">
                                 <i class="bi bi-grip-vertical"></i>
                             </span>
-                            <input type="hidden" name="SortLevels[@index].Order" value="@index" class="sort-order-input" />
-                            <select name="SortLevels[@index].Field" class="form-select form-select-sm" style="width: 200px;">
+                            <input type="hidden" name="SortLevels[@index].Order" class="order-input" value="@index">
+                            <select name="SortLevels[@index].Field" class="form-select form-select-sm field-select" style="flex: 1;">
                                 @foreach (var field in Model.SortableFields)
                                 {
-                                    var isSelected = field.Field == level.Field;
-                                    <option value="@field.Field" selected="@isSelected">@field.Label</option>
+                                    <option value="@field.Field" selected="@(level.Field == field.Field)">@field.Label</option>
                                 }
                             </select>
-                            <select name="SortLevels[@index].Direction" class="form-select form-select-sm" style="width: 140px;">
-                                <option value="asc" selected="@(level.Direction == "asc")">Ascending ↑</option>
-                                <option value="desc" selected="@(level.Direction == "desc")">Descending ↓</option>
-                            </select>
-                            <button type="button" class="btn btn-sm btn-outline-danger remove-sort" title="Remove">
+                            <button type="button" class="btn btn-sm btn-outline-secondary direction-toggle-btn" data-direction="@level.Direction">
+                                <i class="bi bi-arrow-@(level.Direction == "desc" ? "down" : "up")"></i>
+                                <span class="ms-1">@(level.Direction == "desc" ? "DESC" : "ASC")</span>
+                            </button>
+                            <input type="hidden" name="SortLevels[@index].Direction" class="direction-input" value="@level.Direction">
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-level-btn">
                                 <i class="bi bi-x-lg"></i>
                             </button>
                         </div>
@@ -47,107 +48,115 @@
                 }
                 else
                 {
-                    <div class="sort-level d-flex gap-2 align-items-center mb-2" data-index="0">
-                        <span class="drag-handle text-muted" style="cursor: grab;">
-                            <i class="bi bi-grip-vertical"></i>
-                        </span>
-                        <input type="hidden" name="SortLevels[0].Order" value="0" class="sort-order-input" />
-                        <select name="SortLevels[0].Field" class="form-select form-select-sm" style="width: 200px;">
-                            @foreach (var field in Model.SortableFields)
-                            {
-                                var isSelected = field.Field == "CreationTime";
-                                <option value="@field.Field" selected="@isSelected">@field.Label</option>
-                            }
-                        </select>
-                        <select name="SortLevels[0].Direction" class="form-select form-select-sm" style="width: 140px;">
-                            <option value="asc">Ascending ↑</option>
-                            <option value="desc" selected>Descending ↓</option>
-                        </select>
-                        <button type="button" class="btn btn-sm btn-outline-danger remove-sort" title="Remove">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
+                    <div class="text-muted small p-3 bg-light rounded empty-message">
+                        <i class="bi bi-info-circle me-1"></i>
+                        No sort levels defined. Default sorting will be newest first.
                     </div>
                 }
             </div>
             
-            <div class="small text-muted mt-2">
-                Drag levels to reorder. First level is primary sort, subsequent levels break ties.
+            <div class="text-muted small">
+                <i class="bi bi-lightbulb me-1"></i>
+                Drag to reorder. First level is primary sort, subsequent levels break ties.
             </div>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const configurator = document.querySelector('[data-sort-configurator]');
-        if (!configurator) return;
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const card = document.getElementById('sortConfiguratorCard');
+    if (!card) return;
+    
+    const configurator = card.querySelector('[data-sort-configurator]');
+    const fieldsData = configurator?.dataset.sortFields;
+    const fields = fieldsData ? JSON.parse(fieldsData) : [];
+    const sortList = document.getElementById('sortLevelsList');
+    
+    let sortIndex = sortList ? sortList.querySelectorAll('.sort-level').length : 0;
+    
+    // Initialize SortableJS
+    if (typeof Sortable !== 'undefined' && sortList) {
+        new Sortable(sortList, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: updateSortOrders
+        });
+    }
+    
+    // Add sort level button
+    const addBtn = document.getElementById('addSortLevelBtn');
+    if (addBtn) {
+        addBtn.addEventListener('click', addSortLevel);
+    }
+    
+    function addSortLevel() {
+        if (!sortList) return;
         
-        const fields = JSON.parse(configurator.dataset.fields || '[]');
-        const container = document.getElementById('sortLevelsList');
-        const addBtn = document.querySelector('[data-add-sort]');
+        // Remove empty message
+        const emptyMsg = sortList.querySelector('.empty-message');
+        if (emptyMsg) emptyMsg.remove();
         
-        let sortIndex = container.querySelectorAll('.sort-level').length;
+        const row = document.createElement('div');
+        row.className = 'sort-level d-flex gap-2 align-items-center mb-2 p-2 bg-light rounded';
+        row.dataset.index = sortIndex;
         
-        // Initialize SortableJS for drag and drop
-        if (typeof Sortable !== 'undefined') {
-            new Sortable(container, {
-                handle: '.drag-handle',
-                animation: 150,
-                onEnd: updateOrders
-            });
-        }
+        row.innerHTML = `
+            <span class="drag-handle text-muted" style="cursor: grab;">
+                <i class="bi bi-grip-vertical"></i>
+            </span>
+            <input type="hidden" name="SortLevels[${sortIndex}].Order" class="order-input" value="${sortIndex}">
+            <select name="SortLevels[${sortIndex}].Field" class="form-select form-select-sm field-select" style="flex: 1;">
+                <option value="">Select field...</option>
+                ${fields.map(f => `<option value="${f.field}">${f.label}</option>`).join('')}
+            </select>
+            <button type="button" class="btn btn-sm btn-outline-secondary direction-toggle-btn" data-direction="desc">
+                <i class="bi bi-arrow-down"></i> <span class="ms-1">DESC</span>
+            </button>
+            <input type="hidden" name="SortLevels[${sortIndex}].Direction" class="direction-input" value="desc">
+            <button type="button" class="btn btn-sm btn-outline-danger remove-level-btn">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        `;
         
-        if (addBtn) {
-            addBtn.addEventListener('click', addSortLevel);
-        }
+        sortList.appendChild(row);
+        sortIndex++;
         
-        function addSortLevel() {
-            const html = `
-                <div class="sort-level d-flex gap-2 align-items-center mb-2" data-index="${sortIndex}">
-                    <span class="drag-handle text-muted" style="cursor: grab;">
-                        <i class="bi bi-grip-vertical"></i>
-                    </span>
-                    <input type="hidden" name="SortLevels[${sortIndex}].Order" value="${sortIndex}" class="sort-order-input" />
-                    <select name="SortLevels[${sortIndex}].Field" class="form-select form-select-sm" style="width: 200px;">
-                        ${fields.map(f => `<option value="${f.Field}">${f.Label}</option>`).join('')}
-                    </select>
-                    <select name="SortLevels[${sortIndex}].Direction" class="form-select form-select-sm" style="width: 140px;">
-                        <option value="asc">Ascending ↑</option>
-                        <option value="desc" selected>Descending ↓</option>
-                    </select>
-                    <button type="button" class="btn btn-sm btn-outline-danger remove-sort" title="Remove">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>`;
-            container.insertAdjacentHTML('beforeend', html);
-            sortIndex++;
-            attachRemoveHandlers();
-            updateOrders();
-        }
+        attachSortHandlers(row);
+        updateSortOrders();
+    }
+    
+    function attachSortHandlers(row) {
+        const dirBtn = row.querySelector('.direction-toggle-btn');
+        const dirInput = row.querySelector('.direction-input');
+        const removeBtn = row.querySelector('.remove-level-btn');
         
-        function updateOrders() {
-            container.querySelectorAll('.sort-level').forEach((row, idx) => {
-                const orderInput = row.querySelector('.sort-order-input');
-                if (orderInput) {
-                    orderInput.value = idx;
-                }
-            });
-        }
+        dirBtn?.addEventListener('click', function() {
+            const current = this.dataset.direction;
+            const next = current === 'desc' ? 'asc' : 'desc';
+            this.dataset.direction = next;
+            this.innerHTML = `<i class="bi bi-arrow-${next === 'desc' ? 'down' : 'up'}"></i> <span class="ms-1">${next.toUpperCase()}</span>`;
+            if (dirInput) dirInput.value = next;
+        });
         
-        function attachRemoveHandlers() {
-            container.querySelectorAll('.remove-sort').forEach(btn => {
-                btn.onclick = function() {
-                    if (container.querySelectorAll('.sort-level').length > 1) {
-                        this.closest('.sort-level').remove();
-                        updateOrders();
-                    }
-                };
-            });
-        }
-        
-        attachRemoveHandlers();
+        removeBtn?.addEventListener('click', function() {
+            row.remove();
+            updateSortOrders();
+        });
+    }
+    
+    function updateSortOrders() {
+        if (!sortList) return;
+        sortList.querySelectorAll('.sort-level').forEach((row, idx) => {
+            const orderInput = row.querySelector('.order-input');
+            if (orderInput) orderInput.value = idx;
+        });
+    }
+    
+    // Attach handlers to existing sort levels
+    sortList?.querySelectorAll('.sort-level').forEach(row => {
+        attachSortHandlers(row);
     });
-    </script>
-}
-
+});
+</script>

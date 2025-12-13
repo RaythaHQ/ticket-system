@@ -3,27 +3,31 @@
 
 @{
     Layout = null;
-    var fieldsJson = JsonSerializer.Serialize(Model.SortableFields);
+    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var fieldsJson = JsonSerializer.Serialize(Model.SortableFields, jsonOptions);
 }
 
 <div class="staff-card mb-4">
-    <div class="staff-card-header">
+    <div class="staff-card-header d-flex justify-content-between align-items-center">
         <h6 class="mb-0">
-            <i class="fas fa-sort me-2 text-primary"></i>
+            <i class="bi bi-sort-down me-2 text-primary"></i>
             Sort Order
         </h6>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-add-sort-level>
+            <i class="bi bi-plus-lg me-1"></i> Add Sort Level
+        </button>
     </div>
     <div class="staff-card-body">
         <div data-sort-configurator data-sort-fields="@fieldsJson">
-            <div class="sort-levels mb-3">
+            <div class="sort-levels mb-3" id="sortLevelsList">
                 @if (Model.SortLevels?.Any() == true)
                 {
                     var index = 0;
                     foreach (var level in Model.SortLevels.OrderBy(l => l.Order))
                     {
                         <div class="sort-level d-flex gap-2 align-items-center mb-2 p-2 bg-light rounded" data-index="@index">
-                            <span class="drag-handle text-muted cursor-move" title="Drag to reorder">
-                                <i class="fas fa-grip-vertical"></i>
+                            <span class="drag-handle text-muted" style="cursor: grab;" title="Drag to reorder">
+                                <i class="bi bi-grip-vertical"></i>
                             </span>
                             
                             <input type="hidden" name="SortLevels[@index].Order" class="order-input" value="@index">
@@ -32,10 +36,7 @@
                                 <option value="">Select field...</option>
                                 @foreach (var field in Model.SortableFields)
                                 {
-                                    var isFieldSelected = level.Field == field.Field;
-                                    <option value="@field.Field" selected="@isFieldSelected">
-                                        @field.Label
-                                    </option>
+                                    <option value="@field.Field" selected="@(level.Field == field.Field)">@field.Label</option>
                                 }
                             </select>
                             
@@ -43,41 +44,34 @@
                                     class="btn btn-sm btn-outline-secondary direction-toggle" 
                                     data-direction="@level.Direction" 
                                     title="Toggle sort direction">
-                                <i class="fas fa-arrow-@(level.Direction == "desc" ? "down" : "up")"></i>
+                                <i class="bi bi-arrow-@(level.Direction == "desc" ? "down" : "up")"></i>
                                 <span class="ms-1">@(level.Direction == "desc" ? "DESC" : "ASC")</span>
                             </button>
                             <input type="hidden" name="SortLevels[@index].Direction" class="direction-input" value="@level.Direction">
                             
-                            <button type="button" class="btn btn-sm btn-outline-danger remove-level" title="Remove sort level">
-                                <i class="fas fa-times"></i>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-level" title="Remove">
+                                <i class="bi bi-x-lg"></i>
                             </button>
                         </div>
                         index++;
                     }
                 }
+                else
+                {
+                    <div class="text-muted small p-3 bg-light rounded empty-message">
+                        <i class="bi bi-info-circle me-1"></i>
+                        No sort levels defined. Default sorting will be newest first.
+                    </div>
+                }
             </div>
-            
-            <button type="button" class="btn btn-sm btn-outline-primary" data-add-sort-level>
-                <i class="fas fa-plus me-1"></i> Add Sort Level
-            </button>
             
             @if (Model.ShowHelp)
             {
-                <p class="text-muted small mt-3 mb-0">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Drag levels to reorder. First level is primary sort, subsequent levels break ties.
-                </p>
+                <div class="text-muted small">
+                    <i class="bi bi-lightbulb me-1"></i>
+                    Drag to reorder. First level is primary sort, subsequent levels break ties.
+                </div>
             }
         </div>
     </div>
 </div>
-
-<style>
-.cursor-move { cursor: move; }
-.sort-level-ghost { opacity: 0.4; background: #e3f2fd !important; }
-</style>
-
-@section Scripts {
-    <script src="~/admin/js/shared/sort-configurator.js"></script>
-}
-

@@ -3,89 +3,149 @@
 
 @{
     Layout = null;
-    var columnsJson = JsonSerializer.Serialize(Model.AvailableColumns);
+    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var columnsJson = JsonSerializer.Serialize(Model.AvailableColumns, jsonOptions);
     var selectedFields = Model.SelectedColumns ?? new List<string>();
 }
 
 <div class="staff-card mb-4">
     <div class="staff-card-header">
         <h6 class="mb-0">
-            <i class="fas fa-columns me-2 text-primary"></i>
+            <i class="bi bi-layout-three-columns me-2 text-primary"></i>
             Visible Columns
         </h6>
     </div>
     <div class="staff-card-body">
-        <div data-column-selector data-columns="@columnsJson">
-            <div class="row">
-                <div class="col-md-6">
-                    <h6 class="text-muted small mb-3">Available Columns</h6>
-                    <div class="column-list">
-                        @foreach (var col in Model.AvailableColumns)
+        <p class="text-muted small mb-3">
+            Select columns to display. Drag to reorder. Search only matches visible columns.
+        </p>
+        
+        <div data-column-selector data-columns="@columnsJson" id="columnSelectorContainer">
+            <div class="columns-list" id="columnsList">
+                @{
+                    // First render selected columns in order
+                    var hiddenIndex = 0;
+                    foreach (var field in selectedFields)
+                    {
+                        var col = Model.AvailableColumns.FirstOrDefault(c => c.Field.Equals(field, StringComparison.OrdinalIgnoreCase));
+                        if (col != null)
                         {
-                            var isSelected = selectedFields.Contains(col.Field, StringComparer.OrdinalIgnoreCase);
-                            <div class="column-row form-check mb-2 p-2 rounded @(isSelected ? "selected bg-light" : "")" data-field="@col.Field">
+                            <div class="column-item d-flex align-items-center gap-2 mb-2 p-2 border rounded" data-field="@col.Field">
+                                <span class="drag-handle text-muted" style="cursor: grab;">
+                                    <i class="bi bi-grip-vertical"></i>
+                                </span>
                                 <input type="checkbox" 
                                        class="form-check-input column-checkbox" 
                                        id="col_@col.Field" 
-                                       value="@col.Field"
-                                       @(isSelected ? "checked" : "")>
-                                <label class="form-check-label" for="col_@col.Field">
+                                       data-field="@col.Field"
+                                       checked>
+                                <input type="hidden" name="VisibleColumns[@hiddenIndex]" value="@col.Field" class="column-hidden-input">
+                                <label class="form-check-label flex-grow-1 mb-0" for="col_@col.Field">
                                     @col.Label
                                     @if (col.IsClickable)
                                     {
-                                        <i class="fas fa-link ms-1 text-muted small" title="Clickable link"></i>
+                                        <i class="bi bi-link-45deg ms-1 text-muted small" title="Clickable link"></i>
                                     }
                                 </label>
                             </div>
+                            hiddenIndex++;
                         }
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <h6 class="text-muted small mb-3">Selected Order <span class="text-muted">(drag to reorder)</span></h6>
-                    <div class="selected-columns border rounded p-2" style="min-height: 200px;">
-                        @{
-                            var index = 0;
-                            foreach (var field in selectedFields)
-                            {
-                                var col = Model.AvailableColumns.FirstOrDefault(c => c.Field.Equals(field, StringComparison.OrdinalIgnoreCase));
-                                if (col != null)
+                    }
+                    
+                    // Then render unselected columns
+                    foreach (var col in Model.AvailableColumns)
+                    {
+                        if (selectedFields.Any(s => s.Equals(col.Field, StringComparison.OrdinalIgnoreCase)))
+                            continue;
+                        
+                        <div class="column-item d-flex align-items-center gap-2 mb-2 p-2 border rounded bg-light" data-field="@col.Field">
+                            <span class="drag-handle text-muted" style="cursor: grab;">
+                                <i class="bi bi-grip-vertical"></i>
+                            </span>
+                            <input type="checkbox" 
+                                   class="form-check-input column-checkbox" 
+                                   id="col_@col.Field"
+                                   data-field="@col.Field">
+                            <label class="form-check-label flex-grow-1 mb-0 text-muted" for="col_@col.Field">
+                                @col.Label
+                                @if (col.IsClickable)
                                 {
-                                    <div class="selected-column d-flex gap-2 align-items-center mb-2 p-2 bg-light rounded" data-field="@col.Field">
-                                        <span class="drag-handle text-muted cursor-move" title="Drag to reorder">
-                                            <i class="fas fa-grip-vertical"></i>
-                                        </span>
-                                        <span class="flex-grow-1">@col.Label</span>
-                                        <input type="hidden" name="VisibleColumns[@index]" value="@col.Field">
-                                        <button type="button" class="btn btn-sm btn-outline-danger remove-column" title="Remove column">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                    index++;
+                                    <i class="bi bi-link-45deg ms-1 text-muted small" title="Clickable link"></i>
                                 }
-                            }
-                        }
-                    </div>
-                </div>
+                            </label>
+                        </div>
+                    }
+                }
             </div>
             
-            @if (Model.ShowHelp)
-            {
-                <p class="text-muted small mt-3 mb-0">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Check columns to display, then drag to set the order. The search bar will only search visible columns.
-                </p>
-            }
+            <div class="text-muted small mt-2">
+                <i class="bi bi-info-circle me-1"></i>
+                At least one column must be selected.
+            </div>
         </div>
     </div>
 </div>
 
-<style>
-.cursor-move { cursor: move; }
-.column-item-ghost { opacity: 0.4; background: #e3f2fd !important; }
-.column-row.selected { border-left: 3px solid var(--staff-primary, #009ddc); }
-</style>
-
-@section Scripts {
-    <script src="~/admin/js/shared/column-selector.js"></script>
-}
-
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('columnsList');
+    if (!container) return;
+    
+    // Initialize SortableJS
+    if (typeof Sortable !== 'undefined') {
+        new Sortable(container, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: updateColumnInputs
+        });
+    }
+    
+    // Handle checkbox changes
+    container.addEventListener('change', function(e) {
+        if (e.target.classList.contains('column-checkbox')) {
+            handleCheckboxChange(e.target);
+        }
+    });
+    
+    function handleCheckboxChange(checkbox) {
+        const item = checkbox.closest('.column-item');
+        const field = checkbox.dataset.field;
+        
+        if (checkbox.checked) {
+            // Add hidden input if not present
+            if (!item.querySelector('.column-hidden-input')) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'VisibleColumns[0]'; // Will be reindexed
+                input.value = field;
+                input.className = 'column-hidden-input';
+                checkbox.parentNode.insertBefore(input, checkbox.nextSibling);
+            }
+            item.classList.remove('bg-light');
+            const label = item.querySelector('label');
+            if (label) label.classList.remove('text-muted');
+        } else {
+            // Remove hidden input
+            const hiddenInput = item.querySelector('.column-hidden-input');
+            if (hiddenInput) hiddenInput.remove();
+            item.classList.add('bg-light');
+            const label = item.querySelector('label');
+            if (label) label.classList.add('text-muted');
+        }
+        
+        updateColumnInputs();
+    }
+    
+    function updateColumnInputs() {
+        let idx = 0;
+        container.querySelectorAll('.column-item').forEach(item => {
+            const hiddenInput = item.querySelector('.column-hidden-input');
+            if (hiddenInput) {
+                hiddenInput.name = `VisibleColumns[${idx}]`;
+                idx++;
+            }
+        });
+    }
+});
+</script>

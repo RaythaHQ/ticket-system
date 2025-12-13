@@ -17,55 +17,50 @@
 <div>
     <div class="row mb-4">
         <partial name="_Partials/PageHeading" model='ViewData["Title"]' />
-        <div class="col-xxl-7 col-xl-8 col-lg-9 col-md-12">
+        <div class="col-xxl-8 col-xl-9 col-lg-10 col-md-12">
             <div class="card border-0 shadow mb-4">
                 <div class="card-body">
                     @(await Html.PartialAsync("_Partials/BackToList", back))
                     <form asp-page="@RouteNames.SystemViews.Create" method="post" class="py-4" novalidate>
-                    <div class="row">
-                        <div class="col-md-8">
-                            <!-- Basic Info -->
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <h5 class="mb-0">View Details</h5>
+                        <!-- Basic Info -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">View Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label raytha-required" asp-for="Form.Name"></label>
+                                    <input type="text" class="form-control @Model.HasError("Name")" asp-for="Form.Name" required>
+                                    <div class="invalid-feedback">@Model.ErrorMessageFor("Name")</div>
                                 </div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <label class="form-label raytha-required" asp-for="Form.Name"></label>
-                                        <input type="text" class="form-control @Model.HasError("Name")" asp-for="Form.Name" required>
-                                        <div class="invalid-feedback">@Model.ErrorMessageFor("Name")</div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label" asp-for="Form.Description"></label>
-                                        <textarea class="form-control @Model.HasError("Description")" asp-for="Form.Description" rows="2"></textarea>
-                                        <div class="invalid-feedback">@Model.ErrorMessageFor("Description")</div>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input @Model.HasError("IsDefault")" type="checkbox" asp-for="Form.IsDefault">
-                                        <label class="form-check-label" asp-for="Form.IsDefault">
-                                            Set as default view for all users
-                                        </label>
-                                        <div class="invalid-feedback">@Model.ErrorMessageFor("IsDefault")</div>
-                                    </div>
+                                <div class="mb-3">
+                                    <label class="form-label" asp-for="Form.Description"></label>
+                                    <textarea class="form-control @Model.HasError("Description")" asp-for="Form.Description" rows="2"></textarea>
+                                    <div class="invalid-feedback">@Model.ErrorMessageFor("Description")</div>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input @Model.HasError("IsDefault")" type="checkbox" asp-for="Form.IsDefault">
+                                    <label class="form-check-label" asp-for="Form.IsDefault">
+                                        Set as default view for all users
+                                    </label>
+                                    <div class="invalid-feedback">@Model.ErrorMessageFor("IsDefault")</div>
                                 </div>
                             </div>
-
-                            <!-- Advanced Filter Builder -->
-                            <partial name="_Partials/_AdminFilterBuilder" model="Model.FilterBuilder" />
-
-                            <!-- Multi-Level Sort Configurator -->
-                            <partial name="_Partials/_AdminSortConfigurator" model="Model.SortConfigurator" />
                         </div>
 
-                        <div class="col-md-4">
-                            <!-- Column Selector -->
-                            <partial name="_Partials/_AdminColumnSelector" model="Model.ColumnSelector" />
-                    </div>
-                    <button type="submit" class="btn btn-success mt-4">Save changes</button> 
-                </form>
+                        <!-- Advanced Filter Builder -->
+                        <partial name="_Partials/_AdminFilterBuilder" model="Model.FilterBuilder" />
+
+                        <!-- Multi-Level Sort Configurator -->
+                        <partial name="_Partials/_AdminSortConfigurator" model="Model.SortConfigurator" />
+
+                        <!-- Column Selector -->
+                        <partial name="_Partials/_AdminColumnSelector" model="Model.ColumnSelector" />
+                        
+                        <button type="submit" class="btn btn-success mt-4">Save changes</button> 
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-    </div>
 </div>
-

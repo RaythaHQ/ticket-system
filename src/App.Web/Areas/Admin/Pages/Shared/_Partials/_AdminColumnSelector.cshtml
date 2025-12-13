@@ -1,8 +1,12 @@
+@using System.Text.Json
 @using App.Web.Areas.Staff.Pages.Shared.Models
 @model ColumnSelectorViewModel
 
 @{
     Layout = null;
+    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var columnsJson = JsonSerializer.Serialize(Model.AvailableColumns, jsonOptions);
+    var selectedFields = Model.SelectedColumns ?? new List<string>();
 }
 
 <div class="card mb-4">
@@ -10,114 +14,128 @@
         <h5 class="mb-0">Visible Columns</h5>
     </div>
     <div class="card-body">
-        <p class="text-muted small mb-3">Select and drag columns to set the order. Search will only match visible columns.</p>
+        <p class="text-muted small mb-3">
+            Select columns to display. Drag to reorder. Search only matches visible columns.
+        </p>
         
-        <div id="columnsList">
-            @{
-                var index = 0;
-                // First, render selected columns in order
-                if (Model.SelectedColumns?.Any() == true)
-                {
-                    foreach (var field in Model.SelectedColumns)
+        <div data-column-selector data-columns="@columnsJson" id="adminColumnSelectorContainer">
+            <div id="adminColumnsList">
+                @{
+                    var hiddenIndex = 0;
+                    // First render selected columns in order
+                    foreach (var field in selectedFields)
                     {
-                        var col = Model.AvailableColumns.FirstOrDefault(c => c.Field == field);
-                        if (col == null) continue;
+                        var col = Model.AvailableColumns.FirstOrDefault(c => c.Field.Equals(field, StringComparison.OrdinalIgnoreCase));
+                        if (col != null)
+                        {
+                            <div class="column-item d-flex align-items-center gap-2 mb-2 p-2 border rounded" data-field="@col.Field">
+                                <span class="drag-handle text-muted" style="cursor: grab;">
+                                    <i class="bi bi-grip-vertical"></i>
+                                </span>
+                                <input type="checkbox" 
+                                       class="form-check-input column-checkbox" 
+                                       id="admincol_@col.Field" 
+                                       data-field="@col.Field"
+                                       checked>
+                                <input type="hidden" name="VisibleColumns[@hiddenIndex]" value="@col.Field" class="column-hidden-input">
+                                <label class="form-check-label flex-grow-1 mb-0" for="admincol_@col.Field">
+                                    @col.Label
+                                </label>
+                            </div>
+                            hiddenIndex++;
+                        }
+                    }
+                    
+                    // Then render unselected columns
+                    foreach (var col in Model.AvailableColumns)
+                    {
+                        if (selectedFields.Any(s => s.Equals(col.Field, StringComparison.OrdinalIgnoreCase)))
+                            continue;
                         
-                        <div class="column-item d-flex align-items-center gap-2 mb-2 p-2 border rounded" data-field="@col.Field">
+                        <div class="column-item d-flex align-items-center gap-2 mb-2 p-2 border rounded bg-light" data-field="@col.Field">
                             <span class="drag-handle text-muted" style="cursor: grab;">
                                 <i class="bi bi-grip-vertical"></i>
                             </span>
-                            <input type="hidden" name="VisibleColumns[@index]" value="@col.Field" class="column-value" />
                             <input type="checkbox" 
                                    class="form-check-input column-checkbox" 
-                                   checked 
-                                   data-field="@col.Field" />
-                            <label class="form-check-label mb-0">@col.Label</label>
+                                   id="admincol_@col.Field"
+                                   data-field="@col.Field">
+                            <label class="form-check-label flex-grow-1 mb-0 text-muted" for="admincol_@col.Field">
+                                @col.Label
+                            </label>
                         </div>
-                        index++;
                     }
                 }
-                
-                // Then, render unselected columns
-                foreach (var col in Model.AvailableColumns)
-                {
-                    if (Model.SelectedColumns?.Contains(col.Field) == true) continue;
-                    
-                    <div class="column-item d-flex align-items-center gap-2 mb-2 p-2 border rounded bg-light" data-field="@col.Field">
-                        <span class="drag-handle text-muted" style="cursor: grab;">
-                            <i class="bi bi-grip-vertical"></i>
-                        </span>
-                        <input type="checkbox" 
-                               class="form-check-input column-checkbox" 
-                               data-field="@col.Field" />
-                        <label class="form-check-label mb-0 text-muted">@col.Label</label>
-                    </div>
-                }
-            }
-        </div>
-        
-        <div class="small text-muted mt-2">
-            At least one column must be selected. Drag to reorder selected columns.
+            </div>
+            
+            <div class="text-muted small mt-2">
+                <i class="bi bi-info-circle me-1"></i>
+                At least one column must be selected.
+            </div>
         </div>
     </div>
 </div>
 
-@section Scripts {
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const container = document.getElementById('columnsList');
-        if (!container) return;
-        
-        // Initialize SortableJS
-        if (typeof Sortable !== 'undefined') {
-            new Sortable(container, {
-                handle: '.drag-handle',
-                animation: 150,
-                onEnd: updateColumnOrder
-            });
-        }
-        
-        // Checkbox handlers
-        container.querySelectorAll('.column-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const item = this.closest('.column-item');
-                const field = this.dataset.field;
-                
-                if (this.checked) {
-                    // Add hidden input
-                    if (!item.querySelector('.column-value')) {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'VisibleColumns[0]'; // Will be reindexed
-                        input.value = field;
-                        input.className = 'column-value';
-                        item.insertBefore(input, item.querySelector('.column-checkbox'));
-                    }
-                    item.classList.remove('bg-light');
-                    item.querySelector('label').classList.remove('text-muted');
-                } else {
-                    // Remove hidden input
-                    const input = item.querySelector('.column-value');
-                    if (input) input.remove();
-                    item.classList.add('bg-light');
-                    item.querySelector('label').classList.add('text-muted');
-                }
-                
-                updateColumnOrder();
-            });
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('adminColumnsList');
+    if (!container) return;
+    
+    // Initialize SortableJS
+    if (typeof Sortable !== 'undefined') {
+        new Sortable(container, {
+            handle: '.drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: updateColumnInputs
         });
-        
-        function updateColumnOrder() {
-            let idx = 0;
-            container.querySelectorAll('.column-item').forEach(item => {
-                const input = item.querySelector('.column-value');
-                if (input) {
-                    input.name = `VisibleColumns[${idx}]`;
-                    idx++;
-                }
-            });
+    }
+    
+    // Handle checkbox changes
+    container.addEventListener('change', function(e) {
+        if (e.target.classList.contains('column-checkbox')) {
+            handleCheckboxChange(e.target);
         }
     });
-    </script>
-}
-
+    
+    function handleCheckboxChange(checkbox) {
+        const item = checkbox.closest('.column-item');
+        const field = checkbox.dataset.field;
+        
+        if (checkbox.checked) {
+            // Add hidden input if not present
+            if (!item.querySelector('.column-hidden-input')) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'VisibleColumns[0]'; // Will be reindexed
+                input.value = field;
+                input.className = 'column-hidden-input';
+                checkbox.parentNode.insertBefore(input, checkbox.nextSibling);
+            }
+            item.classList.remove('bg-light');
+            const label = item.querySelector('label');
+            if (label) label.classList.remove('text-muted');
+        } else {
+            // Remove hidden input
+            const hiddenInput = item.querySelector('.column-hidden-input');
+            if (hiddenInput) hiddenInput.remove();
+            item.classList.add('bg-light');
+            const label = item.querySelector('label');
+            if (label) label.classList.add('text-muted');
+        }
+        
+        updateColumnInputs();
+    }
+    
+    function updateColumnInputs() {
+        let idx = 0;
+        container.querySelectorAll('.column-item').forEach(item => {
+            const hiddenInput = item.querySelector('.column-hidden-input');
+            if (hiddenInput) {
+                hiddenInput.name = `VisibleColumns[${idx}]`;
+                idx++;
+            }
+        });
+    }
+});
+</script>
