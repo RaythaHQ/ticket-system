@@ -575,7 +575,7 @@ public class ViewFilterBuilder
     )
     {
         var field = Expression.Invoke(selector, param);
-        
+
         // Handle "is within" operators with number value
         if (filter.Operator.StartsWith("is_within_"))
         {
@@ -585,7 +585,7 @@ public class ViewFilterBuilder
                 Expression.LessThanOrEqual(field, Expression.Constant(withinEnd))
             );
         }
-        
+
         var (startDate, endDate) = ResolveDateValue(filter);
 
         return filter.Operator switch
@@ -746,7 +746,7 @@ public class ViewFilterBuilder
             IS_WITHIN_NEXT_HOURS => (now, now.AddHours(amount)),
             IS_WITHIN_NEXT_DAYS => (now, now.AddDays(amount)),
             IS_WITHIN_NEXT_MONTHS => (now, now.AddMonths(amount)),
-            _ => (now.AddDays(-1), now) // fallback
+            _ => (now.AddDays(-1), now), // fallback
         };
     }
 
