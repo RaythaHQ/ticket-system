@@ -68,8 +68,8 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                 Title = ticket.Title,
                 AssigneeName = assignee.FullName,
                 Priority = ticket.Priority,
-                SlaDueAt = ticket.SlaDueAt?.ToString("MMM dd, yyyy HH:mm") ?? "-",
-                BreachedAt = ticket.SlaBreachedAt?.ToString("MMM dd, yyyy HH:mm") ?? DateTime.UtcNow.ToString("MMM dd, yyyy HH:mm"),
+                SlaDueAt = ticket.SlaDueAt?.ToString("MMM dd, yyyy h:mm tt") ?? "-",
+                BreachedAt = ticket.SlaBreachedAt?.ToString("MMM dd, yyyy h:mm tt") ?? DateTime.UtcNow.ToString("MMM dd, yyyy h:mm tt"),
                 SlaRuleName = slaRule?.Name ?? "Unknown",
                 TicketUrl = $"{_currentOrganization.PathBase}/staff/tickets/{ticket.Id}"
             };

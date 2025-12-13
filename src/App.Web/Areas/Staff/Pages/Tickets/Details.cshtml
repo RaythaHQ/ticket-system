@@ -300,7 +300,7 @@
 
                         <dt class="col-5 text-muted fw-medium">Due</dt>
                         <dd class="col-7 @GetSlaDueClass(Model.Ticket.SlaStatus)">
-                            @Model.Ticket.SlaDueAt?.ToString("MMM dd, yyyy HH:mm")
+                            @Model.Ticket.SlaDueAt?.ToString("MMM dd, yyyy h:mm tt")
                         </dd>
 
                         <dt class="col-5 text-muted fw-medium">Status</dt>

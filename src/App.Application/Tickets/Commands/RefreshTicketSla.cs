@@ -146,7 +146,7 @@ public class RefreshTicketSla
                     NewValue = ticket.SlaDueAt?.ToString("o") ?? "",
                 };
                 messageParts.Add(
-                    $"SLA due date changed from {oldSlaDueAt?.ToString("MMM dd, yyyy HH:mm") ?? "None"} to {ticket.SlaDueAt?.ToString("MMM dd, yyyy HH:mm") ?? "None"}"
+                    $"SLA due date changed from {oldSlaDueAt?.ToString("MMM dd, yyyy h:mm tt") ?? "None"} to {ticket.SlaDueAt?.ToString("MMM dd, yyyy h:mm tt") ?? "None"}"
                 );
             }
 

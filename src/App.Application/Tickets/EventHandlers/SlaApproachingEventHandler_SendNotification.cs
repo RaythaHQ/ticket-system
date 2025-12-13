@@ -72,7 +72,7 @@ public class SlaApproachingEventHandler_SendNotification : INotificationHandler<
                 Title = ticket.Title,
                 AssigneeName = assignee.FullName,
                 Priority = ticket.Priority,
-                SlaDueAt = ticket.SlaDueAt?.ToString("MMM dd, yyyy HH:mm") ?? "-",
+                SlaDueAt = ticket.SlaDueAt?.ToString("MMM dd, yyyy h:mm tt") ?? "-",
                 TimeRemaining = timeRemaining,
                 SlaRuleName = slaRule?.Name ?? "Unknown",
                 TicketUrl = $"{_currentOrganization.PathBase}/staff/tickets/{ticket.Id}"

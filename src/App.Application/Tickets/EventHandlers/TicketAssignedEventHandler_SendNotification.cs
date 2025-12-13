@@ -71,7 +71,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
                 AssigneeName = assignee.FullName,
                 ContactName = ticket.Contact?.Name,
                 TeamName = ticket.OwningTeam?.Name,
-                SlaDueAt = ticket.SlaDueAt?.ToString("MMM dd, yyyy HH:mm"),
+                SlaDueAt = ticket.SlaDueAt?.ToString("MMM dd, yyyy h:mm tt"),
                 TicketUrl = $"{_currentOrganization.PathBase}/staff/tickets/{ticket.Id}"
             };
 
