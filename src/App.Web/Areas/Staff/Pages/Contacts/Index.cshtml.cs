@@ -51,6 +51,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.ContactListItemViewM
             PrimaryPhone = p.PrimaryPhone ?? "-",
             OrganizationAccount = p.OrganizationAccount ?? "-",
             TicketCount = p.TicketCount,
+            CommentCount = p.CommentCount,
             CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(p.CreationTime)
         });
 
@@ -85,6 +86,8 @@ public class Index : BaseStaffPageModel, IHasListView<Index.ContactListItemViewM
 
         [Display(Name = "Tickets")]
         public int TicketCount { get; init; }
+
+        public int CommentCount { get; init; }
 
         [Display(Name = "Created")]
         public string CreationTime { get; init; } = string.Empty;

@@ -44,6 +44,11 @@ public class GetTickets
         public long? ContactId { get; init; }
 
         /// <summary>
+        /// Optional filter by created by staff ID.
+        /// </summary>
+        public ShortGuid? CreatedByStaffId { get; init; }
+
+        /// <summary>
         /// When true, show only unassigned tickets.
         /// </summary>
         public bool? Unassigned { get; init; }
@@ -142,6 +147,9 @@ public class GetTickets
 
             if (request.ContactId.HasValue)
                 query = query.Where(t => t.ContactId == request.ContactId.Value);
+
+            if (request.CreatedByStaffId.HasValue)
+                query = query.Where(t => t.CreatedByStaffId == request.CreatedByStaffId.Value.Guid);
 
             if (request.Unassigned == true)
             {

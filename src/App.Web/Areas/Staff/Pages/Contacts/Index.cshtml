@@ -78,10 +78,18 @@
                 {
                     <tr>
                         <td>
-                            <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@contact.Id" asp-route-backToListUrl="@backToListUrl"
-                               class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
-                                #@contact.Id
-                            </a>
+                            <div class="d-flex align-items-center gap-2">
+                                <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@contact.Id" asp-route-backToListUrl="@backToListUrl"
+                                   class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
+                                    #@contact.Id
+                                </a>
+                                @if (contact.CommentCount > 0)
+                                {
+                                    <span class="badge bg-primary rounded-pill" style="font-size: 0.75rem; padding: 2px 6px;">
+                                        @contact.CommentCount
+                                    </span>
+                                }
+                            </div>
                         </td>
                         <td>
                             <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@contact.Id" asp-route-backToListUrl="@backToListUrl"

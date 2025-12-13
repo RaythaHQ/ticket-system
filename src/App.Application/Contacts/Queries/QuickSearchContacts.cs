@@ -44,7 +44,11 @@ public class QuickSearchContacts
             CancellationToken cancellationToken
         )
         {
-            var baseQuery = _db.Contacts.AsNoTracking().Include(c => c.Tickets).AsQueryable();
+            var baseQuery = _db.Contacts
+                .AsNoTracking()
+                .Include(c => c.Tickets)
+                .Include(c => c.Comments)
+                .AsQueryable();
 
             var contactResults = new List<Domain.Entities.Contact>();
 

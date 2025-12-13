@@ -61,6 +61,8 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         string? priority = null,
         string? assigneeId = null,
         long? contactId = null,
+        string? teamId = null,
+        string? createdById = null,
         string? viewId = null,
         string? builtInView = null,
         CancellationToken cancellationToken = default
@@ -76,6 +78,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             "my-tickets" => "MyTickets",
             "created-by-me" or "my-opened" => "CreatedByMe",
             "team-tickets" => "TeamTickets",
+            "overdue" => "Overdue",
             "all" or null or "" => "AllTickets",
             _ => null,
         };
@@ -111,9 +114,15 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             orderBy = mappedOrderBy;
         }
 
-        // Parse assigneeId if provided (format: "team:guid" or "team:guid:assignee:guid" or "unassigned")
-        ShortGuid? parsedAssigneeId = null;
+        // Parse teamId if provided directly
         ShortGuid? parsedTeamId = null;
+        if (!string.IsNullOrEmpty(teamId) && ShortGuid.TryParse(teamId, out ShortGuid teamGuid))
+        {
+            parsedTeamId = teamGuid;
+        }
+
+        // Parse assigneeId if provided (format: "team:guid" or "team:guid:assignee:guid" or "unassigned" or plain ShortGuid)
+        ShortGuid? parsedAssigneeId = null;
         bool? unassigned = null;
 
         if (!string.IsNullOrEmpty(assigneeId))
@@ -126,9 +135,16 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             else if (assigneeId.StartsWith("team:"))
             {
                 var parts = assigneeId.Split(':');
-                if (parts.Length >= 2 && ShortGuid.TryParse(parts[1], out ShortGuid teamGuid))
+                if (
+                    parts.Length >= 2
+                    && ShortGuid.TryParse(parts[1], out ShortGuid assigneeTeamGuid)
+                )
                 {
-                    parsedTeamId = teamGuid;
+                    // If teamId wasn't already set, use the one from assigneeId
+                    if (!parsedTeamId.HasValue)
+                    {
+                        parsedTeamId = assigneeTeamGuid;
+                    }
 
                     // Check if there's an assignee part
                     if (
@@ -148,6 +164,21 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                     }
                 }
             }
+            else if (ShortGuid.TryParse(assigneeId, out ShortGuid plainAssigneeGuid))
+            {
+                // Plain ShortGuid - direct assignee ID (from dashboard search)
+                parsedAssigneeId = plainAssigneeGuid;
+            }
+        }
+
+        // Parse createdById if provided
+        ShortGuid? parsedCreatedById = null;
+        if (
+            !string.IsNullOrEmpty(createdById)
+            && ShortGuid.TryParse(createdById, out ShortGuid createdByGuid)
+        )
+        {
+            parsedCreatedById = createdByGuid;
         }
 
         var query = new GetTickets.Query
@@ -161,6 +192,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             AssigneeId = parsedAssigneeId,
             TeamId = parsedTeamId,
             ContactId = contactId,
+            CreatedByStaffId = parsedCreatedById,
             Unassigned = unassigned,
             TeamTickets = builtInView == "team-tickets",
         };
@@ -275,6 +307,25 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 : null,
             // team-tickets is handled via TeamTickets flag in the query
             "team-tickets" => null,
+            "overdue" => new ViewConditions
+            {
+                Logic = "AND",
+                Filters = new List<ViewFilterCondition>
+                {
+                    new()
+                    {
+                        Field = "Status",
+                        Operator = "notin",
+                        Values = new List<string> { TicketStatus.CLOSED, TicketStatus.RESOLVED },
+                    },
+                    new()
+                    {
+                        Field = "SlaStatus",
+                        Operator = "equals",
+                        Value = SlaStatus.BREACHED,
+                    },
+                },
+            },
             TicketStatus.OPEN => new ViewConditions
             {
                 Logic = "AND",

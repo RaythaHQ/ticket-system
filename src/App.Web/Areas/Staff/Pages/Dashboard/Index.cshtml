@@ -254,8 +254,10 @@
                                 </span>
                             </td>
                             <td class="text-end">
-                                <a asp-page="@RouteNames.Tickets.Index" asp-route-teamId="@team.TeamId"
-                                    class="btn btn-sm btn-outline-primary">
+                                <a asp-page="@RouteNames.Tickets.Index" 
+                                   asp-route-builtInView="all"
+                                   asp-route-teamId="@team.TeamId"
+                                   class="btn btn-sm btn-outline-primary">
                                     View Tickets
                                 </a>
                             </td>

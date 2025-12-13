@@ -13,6 +13,7 @@ public record ContactListItemDto : BaseNumericEntityDto
     public string? PrimaryPhone { get; init; }
     public string? OrganizationAccount { get; init; }
     public int TicketCount { get; init; }
+    public int CommentCount { get; init; }
     public DateTime CreationTime { get; init; }
 
     public static ContactListItemDto MapFrom(Contact contact)
@@ -25,6 +26,7 @@ public record ContactListItemDto : BaseNumericEntityDto
             PrimaryPhone = contact.PhoneNumbers.FirstOrDefault(),
             OrganizationAccount = contact.OrganizationAccount,
             TicketCount = contact.Tickets?.Count ?? 0,
+            CommentCount = contact.Comments?.Count ?? 0,
             CreationTime = contact.CreationTime
         };
     }

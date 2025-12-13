@@ -167,14 +167,17 @@ public class Index : BaseStaffPageModel
             queryParams["assigneeId"] = QuickSearchTickets.AssigneeId.Value.ToString();
         }
 
+        // Add CreatedById if provided
+        if (QuickSearchTickets.CreatedById.HasValue)
+        {
+            queryParams["createdById"] = QuickSearchTickets.CreatedById.Value.ToString();
+        }
+
         // Combine search terms
         if (searchTerms.Any())
         {
             queryParams["search"] = string.Join(" ", searchTerms);
         }
-
-        // Note: CreatedById is not directly supported by Tickets Index,
-        // so we'll skip it for now or could be added as a future enhancement
 
         return RedirectToPage(RouteNames.Tickets.Index, queryParams);
     }
@@ -257,7 +260,7 @@ public class Index : BaseStaffPageModel
             })
             .ToList();
 
-        // Get all users for Created By dropdown
+        // Get all users for Created By dropdown - only admins, non-suspended
         var usersResponse = await Mediator.Send(
             new App.Application.Users.Queries.GetUsers.Query
             {
@@ -268,7 +271,7 @@ public class Index : BaseStaffPageModel
         );
 
         AvailableCreatedByUsers = usersResponse
-            .Result.Items.Where(u => u.IsActive)
+            .Result.Items.Where(u => u.IsActive && u.IsAdmin)
             .Select(u => new AssigneeSelectItem
             {
                 Value = u.Id.ToString(),

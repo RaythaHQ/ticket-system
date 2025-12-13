@@ -34,6 +34,7 @@ public class GetContacts
             var query = _db.Contacts
                 .AsNoTracking()
                 .Include(c => c.Tickets)
+                .Include(c => c.Comments)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(request.Search))
