@@ -1,0 +1,115 @@
+@using System.Text.Json
+@model App.Web.Areas.Staff.Pages.Shared.Models.FilterBuilderViewModel
+
+@{
+    Layout = null;
+    var attributesJson = JsonSerializer.Serialize(Model.Attributes);
+    var usersJson = JsonSerializer.Serialize(Model.Users);
+    var teamsJson = JsonSerializer.Serialize(Model.Teams);
+    var statusesJson = JsonSerializer.Serialize(Model.Statuses);
+    var prioritiesJson = JsonSerializer.Serialize(Model.Priorities);
+    var datePresetsJson = JsonSerializer.Serialize(Model.DatePresets);
+}
+
+<div class="staff-card mb-4">
+    <div class="staff-card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+            <i class="fas fa-filter me-2 text-primary"></i>
+            Filter Conditions
+        </h6>
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">Match</span>
+            <button type="button" 
+                    class="btn btn-sm btn-outline-primary px-3"
+                    data-filter-logic="@(Model.Conditions?.Logic ?? "AND")">
+                @(Model.Conditions?.Logic ?? "AND")
+            </button>
+            <span class="text-muted small">of the following conditions</span>
+        </div>
+    </div>
+    <div class="staff-card-body">
+        <div data-filter-builder 
+             data-attributes="@attributesJson"
+             data-users="@usersJson"
+             data-teams="@teamsJson"
+             data-statuses="@statusesJson"
+             data-priorities="@prioritiesJson"
+             data-date-presets="@datePresetsJson">
+            
+            <input type="hidden" name="Conditions.Logic" value="@(Model.Conditions?.Logic ?? "AND")" />
+            
+            <div class="filter-conditions mb-3">
+                @if (Model.Conditions?.Filters?.Any() == true)
+                {
+                    var index = 0;
+                    foreach (var filter in Model.Conditions.Filters)
+                    {
+                        <div class="filter-condition d-flex gap-2 align-items-start mb-2" data-index="@index">
+                            <select name="Conditions.Filters[@index].Field" class="form-select form-select-sm attribute-select" style="width: 200px;">
+                                <option value="">Select field...</option>
+                                @foreach (var attr in Model.Attributes)
+                                {
+                                    var isSelected = filter.Field == attr.Field;
+                                    <option value="@attr.Field" 
+                                            data-type="@attr.Type"
+                                            selected="@isSelected">
+                                        @attr.Label
+                                    </option>
+                                }
+                            </select>
+                            
+                            <select name="Conditions.Filters[@index].Operator" class="form-select form-select-sm operator-select" style="width: 180px;">
+                                @{
+                                    var attrDef = Model.Attributes.FirstOrDefault(a => a.Field == filter.Field);
+                                    if (attrDef?.Operators != null)
+                                    {
+                                        foreach (var op in attrDef.Operators)
+                                        {
+                                            var isOpSelected = filter.Operator == op.Value;
+                                            <option value="@op.Value"
+                                                    data-requires-value="@op.RequiresValue.ToString().ToLower()"
+                                                    data-multiple="@op.AllowsMultipleValues.ToString().ToLower()"
+                                                    selected="@isOpSelected">
+                                                @op.Label
+                                            </option>
+                                        }
+                                    }
+                                }
+                            </select>
+                            
+                            <div class="value-input-container flex-grow-1" style="min-width: 200px;">
+                                <input type="text" 
+                                       name="Conditions.Filters[@index].Value" 
+                                       class="form-control form-control-sm value-input" 
+                                       value="@filter.Value"
+                                       placeholder="Value...">
+                            </div>
+                            
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-condition" title="Remove condition">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        index++;
+                    }
+                }
+            </div>
+            
+            <button type="button" class="btn btn-sm btn-outline-primary" data-add-condition>
+                <i class="fas fa-plus me-1"></i> Add Condition
+            </button>
+            
+            @if (Model.ShowHelp)
+            {
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Use "Match AND" to require all conditions, or "Match OR" to show tickets matching any condition.
+                </p>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/admin/js/shared/filter-builder.js"></script>
+}
+

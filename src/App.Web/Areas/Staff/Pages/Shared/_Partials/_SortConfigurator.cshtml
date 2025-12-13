@@ -1,0 +1,83 @@
+@using System.Text.Json
+@model App.Web.Areas.Staff.Pages.Shared.Models.SortConfiguratorViewModel
+
+@{
+    Layout = null;
+    var fieldsJson = JsonSerializer.Serialize(Model.SortableFields);
+}
+
+<div class="staff-card mb-4">
+    <div class="staff-card-header">
+        <h6 class="mb-0">
+            <i class="fas fa-sort me-2 text-primary"></i>
+            Sort Order
+        </h6>
+    </div>
+    <div class="staff-card-body">
+        <div data-sort-configurator data-sort-fields="@fieldsJson">
+            <div class="sort-levels mb-3">
+                @if (Model.SortLevels?.Any() == true)
+                {
+                    var index = 0;
+                    foreach (var level in Model.SortLevels.OrderBy(l => l.Order))
+                    {
+                        <div class="sort-level d-flex gap-2 align-items-center mb-2 p-2 bg-light rounded" data-index="@index">
+                            <span class="drag-handle text-muted cursor-move" title="Drag to reorder">
+                                <i class="fas fa-grip-vertical"></i>
+                            </span>
+                            
+                            <input type="hidden" name="SortLevels[@index].Order" class="order-input" value="@index">
+                            
+                            <select name="SortLevels[@index].Field" class="form-select form-select-sm field-select" style="flex: 1;">
+                                <option value="">Select field...</option>
+                                @foreach (var field in Model.SortableFields)
+                                {
+                                    var isFieldSelected = level.Field == field.Field;
+                                    <option value="@field.Field" selected="@isFieldSelected">
+                                        @field.Label
+                                    </option>
+                                }
+                            </select>
+                            
+                            <button type="button" 
+                                    class="btn btn-sm btn-outline-secondary direction-toggle" 
+                                    data-direction="@level.Direction" 
+                                    title="Toggle sort direction">
+                                <i class="fas fa-arrow-@(level.Direction == "desc" ? "down" : "up")"></i>
+                                <span class="ms-1">@(level.Direction == "desc" ? "DESC" : "ASC")</span>
+                            </button>
+                            <input type="hidden" name="SortLevels[@index].Direction" class="direction-input" value="@level.Direction">
+                            
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-level" title="Remove sort level">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        index++;
+                    }
+                }
+            </div>
+            
+            <button type="button" class="btn btn-sm btn-outline-primary" data-add-sort-level>
+                <i class="fas fa-plus me-1"></i> Add Sort Level
+            </button>
+            
+            @if (Model.ShowHelp)
+            {
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Drag levels to reorder. First level is primary sort, subsequent levels break ties.
+                </p>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+.cursor-move { cursor: move; }
+.sort-level-ghost { opacity: 0.4; background: #e3f2fd !important; }
+</style>
+
+@section Scripts {
+    <script src="~/admin/js/shared/sort-configurator.js"></script>
+}
+
