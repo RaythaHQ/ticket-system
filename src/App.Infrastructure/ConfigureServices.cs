@@ -94,9 +94,16 @@ public static class ConfigureServices
         // SLA evaluation background job
         services.AddSingleton<IHostedService, SlaEvaluationJob>();
 
+        // Ticket export background task
+        services.AddScoped<App.Application.Exports.Commands.TicketExportJob, TicketExportBackgroundTask>();
+        
+        // Export cleanup background job
+        services.AddSingleton<IHostedService, ExportCleanupJob>();
+
         // Ticketing services
         services.AddScoped<IRoundRobinService, RoundRobinService>();
         services.AddScoped<ISlaService, SlaService>();
+        services.AddScoped<ITicketConfigService, TicketConfigService>();
 
         return services;
     }

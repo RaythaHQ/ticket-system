@@ -20,12 +20,19 @@ public class ChangeTicketPriority
 
     public class Validator : AbstractValidator<Command>
     {
-        public Validator()
+        public Validator(IAppDbContext db)
         {
             RuleFor(x => x.Id).GreaterThan(0);
+
+            // Validate priority against configured active priorities
             RuleFor(x => x.NewPriority)
-                .Must(p => TicketPriority.SupportedTypes.Any(t => t.DeveloperName == p))
-                .WithMessage("Invalid priority value.");
+                .NotEmpty()
+                .MustAsync(async (priority, cancellationToken) =>
+                {
+                    return await db.TicketPriorityConfigs
+                        .AnyAsync(p => p.DeveloperName == priority.ToLower() && p.IsActive, cancellationToken);
+                })
+                .WithMessage("Invalid or inactive priority value.");
         }
     }
 

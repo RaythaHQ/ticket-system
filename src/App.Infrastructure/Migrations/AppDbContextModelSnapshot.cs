@@ -450,6 +450,89 @@ namespace App.Infrastructure.Migrations
                     b.ToTable("EmailTemplateRevisions");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.ExportJob", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("BackgroundTaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsCleanedUp")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("MediaItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("ProgressPercent")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ProgressStage")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RequesterUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("RowCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SnapshotPayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BackgroundTaskId");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("ExpiresAt");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.HasIndex("MediaItemId");
+
+                    b.HasIndex("RequesterUserId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("ExpiresAt", "IsCleanedUp");
+
+                    b.ToTable("ExportJobs");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.FailedLoginAttempt", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1094,6 +1177,140 @@ namespace App.Infrastructure.Migrations
                     b.ToTable("TicketComments");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.TicketPriorityConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ColorName")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("secondary");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DeveloperName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsBuiltIn")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("DeveloperName")
+                        .IsUnique();
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("IsDefault");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.ToTable("TicketPriorityConfigs");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.TicketStatusConfig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ColorName")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("secondary");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DeveloperName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsBuiltIn")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StatusType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("open");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("DeveloperName")
+                        .IsUnique();
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.HasIndex("StatusType");
+
+                    b.ToTable("TicketStatusConfigs");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.TicketView", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1503,6 +1720,43 @@ namespace App.Infrastructure.Migrations
                     b.Navigation("LastModifierUser");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.ExportJob", b =>
+                {
+                    b.HasOne("App.Domain.Entities.BackgroundTask", "BackgroundTask")
+                        .WithMany()
+                        .HasForeignKey("BackgroundTaskId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.HasOne("App.Domain.Entities.MediaItem", "MediaItem")
+                        .WithMany()
+                        .HasForeignKey("MediaItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("App.Domain.Entities.User", "Requester")
+                        .WithMany()
+                        .HasForeignKey("RequesterUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BackgroundTask");
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("LastModifierUser");
+
+                    b.Navigation("MediaItem");
+
+                    b.Navigation("Requester");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.MediaItem", b =>
                 {
                     b.HasOne("App.Domain.Entities.User", "CreatorUser")
@@ -1756,6 +2010,36 @@ namespace App.Infrastructure.Migrations
                     b.Navigation("LastModifierUser");
 
                     b.Navigation("Ticket");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.TicketPriorityConfig", b =>
+                {
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("LastModifierUser");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.TicketStatusConfig", b =>
+                {
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("LastModifierUser");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.TicketView", b =>

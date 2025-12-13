@@ -87,6 +87,8 @@ public class InitialSetup
             InsertDefaultRolesAndSuperAdmin(request);
             InsertDefaultEmailTemplates();
             InsertDefaultAuthentications();
+            InsertDefaultTicketPriorities();
+            InsertDefaultTicketStatuses();
             await _db.SaveChangesAsync(cancellationToken);
 
             return new CommandResponseDto<ShortGuid>(orgSettingsGuid);
@@ -207,6 +209,118 @@ public class InitialSetup
                 },
             };
             _db.AuthenticationSchemes.AddRange(list);
+        }
+
+        protected void InsertDefaultTicketPriorities()
+        {
+            var priorities = new List<TicketPriorityConfig>
+            {
+                new TicketPriorityConfig
+                {
+                    Id = Guid.NewGuid(),
+                    Label = "Urgent",
+                    DeveloperName = "urgent",
+                    ColorName = "danger",
+                    SortOrder = 1,
+                    IsDefault = false,
+                    IsBuiltIn = true,
+                    IsActive = true,
+                    CreationTime = DateTime.UtcNow,
+                },
+                new TicketPriorityConfig
+                {
+                    Id = Guid.NewGuid(),
+                    Label = "High",
+                    DeveloperName = "high",
+                    ColorName = "warning",
+                    SortOrder = 2,
+                    IsDefault = false,
+                    IsBuiltIn = true,
+                    IsActive = true,
+                    CreationTime = DateTime.UtcNow,
+                },
+                new TicketPriorityConfig
+                {
+                    Id = Guid.NewGuid(),
+                    Label = "Normal",
+                    DeveloperName = "normal",
+                    ColorName = "primary",
+                    SortOrder = 3,
+                    IsDefault = true,
+                    IsBuiltIn = true,
+                    IsActive = true,
+                    CreationTime = DateTime.UtcNow,
+                },
+                new TicketPriorityConfig
+                {
+                    Id = Guid.NewGuid(),
+                    Label = "Low",
+                    DeveloperName = "low",
+                    ColorName = "secondary",
+                    SortOrder = 4,
+                    IsDefault = false,
+                    IsBuiltIn = true,
+                    IsActive = true,
+                    CreationTime = DateTime.UtcNow,
+                },
+            };
+            _db.TicketPriorityConfigs.AddRange(priorities);
+        }
+
+        protected void InsertDefaultTicketStatuses()
+        {
+            var statuses = new List<TicketStatusConfig>
+            {
+                new TicketStatusConfig
+                {
+                    Id = Guid.NewGuid(),
+                    Label = "New",
+                    DeveloperName = "new",
+                    ColorName = "primary",
+                    SortOrder = 1,
+                    StatusType = TicketStatusType.OPEN,
+                    IsBuiltIn = true,
+                    IsActive = true,
+                    CreationTime = DateTime.UtcNow,
+                },
+                new TicketStatusConfig
+                {
+                    Id = Guid.NewGuid(),
+                    Label = "In Progress",
+                    DeveloperName = "in_progress",
+                    ColorName = "info",
+                    SortOrder = 2,
+                    StatusType = TicketStatusType.OPEN,
+                    IsBuiltIn = true,
+                    IsActive = true,
+                    CreationTime = DateTime.UtcNow,
+                },
+                new TicketStatusConfig
+                {
+                    Id = Guid.NewGuid(),
+                    Label = "Pending",
+                    DeveloperName = "pending",
+                    ColorName = "warning",
+                    SortOrder = 3,
+                    StatusType = TicketStatusType.OPEN,
+                    IsBuiltIn = true,
+                    IsActive = true,
+                    CreationTime = DateTime.UtcNow,
+                },
+                new TicketStatusConfig
+                {
+                    Id = Guid.NewGuid(),
+                    Label = "Closed",
+                    DeveloperName = "closed",
+                    ColorName = "secondary",
+                    SortOrder = 4,
+                    StatusType = TicketStatusType.CLOSED,
+                    IsBuiltIn = true,
+                    IsActive = true,
+                    CreationTime = DateTime.UtcNow,
+                },
+            };
+            _db.TicketStatusConfigs.AddRange(statuses);
         }
     }
 }

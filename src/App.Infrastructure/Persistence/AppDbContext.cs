@@ -58,6 +58,11 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     public DbSet<SlaRule> SlaRules => Set<SlaRule>();
     public DbSet<TicketView> TicketViews => Set<TicketView>();
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+    public DbSet<ExportJob> ExportJobs => Set<ExportJob>();
+
+    // Ticket configuration entities
+    public DbSet<TicketPriorityConfig> TicketPriorityConfigs => Set<TicketPriorityConfig>();
+    public DbSet<TicketStatusConfig> TicketStatusConfigs => Set<TicketStatusConfig>();
 
     public DbContext DbContext => this;
 

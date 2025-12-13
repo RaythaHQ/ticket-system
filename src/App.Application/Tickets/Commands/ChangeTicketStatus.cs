@@ -21,12 +21,19 @@ public class ChangeTicketStatus
 
     public class Validator : AbstractValidator<Command>
     {
-        public Validator()
+        public Validator(IAppDbContext db)
         {
             RuleFor(x => x.Id).GreaterThan(0);
+
+            // Validate status against configured active statuses
             RuleFor(x => x.NewStatus)
-                .Must(s => TicketStatus.SupportedTypes.Any(t => t.DeveloperName == s))
-                .WithMessage("Invalid status value.");
+                .NotEmpty()
+                .MustAsync(async (status, cancellationToken) =>
+                {
+                    return await db.TicketStatusConfigs
+                        .AnyAsync(s => s.DeveloperName == status.ToLower() && s.IsActive, cancellationToken);
+                })
+                .WithMessage("Invalid or inactive status value.");
         }
     }
 
@@ -35,12 +42,14 @@ public class ChangeTicketStatus
         private readonly IAppDbContext _db;
         private readonly ICurrentUser _currentUser;
         private readonly ITicketPermissionService _permissionService;
+        private readonly ITicketConfigService _configService;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser, ITicketPermissionService permissionService)
+        public Handler(IAppDbContext db, ICurrentUser currentUser, ITicketPermissionService permissionService, ITicketConfigService configService)
         {
             _db = db;
             _currentUser = currentUser;
             _permissionService = permissionService;
+            _configService = configService;
         }
 
         public async ValueTask<CommandResponseDto<long>> Handle(
@@ -57,39 +66,54 @@ public class ChangeTicketStatus
                 throw new NotFoundException("Ticket", request.Id);
 
             var oldStatus = ticket.Status;
-            if (oldStatus == request.NewStatus)
+            var newStatusLower = request.NewStatus.ToLower();
+            if (oldStatus == newStatusLower)
             {
                 return new CommandResponseDto<long>(ticket.Id);
             }
 
-            ticket.Status = request.NewStatus;
+            ticket.Status = newStatusLower;
 
-            // Handle resolved timestamp
-            if (request.NewStatus == TicketStatus.RESOLVED && ticket.ResolvedAt == null)
+            // Get status configs to determine status types
+            var newStatusConfig = await _configService.GetStatusByDeveloperNameAsync(newStatusLower, cancellationToken);
+            var oldStatusConfig = await _configService.GetStatusByDeveloperNameAsync(oldStatus, cancellationToken);
+
+            // Handle resolved/closed timestamps based on status type
+            if (newStatusConfig?.IsClosedType == true)
             {
-                ticket.ResolvedAt = DateTime.UtcNow;
+                // Moving to a closed status
+                if (ticket.ResolvedAt == null)
+                {
+                    ticket.ResolvedAt = DateTime.UtcNow;
+                }
+                ticket.ClosedAt = DateTime.UtcNow;
             }
-            else if (request.NewStatus != TicketStatus.RESOLVED && request.NewStatus != TicketStatus.CLOSED)
+            else if (oldStatusConfig?.IsClosedType == true && newStatusConfig?.IsOpenType == true)
             {
+                // Reopening from closed to open
                 ticket.ResolvedAt = null;
+                ticket.ClosedAt = null;
             }
 
             // Add change log entry
             var changes = new Dictionary<string, object>
             {
-                ["Status"] = new { OldValue = oldStatus, NewValue = request.NewStatus }
+                ["Status"] = new { OldValue = oldStatus, NewValue = newStatusLower }
             };
+
+            var oldLabel = oldStatusConfig?.Label ?? oldStatus;
+            var newLabel = newStatusConfig?.Label ?? newStatusLower;
 
             var changeLog = new TicketChangeLogEntry
             {
                 TicketId = ticket.Id,
                 ActorStaffId = _currentUser.UserId?.Guid,
                 FieldChangesJson = JsonSerializer.Serialize(changes),
-                Message = $"Status changed from {TicketStatus.From(oldStatus).Label} to {TicketStatus.From(request.NewStatus).Label}"
+                Message = $"Status changed from {oldLabel} to {newLabel}"
             };
             ticket.ChangeLogEntries.Add(changeLog);
 
-            ticket.AddDomainEvent(new TicketStatusChangedEvent(ticket, oldStatus, request.NewStatus));
+            ticket.AddDomainEvent(new TicketStatusChangedEvent(ticket, oldStatus, newStatusLower));
 
             await _db.SaveChangesAsync(cancellationToken);
             return new CommandResponseDto<long>(ticket.Id);

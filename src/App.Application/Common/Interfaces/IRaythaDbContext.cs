@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using App.Domain.Entities;
+﻿using App.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Common.Interfaces;
 
@@ -34,6 +34,11 @@ public interface IAppDbContext
     public DbSet<SlaRule> SlaRules { get; }
     public DbSet<TicketView> TicketViews { get; }
     public DbSet<NotificationPreference> NotificationPreferences { get; }
+    public DbSet<ExportJob> ExportJobs { get; }
+
+    // Ticket configuration entities
+    public DbSet<TicketPriorityConfig> TicketPriorityConfigs { get; }
+    public DbSet<TicketStatusConfig> TicketStatusConfigs { get; }
 
     public DbContext DbContext { get; }
 

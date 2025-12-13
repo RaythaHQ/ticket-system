@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using App.Application.Common.Interfaces;
 using App.Application.Tickets;
 using App.Application.Tickets.Queries;
+using App.Application.TicketConfig;
 using App.Application.TicketViews;
 using App.Application.TicketViews.Queries;
 using App.Domain.ValueObjects;
@@ -16,6 +18,13 @@ namespace App.Web.Areas.Staff.Pages.Tickets;
 /// </summary>
 public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewModel>
 {
+    private readonly ITicketConfigService _configService;
+
+    public Index(ITicketConfigService configService)
+    {
+        _configService = configService;
+    }
+
     /// <summary>
     /// Gets or sets the list view model containing paginated ticket data.
     /// </summary>
@@ -47,6 +56,21 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
     /// Available assignees for filtering (all individuals from all teams).
     /// </summary>
     public List<AssigneeFilterItem> AvailableAssignees { get; set; } = new();
+
+    /// <summary>
+    /// Available statuses for filtering.
+    /// </summary>
+    public IReadOnlyList<TicketStatusConfigDto> AvailableStatuses { get; set; } = new List<TicketStatusConfigDto>();
+
+    /// <summary>
+    /// Available priorities for filtering.
+    /// </summary>
+    public IReadOnlyList<TicketPriorityConfigDto> AvailablePriorities { get; set; } = new List<TicketPriorityConfigDto>();
+
+    /// <summary>
+    /// Whether the current user can export tickets.
+    /// </summary>
+    public bool CanExport { get; set; }
 
     /// <summary>
     /// Handles GET requests to display the paginated list of tickets.
@@ -106,6 +130,10 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 DisplayText = a.DisplayText,
             })
             .ToList();
+
+        // Load statuses and priorities for filters
+        AvailableStatuses = await _configService.GetAllStatusesAsync(includeInactive: true, cancellationToken);
+        AvailablePriorities = await _configService.GetAllPrioritiesAsync(includeInactive: true, cancellationToken);
 
         // Map sortBy to orderBy
         var mappedOrderBy = MapSortByToOrderBy(sortBy);
@@ -248,15 +276,135 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             PageSize = pageSize,
         };
 
+        // Check if user can export (has ImportExportTickets permission)
+        CanExport = CurrentUser.SystemPermissions.Contains(
+            Domain.Entities.BuiltInSystemPermission.IMPORT_EXPORT_TICKETS_PERMISSION);
+
         return Page();
     }
 
-    private Task<ViewConditions?> GetBuiltInViewConditionsAsync(
+    /// <summary>
+    /// Handles POST to initiate a CSV export of the current view.
+    /// </summary>
+    public async Task<IActionResult> OnPostExportAsync(
+        string? viewId = null,
+        string? builtInView = null,
+        string? search = null,
+        string? status = null,
+        string? priority = null,
+        string? sortBy = null,
+        CancellationToken cancellationToken = default)
+    {
+        // Build export snapshot payload
+        var columns = new List<string>
+        {
+            "id", "title", "status", "priority", "category",
+            "contactname", "assigneename", "teamname", "creationtime"
+        };
+
+        var filters = new List<Application.Exports.Models.ExportFilter>();
+        if (!string.IsNullOrEmpty(status))
+        {
+            filters.Add(new Application.Exports.Models.ExportFilter
+            {
+                Field = "status",
+                Operator = "equals",
+                Value = status
+            });
+        }
+        if (!string.IsNullOrEmpty(priority))
+        {
+            filters.Add(new Application.Exports.Models.ExportFilter
+            {
+                Field = "priority",
+                Operator = "equals",
+                Value = priority
+            });
+        }
+
+        // Handle built-in view conditions
+        if (!string.IsNullOrEmpty(builtInView))
+        {
+            var conditions = await GetBuiltInViewConditionsAsync(builtInView, cancellationToken);
+            if (conditions != null)
+            {
+                foreach (var filter in conditions.Filters)
+                {
+                    filters.Add(new Application.Exports.Models.ExportFilter
+                    {
+                        Field = filter.Field,
+                        Operator = filter.Operator,
+                        Value = filter.Value
+                    });
+                }
+            }
+        }
+
+        var sortField = "creationtime";
+        var sortDirection = "desc";
+        switch (sortBy?.ToLower())
+        {
+            case "oldest":
+                sortDirection = "asc";
+                break;
+            case "priority":
+                sortField = "priority";
+                break;
+            case "status":
+                sortField = "status";
+                sortDirection = "asc";
+                break;
+        }
+
+        Guid? parsedViewId = null;
+        if (!string.IsNullOrEmpty(viewId))
+        {
+            if (ShortGuid.TryParse(viewId, out ShortGuid shortViewId))
+            {
+                parsedViewId = shortViewId.Guid;
+            }
+        }
+
+        var snapshotPayload = new Application.Exports.Models.ExportSnapshotPayload
+        {
+            ViewId = parsedViewId,
+            Filters = filters,
+            SearchTerm = search,
+            SortField = sortField,
+            SortDirection = sortDirection,
+            Columns = columns,
+        };
+
+        var command = new Application.Exports.Commands.CreateExportJob.Command
+        {
+            SnapshotPayload = snapshotPayload
+        };
+
+        var response = await Mediator.Send(command, cancellationToken);
+
+        if (response.Success)
+        {
+            return RedirectToPage("/Exports/Status", new { id = response.Result });
+        }
+        else
+        {
+            SetErrorMessage(!string.IsNullOrEmpty(response.Error) ? response.Error : "Failed to start export.");
+            return RedirectToPage();
+        }
+    }
+
+    private async Task<ViewConditions?> GetBuiltInViewConditionsAsync(
         string key,
         CancellationToken cancellationToken
     )
     {
         var currentUserId = CurrentUser.UserId?.Guid;
+
+        // Get closed status developer names for filtering
+        var closedStatusNames = AvailableStatuses
+            .Where(s => s.IsClosedType)
+            .Select(s => s.DeveloperName)
+            .ToList();
 
         ViewConditions? result = key switch
         {
@@ -269,9 +417,9 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                     new() { Field = "AssigneeId", Operator = "isnull" },
                     new()
                     {
-                        Field = "Status",
-                        Operator = "notin",
-                        Values = new List<string> { TicketStatus.CLOSED },
+                        Field = "StatusType",
+                        Operator = "equals",
+                        Value = TicketStatusType.OPEN,
                     },
                 },
             },
@@ -314,9 +462,9 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 {
                     new()
                     {
-                        Field = "Status",
-                        Operator = "notin",
-                        Values = new List<string> { TicketStatus.CLOSED, TicketStatus.RESOLVED },
+                        Field = "StatusType",
+                        Operator = "equals",
+                        Value = TicketStatusType.OPEN,
                     },
                     new()
                     {
@@ -326,36 +474,36 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                     },
                 },
             },
-            TicketStatus.OPEN => new ViewConditions
+            "open" => new ViewConditions
             {
                 Logic = "AND",
                 Filters = new List<ViewFilterCondition>
                 {
                     new()
                     {
-                        Field = "Status",
+                        Field = "StatusType",
                         Operator = "equals",
-                        Value = TicketStatus.OPEN,
+                        Value = TicketStatusType.OPEN,
                     },
                 },
             },
-            "recently-closed" => new ViewConditions
+            "closed" or "recently-closed" => new ViewConditions
             {
                 Logic = "AND",
                 Filters = new List<ViewFilterCondition>
                 {
                     new()
                     {
-                        Field = "Status",
+                        Field = "StatusType",
                         Operator = "equals",
-                        Value = TicketStatus.CLOSED,
+                        Value = TicketStatusType.CLOSED,
                     },
                 },
             },
             _ => null,
         };
 
-        return Task.FromResult(result);
+        return result;
     }
 
     private string? MapSortByToOrderBy(string sortBy)

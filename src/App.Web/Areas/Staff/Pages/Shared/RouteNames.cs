@@ -47,6 +47,14 @@ public static class RouteNames
     }
 
     /// <summary>
+    /// Route constants for export pages.
+    /// </summary>
+    public static class Exports
+    {
+        public const string Status = "/Exports/Status";
+    }
+
+    /// <summary>
     /// Route constants for error pages.
     /// </summary>
     public static class Error

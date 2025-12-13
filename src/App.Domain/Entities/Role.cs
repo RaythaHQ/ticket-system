@@ -90,6 +90,7 @@ public enum SystemPermissions
     ManageTickets = 64,
     AccessReports = 128,
     ManageSystemViews = 256,
+    ImportExportTickets = 512,
 }
 
 public class BuiltInSystemPermission : ValueObject
@@ -104,6 +105,7 @@ public class BuiltInSystemPermission : ValueObject
     public const string MANAGE_TICKETS_PERMISSION = "manage_tickets";
     public const string ACCESS_REPORTS_PERMISSION = "access_reports";
     public const string MANAGE_SYSTEM_VIEWS_PERMISSION = "manage_system_views";
+    public const string IMPORT_EXPORT_TICKETS_PERMISSION = "import_export_tickets";
 
     static BuiltInSystemPermission() { }
 
@@ -155,6 +157,8 @@ public class BuiltInSystemPermission : ValueObject
             permissions.Add(AccessReports);
         if (permission.HasFlag(SystemPermissions.ManageSystemViews))
             permissions.Add(ManageSystemViews);
+        if (permission.HasFlag(SystemPermissions.ImportExportTickets))
+            permissions.Add(ImportExportTickets);
         return permissions;
     }
 
@@ -203,6 +207,8 @@ public class BuiltInSystemPermission : ValueObject
         new("Access Reports", ACCESS_REPORTS_PERMISSION, SystemPermissions.AccessReports);
     public static BuiltInSystemPermission ManageSystemViews =>
         new("Manage System Views", MANAGE_SYSTEM_VIEWS_PERMISSION, SystemPermissions.ManageSystemViews);
+    public static BuiltInSystemPermission ImportExportTickets =>
+        new("Import / Export Tickets", IMPORT_EXPORT_TICKETS_PERMISSION, SystemPermissions.ImportExportTickets);
 
     public string Label { get; private set; } = string.Empty;
     public string DeveloperName { get; private set; } = string.Empty;
@@ -237,6 +243,7 @@ public class BuiltInSystemPermission : ValueObject
             yield return ManageTickets;
             yield return AccessReports;
             yield return ManageSystemViews;
+            yield return ImportExportTickets;
         }
     }
 
@@ -252,7 +259,8 @@ public class BuiltInSystemPermission : ValueObject
                 | ManageTeams.Permission
                 | ManageTickets.Permission
                 | AccessReports.Permission
-                | ManageSystemViews.Permission;
+                | ManageSystemViews.Permission
+                | ImportExportTickets.Permission;
         }
     }
 

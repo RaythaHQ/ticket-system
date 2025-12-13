@@ -1,0 +1,254 @@
+@page "/admin/tickets/statuses"
+@model App.Web.Areas.Admin.Pages.Statuses.Index
+@using App.Web.Areas.Shared.Models
+@using App.Domain.ValueObjects
+
+@{
+    var pageTitle = "Ticket Statuses";
+    Layout = "SidebarLayout";
+    ViewData["Title"] = pageTitle;
+    ViewData["ActiveMenu"] = "TicketStatuses";
+    ViewData["ExpandTicketingMenu"] = true;
+}
+
+<div>
+    <partial name="_Partials/PageHeading" model="pageTitle" />
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <p class="text-muted mb-1">
+                Drag and drop to reorder statuses. The order affects dropdown display and sorting.
+            </p>
+            <p class="text-muted mb-0">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>Important:</strong> The first status is used as the default for new tickets and must be of type "Open".
+            </p>
+        </div>
+        <a asp-page="@RouteNames.TicketStatuses.Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> Add Status
+        </a>
+    </div>
+
+    <div class="card border-0 shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th style="width: 50px;"></th>
+                            <th>Status</th>
+                            <th>Developer Name</th>
+                            <th class="text-center">Type</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="statuses-list">
+                        @foreach (var status in Model.Statuses)
+                        {
+                            var isFirst = status.SortOrder == 1;
+                            <tr data-id="@status.Id" class="@(!status.IsActive ? "table-secondary" : "")">
+                                <td class="text-center">
+                                    <i class="bi bi-grip-vertical drag-handle" style="cursor: grab; color: #adb5bd;"></i>
+                                </td>
+                                <td>
+                                    <span class="badge bg-@status.ColorName me-2 @(status.ColorName == "light" ? "text-dark border" : "")" style="min-width: 100px;">
+                                        @status.Label
+                                    </span>
+                                    @if (status.IsBuiltIn)
+                                    {
+                                        <span class="badge bg-light text-dark border">
+                                            <i class="bi bi-lock-fill me-1"></i>Built-in
+                                        </span>
+                                    }
+                                    @if (isFirst)
+                                    {
+                                        <span class="badge bg-success ms-1">
+                                            <i class="bi bi-star-fill me-1"></i>Default
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <code class="text-muted">@status.DeveloperName</code>
+                                </td>
+                                <td class="text-center">
+                                    @if (status.StatusType == TicketStatusType.OPEN)
+                                    {
+                                        <span class="badge bg-primary">
+                                            <i class="bi bi-circle me-1"></i>Open
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-check-circle me-1"></i>Closed
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @if (status.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-page="@RouteNames.TicketStatuses.Edit" asp-route-id="@status.Id"
+                                            class="btn btn-outline-secondary">
+                                            Edit
+                                        </a>
+                                        @if (!isFirst)
+                                        {
+                                            @if (status.IsActive)
+                                            {
+                                                <button type="button" class="btn btn-outline-warning toggle-active-btn"
+                                                        data-id="@status.Id" data-active="false"
+                                                        title="Deactivate">
+                                                    <i class="bi bi-pause-fill"></i>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="btn btn-outline-success toggle-active-btn"
+                                                        data-id="@status.Id" data-active="true"
+                                                        title="Activate">
+                                                    <i class="bi bi-play-fill"></i>
+                                                </button>
+                                            }
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Status Types</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><span class="badge bg-primary"><i class="bi bi-circle me-1"></i>Open</span> - Ticket is active and being worked on</p>
+                    <p class="mb-0"><span class="badge bg-secondary"><i class="bi bi-check-circle me-1"></i>Closed</span> - Ticket is complete or resolved</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Color Legend</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-danger">Danger</span>
+                        <span class="badge bg-warning text-dark">Warning</span>
+                        <span class="badge bg-primary">Primary</span>
+                        <span class="badge bg-success">Success</span>
+                        <span class="badge bg-info">Info</span>
+                        <span class="badge bg-secondary">Secondary</span>
+                        <span class="badge bg-light text-dark border">Light</span>
+                        <span class="badge bg-dark">Dark</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/admin/lib/sortablejs/Sortable.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const list = document.getElementById('statuses-list');
+            
+            // Initialize Sortable
+            const sortable = new Sortable(list, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'table-primary',
+                onEnd: function(evt) {
+                    saveOrder();
+                }
+            });
+
+            function saveOrder() {
+                const rows = list.querySelectorAll('tr[data-id]');
+                const orderedIds = Array.from(rows).map(row => row.dataset.id);
+
+                fetch('?handler=Reorder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify({ orderedIds: orderedIds })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.text().then(text => {
+                            throw new Error(text || 'Failed to save order');
+                        });
+                    }
+                })
+                .then(data => {
+                    if (!data.success) {
+                        alert('Failed to save order');
+                        location.reload();
+                    } else {
+                        location.reload(); // Refresh to update "Default" badge
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to save order: ' + error.message);
+                    location.reload();
+                });
+            }
+
+            // Toggle active handlers
+            document.querySelectorAll('.toggle-active-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const isActive = this.dataset.active === 'true';
+
+                    fetch('?handler=ToggleActive', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        },
+                        body: JSON.stringify({ id: id, isActive: isActive })
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            return response.text().then(text => {
+                                alert('Failed: ' + text);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to update status');
+                    });
+                });
+            });
+        });
+    </script>
+    <form method="post">
+        @Html.AntiForgeryToken()
+    </form>
+}
+

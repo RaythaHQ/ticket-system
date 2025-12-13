@@ -20,14 +20,31 @@ public class TicketStatus : ValueObject
 
     public static TicketStatus From(string developerName)
     {
+        if (string.IsNullOrEmpty(developerName))
+        {
+            return Open; // Default fallback
+        }
+
         var type = SupportedTypes.FirstOrDefault(p => p.DeveloperName == developerName.ToLower());
 
         if (type == null)
         {
-            throw new TicketStatusNotFoundException(developerName);
+            // Return a dynamic status for custom/unknown values
+            // This supports configurable statuses from the database
+            return new TicketStatus(
+                ToPascalCase(developerName),
+                developerName.ToLower()
+            );
         }
 
         return type;
+    }
+
+    private static string ToPascalCase(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return input;
+        var words = input.Replace("_", " ").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(" ", words.Select(w => char.ToUpper(w[0]) + w.Substring(1).ToLower()));
     }
 
     public static TicketStatus Open => new("Open", OPEN);

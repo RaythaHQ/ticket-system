@@ -31,12 +31,14 @@ public class ReopenTicket
         private readonly IAppDbContext _db;
         private readonly ICurrentUser _currentUser;
         private readonly ITicketPermissionService _permissionService;
+        private readonly ITicketConfigService _configService;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser, ITicketPermissionService permissionService)
+        public Handler(IAppDbContext db, ICurrentUser currentUser, ITicketPermissionService permissionService, ITicketConfigService configService)
         {
             _db = db;
             _currentUser = currentUser;
             _permissionService = permissionService;
+            _configService = configService;
         }
 
         public async ValueTask<CommandResponseDto<long>> Handle(
@@ -52,14 +54,20 @@ public class ReopenTicket
             if (ticket == null)
                 throw new NotFoundException("Ticket", request.Id);
 
-            if (ticket.Status != TicketStatus.CLOSED && ticket.Status != TicketStatus.RESOLVED)
+            // Check if current status is closed type
+            var currentStatusConfig = await _configService.GetStatusByDeveloperNameAsync(ticket.Status, cancellationToken);
+            if (currentStatusConfig?.IsOpenType == true)
             {
                 // Already open
                 return new CommandResponseDto<long>(ticket.Id);
             }
 
             var oldStatus = ticket.Status;
-            ticket.Status = TicketStatus.OPEN;
+            
+            // Get the default status (first in list, must be Open type)
+            var defaultStatus = await _configService.GetDefaultStatusAsync(cancellationToken);
+            
+            ticket.Status = defaultStatus.DeveloperName;
             ticket.ClosedAt = null;
             ticket.ResolvedAt = null;
 
@@ -69,9 +77,11 @@ public class ReopenTicket
                 ticket.SlaStatus = SlaStatus.ON_TRACK;
             }
 
+            var oldLabel = currentStatusConfig?.Label ?? oldStatus;
+
             var changes = new Dictionary<string, object>
             {
-                ["Status"] = new { OldValue = oldStatus, NewValue = TicketStatus.OPEN }
+                ["Status"] = new { OldValue = oldStatus, NewValue = defaultStatus.DeveloperName }
             };
 
             var changeLog = new TicketChangeLogEntry
@@ -79,7 +89,7 @@ public class ReopenTicket
                 TicketId = ticket.Id,
                 ActorStaffId = _currentUser.UserId?.Guid,
                 FieldChangesJson = JsonSerializer.Serialize(changes),
-                Message = "Ticket reopened"
+                Message = $"Ticket reopened (status changed from {oldLabel} to {defaultStatus.Label})"
             };
             ticket.ChangeLogEntries.Add(changeLog);
 

@@ -78,8 +78,10 @@
                 BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION)).Succeeded;
                 var hasManageSystemViews = (await AuthorizationService.AuthorizeAsync(User,
                 BuiltInSystemPermission.MANAGE_SYSTEM_VIEWS_PERMISSION)).Succeeded;
+                var hasManageSystemSettings = (await AuthorizationService.AuthorizeAsync(User,
+                BuiltInSystemPermission.MANAGE_SYSTEM_SETTINGS_PERMISSION)).Succeeded;
             }
-            @if (hasManageTeams || hasManageTickets || hasAccessReports || hasManageSystemViews)
+            @if (hasManageTeams || hasManageTickets || hasAccessReports || hasManageSystemViews || hasManageSystemSettings)
             {
                 <li class="nav-item">
                     <span class="nav-link collapsed d-flex justify-content-between align-items-center"
@@ -137,6 +139,19 @@
                                 <li class="nav-item @(IsActivePage("SystemViews"))">
                                     <a class="nav-link" asp-page="@RouteNames.SystemViews.Index">
                                         <span class="sidebar-text">System Views</span>
+                                    </a>
+                                </li>
+                            }
+                            @if (hasManageSystemSettings)
+                            {
+                                <li class="nav-item @(IsActivePage("TicketPriorities"))">
+                                    <a class="nav-link" asp-page="@RouteNames.TicketPriorities.Index">
+                                        <span class="sidebar-text">Priorities</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item @(IsActivePage("TicketStatuses"))">
+                                    <a class="nav-link" asp-page="@RouteNames.TicketStatuses.Index">
+                                        <span class="sidebar-text">Statuses</span>
                                     </a>
                                 </li>
                             }

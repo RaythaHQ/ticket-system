@@ -1,0 +1,217 @@
+@page "{id}"
+@model App.Web.Areas.Staff.Pages.Exports.Status
+@{
+    ViewData["Title"] = "Export Status";
+}
+
+<partial name="_Partials/PageHeading" model='"Export Status"' />
+
+<div class="row">
+    <div class="col-lg-8 col-xl-6">
+        <div class="staff-card">
+            <div class="staff-card-header">
+                <h5 class="mb-0">Ticket Export</h5>
+            </div>
+            <div class="staff-card-body">
+                @if (Model.ExportJob != null)
+                {
+                    <div id="export-status-container" data-export-id="@Model.ExportJob.Id">
+                        <!-- Status Badge -->
+                        <div class="mb-4">
+                            <span class="staff-badge @GetStatusBadgeClass(Model.ExportJob.Status)" id="status-badge">
+                                @GetStatusLabel(Model.ExportJob.Status)
+                            </span>
+                        </div>
+
+                        <!-- Progress Section -->
+                        <div id="progress-section" class="mb-4" style="@(Model.IsInProgress ? "" : "display:none;")">
+                            <div class="progress mb-2" style="height: 20px;">
+                                <div id="progress-bar" 
+                                     class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                                     role="progressbar" 
+                                     style="width: @(Model.ExportJob.ProgressPercent ?? 0)%"
+                                     aria-valuenow="@(Model.ExportJob.ProgressPercent ?? 0)" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    <span id="progress-percent">@(Model.ExportJob.ProgressPercent ?? 0)%</span>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-0" id="progress-stage">
+                                @Model.ExportJob.ProgressStage
+                            </p>
+                        </div>
+
+                        <!-- Details -->
+                        <dl class="row mb-4">
+                            <dt class="col-sm-4">Requested</dt>
+                            <dd class="col-sm-8">@Model.ExportJob.RequestedAt.ToString("g")</dd>
+
+                            <dt class="col-sm-4">Requested By</dt>
+                            <dd class="col-sm-8">@Model.ExportJob.RequesterName</dd>
+
+                            @if (Model.ExportJob.CompletedAt.HasValue)
+                            {
+                                <dt class="col-sm-4">Completed</dt>
+                                <dd class="col-sm-8">@Model.ExportJob.CompletedAt.Value.ToString("g")</dd>
+                            }
+
+                            @if (Model.ExportJob.RowCount.HasValue)
+                            {
+                                <dt class="col-sm-4" id="row-count-label">Rows Exported</dt>
+                                <dd class="col-sm-8" id="row-count-value">@Model.ExportJob.RowCount.Value.ToString("N0")</dd>
+                            }
+
+                            <dt class="col-sm-4">Expires</dt>
+                            <dd class="col-sm-8">@Model.ExportJob.ExpiresAt.ToString("g")</dd>
+                        </dl>
+
+                        <!-- Error Message (if failed) -->
+                        @if (Model.IsFailed && !string.IsNullOrEmpty(Model.ExportJob.ErrorMessage))
+                        {
+                            <div class="alert alert-danger" id="error-section">
+                                <strong>Error:</strong> @Model.ExportJob.ErrorMessage
+                            </div>
+                        }
+
+                        <!-- Actions -->
+                        <div class="d-flex gap-2" id="actions-section">
+                            @if (Model.IsComplete && Model.CanDownload && !string.IsNullOrEmpty(Model.DownloadUrl))
+                            {
+                                <a href="@Model.DownloadUrl" 
+                                   class="btn btn-success" 
+                                   id="download-btn">
+                                    <i class="bi bi-download me-1"></i> Download CSV
+                                </a>
+                            }
+                            else if (Model.IsComplete && !Model.CanDownload)
+                            {
+                                <div class="alert alert-warning mb-0">
+                                    <i class="bi bi-shield-lock me-1"></i>
+                                    You do not have permission to download this export. Admin access with Import/Export permission is required.
+                                </div>
+                            }
+
+                            @if (Model.IsFailed)
+                            {
+                                <form method="post" asp-page-handler="Retry" asp-route-id="@Model.ExportJob.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="bi bi-arrow-clockwise me-1"></i> Retry Export
+                                    </button>
+                                </form>
+                            }
+
+                            <a asp-page="/Tickets/Index" class="btn btn-outline-secondary">
+                                Back to Tickets
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        Export job not found.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (Model.IsInProgress)
+    {
+        <script>
+            (function() {
+                const exportId = '@Model.ExportJob?.Id';
+                const pollInterval = 2000; // 2 seconds
+                
+                function updateStatus() {
+                    fetch(`?handler=Status&id=${exportId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Update progress bar
+                            const progressBar = document.getElementById('progress-bar');
+                            const progressPercent = document.getElementById('progress-percent');
+                            const progressStage = document.getElementById('progress-stage');
+                            const progressSection = document.getElementById('progress-section');
+                            
+                            if (progressBar) {
+                                progressBar.style.width = data.progressPercent + '%';
+                                progressBar.setAttribute('aria-valuenow', data.progressPercent);
+                            }
+                            if (progressPercent) {
+                                progressPercent.textContent = data.progressPercent + '%';
+                            }
+                            if (progressStage) {
+                                progressStage.textContent = data.progressStage || '';
+                            }
+                            
+                            // Check if complete or failed
+                            if (data.isComplete || data.isFailed) {
+                                // Reload page to show final state
+                                window.location.reload();
+                            } else {
+                                // Continue polling
+                                setTimeout(updateStatus, pollInterval);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error polling export status:', error);
+                            setTimeout(updateStatus, pollInterval * 2);
+                        });
+                }
+                
+                // Start polling
+                setTimeout(updateStatus, pollInterval);
+            })();
+        </script>
+    }
+    @if (Model.IsComplete && Model.CanDownload && Model.ExportJob?.MediaItemId != null)
+    {
+        <script>
+            // Auto-trigger download on page load if just completed
+            (function() {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (!urlParams.has('downloaded')) {
+                    // Add parameter to prevent re-download on refresh
+                    urlParams.set('downloaded', 'true');
+                    const newUrl = window.location.pathname + '?' + urlParams.toString();
+                    window.history.replaceState({}, '', newUrl);
+                    
+                    // Trigger download
+                    const downloadBtn = document.getElementById('download-btn');
+                    if (downloadBtn) {
+                        downloadBtn.click();
+                    }
+                }
+            })();
+        </script>
+    }
+}
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "queued" => "staff-badge-secondary",
+            "running" => "staff-badge-primary",
+            "completed" => "staff-badge-success",
+            "failed" => "staff-badge-danger",
+            _ => "staff-badge-secondary"
+        };
+    }
+    
+    string GetStatusLabel(string status)
+    {
+        return status switch
+        {
+            "queued" => "Queued",
+            "running" => "Running...",
+            "completed" => "Completed",
+            "failed" => "Failed",
+            _ => status
+        };
+    }
+}
+

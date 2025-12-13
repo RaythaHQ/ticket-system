@@ -13,11 +13,13 @@ namespace App.Application.SlaRules.Services;
 public class SlaService : ISlaService
 {
     private readonly IAppDbContext _db;
+    private readonly ITicketConfigService _configService;
     private const double ApproachingBreachThreshold = 0.75; // 75% of time elapsed
 
-    public SlaService(IAppDbContext db)
+    public SlaService(IAppDbContext db, ITicketConfigService configService)
     {
         _db = db;
+        _configService = configService;
     }
 
     public async Task<SlaRule?> EvaluateAndAssignSlaAsync(Ticket ticket, CancellationToken cancellationToken = default)
@@ -88,8 +90,9 @@ public class SlaService : ISlaService
         var now = DateTime.UtcNow;
         var oldStatus = ticket.SlaStatus;
 
-        // Check if already completed
-        if (ticket.Status == TicketStatus.CLOSED || ticket.Status == TicketStatus.RESOLVED)
+        // Check if already completed (status type is Closed)
+        var isClosedType = await _configService.IsStatusClosedTypeAsync(ticket.Status, cancellationToken);
+        if (isClosedType)
         {
             ticket.SlaStatus = SlaStatus.COMPLETED;
             return oldStatus != ticket.SlaStatus;

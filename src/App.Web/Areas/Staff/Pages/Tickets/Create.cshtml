@@ -174,10 +174,10 @@
                                         Priority <span class="text-danger">*</span>
                                     </label>
                                     <select asp-for="Form.Priority" class="form-select">
-                                        @foreach (var priority in TicketPriority.SupportedTypes.OrderBy(p => p.SortOrder))
+                                        @foreach (var priority in Model.AvailablePriorities)
                                         {
                                             <option value="@priority.DeveloperName"
-                                                selected="@(priority.DeveloperName == TicketPriority.NORMAL)">
+                                                selected="@(priority.DeveloperName == Model.DefaultPriority)">
                                                 @priority.Label
                                             </option>
                                         }

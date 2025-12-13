@@ -48,6 +48,9 @@ public class RelativeUrlBuilder : IRelativeUrlBuilder
     public string MediaRedirectToFileUrl(string objectKey) =>
         ResolveUrlByRouteName("mediaitemsredirecttofileurlbyobjectkey", new { objectKey });
 
+    public string MediaRedirectToFileUrlById(string id) =>
+        ResolveUrlByRouteName("mediaitemsredirecttofileurlbyid", new { id });
+
     public string MediaPublicFileUrl(string objectKey) =>
         ResolveUrlByRouteName("mediaitemsredirecttofileurlbyobjectkey", new { objectKey });
 

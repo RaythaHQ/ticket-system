@@ -371,6 +371,26 @@ public static class RouteNames
     }
 
     /// <summary>
+    /// Route constants for ticket priority configuration pages.
+    /// </summary>
+    public static class TicketPriorities
+    {
+        public const string Index = "/Tickets/Priorities/Index";
+        public const string Create = "/Tickets/Priorities/Create";
+        public const string Edit = "/Tickets/Priorities/Edit";
+    }
+
+    /// <summary>
+    /// Route constants for ticket status configuration pages.
+    /// </summary>
+    public static class TicketStatuses
+    {
+        public const string Index = "/Tickets/Statuses/Index";
+        public const string Create = "/Tickets/Statuses/Create";
+        public const string Edit = "/Tickets/Statuses/Edit";
+    }
+
+    /// <summary>
     /// Route constants for report pages.
     /// </summary>
     public static class Reports

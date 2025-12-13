@@ -8,6 +8,7 @@ public interface IRelativeUrlBuilder
     string AdminLoginWithMagicLinkCompleteUrl(string token, string returnUrl = "");
     string AdminForgotPasswordCompleteUrl(string token);
     string MediaRedirectToFileUrl(string objectKey);
+    string MediaRedirectToFileUrlById(string id);
     string MediaFileLocalStorageUrl(string objectKey);
     string MediaCloudUploadPresignUrl();
     string MediaCloudUploadCreateAfterUploadUrl();

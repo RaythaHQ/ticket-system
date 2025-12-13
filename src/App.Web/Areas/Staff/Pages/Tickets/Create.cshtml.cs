@@ -4,6 +4,8 @@ using App.Application.Tickets.Commands;
 using App.Application.Tickets.Queries;
 using App.Application.Contacts.Queries;
 using App.Application.Contacts.Commands;
+using App.Application.Common.Interfaces;
+using App.Application.TicketConfig;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
@@ -16,10 +18,19 @@ namespace App.Web.Areas.Staff.Pages.Tickets;
 /// </summary>
 public class Create : BaseStaffPageModel
 {
+    private readonly ITicketConfigService _configService;
+
+    public Create(ITicketConfigService configService)
+    {
+        _configService = configService;
+    }
+
     [BindProperty]
     public CreateTicketViewModel Form { get; set; } = new();
 
     public List<AssigneeSelectItem> AvailableAssignees { get; set; } = new();
+    public IReadOnlyList<TicketPriorityConfigDto> AvailablePriorities { get; set; } = new List<TicketPriorityConfigDto>();
+    public string DefaultPriority { get; set; } = "normal";
 
     public async Task<IActionResult> OnGet(long? contactId, CancellationToken cancellationToken)
     {
@@ -179,6 +190,11 @@ public class Create : BaseStaffPageModel
             TeamId = a.TeamId,
             AssigneeId = a.AssigneeId
         }).ToList();
+
+        // Load priorities from config
+        AvailablePriorities = await _configService.GetActivePrioritiesAsync(cancellationToken);
+        var defaultPriorityConfig = await _configService.GetDefaultPriorityAsync(cancellationToken);
+        DefaultPriority = defaultPriorityConfig.DeveloperName;
     }
 
     public record CreateTicketViewModel
@@ -190,7 +206,7 @@ public class Create : BaseStaffPageModel
         public string? Description { get; set; }
 
         [Required]
-        public string Priority { get; set; } = TicketPriority.NORMAL;
+        public string Priority { get; set; } = string.Empty;
 
         public string? Category { get; set; }
 

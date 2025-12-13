@@ -20,6 +20,13 @@ namespace App.Web.Areas.Admin.Pages.SystemViews;
 [Authorize(Policy = BuiltInSystemPermission.MANAGE_SYSTEM_VIEWS_PERMISSION)]
 public class Edit : BaseAdminPageModel
 {
+    private readonly ITicketConfigService _configService;
+
+    public Edit(ITicketConfigService configService)
+    {
+        _configService = configService;
+    }
+
     public ShortGuid ViewId { get; set; }
 
     [BindProperty]
@@ -230,23 +237,21 @@ public class Edit : BaseAdminPageModel
             .Result.Items.Select(t => new TeamSelectItem { Id = t.Id.Guid, Name = t.Name })
             .ToList();
 
-        // Status options
-        AvailableStatuses = TicketStatus
-            .SupportedTypes.Select(s => new SelectListItem
-            {
-                Value = s.DeveloperName,
-                Text = s.Label,
-            })
-            .ToList();
+        // Status options from config
+        var statuses = await _configService.GetAllStatusesAsync(includeInactive: true, cancellationToken);
+        AvailableStatuses = statuses.Select(s => new SelectListItem
+        {
+            Value = s.DeveloperName,
+            Text = s.Label + (s.IsActive ? "" : " (inactive)"),
+        }).ToList();
 
-        // Priority options
-        AvailablePriorities = TicketPriority
-            .SupportedTypes.Select(p => new SelectListItem
-            {
-                Value = p.DeveloperName,
-                Text = p.Label,
-            })
-            .ToList();
+        // Priority options from config
+        var priorities = await _configService.GetAllPrioritiesAsync(includeInactive: true, cancellationToken);
+        AvailablePriorities = priorities.Select(p => new SelectListItem
+        {
+            Value = p.DeveloperName,
+            Text = p.Label + (p.IsActive ? "" : " (inactive)"),
+        }).ToList();
 
         // Available columns
         AvailableColumns = new List<ColumnOption>

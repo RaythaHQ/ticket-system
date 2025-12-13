@@ -24,9 +24,25 @@
 
 <div class="staff-page-heading mb-4">
     <h1 class="h3 mb-0">Tickets</h1>
-    <a asp-page="@RouteNames.Tickets.Create" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-2"></i>New Ticket
-    </a>
+    <div class="d-flex gap-2">
+        @if (Model.CanExport)
+        {
+            <form method="post" asp-page-handler="Export" class="d-inline">
+                <input type="hidden" name="viewId" value="@Model.CurrentViewId" />
+                <input type="hidden" name="builtInView" value="@Model.BuiltInView" />
+                <input type="hidden" name="search" value="@Model.ListView.Search" />
+                <input type="hidden" name="status" value="@ViewContext.HttpContext.Request.Query["status"]" />
+                <input type="hidden" name="priority" value="@ViewContext.HttpContext.Request.Query["priority"]" />
+                <input type="hidden" name="sortBy" value="@ViewContext.HttpContext.Request.Query["sortBy"]" />
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="bi bi-download me-2"></i>Export CSV
+                </button>
+            </form>
+        }
+        <a asp-page="@RouteNames.Tickets.Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>New Ticket
+        </a>
+    </div>
 </div>
 
 <!-- Sort By -->
@@ -156,11 +172,12 @@
             <div class="col-lg-2 col-md-3">
                 <select name="status" class="form-select">
                     <option value="">All Statuses</option>
-                    @foreach (var status in TicketStatus.SupportedTypes)
+                    @foreach (var status in Model.AvailableStatuses)
                     {
+                        var displayLabel = status.Label + (!status.IsActive ? " (inactive)" : "");
                         <option value="@status.DeveloperName"
                             selected="@(ViewContext.HttpContext.Request.Query["status"] == status.DeveloperName)">
-                            @status.Label
+                            @displayLabel
                         </option>
                     }
                 </select>
@@ -168,11 +185,12 @@
             <div class="col-lg-2 col-md-3">
                 <select name="priority" class="form-select">
                     <option value="">All Priorities</option>
-                    @foreach (var priority in TicketPriority.SupportedTypes.OrderByDescending(p => p.SortOrder))
+                    @foreach (var priority in Model.AvailablePriorities)
                     {
+                        var displayLabel = priority.Label + (!priority.IsActive ? " (inactive)" : "");
                         <option value="@priority.DeveloperName"
                             selected="@(ViewContext.HttpContext.Request.Query["priority"] == priority.DeveloperName)">
-                            @priority.Label
+                            @displayLabel
                         </option>
                     }
                 </select>
@@ -327,43 +345,26 @@
 @functions {
     string GetStatusBadgeClass(string status)
     {
-        try
+        var statusConfig = Model.AvailableStatuses.FirstOrDefault(s => 
+            s.DeveloperName.Equals(status, StringComparison.OrdinalIgnoreCase));
+        
+        if (statusConfig != null)
         {
-            var statusObj = TicketStatus.From(status);
-            return statusObj.DeveloperName switch
-            {
-                TicketStatus.OPEN => "staff-badge-primary",
-                TicketStatus.IN_PROGRESS => "staff-badge-primary",
-                TicketStatus.PENDING => "staff-badge-warning",
-                TicketStatus.RESOLVED => "staff-badge-success",
-                TicketStatus.CLOSED => "staff-badge-secondary",
-                _ => "staff-badge-secondary"
-            };
+            return statusConfig.StaffBadgeClass;
         }
-        catch
-        {
-            return "staff-badge-secondary";
-        }
+        return "staff-badge-secondary";
     }
 
     string GetPriorityBadgeClass(string priority)
     {
-        try
+        var priorityConfig = Model.AvailablePriorities.FirstOrDefault(p => 
+            p.DeveloperName.Equals(priority, StringComparison.OrdinalIgnoreCase));
+        
+        if (priorityConfig != null)
         {
-            var priorityObj = TicketPriority.From(priority);
-            return priorityObj.DeveloperName switch
-            {
-                TicketPriority.URGENT => "staff-badge-danger",
-                TicketPriority.HIGH => "staff-badge-warning",
-                TicketPriority.NORMAL => "staff-badge-primary",
-                TicketPriority.LOW => "staff-badge-secondary",
-                _ => "staff-badge-secondary"
-            };
+            return priorityConfig.StaffBadgeClass;
         }
-        catch
-        {
-            return "staff-badge-secondary";
-        }
+        return "staff-badge-secondary";
     }
 
     string GetSlaBadgeClass(string slaStatus) => slaStatus switch

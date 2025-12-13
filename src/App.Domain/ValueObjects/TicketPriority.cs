@@ -20,14 +20,32 @@ public class TicketPriority : ValueObject
 
     public static TicketPriority From(string developerName)
     {
+        if (string.IsNullOrEmpty(developerName))
+        {
+            return Normal; // Default fallback
+        }
+
         var type = SupportedTypes.FirstOrDefault(p => p.DeveloperName == developerName.ToLower());
 
         if (type == null)
         {
-            throw new TicketPriorityNotFoundException(developerName);
+            // Return a dynamic priority for custom/unknown values
+            // This supports configurable priorities from the database
+            return new TicketPriority(
+                ToPascalCase(developerName), 
+                developerName.ToLower(), 
+                0
+            );
         }
 
         return type;
+    }
+
+    private static string ToPascalCase(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return input;
+        var words = input.Replace("_", " ").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Join(" ", words.Select(w => char.ToUpper(w[0]) + w.Substring(1).ToLower()));
     }
 
     public static TicketPriority Low => new("Low", LOW, 1);

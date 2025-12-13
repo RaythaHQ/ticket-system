@@ -16,7 +16,10 @@ public class CreateTicket
     {
         public string Title { get; init; } = null!;
         public string? Description { get; init; }
-        public string Priority { get; init; } = TicketPriority.NORMAL;
+        /// <summary>
+        /// Priority developer name. If null/empty, the default priority will be used.
+        /// </summary>
+        public string? Priority { get; init; }
         public string? Category { get; init; }
         public List<string>? Tags { get; init; }
         public ShortGuid? OwningTeamId { get; init; }
@@ -29,9 +32,16 @@ public class CreateTicket
         public Validator(IAppDbContext db)
         {
             RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
+
+            // Validate priority against configured active priorities
             RuleFor(x => x.Priority)
-                .Must(p => TicketPriority.SupportedTypes.Any(t => t.DeveloperName == p))
-                .WithMessage("Invalid priority value.");
+                .MustAsync(async (priority, cancellationToken) =>
+                {
+                    if (string.IsNullOrEmpty(priority)) return true; // Will use default
+                    return await db.TicketPriorityConfigs
+                        .AnyAsync(p => p.DeveloperName == priority.ToLower() && p.IsActive, cancellationToken);
+                })
+                .WithMessage("Invalid or inactive priority value.");
 
             RuleFor(x => x.OwningTeamId)
                 .MustAsync(async (teamId, cancellationToken) =>
@@ -74,12 +84,14 @@ public class CreateTicket
         private readonly IAppDbContext _db;
         private readonly ICurrentUser _currentUser;
         private readonly IRoundRobinService _roundRobinService;
+        private readonly ITicketConfigService _configService;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser, IRoundRobinService roundRobinService)
+        public Handler(IAppDbContext db, ICurrentUser currentUser, IRoundRobinService roundRobinService, ITicketConfigService configService)
         {
             _db = db;
             _currentUser = currentUser;
             _roundRobinService = roundRobinService;
+            _configService = configService;
         }
 
         public async ValueTask<CommandResponseDto<long>> Handle(
@@ -101,12 +113,16 @@ public class CreateTicket
                 }
             }
 
+            // Get default status and priority from config
+            var defaultStatus = await _configService.GetDefaultStatusAsync(cancellationToken);
+            var defaultPriority = await _configService.GetDefaultPriorityAsync(cancellationToken);
+
             var ticket = new Ticket
             {
                 Title = request.Title,
                 Description = request.Description,
-                Status = TicketStatus.OPEN,
-                Priority = request.Priority,
+                Status = defaultStatus.DeveloperName,
+                Priority = string.IsNullOrEmpty(request.Priority) ? defaultPriority.DeveloperName : request.Priority.ToLower(),
                 Category = request.Category,
                 Tags = request.Tags ?? new List<string>(),
                 OwningTeamId = request.OwningTeamId?.Guid,

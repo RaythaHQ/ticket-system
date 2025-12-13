@@ -31,12 +31,14 @@ public class CloseTicket
         private readonly IAppDbContext _db;
         private readonly ICurrentUser _currentUser;
         private readonly ITicketPermissionService _permissionService;
+        private readonly ITicketConfigService _configService;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser, ITicketPermissionService permissionService)
+        public Handler(IAppDbContext db, ICurrentUser currentUser, ITicketPermissionService permissionService, ITicketConfigService configService)
         {
             _db = db;
             _currentUser = currentUser;
             _permissionService = permissionService;
+            _configService = configService;
         }
 
         public async ValueTask<CommandResponseDto<long>> Handle(
@@ -52,13 +54,25 @@ public class CloseTicket
             if (ticket == null)
                 throw new NotFoundException("Ticket", request.Id);
 
-            if (ticket.Status == TicketStatus.CLOSED)
+            // Check if already closed using status type
+            var currentStatusConfig = await _configService.GetStatusByDeveloperNameAsync(ticket.Status, cancellationToken);
+            if (currentStatusConfig?.IsClosedType == true)
             {
                 return new CommandResponseDto<long>(ticket.Id);
             }
 
+            // Find the first closed-type status (preferably one named "closed")
+            var closedStatuses = await _configService.GetActiveStatusesAsync(cancellationToken);
+            var closedStatus = closedStatuses.FirstOrDefault(s => s.DeveloperName == "closed")
+                ?? closedStatuses.FirstOrDefault(s => s.IsClosedType);
+
+            if (closedStatus == null)
+            {
+                throw new BusinessException("No closed-type status is configured. Please configure at least one closed status.");
+            }
+
             var oldStatus = ticket.Status;
-            ticket.Status = TicketStatus.CLOSED;
+            ticket.Status = closedStatus.DeveloperName;
             ticket.ClosedAt = DateTime.UtcNow;
 
             if (ticket.ResolvedAt == null)
@@ -72,9 +86,11 @@ public class CloseTicket
                 ticket.SlaStatus = SlaStatus.COMPLETED;
             }
 
+            var oldLabel = currentStatusConfig?.Label ?? oldStatus;
+
             var changes = new Dictionary<string, object>
             {
-                ["Status"] = new { OldValue = oldStatus, NewValue = TicketStatus.CLOSED }
+                ["Status"] = new { OldValue = oldStatus, NewValue = closedStatus.DeveloperName }
             };
 
             var changeLog = new TicketChangeLogEntry
@@ -82,7 +98,7 @@ public class CloseTicket
                 TicketId = ticket.Id,
                 ActorStaffId = _currentUser.UserId?.Guid,
                 FieldChangesJson = JsonSerializer.Serialize(changes),
-                Message = "Ticket closed"
+                Message = $"Ticket closed (status changed from {oldLabel} to {closedStatus.Label})"
             };
             ticket.ChangeLogEntries.Add(changeLog);
 
