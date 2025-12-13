@@ -51,12 +51,22 @@
         <div class="d-flex align-items-center gap-3 flex-wrap">
             <span class="text-muted fw-semibold small">Sort By:</span>
             <div class="staff-quick-views">
-                @{
-                    var currentSortBy = ViewContext.HttpContext.Request.Query["sortBy"].ToString();
-                    if (string.IsNullOrEmpty(currentSortBy))
-                    {
-                        currentSortBy = "newest";
-                    }
+                @if (Model.SelectedView?.SortLevels.Count > 0)
+                {
+                    <!-- View's custom sort as first pill -->
+                    <a asp-page="@RouteNames.Tickets.Index" 
+                       asp-route-sortBy="view"
+                       asp-route-viewId="@Model.CurrentViewId"
+                       asp-route-builtInView="@Model.BuiltInView"
+                       asp-route-search="@ViewContext.HttpContext.Request.Query["search"]"
+                       asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
+                       asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
+                       asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
+                       class="staff-quick-view-btn @(Model.IsUsingViewSort ? "active" : "")"
+                       title="View's default sort order">
+                        <i class="bi bi-funnel-fill me-1"></i>@Model.SelectedView.SortDisplay
+                    </a>
+                    <span class="text-muted mx-1">|</span>
                 }
                 <a asp-page="@RouteNames.Tickets.Index" 
                    asp-route-sortBy="newest"
@@ -66,7 +76,7 @@
                    asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
                    asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
                    asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
-                   class="staff-quick-view-btn @(currentSortBy == "newest" ? "active" : "")">
+                   class="staff-quick-view-btn @(!Model.IsUsingViewSort && Model.CurrentSortBy == "newest" ? "active" : "")">
                     Newest
                 </a>
                 <a asp-page="@RouteNames.Tickets.Index" 
@@ -77,7 +87,7 @@
                    asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
                    asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
                    asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
-                   class="staff-quick-view-btn @(currentSortBy == "oldest" ? "active" : "")">
+                   class="staff-quick-view-btn @(!Model.IsUsingViewSort && Model.CurrentSortBy == "oldest" ? "active" : "")">
                     Oldest
                 </a>
                 <a asp-page="@RouteNames.Tickets.Index" 
@@ -88,7 +98,7 @@
                    asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
                    asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
                    asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
-                   class="staff-quick-view-btn @(currentSortBy == "priority" ? "active" : "")">
+                   class="staff-quick-view-btn @(!Model.IsUsingViewSort && Model.CurrentSortBy == "priority" ? "active" : "")">
                     Priority
                 </a>
                 <a asp-page="@RouteNames.Tickets.Index" 
@@ -99,7 +109,7 @@
                    asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
                    asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
                    asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
-                   class="staff-quick-view-btn @(currentSortBy == "status" ? "active" : "")">
+                   class="staff-quick-view-btn @(!Model.IsUsingViewSort && Model.CurrentSortBy == "status" ? "active" : "")">
                     Status
                 </a>
                 <a asp-page="@RouteNames.Tickets.Index" 
@@ -110,7 +120,7 @@
                    asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
                    asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
                    asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
-                   class="staff-quick-view-btn @(currentSortBy == "assignee" ? "active" : "")">
+                   class="staff-quick-view-btn @(!Model.IsUsingViewSort && Model.CurrentSortBy == "assignee" ? "active" : "")">
                     Assignee
                 </a>
                 <a asp-page="@RouteNames.Tickets.Index" 
@@ -121,7 +131,7 @@
                    asp-route-status="@ViewContext.HttpContext.Request.Query["status"]"
                    asp-route-priority="@ViewContext.HttpContext.Request.Query["priority"]"
                    asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
-                   class="staff-quick-view-btn @(currentSortBy == "sla" ? "active" : "")">
+                   class="staff-quick-view-btn @(!Model.IsUsingViewSort && Model.CurrentSortBy == "sla" ? "active" : "")">
                     SLA
                 </a>
             </div>
@@ -231,14 +241,10 @@
         <table class="table staff-table mb-0">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Title</th>
-                    <th>Status</th>
-                    <th>Priority</th>
-                    <th>Assignee</th>
-                    <th>Contact</th>
-                    <th>SLA</th>
-                    <th>Created</th>
+                    @foreach (var col in Model.VisibleColumnDefinitions)
+                    {
+                        <th>@col.Label</th>
+                    }
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -246,7 +252,7 @@
                 @if (!Model.ListView.Items.Any())
                 {
                     <tr>
-                        <td colspan="9" class="text-center py-5 text-muted">
+                        <td colspan="@(Model.VisibleColumnDefinitions.Count + 1)" class="text-center py-5 text-muted">
                             <i class="bi bi-inbox" style="font-size: 3rem; opacity: 0.5;"></i>
                             <p class="mt-3 mb-0 fw-medium">No tickets found</p>
                             <p class="small">Try adjusting your filters or create a new ticket</p>
@@ -256,84 +262,82 @@
                 @foreach (var ticket in Model.ListView.Items)
                 {
                     <tr>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
-                                    class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
-                                    #@ticket.Id
-                                </a>
-                                @if (ticket.CommentCount > 0)
+                        @foreach (var col in Model.VisibleColumnDefinitions)
+                        {
+                            <td class="@(col.Field != "Status" && col.Field != "Priority" ? "text-muted" : "")">
+                                @if (col.Field == "Id")
                                 {
-                                    <span class="badge bg-primary rounded-pill" style="font-size: 0.75rem; padding: 2px 6px;">
-                                        @ticket.CommentCount
+                                    <div class="d-flex align-items-center gap-2">
+                                        <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
+                                            class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
+                                            #@ticket.Id
+                                        </a>
+                                        @if (ticket.CommentCount > 0)
+                                        {
+                                            <span class="badge bg-primary rounded-pill" style="font-size: 0.75rem; padding: 2px 6px;">
+                                                @ticket.CommentCount
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                                else if (col.Field == "Title")
+                                {
+                                    <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
+                                        class="text-dark text-decoration-none">
+                                        @ticket.GetColumnValue("Title")
+                                    </a>
+                                }
+                                else if (col.Field == "Status")
+                                {
+                                    <span class="staff-badge @GetStatusBadgeClass(ticket.Status)">
+                                        @ticket.StatusLabel
                                     </span>
                                 }
-                            </div>
-                        </td>
-                        <td>
-                            <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"
-                                class="text-dark text-decoration-none">
-                                @(ticket.Title.Length > 50 ? ticket.Title.Substring(0, 47) + "..." : ticket.Title)
-                            </a>
-                        </td>
-                        <td>
-                            <span class="staff-badge @GetStatusBadgeClass(ticket.Status)">
-                                @ticket.StatusLabel
-                            </span>
-                        </td>
-                        <td>
-                            <span class="staff-badge @GetPriorityBadgeClass(ticket.Priority)">
-                                @ticket.PriorityLabel
-                            </span>
-                        </td>
-                        <td class="text-muted">
-                            @if (!string.IsNullOrEmpty(ticket.OwningTeamName))
-                            {
-                                @ticket.OwningTeamName
-                                @if (!string.IsNullOrEmpty(ticket.AssigneeName))
+                                else if (col.Field == "Priority")
                                 {
-                                    <span> / @ticket.AssigneeName</span>
+                                    <span class="staff-badge @GetPriorityBadgeClass(ticket.Priority)">
+                                        @ticket.PriorityLabel
+                                    </span>
+                                }
+                                else if (col.Field == "ContactId" && ticket.ContactId.HasValue)
+                                {
+                                    <a asp-area="Staff" asp-page="@RouteNames.Contacts.Details" asp-route-id="@ticket.ContactId.Value"
+                                        class="text-decoration-none" style="color: var(--staff-primary);">
+                                        #@ticket.ContactId
+                                    </a>
+                                }
+                                else if (col.Field == "ContactName" && ticket.ContactId.HasValue && !string.IsNullOrEmpty(ticket.ContactName) && ticket.ContactName != "-")
+                                {
+                                    <a asp-area="Staff" asp-page="@RouteNames.Contacts.Details" asp-route-id="@ticket.ContactId.Value"
+                                        class="text-decoration-none" style="color: var(--staff-primary);">
+                                        @ticket.ContactName
+                                    </a>
+                                }
+                                else if (col.Field == "SlaDueAt")
+                                {
+                                    if (ticket.SlaDueAt != "-")
+                                    {
+                                        <span class="@GetSlaBadgeClass(ticket.SlaStatusLabel) small">
+                                            @ticket.SlaDueAt
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>—</span>
+                                    }
+                                }
+                                else if (col.Field == "SlaStatus")
+                                {
+                                    <span class="@GetSlaBadgeClass(ticket.SlaStatusLabel)">
+                                        @ticket.SlaStatusLabel
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span> / Anyone</span>
+                                    @ticket.GetColumnValue(col.Field)
                                 }
-                            }
-                            else if (!string.IsNullOrEmpty(ticket.AssigneeName))
-                            {
-                                @ticket.AssigneeName
-                            }
-                            else
-                            {
-                                <span>—</span>
-                            }
-                        </td>
-                        <td class="text-muted">
-                            @if (ticket.ContactId.HasValue && !string.IsNullOrEmpty(ticket.ContactName))
-                            {
-                                <a asp-area="Staff" asp-page="@RouteNames.Contacts.Details" asp-route-id="@ticket.ContactId.Value"
-                                    class="text-decoration-none" style="color: var(--staff-primary);">
-                                    @ticket.ContactName
-                                </a>
-                            }
-                            else
-                            {
-                                <span>—</span>
-                            }
-                        </td>
-                        <td>
-                            @if (ticket.SlaDueAt != "-")
-                            {
-                                <span class="@GetSlaBadgeClass(ticket.SlaStatusLabel) small">
-                                    @ticket.SlaDueAt
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="text-muted">—</span>
-                            }
-                        </td>
-                        <td class="text-muted small">@ticket.CreationTime</td>
+                            </td>
+                        }
                         <td class="text-end">
                             <div class="btn-group btn-group-sm">
                                 <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@ticket.Id" asp-route-backToListUrl="@backToListUrl"

@@ -1,0 +1,153 @@
+@using System.Text.Json
+@using App.Web.Areas.Staff.Pages.Shared.Models
+@model SortConfiguratorViewModel
+
+@{
+    Layout = null;
+    var fieldsJson = JsonSerializer.Serialize(Model.SortableFields);
+}
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Sort Order</h5>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-add-sort>
+            <i class="bi bi-plus-lg me-1"></i> Add Sort Level
+        </button>
+    </div>
+    <div class="card-body">
+        <div data-sort-configurator data-fields="@fieldsJson">
+            <div class="sort-levels" id="sortLevelsList">
+                @if (Model.SortLevels?.Any() == true)
+                {
+                    var index = 0;
+                    foreach (var level in Model.SortLevels.OrderBy(l => l.Order))
+                    {
+                        <div class="sort-level d-flex gap-2 align-items-center mb-2" data-index="@index">
+                            <span class="drag-handle text-muted" style="cursor: grab;">
+                                <i class="bi bi-grip-vertical"></i>
+                            </span>
+                            <input type="hidden" name="SortLevels[@index].Order" value="@index" class="sort-order-input" />
+                            <select name="SortLevels[@index].Field" class="form-select form-select-sm" style="width: 200px;">
+                                @foreach (var field in Model.SortableFields)
+                                {
+                                    var isSelected = field.Field == level.Field;
+                                    <option value="@field.Field" selected="@isSelected">@field.Label</option>
+                                }
+                            </select>
+                            <select name="SortLevels[@index].Direction" class="form-select form-select-sm" style="width: 140px;">
+                                <option value="asc" selected="@(level.Direction == "asc")">Ascending ↑</option>
+                                <option value="desc" selected="@(level.Direction == "desc")">Descending ↓</option>
+                            </select>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-sort" title="Remove">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        index++;
+                    }
+                }
+                else
+                {
+                    <div class="sort-level d-flex gap-2 align-items-center mb-2" data-index="0">
+                        <span class="drag-handle text-muted" style="cursor: grab;">
+                            <i class="bi bi-grip-vertical"></i>
+                        </span>
+                        <input type="hidden" name="SortLevels[0].Order" value="0" class="sort-order-input" />
+                        <select name="SortLevels[0].Field" class="form-select form-select-sm" style="width: 200px;">
+                            @foreach (var field in Model.SortableFields)
+                            {
+                                var isSelected = field.Field == "CreationTime";
+                                <option value="@field.Field" selected="@isSelected">@field.Label</option>
+                            }
+                        </select>
+                        <select name="SortLevels[0].Direction" class="form-select form-select-sm" style="width: 140px;">
+                            <option value="asc">Ascending ↑</option>
+                            <option value="desc" selected>Descending ↓</option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-sort" title="Remove">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                }
+            </div>
+            
+            <div class="small text-muted mt-2">
+                Drag levels to reorder. First level is primary sort, subsequent levels break ties.
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const configurator = document.querySelector('[data-sort-configurator]');
+        if (!configurator) return;
+        
+        const fields = JSON.parse(configurator.dataset.fields || '[]');
+        const container = document.getElementById('sortLevelsList');
+        const addBtn = document.querySelector('[data-add-sort]');
+        
+        let sortIndex = container.querySelectorAll('.sort-level').length;
+        
+        // Initialize SortableJS for drag and drop
+        if (typeof Sortable !== 'undefined') {
+            new Sortable(container, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: updateOrders
+            });
+        }
+        
+        if (addBtn) {
+            addBtn.addEventListener('click', addSortLevel);
+        }
+        
+        function addSortLevel() {
+            const html = `
+                <div class="sort-level d-flex gap-2 align-items-center mb-2" data-index="${sortIndex}">
+                    <span class="drag-handle text-muted" style="cursor: grab;">
+                        <i class="bi bi-grip-vertical"></i>
+                    </span>
+                    <input type="hidden" name="SortLevels[${sortIndex}].Order" value="${sortIndex}" class="sort-order-input" />
+                    <select name="SortLevels[${sortIndex}].Field" class="form-select form-select-sm" style="width: 200px;">
+                        ${fields.map(f => `<option value="${f.Field}">${f.Label}</option>`).join('')}
+                    </select>
+                    <select name="SortLevels[${sortIndex}].Direction" class="form-select form-select-sm" style="width: 140px;">
+                        <option value="asc">Ascending ↑</option>
+                        <option value="desc" selected>Descending ↓</option>
+                    </select>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-sort" title="Remove">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>`;
+            container.insertAdjacentHTML('beforeend', html);
+            sortIndex++;
+            attachRemoveHandlers();
+            updateOrders();
+        }
+        
+        function updateOrders() {
+            container.querySelectorAll('.sort-level').forEach((row, idx) => {
+                const orderInput = row.querySelector('.sort-order-input');
+                if (orderInput) {
+                    orderInput.value = idx;
+                }
+            });
+        }
+        
+        function attachRemoveHandlers() {
+            container.querySelectorAll('.remove-sort').forEach(btn => {
+                btn.onclick = function() {
+                    if (container.querySelectorAll('.sort-level').length > 1) {
+                        this.closest('.sort-level').remove();
+                        updateOrders();
+                    }
+                };
+            });
+        }
+        
+        attachRemoveHandlers();
+    });
+    </script>
+}
+

@@ -10,11 +10,13 @@ namespace App.Application.Tickets;
 public record TicketListItemDto : BaseNumericEntityDto
 {
     public string Title { get; init; } = null!;
+    public string? Description { get; init; }
     public string Status { get; init; } = null!;
     public string StatusLabel { get; init; } = null!;
     public string Priority { get; init; } = null!;
     public string PriorityLabel { get; init; } = null!;
     public string? Category { get; init; }
+    public List<string>? Tags { get; init; }
     public ShortGuid? AssigneeId { get; init; }
     public string? AssigneeName { get; init; }
     public ShortGuid? OwningTeamId { get; init; }
@@ -26,6 +28,9 @@ public record TicketListItemDto : BaseNumericEntityDto
     public string? SlaStatus { get; init; }
     public string? SlaStatusLabel { get; init; }
     public DateTime CreationTime { get; init; }
+    public DateTime? LastModificationTime { get; init; }
+    public DateTime? ClosedAt { get; init; }
+    public string? CreatedByStaffName { get; init; }
 
     public static TicketListItemDto MapFrom(Ticket ticket)
     {
@@ -33,11 +38,13 @@ public record TicketListItemDto : BaseNumericEntityDto
         {
             Id = ticket.Id,
             Title = ticket.Title,
+            Description = ticket.Description,
             Status = ticket.Status,
             StatusLabel = ticket.StatusValue.Label,
             Priority = ticket.Priority,
             PriorityLabel = ticket.PriorityValue.Label,
             Category = ticket.Category,
+            Tags = ticket.Tags,
             AssigneeId = ticket.AssigneeId,
             AssigneeName = ticket.Assignee?.FullName,
             OwningTeamId = ticket.OwningTeamId,
@@ -48,7 +55,10 @@ public record TicketListItemDto : BaseNumericEntityDto
             SlaDueAt = ticket.SlaDueAt,
             SlaStatus = ticket.SlaStatus,
             SlaStatusLabel = ticket.SlaStatusValue?.Label,
-            CreationTime = ticket.CreationTime
+            CreationTime = ticket.CreationTime,
+            LastModificationTime = ticket.LastModificationTime,
+            ClosedAt = ticket.ClosedAt,
+            CreatedByStaffName = ticket.CreatedByStaff?.FullName
         };
     }
 }

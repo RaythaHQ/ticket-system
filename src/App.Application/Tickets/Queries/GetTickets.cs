@@ -107,6 +107,7 @@ public class GetTickets
                 .Include(t => t.OwningTeam)
                 .Include(t => t.Contact)
                 .Include(t => t.Comments)
+                .Include(t => t.CreatedByStaff)
                 .AsQueryable();
 
             var filterBuilder = new ViewFilterBuilder();
