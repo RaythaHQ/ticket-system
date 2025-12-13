@@ -2,7 +2,6 @@ namespace App.Application.Common.Interfaces;
 
 /// <summary>
 /// Service for generating unique numeric IDs for entities like Contacts and Tickets.
-/// IDs start at a minimum of 7 digits (1000000) when auto-generated.
 /// </summary>
 public interface INumericIdGenerator
 {
@@ -14,7 +13,7 @@ public interface INumericIdGenerator
 
     /// <summary>
     /// Gets the next available ID for a Ticket.
-    /// Returns at minimum 1000000 (7 digits) for new systems.
+    /// Starts at 1 and increments normally.
     /// </summary>
     Task<long> GetNextTicketIdAsync(CancellationToken cancellationToken = default);
 }

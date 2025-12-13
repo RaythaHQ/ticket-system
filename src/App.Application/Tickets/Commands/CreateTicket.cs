@@ -16,7 +16,7 @@ public class CreateTicket
     public record Command : LoggableRequest<CommandResponseDto<long>>
     {
         /// <summary>
-        /// Optional custom ID. If not specified, an ID will be auto-generated (min 7 digits).
+        /// Optional custom ID. If not specified, an ID will be auto-generated starting from 1.
         /// </summary>
         public long? Id { get; init; }
         public string Title { get; init; } = null!;
@@ -142,7 +142,7 @@ public class CreateTicket
             }
             else
             {
-                // Auto-generate ID (minimum 7 digits)
+                // Auto-generate ID (starts at 1)
                 ticketId = await _idGenerator.GetNextTicketIdAsync(cancellationToken);
             }
 
