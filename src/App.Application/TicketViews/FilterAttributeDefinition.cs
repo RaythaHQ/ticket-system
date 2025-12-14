@@ -33,7 +33,7 @@ public static class FilterAttributes
         new() { Field = "Tags", Label = "Tags", Type = "string", Operators = OperatorDefinitions.StringOperators },
 
         // Status & Priority
-        new() { Field = "Status", Label = "Status", Type = "selection", Operators = OperatorDefinitions.SelectionOperators },
+        new() { Field = "Status", Label = "Status", Type = "status", Operators = OperatorDefinitions.SelectionOperators },
         new() { Field = "Priority", Label = "Priority", Type = "priority", Operators = OperatorDefinitions.PriorityOperators },
 
         // Relationships

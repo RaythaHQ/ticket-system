@@ -317,6 +317,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${users.map(u => `<option value="${u.id}" ${u.id === existingValue ? 'selected' : ''}>${u.name}${u.isDeactivated ? ' (deactivated)' : ''}</option>`).join('')}
                 </select>`;
                 break;
+            case 'team':
+                container.innerHTML = `<select name="${fieldName}" class="form-select form-select-sm">
+                    <option value="">Select team...</option>
+                    ${teams.map(t => `<option value="${t.id}" ${t.id === existingValue ? 'selected' : ''}>${t.name}</option>`).join('')}
+                </select>`;
+                break;
             case 'boolean':
                 container.innerHTML = `<input type="hidden" name="${fieldName}" value="">
                     <span class="form-control form-control-sm text-muted bg-light">No value needed</span>`;
