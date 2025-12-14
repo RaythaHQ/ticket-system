@@ -1,20 +1,20 @@
-﻿using System;
+using System;
 using System.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Npgsql;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Utils;
+using App.Application.SlaRules.Services;
+using App.Application.Teams.Services;
+using App.Application.TicketViews;
 using App.Infrastructure.BackgroundTasks;
 using App.Infrastructure.Configurations;
 using App.Infrastructure.FileStorage;
 using App.Infrastructure.Persistence;
 using App.Infrastructure.Persistence.Interceptors;
 using App.Infrastructure.Services;
-using App.Application.Teams.Services;
-using App.Application.SlaRules.Services;
-using App.Application.TicketViews;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
+using Npgsql;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -42,9 +42,7 @@ public static class ConfigureServices
             );
         });
         services.AddTransient<IDbConnection>(_ => new NpgsqlConnection(dbConnectionString));
-        services.AddScoped<IAppDbContext>(provider =>
-            provider.GetRequiredService<AppDbContext>()
-        );
+        services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
 
         // Health checks for PostgreSQL
         services
@@ -96,8 +94,21 @@ public static class ConfigureServices
         services.AddSingleton<IHostedService, SlaEvaluationJob>();
 
         // Ticket export background task
-        services.AddScoped<App.Application.Exports.Commands.TicketExportJob, TicketExportBackgroundTask>();
-        
+        services.AddScoped<
+            App.Application.Exports.Commands.TicketExportJob,
+            TicketExportBackgroundTask
+        >();
+
+        // Import background tasks
+        services.AddScoped<
+            App.Application.Imports.Commands.ContactImportJob,
+            ContactImportBackgroundTask
+        >();
+        services.AddScoped<
+            App.Application.Imports.Commands.TicketImportJob,
+            TicketImportBackgroundTask
+        >();
+
         // Export cleanup background job
         services.AddSingleton<IHostedService, ExportCleanupJob>();
 

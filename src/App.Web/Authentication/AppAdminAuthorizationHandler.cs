@@ -2,10 +2,10 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using App.Application.Common.Security;
 using App.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 
 namespace App.Web.Authentication;
 
@@ -29,6 +29,8 @@ public class ManageTicketsRequirement : IAuthorizationRequirement { }
 public class AccessReportsRequirement : IAuthorizationRequirement { }
 
 public class ManageSystemViewsRequirement : IAuthorizationRequirement { }
+
+public class ImportExportTicketsRequirement : IAuthorizationRequirement { }
 
 public class AppAdminAuthorizationHandler : IAuthorizationHandler
 {
@@ -165,6 +167,17 @@ public class AppAdminAuthorizationHandler : IAuthorizationHandler
                     context.Succeed(requirement);
                 }
             }
+            else if (requirement is ImportExportTicketsRequirement)
+            {
+                if (
+                    systemPermissionsClaims.Contains(
+                        BuiltInSystemPermission.IMPORT_EXPORT_TICKETS_PERMISSION
+                    )
+                )
+                {
+                    context.Succeed(requirement);
+                }
+            }
         }
 
         return Task.CompletedTask;
@@ -180,4 +193,3 @@ public class AppAdminAuthorizationHandler : IAuthorizationHandler
         return Convert.ToBoolean(isAdminClaim.Value);
     }
 }
-

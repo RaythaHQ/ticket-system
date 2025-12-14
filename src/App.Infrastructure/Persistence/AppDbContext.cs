@@ -1,11 +1,11 @@
-﻿using System.Reflection;
-using Mediator;
-using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 using App.Application.Common.Interfaces;
 using App.Domain.Entities;
 using App.Infrastructure.Common;
 using App.Infrastructure.Persistence.Interceptors;
+using Mediator;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Infrastructure.Persistence;
 
@@ -61,6 +61,7 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     public DbSet<UserFavoriteView> UserFavoriteViews => Set<UserFavoriteView>();
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
     public DbSet<ExportJob> ExportJobs => Set<ExportJob>();
+    public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
 
     // Ticket configuration entities
     public DbSet<TicketPriorityConfig> TicketPriorityConfigs => Set<TicketPriorityConfig>();

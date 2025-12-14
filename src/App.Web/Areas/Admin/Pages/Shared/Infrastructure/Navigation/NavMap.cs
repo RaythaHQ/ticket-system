@@ -56,6 +56,16 @@ public static class NavMap
                 Permission = BuiltInSystemPermission.MANAGE_SYSTEM_SETTINGS_PERMISSION,
                 Order = 110,
             },
+            // Import Data
+            new NavMenuItem
+            {
+                Id = "Import",
+                Label = "Import Data",
+                RouteName = RouteNames.Import.Index,
+                Icon = IconLibrary.Import,
+                Permission = BuiltInSystemPermission.IMPORT_EXPORT_TICKETS_PERMISSION,
+                Order = 120,
+            },
             // Audit Log
             new NavMenuItem
             {

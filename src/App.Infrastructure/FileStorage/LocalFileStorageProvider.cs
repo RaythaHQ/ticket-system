@@ -1,4 +1,4 @@
-﻿using App.Application.Common.Interfaces;
+using App.Application.Common.Interfaces;
 using App.Application.Common.Utils;
 
 namespace App.Infrastructure.FileStorage;
@@ -38,6 +38,12 @@ public class LocalFileStorageProvider : IFileStorageProvider
     public async Task<string> GetDownloadUrlAsync(string key)
     {
         return _relativeUrlBuilder.MediaFileLocalStorageUrl(key);
+    }
+
+    public async Task<byte[]> GetFileAsync(string key)
+    {
+        var filePath = Path.Combine(_localStorageDirectory, key);
+        return await File.ReadAllBytesAsync(filePath);
     }
 
     public string GetName()

@@ -1,0 +1,291 @@
+@page "{id}"
+@model App.Web.Areas.Admin.Pages.Import.Status
+@{
+    ViewData["Title"] = "Import Status";
+    ViewData["ActiveMenu"] = "Import";
+    Layout = "SidebarLayout";
+    var isCompleted = Model.ImportJob.Status == "completed" || Model.ImportJob.Status == "failed";
+}
+
+<partial name="_Partials/PageHeading" model='"Import Status"' />
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    @Model.ImportJob.EntityTypeLabel Import
+                    @if (Model.ImportJob.IsDryRun)
+                    {
+                        <span class="badge bg-warning text-dark ms-2">Dry Run</span>
+                    }
+                </h5>
+                <span id="status-badge" class="badge @GetStatusBadgeClass(Model.ImportJob.Status)">
+                    @Model.ImportJob.StatusLabel
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <label class="form-label text-muted small mb-1">Import Mode</label>
+                    <p class="mb-0 fw-bold">@Model.ImportJob.ModeLabel</p>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-muted small mb-1">Progress</label>
+                    <div class="progress" style="height: 24px;">
+                        <div id="progress-bar" class="progress-bar progress-bar-striped @(isCompleted ? "" : "progress-bar-animated")"
+                             role="progressbar"
+                             style="width: @(Model.ImportJob.ProgressPercent ?? 0)%"
+                             aria-valuenow="@(Model.ImportJob.ProgressPercent ?? 0)"
+                             aria-valuemin="0"
+                             aria-valuemax="100">
+                            <span id="progress-text">@(Model.ImportJob.ProgressPercent ?? 0)%</span>
+                        </div>
+                    </div>
+                    <p id="progress-stage" class="text-muted small mt-1 mb-0">@Model.ImportJob.ProgressStage</p>
+                </div>
+
+                <div id="error-message" class="alert alert-danger @(string.IsNullOrEmpty(Model.ImportJob.ErrorMessage) ? "d-none" : "")">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    <strong>Error:</strong> <span id="error-message-text">@Model.ImportJob.ErrorMessage</span>
+                </div>
+
+                <div id="results-section" class="@(isCompleted ? "" : "d-none")">
+                    <hr>
+                    <h6 class="mb-3">
+                        <i class="bi bi-bar-chart-fill me-1"></i> Results
+                        @if (Model.ImportJob.IsDryRun)
+                        {
+                            <span class="text-warning">(Dry Run - No changes were made)</span>
+                        }
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-sm-4 col-md-2">
+                            <div class="border rounded p-3 text-center">
+                                <div id="stat-total" class="h4 mb-0">@Model.ImportJob.TotalRows</div>
+                                <small class="text-muted">Total Rows</small>
+                            </div>
+                        </div>
+                        <div class="col-sm-4 col-md-2">
+                            <div class="border rounded p-3 text-center">
+                                <div id="stat-processed" class="h4 mb-0">@Model.ImportJob.RowsProcessed</div>
+                                <small class="text-muted">Processed</small>
+                            </div>
+                        </div>
+                        <div class="col-sm-4 col-md-2">
+                            <div class="border border-success rounded p-3 text-center">
+                                <div id="stat-inserted" class="h4 mb-0 text-success">@Model.ImportJob.RowsInserted</div>
+                                <small class="text-muted">Inserted</small>
+                            </div>
+                        </div>
+                        <div class="col-sm-4 col-md-2">
+                            <div class="border border-primary rounded p-3 text-center">
+                                <div id="stat-updated" class="h4 mb-0 text-primary">@Model.ImportJob.RowsUpdated</div>
+                                <small class="text-muted">Updated</small>
+                            </div>
+                        </div>
+                        <div class="col-sm-4 col-md-2">
+                            <div class="border rounded p-3 text-center">
+                                <div id="stat-skipped" class="h4 mb-0 text-secondary">@Model.ImportJob.RowsSkipped</div>
+                                <small class="text-muted">Skipped</small>
+                            </div>
+                        </div>
+                        <div class="col-sm-4 col-md-2">
+                            <div class="border border-danger rounded p-3 text-center">
+                                <div id="stat-errors" class="h4 mb-0 text-danger">@Model.ImportJob.RowsWithErrors</div>
+                                <small class="text-muted">Errors</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="error-download-section" class="mt-4 @(Model.ImportJob.RowsWithErrors > 0 || Model.ErrorFileDownloadUrl != null ? "" : "d-none")">
+                        <div class="alert alert-warning d-flex align-items-center justify-content-between">
+                            <div>
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                <span id="error-count-text">@Model.ImportJob.RowsWithErrors row(s) had validation errors.</span>
+                            </div>
+                            <a id="download-errors-btn" href="@Model.ErrorFileDownloadUrl" class="btn btn-warning btn-sm @(Model.ErrorFileDownloadUrl == null ? "d-none" : "")">
+                                <i class="bi bi-download me-1"></i> Download Error Report
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a asp-page="@RouteNames.Import.Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Import
+                </a>
+                @if (Model.ImportJob.IsDryRun && Model.ImportJob.Status == "completed")
+                {
+                    <span class="text-muted ms-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        This was a dry run. Upload again without "Dry Run" checked to apply changes.
+                    </span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Import Details</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Import ID</dt>
+                    <dd class="col-sm-7"><code>@Model.ImportJob.Id</code></dd>
+
+                    <dt class="col-sm-5">Requested By</dt>
+                    <dd class="col-sm-7">@Model.ImportJob.RequesterName</dd>
+
+                    <dt class="col-sm-5">Requested At</dt>
+                    <dd class="col-sm-7">@Model.ImportJob.RequestedAt.ToString("MMM dd, yyyy h:mm tt")</dd>
+
+                    <dt class="col-sm-5">Completed At</dt>
+                    <dd id="completed-at" class="col-sm-7">@(Model.ImportJob.CompletedAt?.ToString("MMM dd, yyyy h:mm tt") ?? "-")</dd>
+
+                    <dt class="col-sm-5">Expires At</dt>
+                    <dd class="col-sm-7">@Model.ImportJob.ExpiresAt.ToString("MMM dd, yyyy h:mm tt")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function() {
+            const importId = '@Model.ImportJob.Id';
+            const isCompleted = @(isCompleted.ToString().ToLower());
+            let pollInterval = null;
+
+            function updateUI(data) {
+                // Update status badge
+                const statusBadge = document.getElementById('status-badge');
+                statusBadge.textContent = data.statusLabel;
+                statusBadge.className = 'badge ' + getStatusBadgeClass(data.status);
+
+                // Update progress bar
+                const progressBar = document.getElementById('progress-bar');
+                const progressText = document.getElementById('progress-text');
+                const progressStage = document.getElementById('progress-stage');
+
+                progressBar.style.width = data.progressPercent + '%';
+                progressBar.setAttribute('aria-valuenow', data.progressPercent);
+                progressText.textContent = data.progressPercent + '%';
+                progressStage.textContent = data.progressStage || '';
+
+                if (data.status === 'completed' || data.status === 'failed') {
+                    progressBar.classList.remove('progress-bar-animated');
+                }
+
+                // Update stats
+                document.getElementById('stat-total').textContent = data.totalRows;
+                document.getElementById('stat-processed').textContent = data.rowsProcessed;
+                document.getElementById('stat-inserted').textContent = data.rowsInserted;
+                document.getElementById('stat-updated').textContent = data.rowsUpdated;
+                document.getElementById('stat-skipped').textContent = data.rowsSkipped;
+                document.getElementById('stat-errors').textContent = data.rowsWithErrors;
+
+                // Show/hide results section (show for both completed and failed)
+                const resultsSection = document.getElementById('results-section');
+                if (data.status === 'completed' || data.status === 'failed') {
+                    resultsSection.classList.remove('d-none');
+                }
+
+                // Update completed at
+                if (data.completedAt) {
+                    document.getElementById('completed-at').textContent = data.completedAt;
+                }
+
+                // Update error message
+                const errorMessageEl = document.getElementById('error-message');
+                const errorMessageText = document.getElementById('error-message-text');
+                if (data.errorMessage && errorMessageEl) {
+                    errorMessageEl.classList.remove('d-none');
+                    if (errorMessageText) {
+                        errorMessageText.textContent = data.errorMessage;
+                    }
+                } else if (errorMessageEl) {
+                    errorMessageEl.classList.add('d-none');
+                }
+
+                // Update error download
+                if (data.rowsWithErrors > 0) {
+                    const errorDownloadSection = document.getElementById('error-download-section');
+                    if (errorDownloadSection) {
+                        errorDownloadSection.classList.remove('d-none');
+                    }
+                    const errorCountText = document.getElementById('error-count-text');
+                    if (errorCountText) {
+                        errorCountText.textContent = data.rowsWithErrors + ' row(s) had validation errors.';
+                    }
+                    const downloadBtn = document.getElementById('download-errors-btn');
+                    if (downloadBtn && data.errorFileUrl) {
+                        downloadBtn.href = data.errorFileUrl;
+                        downloadBtn.classList.remove('d-none');
+                    }
+                }
+
+                // Stop polling if complete
+                if (data.status === 'completed' || data.status === 'failed') {
+                    stopPolling();
+                }
+            }
+
+            function getStatusBadgeClass(status) {
+                switch (status) {
+                    case 'queued': return 'bg-secondary';
+                    case 'running': return 'bg-primary';
+                    case 'completed': return 'bg-success';
+                    case 'failed': return 'bg-danger';
+                    default: return 'bg-secondary';
+                }
+            }
+
+            function poll() {
+                fetch('?handler=Refresh&id=' + importId)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.error) {
+                            updateUI(data);
+                        }
+                    })
+                    .catch(err => console.error('Poll error:', err));
+            }
+
+            function startPolling() {
+                if (!pollInterval) {
+                    pollInterval = setInterval(poll, 2000);
+                }
+            }
+
+            function stopPolling() {
+                if (pollInterval) {
+                    clearInterval(pollInterval);
+                    pollInterval = null;
+                }
+            }
+
+            // Start polling if not already completed
+            if (!isCompleted) {
+                startPolling();
+            }
+        })();
+    </script>
+}
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "queued" => "bg-secondary",
+            "running" => "bg-primary",
+            "completed" => "bg-success",
+            "failed" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

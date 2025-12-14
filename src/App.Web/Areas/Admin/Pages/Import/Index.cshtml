@@ -1,0 +1,305 @@
+@page
+@model App.Web.Areas.Admin.Pages.Import.Index
+@{
+    ViewData["Title"] = "Import Data";
+    ViewData["ActiveMenu"] = "Import";
+    Layout = "SidebarLayout";
+}
+
+<partial name="_Partials/PageHeading" model='"Import Data"' />
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Upload CSV File</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label asp-for="Form.EntityType" class="form-label fw-bold">Import Type <span
+                                class="text-danger">*</span></label>
+                        <select asp-for="Form.EntityType" class="form-select @Model.HasError("Form.EntityType")">
+                            <option value="contacts">Contacts</option>
+                            <option value="tickets">Tickets</option>
+                        </select>
+                        <span class="text-danger">@Model.ErrorMessageFor("Form.EntityType")</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Form.Mode" class="form-label fw-bold">Import Mode <span
+                                class="text-danger">*</span></label>
+                        <select asp-for="Form.Mode" class="form-select @Model.HasError("Form.Mode")">
+                            <option value="insert_if_not_exists">Insert If Not Exists - Only insert new records (with
+                                specified ID if provided), skip existing</option>
+                            <option value="update_existing_only">Update Existing Only - Only update existing records by
+                                ID, skip rows where ID not found</option>
+                            <option value="upsert" selected>Upsert - Update existing by ID, or insert new with specified
+                                ID if not found</option>
+                        </select>
+                        <span class="text-danger">@Model.ErrorMessageFor("Form.Mode")</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input asp-for="Form.IsDryRun" class="form-check-input" type="checkbox">
+                            <label asp-for="Form.IsDryRun" class="form-check-label">
+                                <strong>Dry Run (Validate Only)</strong>
+                                <br><small class="text-muted">Validates the CSV and shows what would happen without
+                                    making any changes</small>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">CSV File <span class="text-danger">*</span></label>
+                        <input type="file" name="file" class="form-control" accept=".csv,text/csv" required>
+                        <div class="form-text">Maximum file size: 30 MB</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-upload me-1"></i> Start Import
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-1"></i> Import Instructions</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>General Requirements:</strong></p>
+                <ul class="small">
+                    <li>File must be CSV format with UTF-8 encoding</li>
+                    <li>First row must contain column headers (exact names required)</li>
+                    <li>Use <code>[NULL]</code> to explicitly clear/unset a field value</li>
+                    <li>Empty cells mean "no change" for updates, or use default/null for inserts</li>
+                    <li>Duplicate rows in the same file: later rows overwrite earlier ones</li>
+                </ul>
+
+                <p class="mb-2 mt-3"><strong>Date Format:</strong></p>
+                <p class="small mb-0">Use ISO 8601 format: <code>2024-01-15T10:30:00Z</code></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4" id="contacts-columns">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-person-lines-fill me-1"></i> Contacts CSV Columns</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Column Header</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                                <th>Format / Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Id</code></td>
+                                <td><span class="badge bg-warning text-dark">For Updates</span></td>
+                                <td>Contact ID (numeric)</td>
+                                <td>
+                                    Required for Update mode. For Insert/Upsert: if provided and the contact doesn't
+                                    exist,
+                                    a new contact will be created <strong>with this exact ID</strong> (useful for data
+                                    migration from other systems).
+                                    If not provided on insert, an ID will be auto-generated.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>FirstName</code></td>
+                                <td><span class="badge bg-danger">Required</span></td>
+                                <td>First name</td>
+                                <td>Text, required for all inserts</td>
+                            </tr>
+                            <tr>
+                                <td><code>LastName</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Last name</td>
+                                <td>Text</td>
+                            </tr>
+                            <tr>
+                                <td><code>Email</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Email address</td>
+                                <td>Valid email format</td>
+                            </tr>
+                            <tr>
+                                <td><code>PhoneNumbers</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Phone numbers</td>
+                                <td>Semicolon-separated list: <code>+15551234567;+15559876543</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>Address</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Street address</td>
+                                <td>Text</td>
+                            </tr>
+                            <tr>
+                                <td><code>OrganizationAccount</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Organization/Company</td>
+                                <td>Text</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4" id="tickets-columns">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-ticket-detailed me-1"></i> Tickets CSV Columns</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Column Header</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                                <th>Format / Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>Id</code></td>
+                                <td><span class="badge bg-warning text-dark">For Updates</span></td>
+                                <td>Ticket ID (numeric)</td>
+                                <td>
+                                    Required for Update mode. For Insert/Upsert: if provided and the ticket doesn't
+                                    exist,
+                                    a new ticket will be created <strong>with this exact ID</strong> (useful for data
+                                    migration from other systems).
+                                    If not provided on insert, an ID will be auto-generated.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>Title</code></td>
+                                <td><span class="badge bg-danger">Required</span></td>
+                                <td>Ticket title</td>
+                                <td>Text, required for all inserts</td>
+                            </tr>
+                            <tr>
+                                <td><code>Description</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Ticket description</td>
+                                <td>Text</td>
+                            </tr>
+                            <tr>
+                                <td><code>Status</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Ticket status</td>
+                                <td>
+                                    Developer name. Default: <code>open</code><br>
+                                    Valid values: @Html.Raw(string.Join(", ", Model.ValidStatuses.Select(s =>
+                                                                        $"<code>{s}</code>")))
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>Priority</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Ticket priority</td>
+                                <td>
+                                    Developer name. Default: <code>normal</code><br>
+                                    Valid values: @Html.Raw(string.Join(", ", Model.ValidPriorities.Select(p =>
+                                                                        $"<code>{p}</code>")))
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>Category</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Ticket category</td>
+                                <td>Text</td>
+                            </tr>
+                            <tr>
+                                <td><code>OwningTeam</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Assigned team</td>
+                                <td>Team ID (GUID) or Team Name. Will attempt ID first, then name lookup.</td>
+                            </tr>
+                            <tr>
+                                <td><code>Assignee</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Assigned staff member</td>
+                                <td>User ID (GUID) or Email address. Will attempt ID first, then email lookup.</td>
+                            </tr>
+                            <tr>
+                                <td><code>Contact</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Associated contact</td>
+                                <td>Contact ID (numeric) or Email address. Will attempt ID first, then email lookup.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>Tags</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Ticket tags</td>
+                                <td>Semicolon-separated list:
+                                    <code>urgent;billing;followup</code><br><strong>Note:</strong> Replaces all existing
+                                    tags
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>CreatedAt</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Creation timestamp</td>
+                                <td>ISO 8601: <code>2024-01-15T10:30:00Z</code><br>
+                                    If omitted, defaults to current time. Useful for data migration.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><code>ResolvedAt</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Resolution timestamp</td>
+                                <td>ISO 8601: <code>2024-01-15T10:30:00Z</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>ClosedAt</code></td>
+                                <td><span class="badge bg-secondary">Optional</span></td>
+                                <td>Closure timestamp</td>
+                                <td>ISO 8601: <code>2024-01-15T10:30:00Z</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const entityTypeSelect = document.querySelector('[name="Form.EntityType"]');
+            const contactsSection = document.getElementById('contacts-columns');
+            const ticketsSection = document.getElementById('tickets-columns');
+
+            function updateVisibility() {
+                const value = entityTypeSelect.value;
+                contactsSection.style.display = value === 'contacts' ? 'block' : 'none';
+                ticketsSection.style.display = value === 'tickets' ? 'block' : 'none';
+            }
+
+            entityTypeSelect.addEventListener('change', updateVisibility);
+            updateVisibility();
+        });
+    </script>
+}

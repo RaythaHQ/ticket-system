@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.S3;
@@ -93,6 +93,16 @@ public class S3FileStorageProvider : IFileStorageProvider
     {
         string url = $"https://{_bucket}.s3.amazonaws.com/{key}";
         return url;
+    }
+
+    public async Task<byte[]> GetFileAsync(string key)
+    {
+        var request = new GetObjectRequest { BucketName = _bucket, Key = key };
+
+        using var response = await _client.GetObjectAsync(request);
+        using var memoryStream = new MemoryStream();
+        await response.ResponseStream.CopyToAsync(memoryStream);
+        return memoryStream.ToArray();
     }
 
     public async Task<string> GetUploadUrlAsync(

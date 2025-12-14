@@ -1,4 +1,11 @@
-﻿using System.Text.Json;
+using System.Text.Json;
+using App.Application.Common.Interfaces;
+using App.Application.Common.Security;
+using App.Domain.Entities;
+using App.Infrastructure.Persistence;
+using App.Web.Authentication;
+using App.Web.Middlewares;
+using App.Web.Services;
 using CSharpVitamins;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -7,13 +14,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
-using App.Application.Common.Interfaces;
-using App.Application.Common.Security;
-using App.Domain.Entities;
-using App.Infrastructure.Persistence;
-using App.Web.Authentication;
-using App.Web.Middlewares;
-using App.Web.Services;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -92,6 +92,10 @@ public static class ConfigureServices
             options.AddPolicy(
                 BuiltInSystemPermission.MANAGE_SYSTEM_VIEWS_PERMISSION,
                 policy => policy.Requirements.Add(new ManageSystemViewsRequirement())
+            );
+            options.AddPolicy(
+                BuiltInSystemPermission.IMPORT_EXPORT_TICKETS_PERMISSION,
+                policy => policy.Requirements.Add(new ImportExportTicketsRequirement())
             );
 
             options.AddPolicy(

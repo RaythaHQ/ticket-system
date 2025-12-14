@@ -398,4 +398,13 @@ public static class RouteNames
         public const string Index = "/Tickets/Reports/Index";
         public const string TeamReport = "/Tickets/Reports/TeamReport";
     }
+
+    /// <summary>
+    /// Route constants for import pages.
+    /// </summary>
+    public static class Import
+    {
+        public const string Index = "/Import/Index";
+        public const string Status = "/Import/Status";
+    }
 }

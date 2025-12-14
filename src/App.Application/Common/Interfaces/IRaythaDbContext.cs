@@ -1,4 +1,4 @@
-﻿using App.Domain.Entities;
+using App.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Application.Common.Interfaces;
@@ -37,6 +37,7 @@ public interface IAppDbContext
     public DbSet<UserFavoriteView> UserFavoriteViews { get; }
     public DbSet<NotificationPreference> NotificationPreferences { get; }
     public DbSet<ExportJob> ExportJobs { get; }
+    public DbSet<ImportJob> ImportJobs { get; }
 
     // Ticket configuration entities
     public DbSet<TicketPriorityConfig> TicketPriorityConfigs { get; }

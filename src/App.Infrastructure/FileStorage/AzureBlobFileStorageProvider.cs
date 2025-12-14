@@ -1,8 +1,8 @@
-﻿using Azure.Storage.Blobs;
-using Azure.Storage.Blobs.Models;
-using Azure.Storage.Sas;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Utils;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 
 namespace App.Infrastructure.FileStorage;
 
@@ -62,6 +62,14 @@ public class AzureBlobFileStorageProvider : IFileStorageProvider
         downloadUrl = UseCustomDomain(downloadUrl);
 
         return downloadUrl;
+    }
+
+    public async Task<byte[]> GetFileAsync(string key)
+    {
+        BlobClient blobClient = _client.GetBlobClient(key);
+        using var memoryStream = new MemoryStream();
+        await blobClient.DownloadToAsync(memoryStream);
+        return memoryStream.ToArray();
     }
 
     public async Task<string> GetUploadUrlAsync(
