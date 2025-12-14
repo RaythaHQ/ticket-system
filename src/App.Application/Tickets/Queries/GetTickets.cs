@@ -110,7 +110,7 @@ public class GetTickets
                 .Include(t => t.CreatedByStaff)
                 .AsQueryable();
 
-            var filterBuilder = new ViewFilterBuilder();
+            var filterBuilder = new ViewFilterBuilder(_db);
             List<string> visibleColumns = request.VisibleColumns ?? new List<string>();
             List<Domain.Entities.ViewSortLevel>? viewSortLevels = null;
             bool useViewSort = request.SortBy?.ToLower() == "view";

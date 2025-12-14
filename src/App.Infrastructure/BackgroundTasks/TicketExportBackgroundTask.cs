@@ -222,7 +222,7 @@ public class TicketExportBackgroundTask : TicketExportJob
         // Apply filters using ViewFilterBuilder pattern
         if (payload.Filters.Any())
         {
-            var filterBuilder = new ViewFilterBuilder();
+            var filterBuilder = new ViewFilterBuilder(db);
             var conditions = new ViewConditions
             {
                 Filters = payload
@@ -240,7 +240,7 @@ public class TicketExportBackgroundTask : TicketExportJob
         // Apply search
         if (!string.IsNullOrWhiteSpace(payload.SearchTerm) && payload.Columns.Any())
         {
-            var filterBuilder = new ViewFilterBuilder();
+            var filterBuilder = new ViewFilterBuilder(db);
             query = filterBuilder.ApplyColumnSearch(query, payload.SearchTerm, payload.Columns);
         }
 

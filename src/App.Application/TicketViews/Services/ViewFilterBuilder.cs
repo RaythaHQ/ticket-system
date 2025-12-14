@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using App.Application.Common.Interfaces;
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
 using CSharpVitamins;
@@ -33,7 +34,13 @@ internal class ParameterReplacer : ExpressionVisitor
 /// </summary>
 public class ViewFilterBuilder
 {
+    private readonly IAppDbContext _db;
     private TimeZoneInfo _timezone = TimeZoneInfo.Utc;
+
+    public ViewFilterBuilder(IAppDbContext db)
+    {
+        _db = db;
+    }
 
     /// <summary>
     /// Set the timezone for relative date calculations.
@@ -952,21 +959,17 @@ public class ViewFilterBuilder
         {
             "id" => t => t.Id,
             "title" => t => t.Title,
-            // Status: map to numeric order based on workflow progression
-            // Ascending = Open first (start of workflow), Descending = Closed first (end of workflow)
-            "status" => t =>
-                t.Status == TicketStatus.OPEN ? 0 :
-                t.Status == TicketStatus.IN_PROGRESS ? 1 :
-                t.Status == TicketStatus.PENDING ? 2 :
-                t.Status == TicketStatus.RESOLVED ? 3 :
-                t.Status == TicketStatus.CLOSED ? 4 : 5,
-            // Priority: map to numeric order where 0=Urgent (highest), 3=Low (lowest)
-            // Ascending = highest priority first (Urgent), Descending = lowest first (Low)
-            "priority" => t => 
-                t.Priority == TicketPriority.URGENT ? 0 :
-                t.Priority == TicketPriority.HIGH ? 1 :
-                t.Priority == TicketPriority.NORMAL ? 2 :
-                t.Priority == TicketPriority.LOW ? 3 : 4,
+            // Status: use SortOrder from TicketStatusConfig (ascending = lower SortOrder first)
+            "status" => t => _db.TicketStatusConfigs
+                .Where(s => s.DeveloperName == t.Status)
+                .Select(s => s.SortOrder)
+                .FirstOrDefault(),
+            // Priority: use SortOrder from TicketPriorityConfig (ascending = lower SortOrder first = higher priority)
+            // Note: In config, lower SortOrder = higher priority (e.g., Urgent=0, Low=3)
+            "priority" => t => _db.TicketPriorityConfigs
+                .Where(p => p.DeveloperName == t.Priority)
+                .Select(p => p.SortOrder)
+                .FirstOrDefault(),
             "category" => t => t.Category ?? "",
             "creationtime" => t => t.CreationTime,
             "lastmodificationtime" => t => t.LastModificationTime ?? DateTime.MinValue,
