@@ -297,13 +297,14 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             {
                 IsUsingViewSort = true;
                 CurrentSortBy = "view";
-                // Sort will be applied by GetTickets query using view's SortLevels
+                query = query with { SortBy = "view" };
             }
             else if (string.IsNullOrEmpty(sortBy) && SelectedView?.SortLevels.Count > 0)
             {
                 // Default to view's sort when first loading the view
                 IsUsingViewSort = true;
                 CurrentSortBy = "view";
+                query = query with { SortBy = "view" };
             }
             else
             {
