@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using App.Application.Admins;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models.RenderModels;
 using App.Application.Login;
+using App.Application.Tickets.RenderModels;
 using App.Application.Users;
 using App.Domain.Entities;
 using App.Domain.Exceptions;
@@ -100,6 +101,35 @@ public class InsertVariableTemplateFactory
     public static InsertVariableTemplateFactory CurrentUser =>
         new("CurrentUser", "CurrentUser", new CurrentUser_RenderModel());
 
+    // Ticket notification templates
+    public static InsertVariableTemplateFactory TicketAssignedEmail =>
+        new(BuiltInEmailTemplate.TicketAssignedEmail, "Target", new TicketAssigned_RenderModel());
+    public static InsertVariableTemplateFactory TicketAssignedToTeamEmail =>
+        new(
+            BuiltInEmailTemplate.TicketAssignedToTeamEmail,
+            "Target",
+            new TicketAssignedToTeam_RenderModel()
+        );
+    public static InsertVariableTemplateFactory TicketCommentAddedEmail =>
+        new(
+            BuiltInEmailTemplate.TicketCommentAddedEmail,
+            "Target",
+            new TicketCommentAdded_RenderModel()
+        );
+    public static InsertVariableTemplateFactory TicketStatusChangedEmail =>
+        new(
+            BuiltInEmailTemplate.TicketStatusChangedEmail,
+            "Target",
+            new TicketStatusChanged_RenderModel()
+        );
+    public static InsertVariableTemplateFactory TicketClosedEmail =>
+        new(BuiltInEmailTemplate.TicketClosedEmail, "Target", new TicketClosed_RenderModel());
+    public static InsertVariableTemplateFactory TicketReopenedEmail =>
+        new(BuiltInEmailTemplate.TicketReopenedEmail, "Target", new TicketReopened_RenderModel());
+    public static InsertVariableTemplateFactory SlaApproachingEmail =>
+        new(BuiltInEmailTemplate.SlaApproachingEmail, "Target", new SlaApproaching_RenderModel());
+    public static InsertVariableTemplateFactory SlaBreachedEmail =>
+        new(BuiltInEmailTemplate.SlaBreachedEmail, "Target", new SlaBreach_RenderModel());
 
     public string DeveloperName { get; private set; } = string.Empty;
     public string VariableCategoryName { get; private set; } = string.Empty;
@@ -120,6 +150,16 @@ public class InsertVariableTemplateFactory
             yield return UserWelcomeEmail;
             yield return UserPasswordChangedEmail;
             yield return UserPasswordResetEmail;
+
+            // Ticket notification templates
+            yield return TicketAssignedEmail;
+            yield return TicketAssignedToTeamEmail;
+            yield return TicketCommentAddedEmail;
+            yield return TicketStatusChangedEmail;
+            yield return TicketClosedEmail;
+            yield return TicketReopenedEmail;
+            yield return SlaApproachingEmail;
+            yield return SlaBreachedEmail;
 
             yield return CurrentOrganization;
             yield return CurrentUser;

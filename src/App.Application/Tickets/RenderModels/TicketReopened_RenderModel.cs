@@ -3,24 +3,24 @@ using App.Application.Common.Interfaces;
 namespace App.Application.Tickets.RenderModels;
 
 /// <summary>
-/// Render model for ticket comment added email notifications.
+/// Render model for ticket reopened email notifications.
 /// </summary>
-public record TicketCommentAdded_RenderModel : IInsertTemplateVariable
+public record TicketReopened_RenderModel : IInsertTemplateVariable
 {
     public long TicketId { get; init; }
-    public string Title { get; init; } = string.Empty;
+    public string TicketTitle { get; init; } = string.Empty;
+    public string ReopenedByName { get; init; } = string.Empty;
+    public string Status { get; init; } = string.Empty;
     public string RecipientName { get; init; } = string.Empty;
-    public string CommentAuthor { get; init; } = string.Empty;
-    public string CommentBody { get; init; } = string.Empty;
     public string TicketUrl { get; init; } = string.Empty;
 
     public IEnumerable<string> GetDeveloperNames()
     {
         yield return nameof(TicketId);
-        yield return nameof(Title);
+        yield return nameof(TicketTitle);
+        yield return nameof(ReopenedByName);
+        yield return nameof(Status);
         yield return nameof(RecipientName);
-        yield return nameof(CommentAuthor);
-        yield return nameof(CommentBody);
         yield return nameof(TicketUrl);
     }
 
