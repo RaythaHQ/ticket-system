@@ -952,23 +952,49 @@ public class ViewFilterBuilder
         {
             "id" => t => t.Id,
             "title" => t => t.Title,
-            "status" => t => t.Status,
-            "priority" => t => t.Priority,
+            // Status: map to numeric order based on workflow progression
+            // Ascending = Open first (start of workflow), Descending = Closed first (end of workflow)
+            "status" => t =>
+                t.Status == TicketStatus.OPEN ? 0 :
+                t.Status == TicketStatus.IN_PROGRESS ? 1 :
+                t.Status == TicketStatus.PENDING ? 2 :
+                t.Status == TicketStatus.RESOLVED ? 3 :
+                t.Status == TicketStatus.CLOSED ? 4 : 5,
+            // Priority: map to numeric order where 0=Urgent (highest), 3=Low (lowest)
+            // Ascending = highest priority first (Urgent), Descending = lowest first (Low)
+            "priority" => t => 
+                t.Priority == TicketPriority.URGENT ? 0 :
+                t.Priority == TicketPriority.HIGH ? 1 :
+                t.Priority == TicketPriority.NORMAL ? 2 :
+                t.Priority == TicketPriority.LOW ? 3 : 4,
             "category" => t => t.Category ?? "",
             "creationtime" => t => t.CreationTime,
             "lastmodificationtime" => t => t.LastModificationTime ?? DateTime.MinValue,
             "closedat" => t => t.ClosedAt ?? DateTime.MinValue,
             "sladueat" => t => t.SlaDueAt ?? DateTime.MaxValue,
             "slastatus" => t => t.SlaStatus ?? "",
+            // User fields - match by ID field names from FilterAttributeDefinition
+            "assigneeid" => t =>
+                t.Assignee != null ? t.Assignee.FirstName + " " + t.Assignee.LastName : "zzz",
+            "createdbystaffid" => t =>
+                t.CreatedByStaff != null
+                    ? t.CreatedByStaff.FirstName + " " + t.CreatedByStaff.LastName
+                    : "zzz",
+            // Team - match by ID field name, sort by team name
+            "owningteamid" => t => t.OwningTeam != null ? t.OwningTeam.Name : "zzz",
+            // Contact
+            "contactid" => t =>
+                t.Contact != null ? t.Contact.FirstName + " " + (t.Contact.LastName ?? "") : "zzz",
+            // Fallback for legacy field names (backwards compatibility)
             "assigneename" => t =>
-                t.Assignee != null ? t.Assignee.FirstName + " " + t.Assignee.LastName : "",
-            "owningteamname" => t => t.OwningTeam != null ? t.OwningTeam.Name : "",
+                t.Assignee != null ? t.Assignee.FirstName + " " + t.Assignee.LastName : "zzz",
+            "owningteamname" => t => t.OwningTeam != null ? t.OwningTeam.Name : "zzz",
             "contactname" => t =>
-                t.Contact != null ? t.Contact.FirstName + " " + (t.Contact.LastName ?? "") : "",
+                t.Contact != null ? t.Contact.FirstName + " " + (t.Contact.LastName ?? "") : "zzz",
             "createdbyname" => t =>
                 t.CreatedByStaff != null
                     ? t.CreatedByStaff.FirstName + " " + t.CreatedByStaff.LastName
-                    : "",
+                    : "zzz",
             _ => t => t.CreationTime,
         };
     }
