@@ -713,31 +713,51 @@ public class ViewFilterBuilder
         // Handle relative date presets
         if (!string.IsNullOrEmpty(filter.RelativeDatePreset))
         {
-            return RelativeDatePresets.Resolve(
+            var (localStart, localEnd) = RelativeDatePresets.Resolve(
                 filter.RelativeDatePreset,
                 filter.RelativeDateValue,
                 _timezone
             );
+            // Convert to UTC for PostgreSQL
+            return (
+                DateTime.SpecifyKind(TimeZoneInfo.ConvertTimeToUtc(localStart, _timezone), DateTimeKind.Utc),
+                DateTime.SpecifyKind(TimeZoneInfo.ConvertTimeToUtc(localEnd, _timezone), DateTimeKind.Utc)
+            );
         }
 
-        // Handle exact date value
+        // Handle exact date value - parse and convert to UTC for PostgreSQL
         if (DateTime.TryParse(filter.Value, out var date))
         {
-            return (date.Date, date.Date.AddDays(1).AddTicks(-1));
+            // The date from the form is the local date in the org's timezone
+            // Get start of day (00:00:00) and end of day (23:59:59.999) in local time
+            var localStart = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Unspecified);
+            var localEnd = new DateTime(date.Year, date.Month, date.Day, 23, 59, 59, 999, DateTimeKind.Unspecified);
+
+            // Convert to UTC for PostgreSQL
+            var utcStart = TimeZoneInfo.ConvertTimeToUtc(localStart, _timezone);
+            var utcEnd = TimeZoneInfo.ConvertTimeToUtc(localEnd, _timezone);
+
+            return (
+                DateTime.SpecifyKind(utcStart, DateTimeKind.Utc),
+                DateTime.SpecifyKind(utcEnd, DateTimeKind.Utc)
+            );
         }
 
-        // Default to today
-        var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _timezone);
-        return (now.Date, now.Date.AddDays(1).AddTicks(-1));
+        // Default to today in UTC
+        var now = DateTime.UtcNow;
+        var todayStart = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc);
+        var todayEnd = todayStart.AddDays(1).AddTicks(-1);
+        return (todayStart, todayEnd);
     }
 
     /// <summary>
     /// Resolve date range for "is_within_past/next_hours/days/months" operators.
     /// The Value field contains the number (e.g., "7" for 7 days).
+    /// Returns UTC datetimes for PostgreSQL compatibility.
     /// </summary>
     private (DateTime Start, DateTime End) ResolveWithinDateRange(ViewFilterCondition filter)
     {
-        var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, _timezone);
+        var now = DateTime.UtcNow; // Use UTC for PostgreSQL
         var amount = int.TryParse(filter.Value, out var val) ? val : 1;
 
         return filter.Operator switch
