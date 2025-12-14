@@ -412,12 +412,26 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         string? sortBy = null,
         CancellationToken cancellationToken = default)
     {
-        // Build export snapshot payload
+        // Get columns from the view if one is selected, otherwise use defaults
         var columns = new List<string>
         {
             "id", "title", "status", "priority", "category",
             "contactname", "assigneename", "teamname", "creationtime"
         };
+
+        // If a view is selected, use its visible columns for the export
+        if (!string.IsNullOrEmpty(viewId))
+        {
+            var viewResponse = await Mediator.Send(
+                new Application.TicketViews.Queries.GetTicketViewById.Query { Id = viewId },
+                cancellationToken
+            );
+            
+            if (viewResponse.Result?.VisibleColumns?.Any() == true)
+            {
+                columns = viewResponse.Result.VisibleColumns;
+            }
+        }
 
         var filters = new List<Application.Exports.Models.ExportFilter>();
         if (!string.IsNullOrEmpty(status))

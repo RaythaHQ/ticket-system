@@ -349,19 +349,31 @@ public class TicketExportBackgroundTask : TicketExportJob
             "category" => ticket.Category ?? "",
             "slastatus" => ticket.SlaStatus ?? "",
             "sladueat" => ticket.SlaDueAt?.ToString("O") ?? "",
+            // Contact fields
+            "contactid" => ticket.ContactId?.ToString() ?? "",
             "contactname" => ticket.Contact?.FullName ?? "",
             "contactemail" => ticket.Contact?.Email ?? "",
+            "contactfirstname" => ticket.Contact?.FirstName ?? "",
+            "contactlastname" => ticket.Contact?.LastName ?? "",
+            // Assignee
             "assigneename" => ticket.Assignee != null
                 ? $"{ticket.Assignee.FirstName} {ticket.Assignee.LastName}".Trim()
                 : "",
-            "teamname" => ticket.OwningTeam?.Name ?? "",
-            "createdbystaff" => ticket.CreatedByStaff != null
+            "assigneeid" => ticket.AssigneeId?.ToString() ?? "",
+            // Team
+            "owningteamname" or "teamname" => ticket.OwningTeam?.Name ?? "",
+            "owningteamid" => ticket.OwningTeamId?.ToString() ?? "",
+            // Created by
+            "createdbyname" or "createdbystaff" => ticket.CreatedByStaff != null
                 ? $"{ticket.CreatedByStaff.FirstName} {ticket.CreatedByStaff.LastName}".Trim()
                 : "",
+            "createdbystaffid" => ticket.CreatedByStaffId?.ToString() ?? "",
+            // Dates
             "creationtime" => ticket.CreationTime.ToString("O"),
             "lastmodificationtime" => ticket.LastModificationTime?.ToString("O") ?? "",
             "resolvedat" => ticket.ResolvedAt?.ToString("O") ?? "",
             "closedat" => ticket.ClosedAt?.ToString("O") ?? "",
+            // Tags
             "tags" => ticket.Tags != null ? string.Join(", ", ticket.Tags) : "",
             _ => "",
         };
@@ -371,7 +383,7 @@ public class TicketExportBackgroundTask : TicketExportJob
     {
         return column.ToLower() switch
         {
-            "id" => "ID",
+            "id" => "Ticket ID",
             "title" => "Title",
             "description" => "Description",
             "status" => "Status",
@@ -379,15 +391,27 @@ public class TicketExportBackgroundTask : TicketExportJob
             "category" => "Category",
             "slastatus" => "SLA Status",
             "sladueat" => "SLA Due At",
-            "contactname" => "Contact Name",
+            // Contact fields
+            "contactid" => "Contact ID",
+            "contactname" => "Contact",
             "contactemail" => "Contact Email",
+            "contactfirstname" => "Contact First Name",
+            "contactlastname" => "Contact Last Name",
+            // Assignee
             "assigneename" => "Assignee",
-            "teamname" => "Team",
-            "createdbystaff" => "Created By",
+            "assigneeid" => "Assignee ID",
+            // Team
+            "owningteamname" or "teamname" => "Team",
+            "owningteamid" => "Team ID",
+            // Created by
+            "createdbyname" or "createdbystaff" => "Created By",
+            "createdbystaffid" => "Created By ID",
+            // Dates
             "creationtime" => "Created At",
-            "lastmodificationtime" => "Last Modified",
+            "lastmodificationtime" => "Last Updated",
             "resolvedat" => "Resolved At",
             "closedat" => "Closed At",
+            // Tags
             "tags" => "Tags",
             _ => column,
         };
