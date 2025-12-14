@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const fields = fieldsData ? JSON.parse(fieldsData) : [];
     const sortList = document.getElementById('sortLevelsList');
     
-    let sortIndex = sortList ? sortList.querySelectorAll('.sort-level').length : 0;
+    // No longer need sortIndex - using current count when adding
     
     // Initialize SortableJS
     if (typeof Sortable !== 'undefined' && sortList) {
@@ -98,33 +98,35 @@ document.addEventListener('DOMContentLoaded', function() {
         const emptyMsg = sortList.querySelector('.empty-message');
         if (emptyMsg) emptyMsg.remove();
         
+        // Use current count for new index (ensures sequential indices)
+        const currentCount = sortList.querySelectorAll('.sort-level').length;
+        
         const row = document.createElement('div');
         row.className = 'sort-level d-flex gap-2 align-items-center mb-2 p-2 bg-light rounded';
-        row.dataset.index = sortIndex;
+        row.dataset.index = currentCount;
         
         row.innerHTML = `
             <span class="drag-handle text-muted" style="cursor: grab;">
                 <i class="bi bi-grip-vertical"></i>
             </span>
-            <input type="hidden" name="SortLevels[${sortIndex}].Order" class="order-input" value="${sortIndex}">
-            <select name="SortLevels[${sortIndex}].Field" class="form-select form-select-sm field-select" style="flex: 1;">
+            <input type="hidden" name="SortLevels[${currentCount}].Order" class="order-input" value="${currentCount}">
+            <select name="SortLevels[${currentCount}].Field" class="form-select form-select-sm field-select" style="flex: 1;">
                 <option value="">Select field...</option>
                 ${fields.map(f => `<option value="${f.field}">${f.label}</option>`).join('')}
             </select>
             <button type="button" class="btn btn-sm btn-outline-secondary direction-toggle-btn" data-direction="desc">
                 <i class="bi bi-arrow-down"></i> <span class="ms-1">DESC</span>
             </button>
-            <input type="hidden" name="SortLevels[${sortIndex}].Direction" class="direction-input" value="desc">
+            <input type="hidden" name="SortLevels[${currentCount}].Direction" class="direction-input" value="desc">
             <button type="button" class="btn btn-sm btn-outline-danger remove-level-btn">
                 <i class="bi bi-x-lg"></i>
             </button>
         `;
         
         sortList.appendChild(row);
-        sortIndex++;
         
         attachSortHandlers(row);
-        updateSortOrders();
+        reindexSortLevels();
     }
     
     function attachSortHandlers(row) {
@@ -142,15 +144,36 @@ document.addEventListener('DOMContentLoaded', function() {
         
         removeBtn?.addEventListener('click', function() {
             row.remove();
-            updateSortOrders();
+            reindexSortLevels();
+            // Show empty message if no levels left
+            if (sortList.querySelectorAll('.sort-level').length === 0) {
+                sortList.innerHTML = `
+                    <div class="text-muted small p-3 bg-light rounded empty-message">
+                        <i class="bi bi-info-circle me-1"></i>
+                        No sort levels defined. Default sorting will be newest first.
+                    </div>`;
+            }
         });
     }
     
-    function updateSortOrders() {
+    function reindexSortLevels() {
         if (!sortList) return;
         sortList.querySelectorAll('.sort-level').forEach((row, idx) => {
+            row.dataset.index = idx;
             const orderInput = row.querySelector('.order-input');
-            if (orderInput) orderInput.value = idx;
+            const fieldSelect = row.querySelector('.field-select');
+            const dirInput = row.querySelector('.direction-input');
+            
+            if (orderInput) {
+                orderInput.name = `SortLevels[${idx}].Order`;
+                orderInput.value = idx;
+            }
+            if (fieldSelect) {
+                fieldSelect.name = `SortLevels[${idx}].Field`;
+            }
+            if (dirInput) {
+                dirInput.name = `SortLevels[${idx}].Direction`;
+            }
         });
     }
     

@@ -835,7 +835,7 @@
                             <div class="staff-submenu-divider"></div>
                             @foreach (var fav in favoriteViews)
                             {
-                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@fav.ViewId"
+                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@fav.ViewId" asp-route-sortBy="view"
                                     class="staff-submenu-link @(ViewData["ActiveViewId"]?.ToString() == fav.ViewId.ToString() ? "active" : "")">
                                     <i class="bi bi-star-fill me-1" style="color: #ffc107; font-size: 0.7rem;"></i>@fav.Name
                                 </a>

@@ -82,11 +82,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const sortableFields = JSON.parse(card.dataset.sortFields || '[]');
     const container = document.getElementById('sortLevelsList');
     
-    // Initialize counter based on existing levels
-    const existingLevels = container.querySelectorAll('.sort-level');
-    let levelIndex = existingLevels.length;
-    
     // Attach handlers to existing levels
+    const existingLevels = container.querySelectorAll('.sort-level');
     existingLevels.forEach(row => attachLevelHandlers(row));
     
     // Initialize SortableJS for drag-and-drop
@@ -101,7 +98,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     document.getElementById('addSortLevelBtn')?.addEventListener('click', function() {
-        addSortLevel(levelIndex++);
+        // Use current count of levels as the next index (ensures sequential indices)
+        const currentCount = container.querySelectorAll('.sort-level').length;
+        addSortLevel(currentCount);
     });
     
     function addSortLevel(index) {
@@ -133,6 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         container.appendChild(row);
         attachLevelHandlers(row);
+        // Reindex all levels to ensure sequential indices
+        reindexSortLevels();
     }
     
     function attachLevelHandlers(row) {
@@ -153,16 +154,37 @@ document.addEventListener('DOMContentLoaded', function() {
         if (removeBtn) {
             removeBtn.addEventListener('click', function() {
                 row.remove();
-                updateOrderInputs();
+                reindexSortLevels();
+                // Show empty message if no levels left
+                if (container.querySelectorAll('.sort-level').length === 0) {
+                    container.innerHTML = `
+                        <div class="text-muted small p-3 bg-light rounded empty-message">
+                            <i class="bi bi-info-circle me-1"></i>
+                            No sort levels defined. Default sorting will be newest first.
+                        </div>`;
+                }
             });
         }
     }
     
-    function updateOrderInputs() {
+    function reindexSortLevels() {
         const levels = container.querySelectorAll('.sort-level');
         levels.forEach((level, idx) => {
+            level.dataset.index = idx;
             const orderInput = level.querySelector('.order-input');
-            if (orderInput) orderInput.value = idx;
+            const fieldSelect = level.querySelector('.field-select');
+            const dirInput = level.querySelector('.direction-input');
+            
+            if (orderInput) {
+                orderInput.name = `SortLevels[${idx}].Order`;
+                orderInput.value = idx;
+            }
+            if (fieldSelect) {
+                fieldSelect.name = `SortLevels[${idx}].Field`;
+            }
+            if (dirInput) {
+                dirInput.name = `SortLevels[${idx}].Direction`;
+            }
         });
     }
 });

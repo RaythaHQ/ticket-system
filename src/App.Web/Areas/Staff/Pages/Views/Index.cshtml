@@ -57,7 +57,7 @@
                                 </form>
                             </td>
                             <td>
-                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@item.View.Id"
+                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@item.View.Id" asp-route-sortBy="view"
                                     class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
                                     @item.View.Name
                                 </a>
@@ -126,14 +126,14 @@
                                 </form>
                             </td>
                             <td>
-                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@item.View.Id"
+                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@item.View.Id" asp-route-sortBy="view"
                                     class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
                                     <i class="bi bi-lock me-1 small text-muted"></i>@item.View.Name
                                 </a>
                             </td>
                             <td class="text-muted">@item.View.Description</td>
                             <td class="text-end">
-                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@item.View.Id"
+                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@item.View.Id" asp-route-sortBy="view"
                                     class="btn btn-sm btn-outline-primary">
                                     Use View
                                 </a>
