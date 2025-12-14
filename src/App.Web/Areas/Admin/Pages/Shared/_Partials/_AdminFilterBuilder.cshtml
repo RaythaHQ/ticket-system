@@ -58,7 +58,7 @@
                     var index = 0;
                     foreach (var filter in andFilters)
                     {
-                        <div class="filter-condition d-flex gap-2 align-items-start mb-2" data-index="@index" data-logic="AND">
+                        <div class="filter-condition d-flex gap-2 align-items-start mb-2" data-index="@index" data-logic="AND" data-initial-value="@filter.Value">
                             <select name="Conditions.AndFilters[@index].Field" class="form-select form-select-sm attribute-select" style="width: 200px;">
                                 <option value="">Select field...</option>
                                 @foreach (var attr in Model.Attributes)
@@ -79,7 +79,7 @@
                                 }
                             </select>
                             <div class="value-input-container flex-grow-1" style="min-width: 200px;">
-                                <input type="text" name="Conditions.AndFilters[@index].Value" class="form-control form-control-sm" value="@filter.Value" placeholder="Value...">
+                                <input type="hidden" name="Conditions.AndFilters[@index].Value" value="@filter.Value">
                             </div>
                             <button type="button" class="btn btn-sm btn-outline-danger remove-condition-btn" title="Remove">
                                 <i class="bi bi-x-lg"></i>
@@ -118,7 +118,7 @@
                     var orIndex = 0;
                     foreach (var filter in orFilters)
                     {
-                        <div class="filter-condition d-flex gap-2 align-items-start mb-2" data-index="@orIndex" data-logic="OR">
+                        <div class="filter-condition d-flex gap-2 align-items-start mb-2" data-index="@orIndex" data-logic="OR" data-initial-value="@filter.Value">
                             <select name="Conditions.OrFilters[@orIndex].Field" class="form-select form-select-sm attribute-select" style="width: 200px;">
                                 <option value="">Select field...</option>
                                 @foreach (var attr in Model.Attributes)
@@ -139,7 +139,7 @@
                                 }
                             </select>
                             <div class="value-input-container flex-grow-1" style="min-width: 200px;">
-                                <input type="text" name="Conditions.OrFilters[@orIndex].Value" class="form-control form-control-sm" value="@filter.Value" placeholder="Value...">
+                                <input type="hidden" name="Conditions.OrFilters[@orIndex].Value" value="@filter.Value">
                             </div>
                             <button type="button" class="btn btn-sm btn-outline-danger remove-condition-btn" title="Remove">
                                 <i class="bi bi-x-lg"></i>
@@ -174,11 +174,29 @@ document.addEventListener('DOMContentLoaded', function() {
     let andIndex = existingAndConditions.length;
     let orIndex = existingOrConditions.length;
     
-    existingAndConditions.forEach(row => attachConditionHandlers(row));
-    existingOrConditions.forEach(row => attachConditionHandlers(row));
+    existingAndConditions.forEach(row => {
+        attachConditionHandlers(row);
+        initializeExistingCondition(row);
+    });
+    existingOrConditions.forEach(row => {
+        attachConditionHandlers(row);
+        initializeExistingCondition(row);
+    });
     
     document.getElementById('addAndConditionBtn')?.addEventListener('click', () => addCondition('AND', andIndex++));
     document.getElementById('addOrConditionBtn')?.addEventListener('click', () => addCondition('OR', orIndex++));
+    
+    function initializeExistingCondition(row) {
+        const attrSelect = row.querySelector('.attribute-select');
+        const opSelect = row.querySelector('.operator-select');
+        const initialValue = row.dataset.initialValue || '';
+        
+        if (attrSelect && attrSelect.value) {
+            const attr = attributes.find(a => a.field === attrSelect.value);
+            const operator = opSelect?.value;
+            updateValueInput(row, attr, operator, initialValue);
+        }
+    }
     
     function addCondition(logic, index) {
         const container = logic === 'AND' ? document.getElementById('andConditions') : document.getElementById('orConditions');
@@ -246,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ).join('');
     }
     
-    function updateValueInput(row, attr, operator) {
+    function updateValueInput(row, attr, operator, existingValue = '') {
         const container = row.querySelector('.value-input-container');
         const prefix = row.dataset.logic === 'AND' ? 'Conditions.AndFilters' : 'Conditions.OrFilters';
         const index = row.dataset.index;
@@ -260,12 +278,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (!attr) {
-            container.innerHTML = `<input type="text" name="${fieldName}" class="form-control form-control-sm" placeholder="Value...">`;
+            container.innerHTML = `<input type="text" name="${fieldName}" class="form-control form-control-sm" value="${existingValue}" placeholder="Value...">`;
             return;
         }
         
         if (operator && operator.startsWith('is_within_')) {
-            container.innerHTML = `<input type="number" name="${fieldName}" class="form-control form-control-sm" min="1" placeholder="Enter number...">`;
+            container.innerHTML = `<input type="number" name="${fieldName}" class="form-control form-control-sm" min="1" value="${existingValue}" placeholder="Enter number...">`;
             return;
         }
         
@@ -273,19 +291,19 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'status':
                 container.innerHTML = `<select name="${fieldName}" class="form-select form-select-sm">
                     <option value="">Select status...</option>
-                    ${statuses.map(s => `<option value="${s.value}">${s.label}</option>`).join('')}
+                    ${statuses.map(s => `<option value="${s.value}" ${s.value === existingValue ? 'selected' : ''}>${s.label}</option>`).join('')}
                 </select>`;
                 break;
             case 'priority':
                 container.innerHTML = `<select name="${fieldName}" class="form-select form-select-sm">
                     <option value="">Select priority...</option>
-                    ${priorities.map(p => `<option value="${p.value}">${p.label}</option>`).join('')}
+                    ${priorities.map(p => `<option value="${p.value}" ${p.value === existingValue ? 'selected' : ''}>${p.label}</option>`).join('')}
                 </select>`;
                 break;
             case 'user':
                 container.innerHTML = `<select name="${fieldName}" class="form-select form-select-sm">
                     <option value="">Select user...</option>
-                    ${users.map(u => `<option value="${u.id}">${u.name}${u.isDeactivated ? ' (deactivated)' : ''}</option>`).join('')}
+                    ${users.map(u => `<option value="${u.id}" ${u.id === existingValue ? 'selected' : ''}>${u.name}${u.isDeactivated ? ' (deactivated)' : ''}</option>`).join('')}
                 </select>`;
                 break;
             case 'boolean':
@@ -293,12 +311,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="form-control form-control-sm text-muted bg-light">No value needed</span>`;
                 break;
             case 'date':
-                container.innerHTML = `<input type="date" name="${fieldName}" class="form-control form-control-sm">`;
+                container.innerHTML = `<input type="date" name="${fieldName}" class="form-control form-control-sm" value="${existingValue}">`;
                 break;
             default:
-                container.innerHTML = `<input type="text" name="${fieldName}" class="form-control form-control-sm" placeholder="Value...">`;
+                container.innerHTML = `<input type="text" name="${fieldName}" class="form-control form-control-sm" value="${existingValue}" placeholder="Value...">`;
         }
     }
 });
 </script>
-

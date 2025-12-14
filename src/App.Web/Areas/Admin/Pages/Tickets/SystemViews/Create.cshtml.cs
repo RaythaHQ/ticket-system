@@ -131,20 +131,20 @@ public class Create : BaseAdminPageModel
 
     private ViewConditions? ParseConditionsFromForm()
     {
-        var logic = Request.Form["Conditions.Logic"].FirstOrDefault() ?? "AND";
-        var filters = new List<ViewFilterCondition>();
+        var andFilters = new List<ViewFilterCondition>();
+        var orFilters = new List<ViewFilterCondition>();
 
-        // Parse filter conditions
+        // Parse AND filter conditions
         var index = 0;
-        while (Request.Form.ContainsKey($"Conditions.Filters[{index}].Field"))
+        while (Request.Form.ContainsKey($"Conditions.AndFilters[{index}].Field"))
         {
-            var field = Request.Form[$"Conditions.Filters[{index}].Field"].FirstOrDefault();
-            var op = Request.Form[$"Conditions.Filters[{index}].Operator"].FirstOrDefault();
-            var value = Request.Form[$"Conditions.Filters[{index}].Value"].FirstOrDefault();
+            var field = Request.Form[$"Conditions.AndFilters[{index}].Field"].FirstOrDefault();
+            var op = Request.Form[$"Conditions.AndFilters[{index}].Operator"].FirstOrDefault();
+            var value = Request.Form[$"Conditions.AndFilters[{index}].Value"].FirstOrDefault();
 
             if (!string.IsNullOrEmpty(field) && !string.IsNullOrEmpty(op))
             {
-                filters.Add(new ViewFilterCondition
+                andFilters.Add(new ViewFilterCondition
                 {
                     Field = field,
                     Operator = op,
@@ -154,13 +154,33 @@ public class Create : BaseAdminPageModel
             index++;
         }
 
-        if (!filters.Any())
+        // Parse OR filter conditions
+        index = 0;
+        while (Request.Form.ContainsKey($"Conditions.OrFilters[{index}].Field"))
+        {
+            var field = Request.Form[$"Conditions.OrFilters[{index}].Field"].FirstOrDefault();
+            var op = Request.Form[$"Conditions.OrFilters[{index}].Operator"].FirstOrDefault();
+            var value = Request.Form[$"Conditions.OrFilters[{index}].Value"].FirstOrDefault();
+
+            if (!string.IsNullOrEmpty(field) && !string.IsNullOrEmpty(op))
+            {
+                orFilters.Add(new ViewFilterCondition
+                {
+                    Field = field,
+                    Operator = op,
+                    Value = value
+                });
+            }
+            index++;
+        }
+
+        if (!andFilters.Any() && !orFilters.Any())
             return null;
 
         return new ViewConditions
         {
-            Logic = logic,
-            Filters = filters
+            AndFilters = andFilters,
+            OrFilters = orFilters
         };
     }
 

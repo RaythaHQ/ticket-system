@@ -575,9 +575,10 @@ public class ViewFilterBuilder
     )
     {
         var field = Expression.Invoke(selector, param);
+        var op = filter.Operator ?? "";
 
         // Handle "is within" operators with number value
-        if (filter.Operator.StartsWith("is_within_"))
+        if (op.StartsWith("is_within_"))
         {
             var (withinStart, withinEnd) = ResolveWithinDateRange(filter);
             return Expression.AndAlso(
@@ -588,9 +589,9 @@ public class ViewFilterBuilder
 
         var (startDate, endDate) = ResolveDateValue(filter);
 
-        return filter.Operator switch
+        return op switch
         {
-            "is" => Expression.AndAlso(
+            IS or "is" => Expression.AndAlso(
                 Expression.GreaterThanOrEqual(field, Expression.Constant(startDate)),
                 Expression.LessThanOrEqual(field, Expression.Constant(endDate))
             ),
@@ -618,19 +619,20 @@ public class ViewFilterBuilder
     )
     {
         var field = Expression.Invoke(selector, param);
+        var op = filter.Operator ?? "";
 
-        if (filter.Operator is IS_EMPTY or IS_NULL)
+        if (op is IS_EMPTY or IS_NULL)
         {
             return Expression.Equal(field, Expression.Constant(null, typeof(DateTime?)));
         }
 
-        if (filter.Operator is IS_NOT_EMPTY or IS_NOT_NULL)
+        if (op is IS_NOT_EMPTY or IS_NOT_NULL)
         {
             return Expression.NotEqual(field, Expression.Constant(null, typeof(DateTime?)));
         }
 
         // Handle "is within" operators with number value
-        if (filter.Operator.StartsWith("is_within_"))
+        if (op.StartsWith("is_within_"))
         {
             var (withinStart, withinEnd) = ResolveWithinDateRange(filter);
             return Expression.AndAlso(
@@ -647,9 +649,9 @@ public class ViewFilterBuilder
 
         var (startDate, endDate) = ResolveDateValue(filter);
 
-        return filter.Operator switch
+        return op switch
         {
-            IS => Expression.AndAlso(
+            IS or "is" => Expression.AndAlso(
                 Expression.GreaterThanOrEqual(
                     field,
                     Expression.Constant((DateTime?)startDate, typeof(DateTime?))
