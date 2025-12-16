@@ -29,6 +29,7 @@ public interface IAppDbContext
     public DbSet<TicketChangeLogEntry> TicketChangeLogEntries { get; }
     public DbSet<TicketComment> TicketComments { get; }
     public DbSet<TicketAttachment> TicketAttachments { get; }
+    public DbSet<TicketFollower> TicketFollowers { get; }
     public DbSet<ContactChangeLogEntry> ContactChangeLogEntries { get; }
     public DbSet<ContactAttachment> ContactAttachments { get; }
     public DbSet<ContactComment> ContactComments { get; }

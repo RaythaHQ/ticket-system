@@ -12,7 +12,6 @@ public record SlaBreach_RenderModel : IInsertTemplateVariable
     public string AssigneeName { get; init; } = string.Empty;
     public string Priority { get; init; } = string.Empty;
     public string SlaDueAt { get; init; } = string.Empty;
-    public string BreachedAt { get; init; } = string.Empty;
     public string SlaRuleName { get; init; } = string.Empty;
     public string TicketUrl { get; init; } = string.Empty;
 
@@ -23,7 +22,6 @@ public record SlaBreach_RenderModel : IInsertTemplateVariable
         yield return nameof(AssigneeName);
         yield return nameof(Priority);
         yield return nameof(SlaDueAt);
-        yield return nameof(BreachedAt);
         yield return nameof(SlaRuleName);
         yield return nameof(TicketUrl);
     }

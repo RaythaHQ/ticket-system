@@ -6,7 +6,6 @@ public class NotificationEventType : ValueObject
     public const string TICKET_ASSIGNED_TEAM = "ticket_assigned_team";
     public const string COMMENT_ADDED = "comment_added";
     public const string STATUS_CHANGED = "status_changed";
-    public const string TICKET_CLOSED = "ticket_closed";
     public const string TICKET_REOPENED = "ticket_reopened";
     public const string SLA_APPROACHING = "sla_approaching";
     public const string SLA_BREACHED = "sla_breached";
@@ -34,12 +33,13 @@ public class NotificationEventType : ValueObject
     }
 
     public static NotificationEventType TicketAssigned => new("Ticket Assigned", TICKET_ASSIGNED);
-    public static NotificationEventType TicketAssignedToTeam => new("Ticket Assigned to Team", TICKET_ASSIGNED_TEAM);
+    public static NotificationEventType TicketAssignedToTeam =>
+        new("Ticket Assigned to Team", TICKET_ASSIGNED_TEAM);
     public static NotificationEventType CommentAdded => new("Comment Added", COMMENT_ADDED);
     public static NotificationEventType StatusChanged => new("Status Changed", STATUS_CHANGED);
-    public static NotificationEventType TicketClosed => new("Ticket Closed", TICKET_CLOSED);
     public static NotificationEventType TicketReopened => new("Ticket Reopened", TICKET_REOPENED);
-    public static NotificationEventType SlaApproaching => new("SLA Approaching Breach", SLA_APPROACHING);
+    public static NotificationEventType SlaApproaching =>
+        new("SLA Approaching Breach", SLA_APPROACHING);
     public static NotificationEventType SlaBreached => new("SLA Breached", SLA_BREACHED);
 
     public string Label { get; set; } = string.Empty;
@@ -68,7 +68,6 @@ public class NotificationEventType : ValueObject
             yield return TicketAssignedToTeam;
             yield return CommentAdded;
             yield return StatusChanged;
-            yield return TicketClosed;
             yield return TicketReopened;
             yield return SlaApproaching;
             yield return SlaBreached;
@@ -84,8 +83,5 @@ public class NotificationEventType : ValueObject
 public class NotificationEventTypeNotFoundException : Exception
 {
     public NotificationEventTypeNotFoundException(string developerName)
-        : base($"Notification event type '{developerName}' is not supported.")
-    {
-    }
+        : base($"Notification event type '{developerName}' is not supported.") { }
 }
-

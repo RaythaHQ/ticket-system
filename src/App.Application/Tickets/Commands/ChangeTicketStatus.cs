@@ -28,11 +28,15 @@ public class ChangeTicketStatus
             // Validate status against configured active statuses
             RuleFor(x => x.NewStatus)
                 .NotEmpty()
-                .MustAsync(async (status, cancellationToken) =>
-                {
-                    return await db.TicketStatusConfigs
-                        .AnyAsync(s => s.DeveloperName == status.ToLower() && s.IsActive, cancellationToken);
-                })
+                .MustAsync(
+                    async (status, cancellationToken) =>
+                    {
+                        return await db.TicketStatusConfigs.AnyAsync(
+                            s => s.DeveloperName == status.ToLower() && s.IsActive,
+                            cancellationToken
+                        );
+                    }
+                )
                 .WithMessage("Invalid or inactive status value.");
         }
     }
@@ -44,7 +48,12 @@ public class ChangeTicketStatus
         private readonly ITicketPermissionService _permissionService;
         private readonly ITicketConfigService _configService;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser, ITicketPermissionService permissionService, ITicketConfigService configService)
+        public Handler(
+            IAppDbContext db,
+            ICurrentUser currentUser,
+            ITicketPermissionService permissionService,
+            ITicketConfigService configService
+        )
         {
             _db = db;
             _currentUser = currentUser;
@@ -59,8 +68,10 @@ public class ChangeTicketStatus
         {
             _permissionService.RequireCanManageTickets();
 
-            var ticket = await _db.Tickets
-                .FirstOrDefaultAsync(t => t.Id == request.Id, cancellationToken);
+            var ticket = await _db.Tickets.FirstOrDefaultAsync(
+                t => t.Id == request.Id,
+                cancellationToken
+            );
 
             if (ticket == null)
                 throw new NotFoundException("Ticket", request.Id);
@@ -75,8 +86,14 @@ public class ChangeTicketStatus
             ticket.Status = newStatusLower;
 
             // Get status configs to determine status types
-            var newStatusConfig = await _configService.GetStatusByDeveloperNameAsync(newStatusLower, cancellationToken);
-            var oldStatusConfig = await _configService.GetStatusByDeveloperNameAsync(oldStatus, cancellationToken);
+            var newStatusConfig = await _configService.GetStatusByDeveloperNameAsync(
+                newStatusLower,
+                cancellationToken
+            );
+            var oldStatusConfig = await _configService.GetStatusByDeveloperNameAsync(
+                oldStatus,
+                cancellationToken
+            );
 
             // Handle resolved/closed timestamps based on status type
             if (newStatusConfig?.IsClosedType == true)
@@ -98,7 +115,7 @@ public class ChangeTicketStatus
             // Add change log entry
             var changes = new Dictionary<string, object>
             {
-                ["Status"] = new { OldValue = oldStatus, NewValue = newStatusLower }
+                ["Status"] = new { OldValue = oldStatus, NewValue = newStatusLower },
             };
 
             var oldLabel = oldStatusConfig?.Label ?? oldStatus;
@@ -109,15 +126,21 @@ public class ChangeTicketStatus
                 TicketId = ticket.Id,
                 ActorStaffId = _currentUser.UserId?.Guid,
                 FieldChangesJson = JsonSerializer.Serialize(changes),
-                Message = $"Status changed from {oldLabel} to {newLabel}"
+                Message = $"Status changed from {oldLabel} to {newLabel}",
             };
             ticket.ChangeLogEntries.Add(changeLog);
 
-            ticket.AddDomainEvent(new TicketStatusChangedEvent(ticket, oldStatus, newStatusLower));
+            ticket.AddDomainEvent(
+                new TicketStatusChangedEvent(
+                    ticket,
+                    oldStatus,
+                    newStatusLower,
+                    _currentUser.UserId?.Guid
+                )
+            );
 
             await _db.SaveChangesAsync(cancellationToken);
             return new CommandResponseDto<long>(ticket.Id);
         }
     }
 }
-

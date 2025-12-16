@@ -1,10 +1,11 @@
-﻿using System.Reflection;
-using FluentValidation;
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 using App.Application.Common.Behaviors;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Services;
+using App.Application.NotificationPreferences.Services;
+using FluentValidation;
+using Mediator;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace App.Application;
 
@@ -25,6 +26,7 @@ public static class ConfigureServices
 
         // Ticketing system services
         services.AddScoped<ITicketPermissionService, TicketPermissionService>();
+        services.AddScoped<INotificationPreferenceService, NotificationPreferenceService>();
 
         return services;
     }

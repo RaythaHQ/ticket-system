@@ -1,4 +1,4 @@
-﻿using System.Web;
+using System.Web;
 
 namespace App.Application.Common.Interfaces;
 
@@ -30,4 +30,5 @@ public interface IRelativeUrlBuilder
         string signinUrl,
         string returnUrl = ""
     );
+    string StaffTicketUrl(long ticketId);
 }

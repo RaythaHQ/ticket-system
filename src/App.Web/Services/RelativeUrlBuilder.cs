@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.WebUtilities;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Utils;
 using App.Web.Services;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace App.Web.Services;
 
@@ -150,10 +150,10 @@ public class RelativeUrlBuilder : IRelativeUrlBuilder
         else
         {
             return _generator.GetUriByName(
-                _httpContextAccessor.HttpContext,
-                routeName,
-                values: values
-            ) ?? string.Empty;
+                    _httpContextAccessor.HttpContext,
+                    routeName,
+                    values: values
+                ) ?? string.Empty;
         }
     }
 
@@ -208,4 +208,6 @@ public class RelativeUrlBuilder : IRelativeUrlBuilder
         var loginUrl = QueryHelpers.AddQueryString(signinUrl, parametersToAdd);
         return loginUrl;
     }
+
+    public string StaffTicketUrl(long ticketId) => GetBaseUrl() + $"/staff/tickets/{ticketId}";
 }

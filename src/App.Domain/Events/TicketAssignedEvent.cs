@@ -7,14 +7,22 @@ public class TicketAssignedEvent : BaseEvent, IAfterSaveChangesNotification
     public Guid? NewAssigneeId { get; private set; }
     public Guid? OldTeamId { get; private set; }
     public Guid? NewTeamId { get; private set; }
+    public Guid? AssignedByUserId { get; private set; }
 
-    public TicketAssignedEvent(Ticket ticket, Guid? oldAssigneeId, Guid? newAssigneeId, Guid? oldTeamId = null, Guid? newTeamId = null)
+    public TicketAssignedEvent(
+        Ticket ticket,
+        Guid? oldAssigneeId,
+        Guid? newAssigneeId,
+        Guid? oldTeamId = null,
+        Guid? newTeamId = null,
+        Guid? assignedByUserId = null
+    )
     {
         Ticket = ticket;
         OldAssigneeId = oldAssigneeId;
         NewAssigneeId = newAssigneeId;
         OldTeamId = oldTeamId;
         NewTeamId = newTeamId;
+        AssignedByUserId = assignedByUserId;
     }
 }
-

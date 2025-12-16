@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 using App.Application.Common.Interfaces;
+using App.Application.TicketConfig;
 using App.Application.Tickets;
 using App.Application.Tickets.Queries;
-using App.Application.TicketConfig;
 using App.Application.TicketViews;
 using App.Application.TicketViews.Queries;
 using App.Domain.ValueObjects;
@@ -11,7 +12,6 @@ using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using CSharpVitamins;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection;
 
 namespace App.Web.Areas.Staff.Pages.Tickets;
 
@@ -62,12 +62,14 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
     /// <summary>
     /// Available statuses for filtering.
     /// </summary>
-    public IReadOnlyList<TicketStatusConfigDto> AvailableStatuses { get; set; } = new List<TicketStatusConfigDto>();
+    public IReadOnlyList<TicketStatusConfigDto> AvailableStatuses { get; set; } =
+        new List<TicketStatusConfigDto>();
 
     /// <summary>
     /// Available priorities for filtering.
     /// </summary>
-    public IReadOnlyList<TicketPriorityConfigDto> AvailablePriorities { get; set; } = new List<TicketPriorityConfigDto>();
+    public IReadOnlyList<TicketPriorityConfigDto> AvailablePriorities { get; set; } =
+        new List<TicketPriorityConfigDto>();
 
     /// <summary>
     /// Whether the current user can export tickets.
@@ -84,7 +86,14 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
     /// </summary>
     public static readonly List<string> DefaultColumnFields = new()
     {
-        "Id", "Title", "Status", "Priority", "AssigneeName", "ContactName", "SlaDueAt", "CreationTime"
+        "Id",
+        "Title",
+        "Status",
+        "Priority",
+        "AssigneeName",
+        "ContactId",
+        "SlaDueAt",
+        "CreationTime",
     };
 
     /// <summary>
@@ -166,8 +175,14 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             .ToList();
 
         // Load statuses and priorities for filters
-        AvailableStatuses = await _configService.GetAllStatusesAsync(includeInactive: true, cancellationToken);
-        AvailablePriorities = await _configService.GetAllPrioritiesAsync(includeInactive: true, cancellationToken);
+        AvailableStatuses = await _configService.GetAllStatusesAsync(
+            includeInactive: true,
+            cancellationToken
+        );
+        AvailablePriorities = await _configService.GetAllPrioritiesAsync(
+            includeInactive: true,
+            cancellationToken
+        );
 
         // Map sortBy to orderBy
         var mappedOrderBy = MapSortByToOrderBy(sortBy);
@@ -291,7 +306,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             SelectedView = selectedViewResponse.Result;
 
             query = query with { ViewId = viewId };
-            
+
             // Handle sort: "view" means use view's default sort, otherwise use the specified sortBy
             if (sortBy == "view" && SelectedView?.SortLevels.Count > 0)
             {
@@ -326,12 +341,12 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         {
             CurrentSortBy = sortBy ?? "newest";
         }
-        
+
         // Setup visible column definitions
         if (SelectedView?.VisibleColumns.Count > 0)
         {
-            VisibleColumnDefinitions = SelectedView.VisibleColumns
-                .Select(field => ColumnRegistry.GetByField(field))
+            VisibleColumnDefinitions = SelectedView
+                .VisibleColumns.Select(field => ColumnRegistry.GetByField(field))
                 .Where(col => col != null)
                 .Cast<ColumnDefinition>()
                 .ToList();
@@ -373,15 +388,20 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 p.CreationTime
             ),
             LastModificationTime = p.LastModificationTime.HasValue
-                ? CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(p.LastModificationTime.Value)
+                ? CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+                    p.LastModificationTime.Value
+                )
                 : "",
             ClosedAt = p.ClosedAt.HasValue
-                ? CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(p.ClosedAt.Value)
+                ? CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+                    p.ClosedAt.Value
+                )
                 : "",
             Description = p.Description ?? "",
             Tags = p.Tags?.Count > 0 ? string.Join(", ", p.Tags) : "",
             CreatedByName = p.CreatedByStaffName ?? "",
-            CanEdit = canManageTickets 
+            CanEdit =
+                canManageTickets
                 || (currentUserId.HasValue && p.AssigneeId == currentUserId.Value)
                 || (p.OwningTeamId.HasValue && userTeamIds.Contains(p.OwningTeamId.Value)),
         });
@@ -395,7 +415,8 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
 
         // Check if user can export (has ImportExportTickets permission)
         CanExport = CurrentUser.SystemPermissions.Contains(
-            Domain.Entities.BuiltInSystemPermission.IMPORT_EXPORT_TICKETS_PERMISSION);
+            Domain.Entities.BuiltInSystemPermission.IMPORT_EXPORT_TICKETS_PERMISSION
+        );
 
         return Page();
     }
@@ -410,13 +431,21 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         string? status = null,
         string? priority = null,
         string? sortBy = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         // Get columns from the view if one is selected, otherwise use defaults
         var columns = new List<string>
         {
-            "id", "title", "status", "priority", "category",
-            "contactname", "assigneename", "teamname", "creationtime"
+            "id",
+            "title",
+            "status",
+            "priority",
+            "category",
+            "contactname",
+            "assigneename",
+            "teamname",
+            "creationtime",
         };
 
         // If a view is selected, use its visible columns for the export
@@ -426,7 +455,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 new Application.TicketViews.Queries.GetTicketViewById.Query { Id = viewId },
                 cancellationToken
             );
-            
+
             if (viewResponse.Result?.VisibleColumns?.Any() == true)
             {
                 columns = viewResponse.Result.VisibleColumns;
@@ -439,31 +468,37 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             if (status.StartsWith("type:"))
             {
                 // Status type filter
-                filters.Add(new Application.Exports.Models.ExportFilter
-                {
-                    Field = "statustype",
-                    Operator = "equals",
-                    Value = status.Substring(5) // "open" or "closed"
-                });
+                filters.Add(
+                    new Application.Exports.Models.ExportFilter
+                    {
+                        Field = "statustype",
+                        Operator = "equals",
+                        Value = status.Substring(5), // "open" or "closed"
+                    }
+                );
             }
             else
             {
-                filters.Add(new Application.Exports.Models.ExportFilter
-                {
-                    Field = "status",
-                    Operator = "equals",
-                    Value = status
-                });
+                filters.Add(
+                    new Application.Exports.Models.ExportFilter
+                    {
+                        Field = "status",
+                        Operator = "equals",
+                        Value = status,
+                    }
+                );
             }
         }
         if (!string.IsNullOrEmpty(priority))
         {
-            filters.Add(new Application.Exports.Models.ExportFilter
-            {
-                Field = "priority",
-                Operator = "equals",
-                Value = priority
-            });
+            filters.Add(
+                new Application.Exports.Models.ExportFilter
+                {
+                    Field = "priority",
+                    Operator = "equals",
+                    Value = priority,
+                }
+            );
         }
 
         // Handle built-in view conditions
@@ -474,12 +509,14 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             {
                 foreach (var filter in conditions.Filters)
                 {
-                    filters.Add(new Application.Exports.Models.ExportFilter
-                    {
-                        Field = filter.Field,
-                        Operator = filter.Operator,
-                        Value = filter.Value
-                    });
+                    filters.Add(
+                        new Application.Exports.Models.ExportFilter
+                        {
+                            Field = filter.Field,
+                            Operator = filter.Operator,
+                            Value = filter.Value,
+                        }
+                    );
                 }
             }
         }
@@ -521,7 +558,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
 
         var command = new Application.Exports.Commands.CreateExportJob.Command
         {
-            SnapshotPayload = snapshotPayload
+            SnapshotPayload = snapshotPayload,
         };
 
         var response = await Mediator.Send(command, cancellationToken);
@@ -532,7 +569,9 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         }
         else
         {
-            SetErrorMessage(!string.IsNullOrEmpty(response.Error) ? response.Error : "Failed to start export.");
+            SetErrorMessage(
+                !string.IsNullOrEmpty(response.Error) ? response.Error : "Failed to start export."
+            );
             return RedirectToPage();
         }
     }
@@ -709,53 +748,73 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
 
         [Display(Name = "Created")]
         public string CreationTime { get; init; } = string.Empty;
-        
+
         [Display(Name = "Last Updated")]
         public string LastModificationTime { get; init; } = string.Empty;
-        
+
         [Display(Name = "Closed")]
         public string ClosedAt { get; init; } = string.Empty;
-        
+
         [Display(Name = "Description")]
         public string Description { get; init; } = string.Empty;
-        
+
         [Display(Name = "Tags")]
         public string Tags { get; init; } = string.Empty;
-        
+
         [Display(Name = "Created By")]
         public string CreatedByName { get; init; } = string.Empty;
-        
+
         /// <summary>
         /// Whether the current user can edit this ticket.
         /// </summary>
         public bool CanEdit { get; init; }
-        
+
         /// <summary>
         /// Gets column value by field name for dynamic rendering.
         /// </summary>
-        public string GetColumnValue(string field) => field switch
-        {
-            "Id" => $"#{Id}",
-            "Title" => Title.Length > 50 ? Title.Substring(0, 47) + "..." : Title,
-            "Status" => StatusLabel,
-            "Priority" => PriorityLabel,
-            "Category" => Category,
-            "AssigneeName" => !string.IsNullOrEmpty(OwningTeamName)
-                ? (OwningTeamName + (!string.IsNullOrEmpty(AssigneeName) && AssigneeName != "Unassigned" ? " / " + AssigneeName : " / Anyone"))
-                : (string.IsNullOrEmpty(AssigneeName) || AssigneeName == "Unassigned" ? "—" : AssigneeName),
-            "OwningTeamName" => string.IsNullOrEmpty(OwningTeamName) ? "—" : OwningTeamName,
-            "ContactId" => ContactId.HasValue ? $"#{ContactId}" : "—",
-            "ContactName" => string.IsNullOrEmpty(ContactName) || ContactName == "-" ? "—" : ContactName,
-            "SlaStatus" => SlaStatusLabel == "-" ? "—" : SlaStatusLabel,
-            "SlaDueAt" => SlaDueAt == "-" ? "—" : SlaDueAt,
-            "CreationTime" => CreationTime,
-            "LastModificationTime" => string.IsNullOrEmpty(LastModificationTime) ? "—" : LastModificationTime,
-            "ClosedAt" => string.IsNullOrEmpty(ClosedAt) ? "—" : ClosedAt,
-            "Description" => string.IsNullOrEmpty(Description) ? "—" : (Description.Length > 50 ? Description.Substring(0, 47) + "..." : Description),
-            "Tags" => string.IsNullOrEmpty(Tags) ? "—" : Tags,
-            "CreatedByName" => string.IsNullOrEmpty(CreatedByName) ? "—" : CreatedByName,
-            _ => "—"
-        };
+        public string GetColumnValue(string field) =>
+            field switch
+            {
+                "Id" => $"#{Id}",
+                "Title" => Title.Length > 50 ? Title.Substring(0, 47) + "..." : Title,
+                "Status" => StatusLabel,
+                "Priority" => PriorityLabel,
+                "Category" => Category,
+                "AssigneeName" => !string.IsNullOrEmpty(OwningTeamName)
+                    ? (
+                        OwningTeamName
+                        + (
+                            !string.IsNullOrEmpty(AssigneeName) && AssigneeName != "Unassigned"
+                                ? " / " + AssigneeName
+                                : " / Anyone"
+                        )
+                    )
+                    : (
+                        string.IsNullOrEmpty(AssigneeName) || AssigneeName == "Unassigned"
+                            ? "—"
+                            : AssigneeName
+                    ),
+                "OwningTeamName" => string.IsNullOrEmpty(OwningTeamName) ? "—" : OwningTeamName,
+                "ContactId" => ContactId.HasValue ? $"#{ContactId}" : "—",
+                "ContactName" => string.IsNullOrEmpty(ContactName) || ContactName == "-"
+                    ? "—"
+                    : ContactName,
+                "SlaStatus" => SlaStatusLabel == "-" ? "—" : SlaStatusLabel,
+                "SlaDueAt" => SlaDueAt == "-" ? "—" : SlaDueAt,
+                "CreationTime" => CreationTime,
+                "LastModificationTime" => string.IsNullOrEmpty(LastModificationTime)
+                    ? "—"
+                    : LastModificationTime,
+                "ClosedAt" => string.IsNullOrEmpty(ClosedAt) ? "—" : ClosedAt,
+                "Description" => string.IsNullOrEmpty(Description)
+                    ? "—"
+                    : (
+                        Description.Length > 50 ? Description.Substring(0, 47) + "..." : Description
+                    ),
+                "Tags" => string.IsNullOrEmpty(Tags) ? "—" : Tags,
+                "CreatedByName" => string.IsNullOrEmpty(CreatedByName) ? "—" : CreatedByName,
+                _ => "—",
+            };
     }
 
     /// <summary>

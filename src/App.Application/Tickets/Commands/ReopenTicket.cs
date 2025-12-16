@@ -33,7 +33,12 @@ public class ReopenTicket
         private readonly ITicketPermissionService _permissionService;
         private readonly ITicketConfigService _configService;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser, ITicketPermissionService permissionService, ITicketConfigService configService)
+        public Handler(
+            IAppDbContext db,
+            ICurrentUser currentUser,
+            ITicketPermissionService permissionService,
+            ITicketConfigService configService
+        )
         {
             _db = db;
             _currentUser = currentUser;
@@ -48,14 +53,19 @@ public class ReopenTicket
         {
             _permissionService.RequireCanManageTickets();
 
-            var ticket = await _db.Tickets
-                .FirstOrDefaultAsync(t => t.Id == request.Id, cancellationToken);
+            var ticket = await _db.Tickets.FirstOrDefaultAsync(
+                t => t.Id == request.Id,
+                cancellationToken
+            );
 
             if (ticket == null)
                 throw new NotFoundException("Ticket", request.Id);
 
             // Check if current status is closed type
-            var currentStatusConfig = await _configService.GetStatusByDeveloperNameAsync(ticket.Status, cancellationToken);
+            var currentStatusConfig = await _configService.GetStatusByDeveloperNameAsync(
+                ticket.Status,
+                cancellationToken
+            );
             if (currentStatusConfig?.IsOpenType == true)
             {
                 // Already open
@@ -63,10 +73,10 @@ public class ReopenTicket
             }
 
             var oldStatus = ticket.Status;
-            
+
             // Get the default status (first in list, must be Open type)
             var defaultStatus = await _configService.GetDefaultStatusAsync(cancellationToken);
-            
+
             ticket.Status = defaultStatus.DeveloperName;
             ticket.ClosedAt = null;
             ticket.ResolvedAt = null;
@@ -81,7 +91,7 @@ public class ReopenTicket
 
             var changes = new Dictionary<string, object>
             {
-                ["Status"] = new { OldValue = oldStatus, NewValue = defaultStatus.DeveloperName }
+                ["Status"] = new { OldValue = oldStatus, NewValue = defaultStatus.DeveloperName },
             };
 
             var changeLog = new TicketChangeLogEntry
@@ -89,15 +99,15 @@ public class ReopenTicket
                 TicketId = ticket.Id,
                 ActorStaffId = _currentUser.UserId?.Guid,
                 FieldChangesJson = JsonSerializer.Serialize(changes),
-                Message = $"Ticket reopened (status changed from {oldLabel} to {defaultStatus.Label})"
+                Message =
+                    $"Ticket reopened (status changed from {oldLabel} to {defaultStatus.Label})",
             };
             ticket.ChangeLogEntries.Add(changeLog);
 
-            ticket.AddDomainEvent(new TicketReopenedEvent(ticket));
+            ticket.AddDomainEvent(new TicketReopenedEvent(ticket, _currentUser.UserId?.Guid));
 
             await _db.SaveChangesAsync(cancellationToken);
             return new CommandResponseDto<long>(ticket.Id);
         }
     }
 }
-

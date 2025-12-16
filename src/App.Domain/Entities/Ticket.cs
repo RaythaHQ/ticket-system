@@ -35,9 +35,10 @@ public class Ticket : BaseNumericFullAuditableEntity
     [NotMapped]
     public List<string> Tags
     {
-        get => string.IsNullOrEmpty(TagsJson)
-            ? new List<string>()
-            : JsonSerializer.Deserialize<List<string>>(TagsJson) ?? new List<string>();
+        get =>
+            string.IsNullOrEmpty(TagsJson)
+                ? new List<string>()
+                : JsonSerializer.Deserialize<List<string>>(TagsJson) ?? new List<string>();
         set => TagsJson = JsonSerializer.Serialize(value);
     }
 
@@ -53,9 +54,12 @@ public class Ticket : BaseNumericFullAuditableEntity
     public string? SlaStatus { get; set; }
 
     // Collections
-    public virtual ICollection<TicketChangeLogEntry> ChangeLogEntries { get; set; } = new List<TicketChangeLogEntry>();
+    public virtual ICollection<TicketChangeLogEntry> ChangeLogEntries { get; set; } =
+        new List<TicketChangeLogEntry>();
     public virtual ICollection<TicketComment> Comments { get; set; } = new List<TicketComment>();
-    public virtual ICollection<TicketAttachment> Attachments { get; set; } = new List<TicketAttachment>();
+    public virtual ICollection<TicketAttachment> Attachments { get; set; } =
+        new List<TicketAttachment>();
+    public virtual ICollection<TicketFollower> Followers { get; set; } = new List<TicketFollower>();
 
     /// <summary>
     /// Gets the ticket status as a value object.
@@ -73,8 +77,6 @@ public class Ticket : BaseNumericFullAuditableEntity
     /// Gets the SLA status as a value object, if set.
     /// </summary>
     [NotMapped]
-    public SlaStatus? SlaStatusValue => string.IsNullOrEmpty(SlaStatus)
-        ? null
-        : ValueObjects.SlaStatus.From(SlaStatus);
+    public SlaStatus? SlaStatusValue =>
+        string.IsNullOrEmpty(SlaStatus) ? null : ValueObjects.SlaStatus.From(SlaStatus);
 }
-

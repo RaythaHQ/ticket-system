@@ -4,6 +4,7 @@ using App.Application.Tickets.RenderModels;
 using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Events;
+using App.Domain.ValueObjects;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -13,29 +14,40 @@ namespace App.Application.Tickets.EventHandlers;
 /// <summary>
 /// Sends email notification when an SLA is approaching breach.
 /// </summary>
-public class SlaApproachingEventHandler_SendNotification : INotificationHandler<SlaApproachingBreachEvent>
+public class SlaApproachingEventHandler_SendNotification
+    : INotificationHandler<SlaApproachingBreachEvent>
 {
     private readonly IAppDbContext _db;
     private readonly IEmailer _emailerService;
     private readonly IRenderEngine _renderEngineService;
+    private readonly IRelativeUrlBuilder _relativeUrlBuilder;
     private readonly ICurrentOrganization _currentOrganization;
+    private readonly INotificationPreferenceService _notificationPreferenceService;
     private readonly ILogger<SlaApproachingEventHandler_SendNotification> _logger;
 
     public SlaApproachingEventHandler_SendNotification(
         IAppDbContext db,
         IEmailer emailerService,
         IRenderEngine renderEngineService,
+        IRelativeUrlBuilder relativeUrlBuilder,
         ICurrentOrganization currentOrganization,
-        ILogger<SlaApproachingEventHandler_SendNotification> logger)
+        INotificationPreferenceService notificationPreferenceService,
+        ILogger<SlaApproachingEventHandler_SendNotification> logger
+    )
     {
         _db = db;
         _emailerService = emailerService;
         _renderEngineService = renderEngineService;
+        _relativeUrlBuilder = relativeUrlBuilder;
         _currentOrganization = currentOrganization;
+        _notificationPreferenceService = notificationPreferenceService;
         _logger = logger;
     }
 
-    public async ValueTask Handle(SlaApproachingBreachEvent notification, CancellationToken cancellationToken)
+    public async ValueTask Handle(
+        SlaApproachingBreachEvent notification,
+        CancellationToken cancellationToken
+    )
     {
         var ticket = notification.Ticket;
 
@@ -44,8 +56,18 @@ public class SlaApproachingEventHandler_SendNotification : INotificationHandler<
 
         try
         {
-            var assignee = await _db.Users
-                .AsNoTracking()
+            // Check notification preferences
+            var emailEnabled = await _notificationPreferenceService.IsEmailEnabledAsync(
+                ticket.AssigneeId.Value,
+                NotificationEventType.SLA_APPROACHING,
+                cancellationToken
+            );
+
+            if (!emailEnabled)
+                return;
+
+            var assignee = await _db
+                .Users.AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Id == ticket.AssigneeId.Value, cancellationToken);
 
             if (assignee == null || string.IsNullOrEmpty(assignee.EmailAddress))
@@ -59,7 +81,9 @@ public class SlaApproachingEventHandler_SendNotification : INotificationHandler<
                 return;
 
             var slaRule = ticket.SlaRuleId.HasValue
-                ? await _db.SlaRules.AsNoTracking().FirstOrDefaultAsync(r => r.Id == ticket.SlaRuleId.Value, cancellationToken)
+                ? await _db
+                    .SlaRules.AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.Id == ticket.SlaRuleId.Value, cancellationToken)
                 : null;
 
             var timeRemaining = ticket.SlaDueAt.HasValue
@@ -75,13 +99,15 @@ public class SlaApproachingEventHandler_SendNotification : INotificationHandler<
                 SlaDueAt = ticket.SlaDueAt?.ToString("MMM dd, yyyy h:mm tt") ?? "-",
                 TimeRemaining = timeRemaining,
                 SlaRuleName = slaRule?.Name ?? "Unknown",
-                TicketUrl = $"{_currentOrganization.PathBase}/staff/tickets/{ticket.Id}"
+                TicketUrl = _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
             };
 
             var wrappedModel = new Wrapper_RenderModel
             {
-                CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(_currentOrganization),
-                Target = renderModel
+                CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(
+                    _currentOrganization
+                ),
+                Target = renderModel,
             };
 
             var subject = _renderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
@@ -91,7 +117,7 @@ public class SlaApproachingEventHandler_SendNotification : INotificationHandler<
             {
                 Content = content,
                 To = new List<string> { assignee.EmailAddress },
-                Subject = subject
+                Subject = subject,
             };
 
             _emailerService.SendEmail(emailMessage);

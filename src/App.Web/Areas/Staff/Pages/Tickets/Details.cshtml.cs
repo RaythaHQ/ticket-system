@@ -29,6 +29,11 @@ public class Details : BaseStaffPageModel
     public bool CanDeleteTicket { get; set; }
     public bool CanManageTickets { get; set; }
 
+    // Following feature
+    public bool IsFollowing { get; set; }
+    public IEnumerable<GetTicketFollowers.TicketFollowerDto> Followers { get; set; } =
+        Enumerable.Empty<GetTicketFollowers.TicketFollowerDto>();
+
     public async Task<IActionResult> OnGet(
         long id,
         string? backToListUrl = null,
@@ -55,6 +60,19 @@ public class Details : BaseStaffPageModel
             cancellationToken
         );
         ChangeLog = changeLogResponse.Result;
+
+        // Load following status and followers list
+        var isFollowingResponse = await Mediator.Send(
+            new IsFollowingTicket.Query { TicketId = id },
+            cancellationToken
+        );
+        IsFollowing = isFollowingResponse.Result;
+
+        var followersResponse = await Mediator.Send(
+            new GetTicketFollowers.Query { TicketId = id },
+            cancellationToken
+        );
+        Followers = followersResponse.Result;
 
         // Load full contact details if contact is assigned
         if (Ticket.ContactId.HasValue)
@@ -161,6 +179,75 @@ public class Details : BaseStaffPageModel
         }
 
         return RedirectToPage(RouteNames.Tickets.Details, new { id });
+    }
+
+    public async Task<IActionResult> OnPostFollow(long id, CancellationToken cancellationToken)
+    {
+        var command = new FollowTicket.Command { TicketId = id };
+        var response = await Mediator.Send(command, cancellationToken);
+
+        if (response.Success)
+        {
+            SetSuccessMessage("You are now following this ticket.");
+        }
+        else
+        {
+            SetErrorMessage(response.GetErrors());
+        }
+
+        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+    }
+
+    public async Task<IActionResult> OnPostUnfollow(long id, CancellationToken cancellationToken)
+    {
+        var command = new UnfollowTicket.Command { TicketId = id };
+        var response = await Mediator.Send(command, cancellationToken);
+
+        if (response.Success)
+        {
+            SetSuccessMessage("You are no longer following this ticket.");
+        }
+        else
+        {
+            SetErrorMessage(response.GetErrors());
+        }
+
+        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+    }
+
+    /// <summary>
+    /// API endpoint for searching mentionable teams and users for @ autocomplete.
+    /// </summary>
+    public async Task<IActionResult> OnGetSearchMentionables(
+        string? query,
+        CancellationToken cancellationToken
+    )
+    {
+        var response = await Mediator.Send(
+            new SearchMentionables.Query { SearchTerm = query ?? string.Empty, MaxResults = 10 },
+            cancellationToken
+        );
+
+        var result = response.Result;
+        return new JsonResult(
+            new
+            {
+                teams = result.Teams.Select(t => new
+                {
+                    id = t.Id.ToString(),
+                    name = t.Name,
+                    memberCount = t.MemberCount,
+                    type = "team",
+                }),
+                users = result.Users.Select(u => new
+                {
+                    id = u.Id.ToString(),
+                    name = u.Name,
+                    email = u.Email,
+                    type = "user",
+                }),
+            }
+        );
     }
 
     public record AddCommentViewModel

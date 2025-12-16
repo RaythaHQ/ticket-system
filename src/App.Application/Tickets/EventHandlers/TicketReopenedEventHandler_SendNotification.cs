@@ -3,6 +3,7 @@ using App.Application.Common.Models.RenderModels;
 using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Events;
+using App.Domain.ValueObjects;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -17,24 +18,34 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
     private readonly IAppDbContext _db;
     private readonly IEmailer _emailerService;
     private readonly IRenderEngine _renderEngineService;
+    private readonly IRelativeUrlBuilder _relativeUrlBuilder;
     private readonly ICurrentOrganization _currentOrganization;
+    private readonly INotificationPreferenceService _notificationPreferenceService;
     private readonly ILogger<TicketReopenedEventHandler_SendNotification> _logger;
 
     public TicketReopenedEventHandler_SendNotification(
         IAppDbContext db,
         IEmailer emailerService,
         IRenderEngine renderEngineService,
+        IRelativeUrlBuilder relativeUrlBuilder,
         ICurrentOrganization currentOrganization,
-        ILogger<TicketReopenedEventHandler_SendNotification> logger)
+        INotificationPreferenceService notificationPreferenceService,
+        ILogger<TicketReopenedEventHandler_SendNotification> logger
+    )
     {
         _db = db;
         _emailerService = emailerService;
         _renderEngineService = renderEngineService;
+        _relativeUrlBuilder = relativeUrlBuilder;
         _currentOrganization = currentOrganization;
+        _notificationPreferenceService = notificationPreferenceService;
         _logger = logger;
     }
 
-    public async ValueTask Handle(TicketReopenedEvent notification, CancellationToken cancellationToken)
+    public async ValueTask Handle(
+        TicketReopenedEvent notification,
+        CancellationToken cancellationToken
+    )
     {
         try
         {
@@ -44,8 +55,25 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
             if (!ticket.AssigneeId.HasValue)
                 return;
 
-            var assignee = await _db.Users
-                .AsNoTracking()
+            // Don't notify if the assignee is the one who reopened the ticket
+            if (
+                notification.ReopenedByUserId.HasValue
+                && ticket.AssigneeId.Value == notification.ReopenedByUserId.Value
+            )
+                return;
+
+            // Check notification preferences
+            var emailEnabled = await _notificationPreferenceService.IsEmailEnabledAsync(
+                ticket.AssigneeId.Value,
+                NotificationEventType.TICKET_REOPENED,
+                cancellationToken
+            );
+
+            if (!emailEnabled)
+                return;
+
+            var assignee = await _db
+                .Users.AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Id == ticket.AssigneeId.Value, cancellationToken);
 
             if (assignee == null || string.IsNullOrEmpty(assignee.EmailAddress))
@@ -65,13 +93,15 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
                 ReopenedByName = "System",
                 Status = ticket.Status,
                 RecipientName = assignee.FullName,
-                TicketUrl = $"{_currentOrganization.PathBase}/staff/tickets/{ticket.Id}"
+                TicketUrl = _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
             };
 
             var wrappedModel = new Wrapper_RenderModel
             {
-                CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(_currentOrganization),
-                Target = renderModel
+                CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(
+                    _currentOrganization
+                ),
+                Target = renderModel,
             };
 
             var subject = _renderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
@@ -81,7 +111,7 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
             {
                 Content = content,
                 To = new List<string> { assignee.EmailAddress },
-                Subject = subject
+                Subject = subject,
             };
 
             _emailerService.SendEmail(emailMessage);
@@ -98,4 +128,3 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
         }
     }
 }
-

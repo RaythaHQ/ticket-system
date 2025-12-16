@@ -34,12 +34,17 @@ public class UpdateTicket
             RuleFor(x => x.Id).GreaterThan(0);
             RuleFor(x => x.Title).NotEmpty().MaximumLength(500);
             RuleFor(x => x.Priority)
-                .MustAsync(async (priority, cancellationToken) =>
-                {
-                    return await db.TicketPriorityConfigs
-                        .AsNoTracking()
-                        .AnyAsync(p => p.DeveloperName == priority && p.IsActive, cancellationToken);
-                })
+                .MustAsync(
+                    async (priority, cancellationToken) =>
+                    {
+                        return await db
+                            .TicketPriorityConfigs.AsNoTracking()
+                            .AnyAsync(
+                                p => p.DeveloperName == priority && p.IsActive,
+                                cancellationToken
+                            );
+                    }
+                )
                 .WithMessage("Invalid priority value.");
 
             RuleFor(x => x.OwningTeamId)
@@ -142,7 +147,7 @@ public class UpdateTicket
             var oldAssigneeId = ticket.AssigneeId;
             var oldTeamId = ticket.OwningTeamId;
             bool wasAutoAssigned = false;
-            
+
             // Handle round-robin auto-assignment:
             // If team is being set/changed AND no assignee is specified, try round-robin
             Guid? effectiveAssigneeId = request.AssigneeId?.Guid;
@@ -151,7 +156,10 @@ public class UpdateTicket
                 // Only trigger round-robin if team is new or changing
                 if (ticket.OwningTeamId != request.OwningTeamId.Value.Guid)
                 {
-                    var autoAssignee = await _roundRobinService.GetNextAssigneeAsync(request.OwningTeamId.Value, cancellationToken);
+                    var autoAssignee = await _roundRobinService.GetNextAssigneeAsync(
+                        request.OwningTeamId.Value,
+                        cancellationToken
+                    );
                     if (autoAssignee.HasValue)
                     {
                         effectiveAssigneeId = autoAssignee.Value.Guid;
@@ -300,10 +308,7 @@ public class UpdateTicket
                 ticket.ChangeLogEntries.Add(changeLog);
 
                 // Raise assignment event if assignee or team changed
-                if (
-                    oldAssigneeId != effectiveAssigneeId
-                    || oldTeamId != request.OwningTeamId?.Guid
-                )
+                if (oldAssigneeId != effectiveAssigneeId || oldTeamId != request.OwningTeamId?.Guid)
                 {
                     ticket.AddDomainEvent(
                         new TicketAssignedEvent(
@@ -311,16 +316,25 @@ public class UpdateTicket
                             oldAssigneeId,
                             effectiveAssigneeId,
                             oldTeamId,
-                            request.OwningTeamId?.Guid
+                            request.OwningTeamId?.Guid,
+                            _currentUser.UserId?.Guid
                         )
                     );
                 }
 
                 // Record round-robin assignment if used
-                if (wasAutoAssigned && effectiveAssigneeId.HasValue && request.OwningTeamId.HasValue)
+                if (
+                    wasAutoAssigned
+                    && effectiveAssigneeId.HasValue
+                    && request.OwningTeamId.HasValue
+                )
                 {
-                    var membership = await _db.TeamMemberships
-                        .FirstOrDefaultAsync(m => m.TeamId == request.OwningTeamId.Value.Guid && m.StaffAdminId == effectiveAssigneeId.Value, cancellationToken);
+                    var membership = await _db.TeamMemberships.FirstOrDefaultAsync(
+                        m =>
+                            m.TeamId == request.OwningTeamId.Value.Guid
+                            && m.StaffAdminId == effectiveAssigneeId.Value,
+                        cancellationToken
+                    );
                     if (membership != null)
                     {
                         membership.LastAssignedAt = DateTime.UtcNow;
@@ -358,14 +372,17 @@ public class UpdateTicket
             CancellationToken cancellationToken
         )
         {
-            var priorities = await _ticketConfigService.GetAllPrioritiesAsync(true, cancellationToken);
-            
+            var priorities = await _ticketConfigService.GetAllPrioritiesAsync(
+                true,
+                cancellationToken
+            );
+
             var oldPriority = priorities.FirstOrDefault(p => p.DeveloperName == oldValue);
             var newPriority = priorities.FirstOrDefault(p => p.DeveloperName == newValue);
-            
+
             var oldLabel = oldPriority?.Label ?? oldValue ?? "None";
             var newLabel = newPriority?.Label ?? newValue ?? "None";
-            
+
             return $"Priority changed from {oldLabel} to {newLabel}";
         }
 

@@ -79,6 +79,12 @@ public class SetIsActive
                     .ToListAsync(cancellationToken);
                 _db.TeamMemberships.RemoveRange(teamMemberships);
 
+                // Unfollow all tickets
+                var ticketFollowers = await _db
+                    .TicketFollowers.Where(f => f.StaffAdminId == request.Id.Guid)
+                    .ToListAsync(cancellationToken);
+                _db.TicketFollowers.RemoveRange(ticketFollowers);
+
                 // Unassign from all open tickets (set AssigneeId to null)
                 // Only unassign from tickets that are not closed/resolved
                 var openTickets = await _db

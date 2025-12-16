@@ -53,6 +53,7 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     public DbSet<TicketChangeLogEntry> TicketChangeLogEntries => Set<TicketChangeLogEntry>();
     public DbSet<TicketComment> TicketComments => Set<TicketComment>();
     public DbSet<TicketAttachment> TicketAttachments => Set<TicketAttachment>();
+    public DbSet<TicketFollower> TicketFollowers => Set<TicketFollower>();
     public DbSet<ContactChangeLogEntry> ContactChangeLogEntries => Set<ContactChangeLogEntry>();
     public DbSet<ContactComment> ContactComments => Set<ContactComment>();
     public DbSet<ContactAttachment> ContactAttachments => Set<ContactAttachment>();
