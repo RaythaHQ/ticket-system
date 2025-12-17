@@ -21,6 +21,11 @@ public class NotificationPreference : BaseAuditableEntity
     public bool EmailEnabled { get; set; } = true;
 
     /// <summary>
+    /// When true, in-app (SignalR) notifications are enabled for this event.
+    /// </summary>
+    public bool InAppEnabled { get; set; } = true;
+
+    /// <summary>
     /// When true, webhook notifications are enabled for this event.
     /// </summary>
     public bool WebhookEnabled { get; set; }
@@ -30,4 +35,3 @@ public class NotificationPreference : BaseAuditableEntity
     /// </summary>
     public string? WebhookUrl { get; set; }
 }
-

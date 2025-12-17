@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json;
 
 namespace App.Domain.Entities;
@@ -28,7 +28,7 @@ public class User : BaseAuditableEntity, IPassivable
     public virtual ICollection<Role> Roles { get; set; }
     public virtual ICollection<UserGroup> UserGroups { get; set; }
     public virtual ICollection<ApiKey> ApiKeys { get; set; }
-    
+
     // Custom attributes (only editable via Admin area)
     public string? CustomAttribute1 { get; set; }
     public string? CustomAttribute2 { get; set; }
@@ -36,8 +36,14 @@ public class User : BaseAuditableEntity, IPassivable
     public string? CustomAttribute4 { get; set; }
     public string? CustomAttribute5 { get; set; }
 
+    /// <summary>
+    /// When true, plays a sound when in-app notifications are received.
+    /// </summary>
+    public bool PlaySoundOnNotification { get; set; } = true;
+
     // Ticketing system navigation properties
-    public virtual ICollection<TeamMembership> TeamMemberships { get; set; } = new List<TeamMembership>();
+    public virtual ICollection<TeamMembership> TeamMemberships { get; set; } =
+        new List<TeamMembership>();
     public virtual ICollection<Ticket> AssignedTickets { get; set; } = new List<Ticket>();
 
     public override string ToString()

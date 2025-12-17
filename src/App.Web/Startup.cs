@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text.Json;
 using App.Application;
@@ -7,6 +7,7 @@ using App.Application.Common.Utils;
 using App.Infrastructure.Persistence;
 using App.Web.Areas.Admin.Endpoints;
 using App.Web.Areas.Staff.Endpoints;
+using App.Web.Hubs;
 using App.Web.Middlewares;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
@@ -137,6 +138,9 @@ public class Startup
             endpoints.MapControllers();
             endpoints.MapMediaItemsEndpoints();
             endpoints.MapStaffAttachmentEndpoints();
+
+            // SignalR hub for real-time notifications and presence
+            endpoints.MapHub<NotificationHub>("/hubs/notifications");
             endpoints.MapOpenApi("/app/api/{documentName}/swagger.json");
 
             endpoints.MapScalarApiReference(

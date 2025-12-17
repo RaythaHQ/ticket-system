@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using App.Application.Common.Models;
 using App.Application.UserGroups;
 using App.Domain.Entities;
@@ -21,6 +21,7 @@ namespace App.Application.Users
             get { return $"{FirstName} {LastName}"; }
         }
         public bool IsAdmin { get; init; }
+        public bool PlaySoundOnNotification { get; init; } = true;
 
         public IEnumerable<UserGroupDto> UserGroups { get; init; } = new List<UserGroupDto>();
 
@@ -47,6 +48,7 @@ namespace App.Application.Users
                 LastModificationTime = entity.LastModificationTime,
                 LastModifierUserId = entity.LastModifierUserId,
                 IsAdmin = entity.IsAdmin,
+                PlaySoundOnNotification = entity.PlaySoundOnNotification,
                 CreatorUser = AuditableUserDto.GetProjection(entity.CreatorUser),
                 LastModifierUser = AuditableUserDto.GetProjection(entity.LastModifierUser),
                 UserGroups =

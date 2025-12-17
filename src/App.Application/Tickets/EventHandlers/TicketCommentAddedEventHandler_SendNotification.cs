@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace App.Application.Tickets.EventHandlers;
 
 /// <summary>
-/// Sends email notification when a comment is added to a ticket.
+/// Sends email and in-app notification when a comment is added to a ticket.
 /// Notifies:
 /// - Ticket assignee and creator (respects their notification preferences)
 /// - Ticket followers (bypasses notification preferences)
@@ -28,6 +28,7 @@ public class TicketCommentAddedEventHandler_SendNotification
     private readonly IRelativeUrlBuilder _relativeUrlBuilder;
     private readonly ICurrentOrganization _currentOrganization;
     private readonly INotificationPreferenceService _notificationPreferenceService;
+    private readonly IInAppNotificationService _inAppNotificationService;
     private readonly ILogger<TicketCommentAddedEventHandler_SendNotification> _logger;
 
     public TicketCommentAddedEventHandler_SendNotification(
@@ -37,6 +38,7 @@ public class TicketCommentAddedEventHandler_SendNotification
         IRelativeUrlBuilder relativeUrlBuilder,
         ICurrentOrganization currentOrganization,
         INotificationPreferenceService notificationPreferenceService,
+        IInAppNotificationService inAppNotificationService,
         ILogger<TicketCommentAddedEventHandler_SendNotification> logger
     )
     {
@@ -46,6 +48,7 @@ public class TicketCommentAddedEventHandler_SendNotification
         _relativeUrlBuilder = relativeUrlBuilder;
         _currentOrganization = currentOrganization;
         _notificationPreferenceService = notificationPreferenceService;
+        _inAppNotificationService = inAppNotificationService;
         _logger = logger;
     }
 
@@ -192,6 +195,46 @@ public class TicketCommentAddedEventHandler_SendNotification
                     "Sent comment notification for ticket {TicketId} to {Email}",
                     ticket.Id,
                     user.EmailAddress
+                );
+            }
+
+            // === SEND IN-APP NOTIFICATIONS ===
+
+            // Filter by in-app preferences for standard recipients
+            var inAppStandardRecipients = standardRecipients.Any()
+                ? await _notificationPreferenceService.FilterUsersWithInAppEnabledAsync(
+                    standardRecipients,
+                    NotificationEventType.COMMENT_ADDED,
+                    cancellationToken
+                )
+                : new List<Guid>();
+
+            // Combine forced and filtered standard recipients
+            var inAppRecipients = new HashSet<Guid>(forcedRecipients);
+            foreach (var id in inAppStandardRecipients)
+                inAppRecipients.Add(id);
+
+            if (inAppRecipients.Any())
+            {
+                var truncatedBody =
+                    comment.Body.Length > 100
+                        ? comment.Body.Substring(0, 100) + "..."
+                        : comment.Body;
+
+                await _inAppNotificationService.SendToUsersAsync(
+                    inAppRecipients,
+                    NotificationType.CommentAdded,
+                    $"New comment on #{ticket.Id}",
+                    $"{commenter?.FullName ?? "Someone"}: {truncatedBody}",
+                    _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                    ticket.Id,
+                    cancellationToken
+                );
+
+                _logger.LogInformation(
+                    "Sent in-app comment notification for ticket {TicketId} to {Count} users",
+                    ticket.Id,
+                    inAppRecipients.Count
                 );
             }
         }

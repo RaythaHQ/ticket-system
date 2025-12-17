@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace App.Application.Tickets.EventHandlers;
 
 /// <summary>
-/// Sends email notification when an SLA is approaching breach.
+/// Sends email and in-app notification when an SLA is approaching breach.
 /// </summary>
 public class SlaApproachingEventHandler_SendNotification
     : INotificationHandler<SlaApproachingBreachEvent>
@@ -23,6 +23,7 @@ public class SlaApproachingEventHandler_SendNotification
     private readonly IRelativeUrlBuilder _relativeUrlBuilder;
     private readonly ICurrentOrganization _currentOrganization;
     private readonly INotificationPreferenceService _notificationPreferenceService;
+    private readonly IInAppNotificationService _inAppNotificationService;
     private readonly ILogger<SlaApproachingEventHandler_SendNotification> _logger;
 
     public SlaApproachingEventHandler_SendNotification(
@@ -32,6 +33,7 @@ public class SlaApproachingEventHandler_SendNotification
         IRelativeUrlBuilder relativeUrlBuilder,
         ICurrentOrganization currentOrganization,
         INotificationPreferenceService notificationPreferenceService,
+        IInAppNotificationService inAppNotificationService,
         ILogger<SlaApproachingEventHandler_SendNotification> logger
     )
     {
@@ -41,6 +43,7 @@ public class SlaApproachingEventHandler_SendNotification
         _relativeUrlBuilder = relativeUrlBuilder;
         _currentOrganization = currentOrganization;
         _notificationPreferenceService = notificationPreferenceService;
+        _inAppNotificationService = inAppNotificationService;
         _logger = logger;
     }
 
@@ -129,6 +132,26 @@ public class SlaApproachingEventHandler_SendNotification
                 ticket.Id,
                 assignee.EmailAddress
             );
+
+            // Send in-app notification
+            var inAppEnabled = await _notificationPreferenceService.IsInAppEnabledAsync(
+                ticket.AssigneeId.Value,
+                NotificationEventType.SLA_APPROACHING,
+                cancellationToken
+            );
+
+            if (inAppEnabled)
+            {
+                await _inAppNotificationService.SendToUserAsync(
+                    ticket.AssigneeId.Value,
+                    NotificationType.SlaApproaching,
+                    $"SLA Warning: #{ticket.Id}",
+                    $"{ticket.Title} - {timeRemaining} remaining",
+                    _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                    ticket.Id,
+                    cancellationToken
+                );
+            }
         }
         catch (Exception ex)
         {

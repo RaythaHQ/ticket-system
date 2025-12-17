@@ -34,6 +34,8 @@
                 <span class="staff-badge staff-badge-secondary">@Model.Ticket.Category</span>
             }
         </div>
+        <!-- Live presence indicator - shows who else is viewing this ticket -->
+        <div id="ticket-presence-container" class="mt-2" style="display: none;"></div>
     </div>
     <div class="d-flex gap-2">
         <!-- Follow/Unfollow Button -->
@@ -673,6 +675,18 @@
             });
             
             tribute.attach(textarea);
+        });
+
+        // Initialize presence tracking for this ticket
+        if (window.AppNotifications) {
+            window.AppNotifications.joinTicketView(@Model.Ticket.Id);
+        }
+
+        // Leave ticket view when navigating away
+        window.addEventListener('beforeunload', function() {
+            if (window.AppNotifications) {
+                window.AppNotifications.leaveTicketView(@Model.Ticket.Id);
+            }
         });
     </script>
 }

@@ -16,6 +16,7 @@ public class Index : BaseAdminPageModel
     public FormModel Form { get; set; }
 
     public List<NotificationPreferenceDto> NotificationPreferences { get; set; } = new();
+    public bool PlaySoundOnNotification { get; set; } = true;
 
     public async Task<IActionResult> OnGet()
     {
@@ -46,6 +47,15 @@ public class Index : BaseAdminPageModel
                 }
             );
             NotificationPreferences = prefsResponse.Result;
+
+            // Load sound preference
+            var userResponse = await Mediator.Send(
+                new App.Application.Users.Queries.GetUserById.Query
+                {
+                    Id = CurrentUser.UserId.Value.ToString(),
+                }
+            );
+            PlaySoundOnNotification = userResponse.Result?.PlaySoundOnNotification ?? true;
         }
 
         return Page();
@@ -76,6 +86,8 @@ public class Index : BaseAdminPageModel
 
     public async Task<IActionResult> OnPostUpdateNotifications(
         [FromForm] Dictionary<string, string> emailPrefs,
+        [FromForm] Dictionary<string, string> inAppPrefs,
+        [FromForm] bool playSoundOnNotification,
         CancellationToken cancellationToken
     )
     {
@@ -91,7 +103,8 @@ public class Index : BaseAdminPageModel
             .Select(eventType => new UpdateNotificationPreferences.PreferenceUpdate
             {
                 EventType = eventType.DeveloperName,
-                EmailEnabled = emailPrefs.ContainsKey(eventType.DeveloperName),
+                EmailEnabled = emailPrefs?.ContainsKey(eventType.DeveloperName) ?? false,
+                InAppEnabled = inAppPrefs?.ContainsKey(eventType.DeveloperName) ?? false,
                 WebhookEnabled = false,
             })
             .ToList();
@@ -101,6 +114,7 @@ public class Index : BaseAdminPageModel
             {
                 StaffAdminId = CurrentUser.UserId.Value.Guid,
                 Preferences = preferences,
+                PlaySoundOnNotification = playSoundOnNotification,
             },
             cancellationToken
         );

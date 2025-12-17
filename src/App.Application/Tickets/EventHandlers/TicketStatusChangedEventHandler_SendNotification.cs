@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace App.Application.Tickets.EventHandlers;
 
 /// <summary>
-/// Sends email notification when a ticket's status changes.
+/// Sends email and in-app notification when a ticket's status changes.
 /// </summary>
 public class TicketStatusChangedEventHandler_SendNotification
     : INotificationHandler<TicketStatusChangedEvent>
@@ -23,6 +23,7 @@ public class TicketStatusChangedEventHandler_SendNotification
     private readonly IRelativeUrlBuilder _relativeUrlBuilder;
     private readonly ICurrentOrganization _currentOrganization;
     private readonly INotificationPreferenceService _notificationPreferenceService;
+    private readonly IInAppNotificationService _inAppNotificationService;
     private readonly ILogger<TicketStatusChangedEventHandler_SendNotification> _logger;
 
     public TicketStatusChangedEventHandler_SendNotification(
@@ -32,6 +33,7 @@ public class TicketStatusChangedEventHandler_SendNotification
         IRelativeUrlBuilder relativeUrlBuilder,
         ICurrentOrganization currentOrganization,
         INotificationPreferenceService notificationPreferenceService,
+        IInAppNotificationService inAppNotificationService,
         ILogger<TicketStatusChangedEventHandler_SendNotification> logger
     )
     {
@@ -41,6 +43,7 @@ public class TicketStatusChangedEventHandler_SendNotification
         _relativeUrlBuilder = relativeUrlBuilder;
         _currentOrganization = currentOrganization;
         _notificationPreferenceService = notificationPreferenceService;
+        _inAppNotificationService = inAppNotificationService;
         _logger = logger;
     }
 
@@ -124,6 +127,26 @@ public class TicketStatusChangedEventHandler_SendNotification
                 ticket.Id,
                 assignee.EmailAddress
             );
+
+            // Send in-app notification
+            var inAppEnabled = await _notificationPreferenceService.IsInAppEnabledAsync(
+                ticket.AssigneeId.Value,
+                NotificationEventType.STATUS_CHANGED,
+                cancellationToken
+            );
+
+            if (inAppEnabled)
+            {
+                await _inAppNotificationService.SendToUserAsync(
+                    ticket.AssigneeId.Value,
+                    NotificationType.StatusChanged,
+                    $"Status changed: #{ticket.Id}",
+                    $"{notification.OldStatus} → {notification.NewStatus}",
+                    _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                    ticket.Id,
+                    cancellationToken
+                );
+            }
         }
         catch (Exception ex)
         {

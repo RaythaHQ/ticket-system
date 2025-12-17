@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 namespace App.Application.Tickets.EventHandlers;
 
 /// <summary>
-/// Sends email notification when an SLA is breached.
+/// Sends email and in-app notification when an SLA is breached.
 /// </summary>
 public class SlaBreachedEventHandler_SendNotification : INotificationHandler<SlaBreachedEvent>
 {
@@ -24,6 +24,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
     private readonly IRelativeUrlBuilder _relativeUrlBuilder;
     private readonly ICurrentOrganization _currentOrganization;
     private readonly INotificationPreferenceService _notificationPreferenceService;
+    private readonly IInAppNotificationService _inAppNotificationService;
     private readonly ILogger<SlaBreachedEventHandler_SendNotification> _logger;
 
     public SlaBreachedEventHandler_SendNotification(
@@ -33,6 +34,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
         IRelativeUrlBuilder relativeUrlBuilder,
         ICurrentOrganization currentOrganization,
         INotificationPreferenceService notificationPreferenceService,
+        IInAppNotificationService inAppNotificationService,
         ILogger<SlaBreachedEventHandler_SendNotification> logger
     )
     {
@@ -42,6 +44,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
         _relativeUrlBuilder = relativeUrlBuilder;
         _currentOrganization = currentOrganization;
         _notificationPreferenceService = notificationPreferenceService;
+        _inAppNotificationService = inAppNotificationService;
         _logger = logger;
     }
 
@@ -173,6 +176,29 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                         "Sent SLA breach notification for ticket {TicketId} to additional recipient {Email}",
                         ticket.Id,
                         email
+                    );
+                }
+            }
+
+            // Send in-app notification to assignee
+            if (ticket.AssigneeId.HasValue && (breachBehavior?.NotifyAssignee ?? true))
+            {
+                var inAppEnabled = await _notificationPreferenceService.IsInAppEnabledAsync(
+                    ticket.AssigneeId.Value,
+                    NotificationEventType.SLA_BREACHED,
+                    cancellationToken
+                );
+
+                if (inAppEnabled)
+                {
+                    await _inAppNotificationService.SendToUserAsync(
+                        ticket.AssigneeId.Value,
+                        NotificationType.SlaBreach,
+                        $"SLA Breached: #{ticket.Id}",
+                        $"{ticket.Title} - SLA has been breached",
+                        _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                        ticket.Id,
+                        cancellationToken
                     );
                 }
             }

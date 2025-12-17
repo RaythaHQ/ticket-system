@@ -196,7 +196,7 @@
             color: white;
             background: linear-gradient(135deg, var(--staff-primary) 0%, var(--staff-primary-dark) 100%);
         }
-        
+
         .staff-submenu-divider {
             height: 1px;
             background: rgba(255, 255, 255, 0.15);
@@ -796,7 +796,8 @@
                     <span>Dashboard</span>
                 </a>
                 <div class="staff-nav-item">
-                    <span class="staff-nav-link has-submenu expanded @(ViewData["ActiveMenu"]?.ToString() == "Tickets" ? "active" : "")"
+                    <span
+                        class="staff-nav-link has-submenu expanded @(ViewData["ActiveMenu"]?.ToString() == "Tickets" ? "active" : "")"
                         onclick="toggleSubmenu(event, 'tickets-submenu')">
                         <i class="bi bi-ticket-detailed"></i>
                         <span>Tickets</span>
@@ -835,7 +836,8 @@
                             <div class="staff-submenu-divider"></div>
                             @foreach (var fav in favoriteViews)
                             {
-                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@fav.ViewId" asp-route-sortBy="view"
+                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@fav.ViewId"
+                                    asp-route-sortBy="view"
                                     class="staff-submenu-link @(ViewData["ActiveViewId"]?.ToString() == fav.ViewId.ToString() ? "active" : "")">
                                     <i class="bi bi-star-fill me-1" style="color: #ffc107; font-size: 0.7rem;"></i>@fav.Name
                                 </a>
@@ -958,7 +960,7 @@
             event.stopPropagation();
             const submenu = document.getElementById(submenuId);
             const link = event.currentTarget;
-            
+
             if (submenu.classList.contains('expanded')) {
                 submenu.classList.remove('expanded');
                 link.classList.remove('expanded');
@@ -968,6 +970,10 @@
             }
         }
     </script>
+
+    <!-- SignalR for real-time notifications -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="~/js/notifications.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

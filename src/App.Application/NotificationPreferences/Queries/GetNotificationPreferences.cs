@@ -29,8 +29,8 @@ public class GetNotificationPreferences
         )
         {
             // Get existing preferences
-            var existingPrefs = await _db.NotificationPreferences
-                .AsNoTracking()
+            var existingPrefs = await _db
+                .NotificationPreferences.AsNoTracking()
                 .Where(p => p.StaffAdminId == request.StaffAdminId.Guid)
                 .ToListAsync(cancellationToken);
 
@@ -40,22 +40,26 @@ public class GetNotificationPreferences
 
             foreach (var eventType in allEventTypes)
             {
-                var existing = existingPrefs.FirstOrDefault(p => p.EventType == eventType.DeveloperName);
+                var existing = existingPrefs.FirstOrDefault(p =>
+                    p.EventType == eventType.DeveloperName
+                );
 
-                result.Add(new NotificationPreferenceDto
-                {
-                    Id = existing?.Id ?? Guid.Empty,
-                    StaffAdminId = request.StaffAdminId,
-                    EventType = eventType.DeveloperName,
-                    EventTypeLabel = eventType.Label,
-                    EmailEnabled = existing?.EmailEnabled ?? true, // Default to enabled
-                    WebhookEnabled = existing?.WebhookEnabled ?? false,
-                    CreationTime = existing?.CreationTime ?? DateTime.UtcNow
-                });
+                result.Add(
+                    new NotificationPreferenceDto
+                    {
+                        Id = existing?.Id ?? Guid.Empty,
+                        StaffAdminId = request.StaffAdminId,
+                        EventType = eventType.DeveloperName,
+                        EventTypeLabel = eventType.Label,
+                        EmailEnabled = existing?.EmailEnabled ?? true, // Default to enabled
+                        InAppEnabled = existing?.InAppEnabled ?? true, // Default to enabled
+                        WebhookEnabled = existing?.WebhookEnabled ?? false,
+                        CreationTime = existing?.CreationTime ?? DateTime.UtcNow,
+                    }
+                );
             }
 
             return new QueryResponseDto<List<NotificationPreferenceDto>>(result);
         }
     }
 }
-

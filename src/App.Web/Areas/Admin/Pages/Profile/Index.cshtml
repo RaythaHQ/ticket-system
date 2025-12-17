@@ -51,7 +51,7 @@
                 <h5 class="mb-0">Notification Preferences</h5>
             </div>
             <div class="card-body">
-                <p class="text-muted mb-4">Configure which email notifications you want to receive.</p>
+                <p class="text-muted mb-4">Configure how you want to receive notifications for different events.</p>
                 <form method="post" asp-page-handler="UpdateNotifications">
                     <div class="table-responsive">
                         <table class="table">
@@ -59,6 +59,7 @@
                                 <tr>
                                     <th>Event Type</th>
                                     <th class="text-center">Email</th>
+                                    <th class="text-center">In App</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -74,11 +75,32 @@
                                                        @(pref.EmailEnabled ? "checked" : "") />
                                             </div>
                                         </td>
+                                        <td class="text-center">
+                                            <div class="form-check d-flex justify-content-center">
+                                                <input class="form-check-input" type="checkbox" 
+                                                       name="inAppPrefs[@pref.EventType]" 
+                                                       value="true"
+                                                       @(pref.InAppEnabled ? "checked" : "") />
+                                            </div>
+                                        </td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
                     </div>
+                    
+                    <!-- Sound toggle -->
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" 
+                               name="playSoundOnNotification" 
+                               value="true"
+                               id="playSoundCheck"
+                               @(Model.PlaySoundOnNotification ? "checked" : "") />
+                        <label class="form-check-label" for="playSoundCheck">
+                            <i class="bi bi-volume-up me-1"></i>Play sound on notification
+                        </label>
+                    </div>
+                    
                     <button type="submit" class="btn btn-primary mt-3">Save Notification Preferences</button>
                 </form>
             </div>

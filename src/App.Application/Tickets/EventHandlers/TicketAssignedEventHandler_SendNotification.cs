@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 namespace App.Application.Tickets.EventHandlers;
 
 /// <summary>
-/// Sends email notification when a ticket is assigned to an individual or team.
+/// Sends email and in-app notification when a ticket is assigned to an individual or team.
 /// </summary>
 public class TicketAssignedEventHandler_SendNotification : INotificationHandler<TicketAssignedEvent>
 {
@@ -22,6 +22,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
     private readonly IRelativeUrlBuilder _relativeUrlBuilderService;
     private readonly ICurrentOrganization _currentOrganization;
     private readonly INotificationPreferenceService _notificationPreferenceService;
+    private readonly IInAppNotificationService _inAppNotificationService;
     private readonly ILogger<TicketAssignedEventHandler_SendNotification> _logger;
 
     public TicketAssignedEventHandler_SendNotification(
@@ -31,6 +32,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         IRelativeUrlBuilder relativeUrlBuilderService,
         ICurrentOrganization currentOrganization,
         INotificationPreferenceService notificationPreferenceService,
+        IInAppNotificationService inAppNotificationService,
         ILogger<TicketAssignedEventHandler_SendNotification> logger
     )
     {
@@ -40,6 +42,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         _relativeUrlBuilderService = relativeUrlBuilderService;
         _currentOrganization = currentOrganization;
         _notificationPreferenceService = notificationPreferenceService;
+        _inAppNotificationService = inAppNotificationService;
         _logger = logger;
     }
 
@@ -161,6 +164,26 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
             ticket.Id,
             assignee.EmailAddress
         );
+
+        // Send in-app notification
+        var inAppEnabled = await _notificationPreferenceService.IsInAppEnabledAsync(
+            assigneeId,
+            NotificationEventType.TICKET_ASSIGNED,
+            cancellationToken
+        );
+
+        if (inAppEnabled)
+        {
+            await _inAppNotificationService.SendToUserAsync(
+                assigneeId,
+                NotificationType.TicketAssigned,
+                $"Ticket #{ticket.Id} assigned to you",
+                $"{ticket.Title}",
+                _relativeUrlBuilderService.StaffTicketUrl(ticket.Id),
+                ticket.Id,
+                cancellationToken
+            );
+        }
     }
 
     private async Task SendTeamAssignmentNotificationAsync(
@@ -256,6 +279,29 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
                 "Sent team assignment notification for ticket {TicketId} to team member {Email}",
                 ticket.Id,
                 member.EmailAddress
+            );
+        }
+
+        // Send in-app notifications to team members
+        var usersWithInAppEnabled =
+            await _notificationPreferenceService.FilterUsersWithInAppEnabledAsync(
+                teamMemberIds.Where(id =>
+                    !assignedByUserId.HasValue || id != assignedByUserId.Value
+                ),
+                NotificationEventType.TICKET_ASSIGNED_TEAM,
+                cancellationToken
+            );
+
+        if (usersWithInAppEnabled.Any())
+        {
+            await _inAppNotificationService.SendToUsersAsync(
+                usersWithInAppEnabled,
+                NotificationType.TicketAssigned,
+                $"Ticket #{ticket.Id} assigned to {team.Name}",
+                $"{ticket.Title}",
+                _relativeUrlBuilderService.StaffTicketUrl(ticket.Id),
+                ticket.Id,
+                cancellationToken
             );
         }
     }

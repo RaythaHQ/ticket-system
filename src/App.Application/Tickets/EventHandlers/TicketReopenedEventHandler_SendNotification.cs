@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 namespace App.Application.Tickets.EventHandlers;
 
 /// <summary>
-/// Sends email notification when a ticket is reopened.
+/// Sends email and in-app notification when a ticket is reopened.
 /// </summary>
 public class TicketReopenedEventHandler_SendNotification : INotificationHandler<TicketReopenedEvent>
 {
@@ -21,6 +21,7 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
     private readonly IRelativeUrlBuilder _relativeUrlBuilder;
     private readonly ICurrentOrganization _currentOrganization;
     private readonly INotificationPreferenceService _notificationPreferenceService;
+    private readonly IInAppNotificationService _inAppNotificationService;
     private readonly ILogger<TicketReopenedEventHandler_SendNotification> _logger;
 
     public TicketReopenedEventHandler_SendNotification(
@@ -30,6 +31,7 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
         IRelativeUrlBuilder relativeUrlBuilder,
         ICurrentOrganization currentOrganization,
         INotificationPreferenceService notificationPreferenceService,
+        IInAppNotificationService inAppNotificationService,
         ILogger<TicketReopenedEventHandler_SendNotification> logger
     )
     {
@@ -39,6 +41,7 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
         _relativeUrlBuilder = relativeUrlBuilder;
         _currentOrganization = currentOrganization;
         _notificationPreferenceService = notificationPreferenceService;
+        _inAppNotificationService = inAppNotificationService;
         _logger = logger;
     }
 
@@ -121,6 +124,26 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
                 ticket.Id,
                 assignee.EmailAddress
             );
+
+            // Send in-app notification
+            var inAppEnabled = await _notificationPreferenceService.IsInAppEnabledAsync(
+                ticket.AssigneeId.Value,
+                NotificationEventType.TICKET_REOPENED,
+                cancellationToken
+            );
+
+            if (inAppEnabled)
+            {
+                await _inAppNotificationService.SendToUserAsync(
+                    ticket.AssigneeId.Value,
+                    NotificationType.TicketReopened,
+                    $"Ticket #{ticket.Id} reopened",
+                    ticket.Title,
+                    _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                    ticket.Id,
+                    cancellationToken
+                );
+            }
         }
         catch (Exception ex)
         {
