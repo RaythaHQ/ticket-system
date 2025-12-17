@@ -1,0 +1,108 @@
+@page "/admin/settings/webhooks/logs"
+@model App.Web.Areas.Admin.Pages.Webhooks.Logs
+
+@{
+    var pageTitle = "Webhook Delivery Logs";
+    Layout = "SidebarLayout";
+    ViewData["Title"] = pageTitle;
+    ViewData["ActiveMenu"] = "Webhooks";
+    ViewData["ExpandSettingsMenu"] = true;
+
+    BackLinkOptions back = new BackLinkOptions
+    {
+        Page = RouteNames.Webhooks.Index
+    };
+}
+
+<div>
+    <partial name="_Partials/PageHeading" model="pageTitle" />
+
+    <div class="card border-0 shadow mb-4">
+        <div class="card-body">
+            @(await Html.PartialAsync("_Partials/BackToList", back))
+
+            <form method="get" class="row g-3 mb-4 mt-2">
+                <div class="col-md-3">
+                    <label class="form-label">Webhook</label>
+                    <select asp-for="WebhookId" asp-items="Model.WebhookOptions" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Trigger</label>
+                    <select asp-for="TriggerType" asp-items="Model.TriggerTypeOptions" class="form-select"></select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select asp-for="Status" asp-items="Model.StatusOptions" class="form-select"></select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                    <a asp-page="@RouteNames.Webhooks.Logs" class="btn btn-outline-secondary ms-2">Clear</a>
+                </div>
+            </form>
+
+            <div class="table-responsive">
+                <table class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
+                        <tr>
+                            <th class="border-0 rounded-start">Webhook</th>
+                            <th class="border-0">Trigger</th>
+                            <th class="border-0">Ticket</th>
+                            <th class="border-0">Status</th>
+                            <th class="border-0">HTTP</th>
+                            <th class="border-0">Attempts</th>
+                            <th class="border-0">Duration</th>
+                            <th class="border-0">Created</th>
+                            <th class="border-0 rounded-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.ListView.Items)
+                        {
+                            <tr>
+                                <td>@item.WebhookName</td>
+                                <td>@item.TriggerTypeLabel</td>
+                                <td>
+                                    @if (item.TicketId.HasValue)
+                                    {
+                                        <span>#@item.TicketId</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Test</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.Success)
+                                    {
+                                        <span class="badge bg-success">Success</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Failed</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.HttpStatusCode.HasValue)
+                                    {
+                                        <code>@item.HttpStatusCode</code>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>@item.AttemptCount</td>
+                                <td>@(item.Duration ?? "-")</td>
+                                <td>@item.CreatedAt</td>
+                                <td>
+                                    <a asp-page="@RouteNames.Webhooks.LogDetails" asp-route-id="@item.Id">Details</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <partial name="_Partials/TablePagination" model="@Model.ListView" />
+            </div>
+        </div>
+    </div>
+</div>

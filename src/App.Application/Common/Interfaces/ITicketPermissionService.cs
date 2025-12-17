@@ -26,10 +26,19 @@ public interface ITicketPermissionService
     bool CanManageSystemViews();
 
     /// <summary>
+    /// Returns true if the current user can manage system settings (webhooks, configuration, etc.).
+    /// </summary>
+    bool CanManageSystemSettings();
+
+    /// <summary>
     /// Returns true if the current user can edit a specific ticket.
     /// User can edit if they have CanManageTickets permission, are assigned to the ticket, or are a member of the ticket's team.
     /// </summary>
-    Task<bool> CanEditTicketAsync(Guid? assigneeId, Guid? owningTeamId, CancellationToken cancellationToken = default);
+    Task<bool> CanEditTicketAsync(
+        Guid? assigneeId,
+        Guid? owningTeamId,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Throws ForbiddenAccessException if user cannot manage tickets.
@@ -52,13 +61,21 @@ public interface ITicketPermissionService
     void RequireCanManageSystemViews();
 
     /// <summary>
+    /// Throws ForbiddenAccessException if user cannot manage system settings.
+    /// </summary>
+    void RequireCanManageSystemSettings();
+
+    /// <summary>
     /// Throws ForbiddenAccessException if user cannot edit the specified ticket.
     /// </summary>
-    Task RequireCanEditTicketAsync(Guid? assigneeId, Guid? owningTeamId, CancellationToken cancellationToken = default);
+    Task RequireCanEditTicketAsync(
+        Guid? assigneeId,
+        Guid? owningTeamId,
+        CancellationToken cancellationToken = default
+    );
 
     /// <summary>
     /// Gets the IDs of all teams the current user belongs to.
     /// </summary>
     Task<HashSet<Guid>> GetUserTeamIdsAsync(CancellationToken cancellationToken = default);
 }
-

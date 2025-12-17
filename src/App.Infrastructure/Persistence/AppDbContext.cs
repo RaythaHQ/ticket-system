@@ -68,6 +68,10 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     public DbSet<TicketPriorityConfig> TicketPriorityConfigs => Set<TicketPriorityConfig>();
     public DbSet<TicketStatusConfig> TicketStatusConfigs => Set<TicketStatusConfig>();
 
+    // Webhook entities
+    public DbSet<Webhook> Webhooks => Set<Webhook>();
+    public DbSet<WebhookLog> WebhookLogs => Set<WebhookLog>();
+
     public DbContext DbContext => this;
 
     protected override void OnModelCreating(ModelBuilder builder)

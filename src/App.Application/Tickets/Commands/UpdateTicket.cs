@@ -322,6 +322,59 @@ public class UpdateTicket
                     );
                 }
 
+                // Raise TicketUpdatedEvent for title/description/priority changes (for webhooks)
+                if (
+                    changes.ContainsKey("Title")
+                    || changes.ContainsKey("Description")
+                    || changes.ContainsKey("Priority")
+                )
+                {
+                    string? oldTitle = null,
+                        newTitle = null;
+                    string? oldDescription = null,
+                        newDescription = null;
+                    string? oldPriority = null,
+                        newPriority = null;
+
+                    if (changes.ContainsKey("Title"))
+                    {
+                        var titleChange = JsonSerializer.Deserialize<JsonElement>(
+                            JsonSerializer.Serialize(changes["Title"])
+                        );
+                        oldTitle = titleChange.GetProperty("OldValue").GetString();
+                        newTitle = titleChange.GetProperty("NewValue").GetString();
+                    }
+                    if (changes.ContainsKey("Description"))
+                    {
+                        var descChange = JsonSerializer.Deserialize<JsonElement>(
+                            JsonSerializer.Serialize(changes["Description"])
+                        );
+                        oldDescription = descChange.GetProperty("OldValue").GetString();
+                        newDescription = descChange.GetProperty("NewValue").GetString();
+                    }
+                    if (changes.ContainsKey("Priority"))
+                    {
+                        var prioChange = JsonSerializer.Deserialize<JsonElement>(
+                            JsonSerializer.Serialize(changes["Priority"])
+                        );
+                        oldPriority = prioChange.GetProperty("OldValue").GetString();
+                        newPriority = prioChange.GetProperty("NewValue").GetString();
+                    }
+
+                    ticket.AddDomainEvent(
+                        new TicketUpdatedEvent(
+                            ticket,
+                            oldTitle,
+                            newTitle,
+                            oldDescription,
+                            newDescription,
+                            oldPriority,
+                            newPriority,
+                            _currentUser.UserId?.Guid
+                        )
+                    );
+                }
+
                 // Record round-robin assignment if used
                 if (
                     wasAutoAssigned

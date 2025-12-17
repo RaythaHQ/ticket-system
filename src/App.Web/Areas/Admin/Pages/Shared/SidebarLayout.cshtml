@@ -297,6 +297,11 @@
                                         <span class="sidebar-text">SMTP</span>
                                     </a>
                                 </li>
+                                <li class="nav-item @(IsActivePage("Webhooks"))">
+                                    <a class="nav-link" asp-page="@RouteNames.Webhooks.Index">
+                                        <span class="sidebar-text">Webhooks</span>
+                                    </a>
+                                </li>
                             }
                         </ul>
                     </div>

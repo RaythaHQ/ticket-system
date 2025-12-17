@@ -24,7 +24,9 @@ public class TicketPermissionService : ITicketPermissionService
         if (!_currentUser.IsAuthenticated)
             return false;
 
-        return _currentUser.SystemPermissions?.Contains(BuiltInSystemPermission.MANAGE_TICKETS_PERMISSION) ?? false;
+        return _currentUser.SystemPermissions?.Contains(
+                BuiltInSystemPermission.MANAGE_TICKETS_PERMISSION
+            ) ?? false;
     }
 
     public bool CanManageTeams()
@@ -32,7 +34,9 @@ public class TicketPermissionService : ITicketPermissionService
         if (!_currentUser.IsAuthenticated)
             return false;
 
-        return _currentUser.SystemPermissions?.Contains(BuiltInSystemPermission.MANAGE_TEAMS_PERMISSION) ?? false;
+        return _currentUser.SystemPermissions?.Contains(
+                BuiltInSystemPermission.MANAGE_TEAMS_PERMISSION
+            ) ?? false;
     }
 
     public bool CanAccessReports()
@@ -40,7 +44,9 @@ public class TicketPermissionService : ITicketPermissionService
         if (!_currentUser.IsAuthenticated)
             return false;
 
-        return _currentUser.SystemPermissions?.Contains(BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION) ?? false;
+        return _currentUser.SystemPermissions?.Contains(
+                BuiltInSystemPermission.ACCESS_REPORTS_PERMISSION
+            ) ?? false;
     }
 
     public bool CanManageSystemViews()
@@ -48,7 +54,19 @@ public class TicketPermissionService : ITicketPermissionService
         if (!_currentUser.IsAuthenticated)
             return false;
 
-        return _currentUser.SystemPermissions?.Contains(BuiltInSystemPermission.MANAGE_SYSTEM_VIEWS_PERMISSION) ?? false;
+        return _currentUser.SystemPermissions?.Contains(
+                BuiltInSystemPermission.MANAGE_SYSTEM_VIEWS_PERMISSION
+            ) ?? false;
+    }
+
+    public bool CanManageSystemSettings()
+    {
+        if (!_currentUser.IsAuthenticated)
+            return false;
+
+        return _currentUser.SystemPermissions?.Contains(
+                BuiltInSystemPermission.MANAGE_SYSTEM_SETTINGS_PERMISSION
+            ) ?? false;
     }
 
     public void RequireCanManageTickets()
@@ -72,10 +90,24 @@ public class TicketPermissionService : ITicketPermissionService
     public void RequireCanManageSystemViews()
     {
         if (!CanManageSystemViews())
-            throw new ForbiddenAccessException("You do not have permission to manage system views.");
+            throw new ForbiddenAccessException(
+                "You do not have permission to manage system views."
+            );
     }
 
-    public async Task<bool> CanEditTicketAsync(Guid? assigneeId, Guid? owningTeamId, CancellationToken cancellationToken = default)
+    public void RequireCanManageSystemSettings()
+    {
+        if (!CanManageSystemSettings())
+            throw new ForbiddenAccessException(
+                "You do not have permission to manage system settings."
+            );
+    }
+
+    public async Task<bool> CanEditTicketAsync(
+        Guid? assigneeId,
+        Guid? owningTeamId,
+        CancellationToken cancellationToken = default
+    )
     {
         if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
             return false;
@@ -93,10 +125,13 @@ public class TicketPermissionService : ITicketPermissionService
         // User can edit if they are a member of the ticket's team
         if (owningTeamId.HasValue)
         {
-            var isTeamMember = await _db.TeamMemberships
-                .AsNoTracking()
-                .AnyAsync(m => m.TeamId == owningTeamId.Value && m.StaffAdminId == userId, cancellationToken);
-            
+            var isTeamMember = await _db
+                .TeamMemberships.AsNoTracking()
+                .AnyAsync(
+                    m => m.TeamId == owningTeamId.Value && m.StaffAdminId == userId,
+                    cancellationToken
+                );
+
             if (isTeamMember)
                 return true;
         }
@@ -104,20 +139,26 @@ public class TicketPermissionService : ITicketPermissionService
         return false;
     }
 
-    public async Task RequireCanEditTicketAsync(Guid? assigneeId, Guid? owningTeamId, CancellationToken cancellationToken = default)
+    public async Task RequireCanEditTicketAsync(
+        Guid? assigneeId,
+        Guid? owningTeamId,
+        CancellationToken cancellationToken = default
+    )
     {
         if (!await CanEditTicketAsync(assigneeId, owningTeamId, cancellationToken))
             throw new ForbiddenAccessException("You do not have permission to edit this ticket.");
     }
 
-    public async Task<HashSet<Guid>> GetUserTeamIdsAsync(CancellationToken cancellationToken = default)
+    public async Task<HashSet<Guid>> GetUserTeamIdsAsync(
+        CancellationToken cancellationToken = default
+    )
     {
         if (!_currentUser.IsAuthenticated || !_currentUser.UserId.HasValue)
             return new HashSet<Guid>();
 
         var userId = _currentUser.UserId.Value.Guid;
-        var teamIds = await _db.TeamMemberships
-            .AsNoTracking()
+        var teamIds = await _db
+            .TeamMemberships.AsNoTracking()
             .Where(m => m.StaffAdminId == userId)
             .Select(m => m.TeamId)
             .ToListAsync(cancellationToken);

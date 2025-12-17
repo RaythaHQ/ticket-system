@@ -1,6 +1,6 @@
-﻿using FluentAssertions;
 using App.Domain.Entities;
 using App.Domain.Exceptions;
+using FluentAssertions;
 
 namespace App.Domain.UnitTests.ValueObjects;
 
@@ -54,6 +54,6 @@ public class BuiltInSystemPermissionTests
     [Test]
     public void ShouldMatchNumberOfSupportedTypes()
     {
-        BuiltInSystemPermission.Permissions.Count().Should().Be(5);
+        BuiltInSystemPermission.Permissions.Count().Should().Be(10);
     }
 }

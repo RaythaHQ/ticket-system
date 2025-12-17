@@ -1,6 +1,6 @@
-﻿using FluentAssertions;
 using App.Domain.Entities;
 using App.Domain.Exceptions;
+using FluentAssertions;
 
 namespace App.Domain.UnitTests.ValueObjects;
 
@@ -51,6 +51,6 @@ public class BuiltInEmailTemplateTests
     [Test]
     public void ShouldMatchNumberOfSupportedTypes()
     {
-        BuiltInEmailTemplate.Templates.Count().Should().Be(9);
+        BuiltInEmailTemplate.Templates.Count().Should().Be(17);
     }
 }

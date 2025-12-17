@@ -5,6 +5,8 @@ using App.Application.Common.Utils;
 using App.Application.SlaRules.Services;
 using App.Application.Teams.Services;
 using App.Application.TicketViews;
+using App.Application.Webhooks.Commands;
+using App.Application.Webhooks.Services;
 using App.Infrastructure.BackgroundTasks;
 using App.Infrastructure.Configurations;
 using App.Infrastructure.FileStorage;
@@ -111,6 +113,13 @@ public static class ConfigureServices
 
         // Export cleanup background job
         services.AddSingleton<IHostedService, ExportCleanupJob>();
+
+        // Webhook background tasks and services
+        services.AddScoped<WebhookDeliveryJob, WebhookDeliveryBackgroundTask>();
+        services.AddSingleton<IHostedService, WebhookLogCleanupJob>();
+        services.AddScoped<IUrlValidationService, UrlValidationService>();
+        services.AddScoped<IWebhookPayloadBuilder, WebhookPayloadBuilder>();
+        services.AddHttpClient("WebhookClient");
 
         // Ticketing services
         services.AddScoped<IRoundRobinService, RoundRobinService>();

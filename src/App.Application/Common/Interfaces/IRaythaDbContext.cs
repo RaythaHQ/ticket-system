@@ -44,6 +44,10 @@ public interface IAppDbContext
     public DbSet<TicketPriorityConfig> TicketPriorityConfigs { get; }
     public DbSet<TicketStatusConfig> TicketStatusConfigs { get; }
 
+    // Webhook entities
+    public DbSet<Webhook> Webhooks { get; }
+    public DbSet<WebhookLog> WebhookLogs { get; }
+
     public DbContext DbContext { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);

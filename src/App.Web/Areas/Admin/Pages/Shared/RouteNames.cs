@@ -407,4 +407,17 @@ public static class RouteNames
         public const string Index = "/Import/Index";
         public const string Status = "/Import/Status";
     }
+
+    /// <summary>
+    /// Route constants for webhook management pages.
+    /// </summary>
+    public static class Webhooks
+    {
+        public const string Index = "/Webhooks/Index";
+        public const string Create = "/Webhooks/Create";
+        public const string Edit = "/Webhooks/Edit";
+        public const string Delete = "/Webhooks/Delete";
+        public const string Logs = "/Webhooks/Logs";
+        public const string LogDetails = "/Webhooks/LogDetails";
+    }
 }

@@ -1,0 +1,100 @@
+@page "/admin/settings/webhooks/{id}/edit"
+@model App.Web.Areas.Admin.Pages.Webhooks.Edit
+
+@{
+    var pageTitle = "Edit webhook";
+    Layout = "SidebarLayout";
+    ViewData["Title"] = pageTitle;
+    ViewData["ActiveMenu"] = "Webhooks";
+    ViewData["ExpandSettingsMenu"] = true;
+
+    BackLinkOptions back = new BackLinkOptions
+    {
+        Page = RouteNames.Webhooks.Index
+    };
+}
+
+<div>
+    <div class="row mb-4">
+        <partial name="_Partials/PageHeading" model='ViewData["Title"]' />
+        <div class="col-xxl-7 col-xl-8 col-lg-9 col-md-12">
+            <div class="card border-0 shadow mb-4">
+                <div class="card-body">
+                    @(await Html.PartialAsync("_Partials/BackToList", back))
+                    <form asp-page="@RouteNames.Webhooks.Edit" asp-route-id="@Model.Form.Id" method="post" class="py-4" novalidate>
+                        <input type="hidden" asp-for="Form.Id" />
+                        <div class="col-lg-12">
+                            <div class="mb-3">
+                                <label class="form-label raytha-required" asp-for="Form.Name"></label>
+                                <input type="text" class="form-control @Model.HasError("Name")" asp-for="Form.Name" required>
+                                <div class="invalid-feedback">@Model.ErrorMessageFor("Name")</div>
+                                <div class="form-text">A friendly name to identify this webhook.</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="mb-3">
+                                <label class="form-label raytha-required" asp-for="Form.Url"></label>
+                                <input type="url" class="form-control @Model.HasError("Url")" asp-for="Form.Url" required>
+                                <div class="invalid-feedback">@Model.ErrorMessageFor("Url")</div>
+                                <div class="form-text">The URL that will receive webhook POST requests. Must be publicly accessible.</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="mb-3">
+                                <label class="form-label raytha-required" asp-for="Form.TriggerType"></label>
+                                <select class="form-select @Model.HasError("TriggerType")" asp-for="Form.TriggerType" asp-items="Model.TriggerTypes" required></select>
+                                <div class="invalid-feedback">@Model.ErrorMessageFor("TriggerType")</div>
+                                <div class="form-text">The event that will trigger this webhook.</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <div class="mb-3">
+                                <label class="form-label" asp-for="Form.Description"></label>
+                                <textarea class="form-control @Model.HasError("Description")" asp-for="Form.Description" rows="3"></textarea>
+                                <div class="invalid-feedback">@Model.ErrorMessageFor("Description")</div>
+                            </div>
+                        </div>
+                        <div class="col-lg-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" asp-for="Form.IsActive">
+                                <label class="form-check-label" asp-for="Form.IsActive">
+                                    Enable this webhook
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success mt-4">Save changes</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Test Webhook</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Send a test payload to verify your webhook endpoint is working correctly.</p>
+                    <form asp-page-handler="Test" asp-route-id="@Model.Form.Id" method="post">
+                        <input type="hidden" asp-for="Form.Id" />
+                        <button type="submit" class="btn btn-outline-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send me-1" viewBox="0 0 16 16">
+                                <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+                            </svg>
+                            Send Test Webhook
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">Recent Deliveries</h6>
+                </div>
+                <div class="card-body">
+                    <a asp-page="@RouteNames.Webhooks.Logs" asp-route-webhookId="@Model.Form.Id" class="btn btn-outline-secondary btn-sm">
+                        View delivery logs for this webhook
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
