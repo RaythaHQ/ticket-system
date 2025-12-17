@@ -3,6 +3,7 @@
 @using App.Web.Areas.Staff.Pages.Shared.Models
 @using App.Domain.ValueObjects
 @inject App.Application.Common.Interfaces.IFileStorageProviderSettings FileStorageProviderSettings
+@inject App.Application.Common.Interfaces.ICurrentOrganization CurrentOrganization
 
 @{
     ViewData["Title"] = $"Ticket #{Model.Ticket.Id}";
@@ -143,7 +144,7 @@
                                 <div>
                                     <span class="fw-semibold">@comment.AuthorStaffName</span>
                                     <span class="text-muted small ms-2">
-                                        @comment.CreationTime.ToString("MMM dd, yyyy 'at' HH:mm")
+                                        @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(comment.CreationTime)
                                     </span>
                                 </div>
                             </div>
@@ -181,7 +182,7 @@
                                             <span class="text-muted">@entry.Message</span>
                                         </p>
                                         <small class="text-muted flex-shrink-0 ms-3">
-                                            @entry.CreationTime.ToString("MMM dd, HH:mm")
+                                            @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(entry.CreationTime)
                                         </small>
                                     </div>
                                 </div>
@@ -288,18 +289,24 @@
                     <dd class="col-7">@(Model.Ticket.CreatedByStaffName ?? "—")</dd>
 
                     <dt class="col-5 text-muted fw-medium">Created</dt>
-                    <dd class="col-7 small">@Model.Ticket.CreationTime.ToString("MMM dd, yyyy HH:mm")</dd>
+                    <dd class="col-7 small">@CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.CreationTime)</dd>
+
+                    @if (Model.Ticket.LastModificationTime.HasValue)
+                    {
+                        <dt class="col-5 text-muted fw-medium">Last Modified</dt>
+                        <dd class="col-7 small">@CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.LastModificationTime)</dd>
+                    }
 
                     @if (Model.Ticket.ResolvedAt.HasValue)
                     {
                         <dt class="col-5 text-muted fw-medium">Resolved</dt>
-                        <dd class="col-7 small">@Model.Ticket.ResolvedAt.Value.ToString("MMM dd, yyyy HH:mm")</dd>
+                        <dd class="col-7 small">@CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.ResolvedAt)</dd>
                     }
 
                     @if (Model.Ticket.ClosedAt.HasValue)
                     {
                         <dt class="col-5 text-muted fw-medium">Closed</dt>
-                        <dd class="col-7 small">@Model.Ticket.ClosedAt.Value.ToString("MMM dd, yyyy HH:mm")</dd>
+                        <dd class="col-7 small">@CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.ClosedAt)</dd>
                     }
                 </dl>
             </div>
@@ -345,7 +352,7 @@
 
                         <dt class="col-5 text-muted fw-medium">Due</dt>
                         <dd class="col-7 @GetSlaDueClass(Model.Ticket.SlaStatus)">
-                            @Model.Ticket.SlaDueAt?.ToString("MMM dd, yyyy h:mm tt")
+                            @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.SlaDueAt)
                         </dd>
 
                         <dt class="col-5 text-muted fw-medium">Status</dt>

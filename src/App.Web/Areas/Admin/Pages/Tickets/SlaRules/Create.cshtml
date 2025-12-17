@@ -29,7 +29,7 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label raytha-required" asp-for="Form.Name"></label>
-                            <input type="text" class="form-control @Model.HasError("Name")" asp-for="Form.Name" 
+                            <input type="text" class="form-control @Model.HasError("Name")" asp-for="Form.Name"
                                 placeholder="e.g., Urgent Priority SLA" required>
                             <div class="invalid-feedback">@Model.ErrorMessageFor("Name")</div>
                         </div>
@@ -54,10 +54,10 @@
                                 Time to Resolve
                             </label>
                             <div class="input-group" style="max-width: 300px;">
-                                <input type="number"
-                                    class="form-control @Model.HasError("TargetResolutionValue")"
+                                <input type="number" class="form-control @Model.HasError("TargetResolutionValue")"
                                     asp-for="Form.TargetResolutionValue" min="1" required>
-                                <select class="form-select" asp-for="Form.TargetResolutionUnit" style="max-width: 120px;">
+                                <select class="form-select" asp-for="Form.TargetResolutionUnit"
+                                    style="max-width: 120px;">
                                     <option value="minutes">Minutes</option>
                                     <option value="hours" selected>Hours</option>
                                     <option value="days">Days</option>
@@ -139,13 +139,25 @@
                         <h6 class="mb-0"><i class="bi bi-bell me-2"></i>Breach Notifications</h6>
                     </div>
                     <div class="card-body">
-                        <div class="form-check form-switch">
+                        <div class="form-check form-switch mb-3">
                             <input class="form-check-input @Model.HasError("NotifyAssignee")" type="checkbox"
                                 asp-for="Form.NotifyAssignee" role="switch" checked>
                             <label class="form-check-label" asp-for="Form.NotifyAssignee">
                                 <strong>Notify Assignee</strong> — Send notification when SLA is breached
                             </label>
                             <div class="invalid-feedback">@Model.ErrorMessageFor("NotifyAssignee")</div>
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label" asp-for="Form.AdditionalNotificationEmails"></label>
+                            <input type="text" class="form-control @Model.HasError("AdditionalNotificationEmails")"
+                                asp-for="Form.AdditionalNotificationEmails"
+                                placeholder="e.g., manager@example.com, support-lead@example.com">
+                            <div class="form-text">
+                                Comma-separated email addresses to notify when SLA is breached (in addition to the
+                                assignee).
+                            </div>
+                            <div class="invalid-feedback">@Model.ErrorMessageFor("AdditionalNotificationEmails")</div>
                         </div>
                     </div>
                 </div>
@@ -180,14 +192,14 @@
 
 @section Scripts {
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const toggle = document.getElementById('businessHoursToggle');
             const config = document.getElementById('businessHoursConfig');
-            
+
             function updateVisibility() {
                 config.style.display = toggle.checked ? 'flex' : 'none';
             }
-            
+
             toggle.addEventListener('change', updateVisibility);
             updateVisibility();
         });

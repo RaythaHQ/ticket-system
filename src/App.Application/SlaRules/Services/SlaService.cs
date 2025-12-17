@@ -1,9 +1,10 @@
+using System.Text.Json;
 using App.Application.Common.Interfaces;
+using App.Application.Common.Utils;
 using App.Domain.Entities;
 using App.Domain.Events;
 using App.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace App.Application.SlaRules.Services;
 
@@ -14,19 +15,28 @@ public class SlaService : ISlaService
 {
     private readonly IAppDbContext _db;
     private readonly ITicketConfigService _configService;
+    private readonly ICurrentOrganization _currentOrganization;
     private const double ApproachingBreachThreshold = 0.75; // 75% of time elapsed
 
-    public SlaService(IAppDbContext db, ITicketConfigService configService)
+    public SlaService(
+        IAppDbContext db,
+        ITicketConfigService configService,
+        ICurrentOrganization currentOrganization
+    )
     {
         _db = db;
         _configService = configService;
+        _currentOrganization = currentOrganization;
     }
 
-    public async Task<SlaRule?> EvaluateAndAssignSlaAsync(Ticket ticket, CancellationToken cancellationToken = default)
+    public async Task<SlaRule?> EvaluateAndAssignSlaAsync(
+        Ticket ticket,
+        CancellationToken cancellationToken = default
+    )
     {
         // Get all active SLA rules ordered by priority
-        var rules = await _db.SlaRules
-            .AsNoTracking()
+        var rules = await _db
+            .SlaRules.AsNoTracking()
             .Where(r => r.IsActive)
             .OrderBy(r => r.Priority)
             .ToListAsync(cancellationToken);
@@ -56,33 +66,49 @@ public class SlaService : ISlaService
 
     public DateTime? CalculateSlaDueDate(Ticket ticket, SlaRule rule)
     {
-        var startTime = ticket.CreationTime;
+        var startTimeUtc = ticket.CreationTime;
 
         if (!rule.BusinessHoursEnabled)
         {
             // Simple calculation without business hours
-            return startTime.AddMinutes(rule.TargetResolutionMinutes);
+            return startTimeUtc.AddMinutes(rule.TargetResolutionMinutes);
         }
 
         // Business hours calculation
         BusinessHoursConfig? config = null;
         if (!string.IsNullOrEmpty(rule.BusinessHoursConfigJson))
         {
-            try { config = JsonSerializer.Deserialize<BusinessHoursConfig>(rule.BusinessHoursConfigJson); }
+            try
+            {
+                config = JsonSerializer.Deserialize<BusinessHoursConfig>(
+                    rule.BusinessHoursConfigJson
+                );
+            }
             catch { }
         }
 
         if (config == null)
         {
             // Fallback to simple calculation
-            return startTime.AddMinutes(rule.TargetResolutionMinutes);
+            return startTimeUtc.AddMinutes(rule.TargetResolutionMinutes);
         }
 
-        // Calculate business hours (simplified implementation)
-        return CalculateBusinessHoursDue(startTime, rule.TargetResolutionMinutes, config);
+        // Use the organization's timezone for business hours calculation
+        var timeZone = _currentOrganization.TimeZone;
+
+        // Calculate business hours with proper timezone handling
+        return CalculateBusinessHoursDue(
+            startTimeUtc,
+            rule.TargetResolutionMinutes,
+            config,
+            timeZone
+        );
     }
 
-    public async Task<bool> UpdateSlaStatusAsync(Ticket ticket, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateSlaStatusAsync(
+        Ticket ticket,
+        CancellationToken cancellationToken = default
+    )
     {
         if (!ticket.SlaDueAt.HasValue || !ticket.SlaRuleId.HasValue)
             return false;
@@ -91,7 +117,10 @@ public class SlaService : ISlaService
         var oldStatus = ticket.SlaStatus;
 
         // Check if already completed (status type is Closed)
-        var isClosedType = await _configService.IsStatusClosedTypeAsync(ticket.Status, cancellationToken);
+        var isClosedType = await _configService.IsStatusClosedTypeAsync(
+            ticket.Status,
+            cancellationToken
+        );
         if (isClosedType)
         {
             ticket.SlaStatus = SlaStatus.COMPLETED;
@@ -111,8 +140,8 @@ public class SlaService : ISlaService
         }
 
         // Check if approaching breach
-        var rule = await _db.SlaRules
-            .AsNoTracking()
+        var rule = await _db
+            .SlaRules.AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == ticket.SlaRuleId, cancellationToken);
 
         if (rule != null)
@@ -156,12 +185,24 @@ public class SlaService : ISlaService
             switch (key)
             {
                 case "priority":
-                    if (!string.Equals(ticket.Priority, valueStr, StringComparison.OrdinalIgnoreCase))
+                    if (
+                        !string.Equals(
+                            ticket.Priority,
+                            valueStr,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
                         return false;
                     break;
 
                 case "category":
-                    if (!string.Equals(ticket.Category, valueStr, StringComparison.OrdinalIgnoreCase))
+                    if (
+                        !string.Equals(
+                            ticket.Category,
+                            valueStr,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
                         return false;
                     break;
 
@@ -184,48 +225,53 @@ public class SlaService : ISlaService
         return true;
     }
 
-    private DateTime CalculateBusinessHoursDue(DateTime startTime, int targetMinutes, BusinessHoursConfig config)
+    private DateTime CalculateBusinessHoursDue(
+        DateTime startTimeUtc,
+        int targetMinutes,
+        BusinessHoursConfig config,
+        string timeZone
+    )
     {
-        // Parse start/end times
+        // Parse start/end times (these are in local business time)
         if (!TimeSpan.TryParse(config.StartTime, out var businessStart))
             businessStart = TimeSpan.FromHours(8);
         if (!TimeSpan.TryParse(config.EndTime, out var businessEnd))
             businessEnd = TimeSpan.FromHours(18);
 
-        var businessDayMinutes = (businessEnd - businessStart).TotalMinutes;
-        var current = startTime;
+        // Convert start time from UTC to local timezone for calculation
+        var currentLocal = startTimeUtc.UtcToTimeZone(timeZone);
         var remainingMinutes = (double)targetMinutes;
 
         // Limit iterations to prevent infinite loops
         for (int i = 0; i < 365 && remainingMinutes > 0; i++)
         {
             // Skip non-working days
-            if (!config.Workdays.Contains((int)current.DayOfWeek))
+            if (!config.Workdays.Contains((int)currentLocal.DayOfWeek))
             {
-                current = current.Date.AddDays(1).Add(businessStart);
+                currentLocal = currentLocal.Date.AddDays(1).Add(businessStart);
                 continue;
             }
 
             // Skip holidays
-            if (config.Holidays?.Any(h => h.Date == current.Date) == true)
+            if (config.Holidays?.Any(h => h.Date == currentLocal.Date) == true)
             {
-                current = current.Date.AddDays(1).Add(businessStart);
+                currentLocal = currentLocal.Date.AddDays(1).Add(businessStart);
                 continue;
             }
 
-            var currentTime = current.TimeOfDay;
+            var currentTime = currentLocal.TimeOfDay;
 
-            // Before business hours
+            // Before business hours - move to start of business day
             if (currentTime < businessStart)
             {
-                current = current.Date.Add(businessStart);
+                currentLocal = currentLocal.Date.Add(businessStart);
                 currentTime = businessStart;
             }
 
-            // After business hours
+            // After business hours - move to start of next business day
             if (currentTime >= businessEnd)
             {
-                current = current.Date.AddDays(1).Add(businessStart);
+                currentLocal = currentLocal.Date.AddDays(1).Add(businessStart);
                 continue;
             }
 
@@ -234,15 +280,16 @@ public class SlaService : ISlaService
 
             if (remainingMinutes <= remainingInDay)
             {
-                return current.AddMinutes(remainingMinutes);
+                // Add remaining minutes and convert back to UTC
+                var dueLocalTime = currentLocal.AddMinutes(remainingMinutes);
+                return dueLocalTime.TimeZoneToUtc(timeZone);
             }
 
             remainingMinutes -= remainingInDay;
-            current = current.Date.AddDays(1).Add(businessStart);
+            currentLocal = currentLocal.Date.AddDays(1).Add(businessStart);
         }
 
-        // Fallback
-        return startTime.AddMinutes(targetMinutes);
+        // Fallback - just add minutes to original UTC time
+        return startTimeUtc.AddMinutes(targetMinutes);
     }
 }
-

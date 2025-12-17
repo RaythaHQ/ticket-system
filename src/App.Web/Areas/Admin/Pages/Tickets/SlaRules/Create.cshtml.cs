@@ -105,6 +105,7 @@ public class Create : BaseAdminPageModel
             {
                 UiMarkers = true,
                 NotifyAssignee = Form.NotifyAssignee,
+                AdditionalNotificationEmails = Form.AdditionalNotificationEmails,
             },
         };
 
@@ -166,5 +167,9 @@ public class Create : BaseAdminPageModel
 
         [Display(Name = "Notify Assignee on Breach")]
         public bool NotifyAssignee { get; set; } = true;
+
+        [Display(Name = "Additional Notification Emails")]
+        [MaxLength(1000)]
+        public string? AdditionalNotificationEmails { get; set; }
     }
 }

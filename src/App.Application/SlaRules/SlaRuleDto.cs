@@ -1,7 +1,7 @@
+using System.Text.Json;
 using App.Application.Common.Models;
 using App.Domain.Entities;
 using CSharpVitamins;
-using System.Text.Json;
 
 namespace App.Application.SlaRules;
 
@@ -31,14 +31,24 @@ public record SlaRuleDto : BaseAuditableEntityDto
         BusinessHoursConfig? businessHours = null;
         if (!string.IsNullOrEmpty(rule.BusinessHoursConfigJson))
         {
-            try { businessHours = JsonSerializer.Deserialize<BusinessHoursConfig>(rule.BusinessHoursConfigJson); }
+            try
+            {
+                businessHours = JsonSerializer.Deserialize<BusinessHoursConfig>(
+                    rule.BusinessHoursConfigJson
+                );
+            }
             catch { }
         }
 
         BreachBehavior? breachBehavior = null;
         if (!string.IsNullOrEmpty(rule.BreachBehaviorJson))
         {
-            try { breachBehavior = JsonSerializer.Deserialize<BreachBehavior>(rule.BreachBehaviorJson); }
+            try
+            {
+                breachBehavior = JsonSerializer.Deserialize<BreachBehavior>(
+                    rule.BreachBehaviorJson
+                );
+            }
             catch { }
         }
 
@@ -56,7 +66,7 @@ public record SlaRuleDto : BaseAuditableEntityDto
             Priority = rule.Priority,
             BreachBehavior = breachBehavior,
             CreationTime = rule.CreationTime,
-            LastModificationTime = rule.LastModificationTime
+            LastModificationTime = rule.LastModificationTime,
         };
     }
 
@@ -85,5 +95,10 @@ public record BreachBehavior
     public bool NotifyAssignee { get; init; } = true;
     public bool NotifyTeam { get; init; }
     public string? WebhookUrl { get; init; }
-}
 
+    /// <summary>
+    /// Comma-separated list of additional email addresses to notify on SLA breach.
+    /// These can be any email addresses (not limited to system users).
+    /// </summary>
+    public string? AdditionalNotificationEmails { get; init; }
+}

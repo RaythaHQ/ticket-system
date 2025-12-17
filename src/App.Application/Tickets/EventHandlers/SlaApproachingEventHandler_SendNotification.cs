@@ -96,7 +96,9 @@ public class SlaApproachingEventHandler_SendNotification
                 Title = ticket.Title,
                 AssigneeName = assignee.FullName,
                 Priority = ticket.Priority,
-                SlaDueAt = ticket.SlaDueAt?.ToString("MMM dd, yyyy h:mm tt") ?? "-",
+                SlaDueAt = _currentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+                    ticket.SlaDueAt
+                ),
                 TimeRemaining = timeRemaining,
                 SlaRuleName = slaRule?.Name ?? "Unknown",
                 TicketUrl = _relativeUrlBuilder.StaffTicketUrl(ticket.Id),

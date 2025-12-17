@@ -382,7 +382,11 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             ContactName = p.ContactName ?? "-",
             ContactId = p.ContactId,
             CommentCount = p.CommentCount,
-            SlaDueAt = p.SlaDueAt?.ToString("MMM dd, h:mm tt") ?? "-",
+            SlaDueAt = p.SlaDueAt.HasValue
+                ? CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+                    p.SlaDueAt.Value
+                )
+                : "-",
             SlaStatusLabel = p.SlaStatusLabel ?? "-",
             CreationTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
                 p.CreationTime

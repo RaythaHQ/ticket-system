@@ -82,6 +82,7 @@ public class Edit : BaseAdminPageModel
                 : null,
             NotifyAssignee = Rule.BreachBehavior?.NotifyAssignee ?? true,
             IsActive = Rule.IsActive,
+            AdditionalNotificationEmails = Rule.BreachBehavior?.AdditionalNotificationEmails,
         };
 
         return Page();
@@ -93,7 +94,10 @@ public class Edit : BaseAdminPageModel
             return Forbid();
 
         // Reload rule to get current priority
-        var ruleResponse = await Mediator.Send(new GetSlaRuleById.Query { Id = Form.Id }, cancellationToken);
+        var ruleResponse = await Mediator.Send(
+            new GetSlaRuleById.Query { Id = Form.Id },
+            cancellationToken
+        );
         Rule = ruleResponse.Result;
 
         // Load available priorities for dropdown (in case of validation error)
@@ -139,6 +143,7 @@ public class Edit : BaseAdminPageModel
             {
                 UiMarkers = true,
                 NotifyAssignee = Form.NotifyAssignee,
+                AdditionalNotificationEmails = Form.AdditionalNotificationEmails,
             },
             IsActive = Form.IsActive,
         };
@@ -233,5 +238,9 @@ public class Edit : BaseAdminPageModel
 
         [Display(Name = "Active")]
         public bool IsActive { get; set; } = true;
+
+        [Display(Name = "Additional Notification Emails")]
+        [MaxLength(1000)]
+        public string? AdditionalNotificationEmails { get; set; }
     }
 }

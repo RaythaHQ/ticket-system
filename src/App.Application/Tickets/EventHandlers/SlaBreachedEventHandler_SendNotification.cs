@@ -1,5 +1,7 @@
+using System.Text.Json;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models.RenderModels;
+using App.Application.SlaRules;
 using App.Application.Tickets.RenderModels;
 using App.Domain.Common;
 using App.Domain.Entities;
@@ -50,28 +52,8 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
     {
         var ticket = notification.Ticket;
 
-        if (!ticket.AssigneeId.HasValue)
-            return;
-
         try
         {
-            // Check notification preferences
-            var emailEnabled = await _notificationPreferenceService.IsEmailEnabledAsync(
-                ticket.AssigneeId.Value,
-                NotificationEventType.SLA_BREACHED,
-                cancellationToken
-            );
-
-            if (!emailEnabled)
-                return;
-
-            var assignee = await _db
-                .Users.AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == ticket.AssigneeId.Value, cancellationToken);
-
-            if (assignee == null || string.IsNullOrEmpty(assignee.EmailAddress))
-                return;
-
             var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
                 p.DeveloperName == BuiltInEmailTemplate.SlaBreachedEmail.DeveloperName
             );
@@ -85,13 +67,40 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                     .FirstOrDefaultAsync(r => r.Id == ticket.SlaRuleId.Value, cancellationToken)
                 : null;
 
+            // Parse breach behavior to get notification settings
+            BreachBehavior? breachBehavior = null;
+            if (!string.IsNullOrEmpty(slaRule?.BreachBehaviorJson))
+            {
+                try
+                {
+                    breachBehavior = JsonSerializer.Deserialize<BreachBehavior>(
+                        slaRule.BreachBehaviorJson
+                    );
+                }
+                catch
+                {
+                    // Ignore deserialization errors
+                }
+            }
+
+            // Get assignee info for the render model
+            User? assignee = null;
+            if (ticket.AssigneeId.HasValue)
+            {
+                assignee = await _db
+                    .Users.AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == ticket.AssigneeId.Value, cancellationToken);
+            }
+
             var renderModel = new SlaBreach_RenderModel
             {
                 TicketId = ticket.Id,
                 Title = ticket.Title,
-                AssigneeName = assignee.FullName,
+                AssigneeName = assignee?.FullName ?? "Unassigned",
                 Priority = ticket.Priority,
-                SlaDueAt = ticket.SlaDueAt?.ToString("MMM dd, yyyy h:mm tt") ?? "-",
+                SlaDueAt = _currentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+                    ticket.SlaDueAt
+                ),
                 SlaRuleName = slaRule?.Name ?? "Unknown",
                 TicketUrl = _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
             };
@@ -107,20 +116,66 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
             var subject = _renderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
             var content = _renderEngineService.RenderAsHtml(renderTemplate.Content, wrappedModel);
 
-            var emailMessage = new EmailMessage
+            // Send to assignee if enabled
+            if (
+                ticket.AssigneeId.HasValue
+                && assignee != null
+                && !string.IsNullOrEmpty(assignee.EmailAddress)
+                && (breachBehavior?.NotifyAssignee ?? true)
+            )
             {
-                Content = content,
-                To = new List<string> { assignee.EmailAddress },
-                Subject = subject,
-            };
+                var emailEnabled = await _notificationPreferenceService.IsEmailEnabledAsync(
+                    ticket.AssigneeId.Value,
+                    NotificationEventType.SLA_BREACHED,
+                    cancellationToken
+                );
 
-            _emailerService.SendEmail(emailMessage);
+                if (emailEnabled)
+                {
+                    var emailMessage = new EmailMessage
+                    {
+                        Content = content,
+                        To = new List<string> { assignee.EmailAddress },
+                        Subject = subject,
+                    };
 
-            _logger.LogInformation(
-                "Sent SLA breach notification for ticket {TicketId} to {Email}",
-                ticket.Id,
-                assignee.EmailAddress
-            );
+                    _emailerService.SendEmail(emailMessage);
+
+                    _logger.LogInformation(
+                        "Sent SLA breach notification for ticket {TicketId} to assignee {Email}",
+                        ticket.Id,
+                        assignee.EmailAddress
+                    );
+                }
+            }
+
+            // Send to additional notification emails
+            if (!string.IsNullOrWhiteSpace(breachBehavior?.AdditionalNotificationEmails))
+            {
+                var additionalEmails = breachBehavior
+                    .AdditionalNotificationEmails.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(e => e.Trim())
+                    .Where(e => !string.IsNullOrEmpty(e))
+                    .ToList();
+
+                foreach (var email in additionalEmails)
+                {
+                    var emailMessage = new EmailMessage
+                    {
+                        Content = content,
+                        To = new List<string> { email },
+                        Subject = subject,
+                    };
+
+                    _emailerService.SendEmail(emailMessage);
+
+                    _logger.LogInformation(
+                        "Sent SLA breach notification for ticket {TicketId} to additional recipient {Email}",
+                        ticket.Id,
+                        email
+                    );
+                }
+            }
         }
         catch (Exception ex)
         {
