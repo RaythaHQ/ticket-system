@@ -144,6 +144,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 "my-tickets" => "MyTickets",
                 "created-by-me" or "my-opened" => "CreatedByMe",
                 "team-tickets" => "TeamTickets",
+                "following" => "Following",
                 "overdue" => "Overdue",
                 "all" or null or "" => "AllTickets",
                 _ => null,
@@ -293,6 +294,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             CreatedByStaffId = parsedCreatedById,
             Unassigned = unassigned,
             TeamTickets = builtInView == "team-tickets",
+            Following = builtInView == "following",
             SortBy = sortBy,
         };
 

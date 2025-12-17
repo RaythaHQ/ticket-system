@@ -824,6 +824,10 @@
                             class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Overdue" ? "active" : "")">
                             Overdue
                         </a>
+                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="following"
+                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Following" ? "active" : "")">
+                            Following
+                        </a>
                         <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="all"
                             class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "AllTickets" ? "active" : "")">
                             All Tickets

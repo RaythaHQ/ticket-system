@@ -65,6 +65,11 @@ public class GetTickets
         public bool? TeamTickets { get; init; }
 
         /// <summary>
+        /// When true, show only tickets the current user is following.
+        /// </summary>
+        public bool? Following { get; init; }
+
+        /// <summary>
         /// Optional view ID to apply saved view filters.
         /// </summary>
         public ShortGuid? ViewId { get; init; }
@@ -85,7 +90,8 @@ public class GetTickets
         public string? SortBy { get; init; }
     }
 
-    public class Handler : IRequestHandler<Query, IQueryResponseDto<ListResultDto<TicketListItemDto>>>
+    public class Handler
+        : IRequestHandler<Query, IQueryResponseDto<ListResultDto<TicketListItemDto>>>
     {
         private readonly IAppDbContext _db;
         private readonly ICurrentUser _currentUser;
@@ -101,8 +107,8 @@ public class GetTickets
             CancellationToken cancellationToken
         )
         {
-            var query = _db.Tickets
-                .AsNoTracking()
+            var query = _db
+                .Tickets.AsNoTracking()
                 .Include(t => t.Assignee)
                 .Include(t => t.OwningTeam)
                 .Include(t => t.Contact)
@@ -118,20 +124,23 @@ public class GetTickets
             // Apply view filters if ViewId is provided
             if (request.ViewId.HasValue)
             {
-                var view = await _db.TicketViews
-                    .AsNoTracking()
+                var view = await _db
+                    .TicketViews.AsNoTracking()
                     .FirstOrDefaultAsync(v => v.Id == request.ViewId.Value.Guid, cancellationToken);
 
                 if (view != null)
                 {
                     visibleColumns = view.VisibleColumns;
                     viewSortLevels = view.SortLevels;
-                    
+
                     if (!string.IsNullOrEmpty(view.ConditionsJson))
                     {
                         try
                         {
-                            var conditions = System.Text.Json.JsonSerializer.Deserialize<ViewConditions>(view.ConditionsJson);
+                            var conditions =
+                                System.Text.Json.JsonSerializer.Deserialize<ViewConditions>(
+                                    view.ConditionsJson
+                                );
                             if (conditions != null)
                             {
                                 query = filterBuilder.ApplyFilters(query, conditions);
@@ -155,12 +164,12 @@ public class GetTickets
             if (!string.IsNullOrEmpty(request.StatusType))
             {
                 var statusTypeValue = request.StatusType.ToLower();
-                var statusesOfType = await _db.TicketStatusConfigs
-                    .AsNoTracking()
+                var statusesOfType = await _db
+                    .TicketStatusConfigs.AsNoTracking()
                     .Where(s => s.StatusType == statusTypeValue)
                     .Select(s => s.DeveloperName)
                     .ToListAsync(cancellationToken);
-                
+
                 query = query.Where(t => statusesOfType.Contains(t.Status));
             }
 
@@ -191,8 +200,8 @@ public class GetTickets
             // Shows all tickets where the ticket's OwningTeamId matches any team the user is a member of
             if (request.TeamTickets == true && _currentUser.UserId.HasValue)
             {
-                var userTeamIds = await _db.TeamMemberships
-                    .AsNoTracking()
+                var userTeamIds = await _db
+                    .TeamMemberships.AsNoTracking()
                     .Where(m => m.StaffAdminId == _currentUser.UserId.Value.Guid)
                     .Select(m => m.TeamId)
                     .ToListAsync(cancellationToken);
@@ -200,13 +209,27 @@ public class GetTickets
                 if (userTeamIds.Any())
                 {
                     // Filter tickets where OwningTeamId is in the user's team list
-                    query = query.Where(t => t.OwningTeamId.HasValue && userTeamIds.Contains(t.OwningTeamId.Value));
+                    query = query.Where(t =>
+                        t.OwningTeamId.HasValue && userTeamIds.Contains(t.OwningTeamId.Value)
+                    );
                 }
                 else
                 {
                     // User is not in any team, return no results
                     query = query.Where(t => false);
                 }
+            }
+
+            // Filter by tickets the current user is following
+            if (request.Following == true && _currentUser.UserId.HasValue)
+            {
+                var followedTicketIds = await _db
+                    .TicketFollowers.AsNoTracking()
+                    .Where(f => f.StaffAdminId == _currentUser.UserId.Value.Guid)
+                    .Select(f => f.TicketId)
+                    .ToListAsync(cancellationToken);
+
+                query = query.Where(t => followedTicketIds.Contains(t.Id));
             }
 
             // Apply search - respect visible columns if available
@@ -224,8 +247,16 @@ public class GetTickets
                         t.Title.ToLower().Contains(searchQuery)
                         || (t.Description != null && t.Description.ToLower().Contains(searchQuery))
                         || t.Id.ToString().Contains(searchQuery)
-                        || (t.Contact != null && (t.Contact.FirstName.ToLower().Contains(searchQuery)
-                            || (t.Contact.LastName != null && t.Contact.LastName.ToLower().Contains(searchQuery))))
+                        || (
+                            t.Contact != null
+                            && (
+                                t.Contact.FirstName.ToLower().Contains(searchQuery)
+                                || (
+                                    t.Contact.LastName != null
+                                    && t.Contact.LastName.ToLower().Contains(searchQuery)
+                                )
+                            )
+                        )
                     );
                 }
             }
