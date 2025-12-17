@@ -15,6 +15,8 @@
     let currentTicketId = null;
     let toastContainer = null;
     let activeToasts = [];
+    let pendingTicketJoin = null; // Ticket to join once connected
+    let isConnected = false;
 
     // Notification type colors
     const TYPE_COLORS = {
@@ -125,6 +127,7 @@
 
             connection.onreconnected(() => {
                 console.log('SignalR reconnected');
+                isConnected = true;
                 // Re-join ticket view if we were viewing one
                 if (currentTicketId) {
                     joinTicketView(currentTicketId);
@@ -133,10 +136,17 @@
 
             connection.onclose(() => {
                 console.log('SignalR disconnected');
+                isConnected = false;
             });
 
             await connection.start();
-            console.log('SignalR connected');
+            isConnected = true;
+
+            // Join pending ticket view if any
+            if (pendingTicketJoin !== null) {
+                joinTicketView(pendingTicketJoin);
+                pendingTicketJoin = null;
+            }
 
         } catch (err) {
             console.error('SignalR connection failed:', err);
@@ -264,7 +274,9 @@
      * Join a ticket view for presence tracking.
      */
     async function joinTicketView(ticketId) {
-        if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
+        if (!isConnected || !connection || connection.state !== signalR.HubConnectionState.Connected) {
+            // Queue this for when we connect
+            pendingTicketJoin = ticketId;
             return;
         }
 
