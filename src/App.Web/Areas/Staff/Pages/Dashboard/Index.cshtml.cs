@@ -140,22 +140,24 @@ public class Index : BaseStaffPageModel
             var matchingContactIds = contactSearchResponse.Result.Select(c => c.Id).ToList();
             if (matchingContactIds.Any())
             {
-                // If we have a single contact match and no ContactId already set, use contactId
-                if (matchingContactIds.Count == 1 && !QuickSearchTickets.ContactId.HasValue)
+                // Use the phone-matched contact ID (only if explicit ContactId not provided)
+                if (!QuickSearchTickets.ContactId.HasValue)
                 {
-                    queryParams["contactId"] = matchingContactIds.First().ToString();
-                }
-                else if (matchingContactIds.Count > 1)
-                {
-                    // Multiple matches - we can't use a single contactId, so we'll need to
-                    // use search with contact names or handle it differently
-                    // For now, use the first match
+                    // If multiple matches, use the first one
                     queryParams["contactId"] = matchingContactIds.First().ToString();
                 }
             }
+            else
+            {
+                // No contacts found with that phone number
+                SetWarningMessage(
+                    $"No contacts found with phone number containing '{QuickSearchTickets.ContactPhone}'."
+                );
+                return await OnGet(cancellationToken);
+            }
         }
 
-        // Add ContactId if provided
+        // Add explicit ContactId if provided (overrides phone-matched contact)
         if (QuickSearchTickets.ContactId.HasValue)
         {
             queryParams["contactId"] = QuickSearchTickets.ContactId.Value.ToString();
