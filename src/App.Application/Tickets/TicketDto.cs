@@ -31,6 +31,7 @@ public record TicketDto : BaseNumericAuditableEntityDto
     public string? ContactName { get; init; }
 
     // Timestamps
+    public DateTime? AssignedAt { get; init; }
     public DateTime? ResolvedAt { get; init; }
     public DateTime? ClosedAt { get; init; }
 
@@ -65,6 +66,7 @@ public record TicketDto : BaseNumericAuditableEntityDto
             CreatedByStaffName = ticket.CreatedByStaff?.FullName,
             ContactId = ticket.ContactId,
             ContactName = ticket.Contact?.FullName,
+            AssignedAt = ticket.AssignedAt,
             ResolvedAt = ticket.ResolvedAt,
             ClosedAt = ticket.ClosedAt,
             SlaRuleId = ticket.SlaRuleId,

@@ -35,6 +35,8 @@ public class GetUserDashboardMetrics
             var userIdGuid = request.UserId.Guid;
 
             // NOTE: DbContext is not thread-safe, so queries must be sequential
+
+            // Open tickets assigned to the logged-in user
             var openTicketsAssigned = await _db
                 .Tickets.AsNoTracking()
                 .CountAsync(
@@ -45,37 +47,47 @@ public class GetUserDashboardMetrics
                     cancellationToken
                 );
 
-            var ticketsResolvedLast7Days = await _db
+            // Tickets closed BY the logged-in user in last 7 days
+            var ticketsClosedLast7Days = await _db
                 .Tickets.AsNoTracking()
                 .CountAsync(
                     t =>
-                        t.AssigneeId == userIdGuid
-                        && t.ResolvedAt.HasValue
-                        && t.ResolvedAt.Value >= sevenDaysAgo,
+                        t.ClosedByStaffId == userIdGuid
+                        && t.ClosedAt.HasValue
+                        && t.ClosedAt.Value >= sevenDaysAgo,
                     cancellationToken
                 );
 
-            var ticketsResolvedLast30Days = await _db
+            // Tickets closed BY the logged-in user in last 30 days
+            var ticketsClosedLast30Days = await _db
                 .Tickets.AsNoTracking()
                 .CountAsync(
                     t =>
-                        t.AssigneeId == userIdGuid
-                        && t.ResolvedAt.HasValue
-                        && t.ResolvedAt.Value >= thirtyDaysAgo,
+                        t.ClosedByStaffId == userIdGuid
+                        && t.ClosedAt.HasValue
+                        && t.ClosedAt.Value >= thirtyDaysAgo,
                     cancellationToken
                 );
 
-            var closedTickets = await _db
+            // For median close time: only tickets where the user was both the assignee AND the closer
+            // Time is calculated from when ticket was assigned to the user until they closed it
+            var closedTicketsForMedian = await _db
                 .Tickets.AsNoTracking()
-                .Where(t => t.AssigneeId == userIdGuid && t.ClosedAt.HasValue)
-                .Select(t => new { t.CreationTime, t.ClosedAt })
+                .Where(t =>
+                    t.ClosedByStaffId == userIdGuid
+                    && t.AssigneeId == userIdGuid
+                    && t.ClosedAt.HasValue
+                    && t.AssignedAt.HasValue
+                    && t.ClosedAt.Value >= thirtyDaysAgo
+                )
+                .Select(t => new { t.AssignedAt, t.ClosedAt })
                 .ToListAsync(cancellationToken);
 
             double? medianCloseTimeHours = null;
-            if (closedTickets.Any())
+            if (closedTicketsForMedian.Any())
             {
-                var closeTimes = closedTickets
-                    .Select(t => (t.ClosedAt!.Value - t.CreationTime).TotalHours)
+                var closeTimes = closedTicketsForMedian
+                    .Select(t => (t.ClosedAt!.Value - t.AssignedAt!.Value).TotalHours)
                     .OrderBy(h => h)
                     .ToList();
 
@@ -88,12 +100,20 @@ public class GetUserDashboardMetrics
 
             var reopenCount = await _db
                 .TicketChangeLogEntries.AsNoTracking()
-                .Where(e => e.Ticket.AssigneeId == userIdGuid)
+                .Where(e => e.Ticket.ClosedByStaffId == userIdGuid)
                 .Where(e => e.Message != null && e.Message.Contains("Ticket reopened"))
                 .CountAsync(cancellationToken);
 
-            var totalResolved = closedTickets.Count;
-            var reopenRate = totalResolved > 0 ? (double)reopenCount / totalResolved * 100 : 0;
+            // Total tickets closed by the user (for reopen rate calculation)
+            var totalClosedByUser = await _db
+                .Tickets.AsNoTracking()
+                .CountAsync(
+                    t => t.ClosedByStaffId == userIdGuid && t.ClosedAt.HasValue,
+                    cancellationToken
+                );
+
+            var reopenRate =
+                totalClosedByUser > 0 ? (double)reopenCount / totalClosedByUser * 100 : 0;
 
             var slaBreachCount = await _db
                 .Tickets.AsNoTracking()
@@ -149,8 +169,8 @@ public class GetUserDashboardMetrics
                 new UserDashboardMetricsDto
                 {
                     OpenTicketsAssigned = openTicketsAssigned,
-                    TicketsResolvedLast7Days = ticketsResolvedLast7Days,
-                    TicketsResolvedLast30Days = ticketsResolvedLast30Days,
+                    TicketsClosedLast7Days = ticketsClosedLast7Days,
+                    TicketsClosedLast30Days = ticketsClosedLast30Days,
                     MedianCloseTimeHours = medianCloseTimeHours,
                     ReopenCount = reopenCount,
                     ReopenRate = Math.Round(reopenRate, 2),

@@ -237,6 +237,7 @@ public class CreateTicket
                 Tags = request.Tags ?? new List<string>(),
                 OwningTeamId = request.OwningTeamId?.Guid,
                 AssigneeId = assigneeId,
+                AssignedAt = assigneeId.HasValue ? DateTime.UtcNow : null,
                 ContactId = request.ContactId,
                 CreatedByStaffId = _currentUser.UserId?.Guid,
             };

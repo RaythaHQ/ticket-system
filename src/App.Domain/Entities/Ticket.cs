@@ -24,6 +24,12 @@ public class Ticket : BaseNumericFullAuditableEntity
     public Guid? AssigneeId { get; set; }
     public virtual User? Assignee { get; set; }
 
+    /// <summary>
+    /// When the current assignee was assigned to this ticket.
+    /// Used for calculating personal close time metrics.
+    /// </summary>
+    public DateTime? AssignedAt { get; set; }
+
     public Guid? CreatedByStaffId { get; set; }
     public virtual User? CreatedByStaff { get; set; }
 
@@ -46,6 +52,12 @@ public class Ticket : BaseNumericFullAuditableEntity
     // Timestamps
     public DateTime? ResolvedAt { get; set; }
     public DateTime? ClosedAt { get; set; }
+
+    /// <summary>
+    /// The staff member who closed this ticket (for leaderboard tracking).
+    /// </summary>
+    public Guid? ClosedByStaffId { get; set; }
+    public virtual User? ClosedByStaff { get; set; }
 
     // SLA
     public Guid? SlaRuleId { get; set; }

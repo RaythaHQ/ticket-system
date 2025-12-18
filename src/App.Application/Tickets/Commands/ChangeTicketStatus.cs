@@ -109,12 +109,14 @@ public class ChangeTicketStatus
                     ticket.ResolvedAt = DateTime.UtcNow;
                 }
                 ticket.ClosedAt = DateTime.UtcNow;
+                ticket.ClosedByStaffId = _currentUser.UserId?.Guid;
             }
             else if (oldStatusConfig?.IsClosedType == true && newStatusConfig?.IsOpenType == true)
             {
                 // Reopening from closed to open
                 ticket.ResolvedAt = null;
                 ticket.ClosedAt = null;
+                ticket.ClosedByStaffId = null;
             }
 
             // Add change log entry

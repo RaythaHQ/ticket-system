@@ -87,6 +87,7 @@ public class CloseTicket
             var oldStatus = ticket.Status;
             ticket.Status = closedStatus.DeveloperName;
             ticket.ClosedAt = DateTime.UtcNow;
+            ticket.ClosedByStaffId = _currentUser.UserId?.Guid;
 
             if (ticket.ResolvedAt == null)
             {

@@ -8,8 +8,8 @@ namespace App.Application.Tickets;
 public record UserDashboardMetricsDto
 {
     public int OpenTicketsAssigned { get; init; }
-    public int TicketsResolvedLast7Days { get; init; }
-    public int TicketsResolvedLast30Days { get; init; }
+    public int TicketsClosedLast7Days { get; init; }
+    public int TicketsClosedLast30Days { get; init; }
     public double? MedianCloseTimeHours { get; init; }
     public int ReopenCount { get; init; }
     public double ReopenRate { get; init; }
@@ -27,4 +27,3 @@ public record TeamSummaryDto
     public int OpenTickets { get; init; }
     public int UnassignedTickets { get; init; }
 }
-

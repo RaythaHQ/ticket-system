@@ -98,6 +98,7 @@ public class SetIsActive
                 foreach (var ticket in openTickets)
                 {
                     ticket.AssigneeId = null;
+                    ticket.AssignedAt = null;
 
                     // Add change log entry for the unassignment
                     var changeLog = new TicketChangeLogEntry

@@ -13,6 +13,7 @@ namespace App.Web.Areas.Staff.Pages.Dashboard;
 public class Index : BaseStaffPageModel
 {
     public UserDashboardMetricsDto Metrics { get; set; } = null!;
+    public LeaderboardDto Leaderboard { get; set; } = null!;
     public ShortGuid? UserId { get; set; }
 
     [BindProperty]
@@ -39,11 +40,17 @@ public class Index : BaseStaffPageModel
         if (!UserId.HasValue)
             return RedirectToPage(RouteNames.Error.Index);
 
-        var response = await Mediator.Send(
+        var metricsResponse = await Mediator.Send(
             new GetUserDashboardMetrics.Query { UserId = UserId.Value },
             cancellationToken
         );
-        Metrics = response.Result;
+        Metrics = metricsResponse.Result;
+
+        var leaderboardResponse = await Mediator.Send(
+            new GetLeaderboard.Query(),
+            cancellationToken
+        );
+        Leaderboard = leaderboardResponse.Result;
 
         await LoadSelectListsAsync(cancellationToken);
 

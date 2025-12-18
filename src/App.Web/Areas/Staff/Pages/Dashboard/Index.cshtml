@@ -26,7 +26,8 @@
                 <!-- Fast Open by ID -->
                 <form method="post" asp-page-handler="QuickLookupTicketId" class="mb-3">
                     <label asp-for="QuickLookupTicketId.TicketId" class="form-label small">Ticket ID</label>
-                    <input asp-for="QuickLookupTicketId.TicketId" type="number" class="form-control" placeholder="Ticket ID" />
+                    <input asp-for="QuickLookupTicketId.TicketId" type="number" class="form-control"
+                        placeholder="Ticket ID" />
                     <span asp-validation-for="QuickLookupTicketId.TicketId" class="text-danger small"></span>
                     <button type="submit" class="btn btn-primary mt-2 w-100">Go</button>
                 </form>
@@ -37,15 +38,18 @@
                 <form method="post" asp-page-handler="QuickSearchTickets">
                     <div class="mb-3">
                         <label asp-for="QuickSearchTickets.ContactId" class="form-label small">Contact ID</label>
-                        <input asp-for="QuickSearchTickets.ContactId" type="number" class="form-control form-control-sm" placeholder="Contact ID" />
+                        <input asp-for="QuickSearchTickets.ContactId" type="number" class="form-control form-control-sm"
+                            placeholder="Contact ID" />
                     </div>
                     <div class="mb-3">
                         <label asp-for="QuickSearchTickets.ContactPhone" class="form-label small">Contact Phone</label>
-                        <input asp-for="QuickSearchTickets.ContactPhone" type="text" class="form-control form-control-sm" placeholder="Phone number" />
+                        <input asp-for="QuickSearchTickets.ContactPhone" type="text"
+                            class="form-control form-control-sm" placeholder="Phone number" />
                     </div>
                     <div class="mb-3">
                         <label asp-for="QuickSearchTickets.TicketTitle" class="form-label small">Ticket Title</label>
-                        <input asp-for="QuickSearchTickets.TicketTitle" type="text" class="form-control form-control-sm" placeholder="Title contains..." />
+                        <input asp-for="QuickSearchTickets.TicketTitle" type="text" class="form-control form-control-sm"
+                            placeholder="Title contains..." />
                     </div>
                     <div class="mb-3">
                         <label asp-for="QuickSearchTickets.AssigneeId" class="form-label small">Assignee</label>
@@ -83,7 +87,8 @@
                 <!-- Fast Open by ID -->
                 <form method="post" asp-page-handler="QuickLookupContactId" class="mb-3">
                     <label asp-for="QuickLookupContactId.ContactId" class="form-label small">Contact ID</label>
-                    <input asp-for="QuickLookupContactId.ContactId" type="number" class="form-control" placeholder="Contact ID" />
+                    <input asp-for="QuickLookupContactId.ContactId" type="number" class="form-control"
+                        placeholder="Contact ID" />
                     <span asp-validation-for="QuickLookupContactId.ContactId" class="text-danger small"></span>
                     <button type="submit" class="btn btn-primary mt-2 w-100">Go</button>
                 </form>
@@ -94,15 +99,18 @@
                 <form method="post" asp-page-handler="QuickSearchContacts">
                     <div class="mb-3">
                         <label asp-for="QuickSearchContacts.FirstName" class="form-label small">First Name</label>
-                        <input asp-for="QuickSearchContacts.FirstName" type="text" class="form-control form-control-sm" placeholder="First name contains..." />
+                        <input asp-for="QuickSearchContacts.FirstName" type="text" class="form-control form-control-sm"
+                            placeholder="First name contains..." />
                     </div>
                     <div class="mb-3">
                         <label asp-for="QuickSearchContacts.LastName" class="form-label small">Last Name</label>
-                        <input asp-for="QuickSearchContacts.LastName" type="text" class="form-control form-control-sm" placeholder="Last name contains..." />
+                        <input asp-for="QuickSearchContacts.LastName" type="text" class="form-control form-control-sm"
+                            placeholder="Last name contains..." />
                     </div>
                     <div class="mb-3">
                         <label asp-for="QuickSearchContacts.Phone" class="form-label small">Phone</label>
-                        <input asp-for="QuickSearchContacts.Phone" type="text" class="form-control form-control-sm" placeholder="Phone number" />
+                        <input asp-for="QuickSearchContacts.Phone" type="text" class="form-control form-control-sm"
+                            placeholder="Phone number" />
                     </div>
                     <button type="submit" class="btn btn-sm btn-primary w-100">Search Contacts</button>
                 </form>
@@ -131,8 +139,8 @@
                     <i class="bi bi-check-circle"></i>
                 </div>
             </div>
-            <div class="staff-stat-value">@Model.Metrics.TicketsResolvedLast7Days</div>
-            <div class="staff-stat-label">Resolved (7 days)</div>
+            <div class="staff-stat-value">@Model.Metrics.TicketsClosedLast7Days</div>
+            <div class="staff-stat-label">Closed (7 days)</div>
         </div>
     </div>
     <div class="col-lg-3 col-md-6">
@@ -142,8 +150,8 @@
                     <i class="bi bi-calendar-check"></i>
                 </div>
             </div>
-            <div class="staff-stat-value">@Model.Metrics.TicketsResolvedLast30Days</div>
-            <div class="staff-stat-label">Resolved (30 days)</div>
+            <div class="staff-stat-value">@Model.Metrics.TicketsClosedLast30Days</div>
+            <div class="staff-stat-label">Closed (30 days)</div>
         </div>
     </div>
     <div class="col-lg-3 col-md-6">
@@ -260,10 +268,8 @@
                                 </span>
                             </td>
                             <td class="text-end">
-                                <a asp-page="@RouteNames.Tickets.Index" 
-                                   asp-route-builtInView="all"
-                                   asp-route-teamId="@team.TeamId"
-                                   class="btn btn-sm btn-outline-primary">
+                                <a asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="all"
+                                    asp-route-teamId="@team.TeamId" class="btn btn-sm btn-outline-primary">
                                     View Tickets
                                 </a>
                             </td>
@@ -275,3 +281,194 @@
     </div>
 }
 
+<!-- Leaderboards -->
+<div class="row g-4 mb-4">
+    <!-- Staff Leaderboard -->
+    <div class="col-lg-6">
+        <div class="staff-card">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-trophy me-2"></i>Staff Leaderboard</h5>
+                <span class="text-muted small">Tickets Closed</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table staff-table mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;"></th>
+                            <th>Staff Member</th>
+                            <th class="text-center">Today</th>
+                            <th class="text-center">This Week</th>
+                            <th class="text-center">This Month</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Leaderboard.StaffLeaderboard.Any())
+                        {
+                            var rank = 0;
+                            @foreach (var staff in Model.Leaderboard.StaffLeaderboard)
+                            {
+                                rank++;
+                                var rankBadgeClass = rank switch
+                                {
+                                    1 => "leaderboard-rank-gold",
+                                    2 => "leaderboard-rank-silver",
+                                    3 => "leaderboard-rank-bronze",
+                                    _ => ""
+                                };
+                                <tr>
+                                    <td class="text-center">
+                                        @if (rank <= 3)
+                                        {
+                                            <span class="leaderboard-rank @rankBadgeClass">@rank</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@rank</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">@staff.StaffName</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="@(staff.ClosedToday > 0 ? "fw-bold text-success" : "text-muted")">
+                                            @staff.ClosedToday
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="@(staff.ClosedThisWeek > 0 ? "fw-semibold" : "text-muted")">
+                                            @staff.ClosedThisWeek
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="staff-badge staff-badge-primary">@staff.ClosedThisMonth</span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox me-2"></i>No tickets closed this month yet
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Leaderboard -->
+    <div class="col-lg-6">
+        <div class="staff-card">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-people-fill me-2"></i>Team Leaderboard</h5>
+                <span class="text-muted small">Tickets Closed</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table staff-table mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;"></th>
+                            <th>Team</th>
+                            <th class="text-center">Today</th>
+                            <th class="text-center">This Week</th>
+                            <th class="text-center">This Month</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Leaderboard.TeamLeaderboard.Any())
+                        {
+                            var rank = 0;
+                            @foreach (var team in Model.Leaderboard.TeamLeaderboard)
+                            {
+                                rank++;
+                                var rankBadgeClass = rank switch
+                                {
+                                    1 => "leaderboard-rank-gold",
+                                    2 => "leaderboard-rank-silver",
+                                    3 => "leaderboard-rank-bronze",
+                                    _ => ""
+                                };
+                                <tr>
+                                    <td class="text-center">
+                                        @if (rank <= 3)
+                                        {
+                                            <span class="leaderboard-rank @rankBadgeClass">@rank</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@rank</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="fw-semibold">@team.TeamName</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="@(team.ClosedToday > 0 ? "fw-bold text-success" : "text-muted")">
+                                            @team.ClosedToday
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="@(team.ClosedThisWeek > 0 ? "fw-semibold" : "text-muted")">
+                                            @team.ClosedThisWeek
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="staff-badge staff-badge-primary">@team.ClosedThisMonth</span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox me-2"></i>No tickets closed this month yet
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .leaderboard-rank {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        font-weight: 700;
+        font-size: 0.875rem;
+    }
+
+    .leaderboard-rank-gold {
+        background: linear-gradient(135deg, #ffd700, #ffb800);
+        color: #5a4a00;
+        box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+    }
+
+    .leaderboard-rank-silver {
+        background: linear-gradient(135deg, #e0e0e0, #c0c0c0);
+        color: #4a4a4a;
+        box-shadow: 0 2px 8px rgba(192, 192, 192, 0.4);
+    }
+
+    .leaderboard-rank-bronze {
+        background: linear-gradient(135deg, #cd7f32, #b87333);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(205, 127, 50, 0.4);
+    }
+
+    .staff-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>

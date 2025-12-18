@@ -293,6 +293,12 @@
                     <dt class="col-5 text-muted fw-medium">Created</dt>
                     <dd class="col-7 small">@CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.CreationTime)</dd>
 
+                    @if (Model.Ticket.AssignedAt.HasValue)
+                    {
+                        <dt class="col-5 text-muted fw-medium">Assigned</dt>
+                        <dd class="col-7 small">@CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.AssignedAt)</dd>
+                    }
+
                     @if (Model.Ticket.LastModificationTime.HasValue)
                     {
                         <dt class="col-5 text-muted fw-medium">Last Modified</dt>

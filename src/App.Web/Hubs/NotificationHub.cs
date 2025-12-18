@@ -19,11 +19,6 @@ public class NotificationHub : Hub
     private static readonly object _lock = new();
 
     /// <summary>
-    /// Idle timeout in minutes. Users are marked idle after this period of inactivity.
-    /// </summary>
-    private const int IdleTimeoutMinutes = 5;
-
-    /// <summary>
     /// Grace period in seconds before marking a user as offline.
     /// This prevents flashing when navigating between pages.
     /// </summary>

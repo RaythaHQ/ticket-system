@@ -241,6 +241,7 @@ public class UpdateTicket
                     NewValue = effectiveAssigneeId?.ToString() ?? "",
                 };
                 ticket.AssigneeId = effectiveAssigneeId;
+                ticket.AssignedAt = effectiveAssigneeId.HasValue ? DateTime.UtcNow : null;
             }
 
             if (ticket.ContactId != request.ContactId)

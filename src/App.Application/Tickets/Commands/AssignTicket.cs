@@ -154,6 +154,7 @@ public class AssignTicket
                     NewValue = newAssigneeId?.ToString() ?? "",
                 };
                 ticket.AssigneeId = newAssigneeId;
+                ticket.AssignedAt = newAssigneeId.HasValue ? DateTime.UtcNow : null;
             }
 
             if (oldTeamId != request.OwningTeamId?.Guid)
