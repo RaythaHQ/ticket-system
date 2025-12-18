@@ -20,6 +20,7 @@ public class UpdateTicket
         public string Title { get; init; } = null!;
         public string? Description { get; init; }
         public string Priority { get; init; } = null!;
+        public string Language { get; init; } = null!;
         public string? Category { get; init; }
         public List<string>? Tags { get; init; }
         public ShortGuid? OwningTeamId { get; init; }
@@ -46,6 +47,13 @@ public class UpdateTicket
                     }
                 )
                 .WithMessage("Invalid priority value.");
+
+            RuleFor(x => x.Language)
+                .NotEmpty()
+                .Must(language =>
+                    TicketLanguage.SupportedTypes.Any(l => l.DeveloperName == language.ToLower())
+                )
+                .WithMessage("Invalid language value.");
 
             RuleFor(x => x.OwningTeamId)
                 .MustAsync(
@@ -195,6 +203,16 @@ public class UpdateTicket
                 ticket.Priority = request.Priority;
             }
 
+            if (ticket.Language != request.Language)
+            {
+                changes["Language"] = new
+                {
+                    OldValue = ticket.Language,
+                    NewValue = request.Language,
+                };
+                ticket.Language = request.Language;
+            }
+
             if (ticket.Category != request.Category)
             {
                 changes["Category"] = new
@@ -273,6 +291,7 @@ public class UpdateTicket
                             newValue,
                             cancellationToken
                         ),
+                        "Language" => GetLanguageChangeDescription(oldValue, newValue),
                         "Category" => $"Category changed from \"{oldValue}\" to \"{newValue}\"",
                         "OwningTeamId" => await GetTeamChangeDescription(
                             oldValue,
@@ -566,6 +585,21 @@ public class UpdateTicket
             }
 
             return $"Contact changed from {oldName} to {newName}";
+        }
+
+        private static string GetLanguageChangeDescription(string oldValue, string newValue)
+        {
+            var oldLanguage = TicketLanguage.SupportedTypes.FirstOrDefault(l =>
+                l.DeveloperName == oldValue
+            );
+            var newLanguage = TicketLanguage.SupportedTypes.FirstOrDefault(l =>
+                l.DeveloperName == newValue
+            );
+
+            var oldLabel = oldLanguage?.Label ?? oldValue ?? "Unknown";
+            var newLabel = newLanguage?.Label ?? newValue ?? "Unknown";
+
+            return $"Language changed from {oldLabel} to {newLabel}";
         }
     }
 }

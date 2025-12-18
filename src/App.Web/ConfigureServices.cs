@@ -147,9 +147,10 @@ public static class ConfigureServices
 
         services.AddScoped<ICsvService, CsvService>();
 
-        // SignalR for real-time notifications
+        // SignalR for real-time notifications and activity stream
         services.AddSignalR();
         services.AddScoped<IInAppNotificationService, InAppNotificationService>();
+        services.AddScoped<IActivityStreamService, ActivityStreamService>();
 
         services.AddRouting();
         services

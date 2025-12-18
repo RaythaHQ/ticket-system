@@ -31,4 +31,6 @@ public interface IRelativeUrlBuilder
         string returnUrl = ""
     );
     string StaffTicketUrl(long ticketId);
+    string StaffContactUrl(long contactId);
+    string StaffActivityLogUrl();
 }

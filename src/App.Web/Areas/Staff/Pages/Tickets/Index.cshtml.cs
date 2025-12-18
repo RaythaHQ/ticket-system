@@ -378,6 +378,8 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             StatusLabel = p.StatusLabel,
             Priority = p.Priority,
             PriorityLabel = p.PriorityLabel,
+            Language = p.Language,
+            LanguageLabel = p.LanguageLabel,
             Category = p.Category ?? "-",
             AssigneeName = p.AssigneeName ?? "Unassigned",
             OwningTeamName = p.OwningTeamName ?? "",
@@ -730,6 +732,11 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         [Display(Name = "Priority")]
         public string PriorityLabel { get; init; } = string.Empty;
 
+        public string Language { get; init; } = string.Empty;
+
+        [Display(Name = "Language")]
+        public string LanguageLabel { get; init; } = string.Empty;
+
         [Display(Name = "Category")]
         public string Category { get; init; } = string.Empty;
 
@@ -785,6 +792,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 "Title" => Title.Length > 50 ? Title.Substring(0, 47) + "..." : Title,
                 "Status" => StatusLabel,
                 "Priority" => PriorityLabel,
+                "Language" => LanguageLabel,
                 "Category" => Category,
                 "AssigneeName" => !string.IsNullOrEmpty(OwningTeamName)
                     ? (

@@ -210,4 +210,8 @@ public class RelativeUrlBuilder : IRelativeUrlBuilder
     }
 
     public string StaffTicketUrl(long ticketId) => GetBaseUrl() + $"/staff/tickets/{ticketId}";
+
+    public string StaffContactUrl(long contactId) => GetBaseUrl() + $"/staff/contacts/{contactId}";
+
+    public string StaffActivityLogUrl() => GetBaseUrl() + "/staff/activity-log";
 }

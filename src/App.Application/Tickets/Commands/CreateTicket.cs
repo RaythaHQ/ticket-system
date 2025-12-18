@@ -21,10 +21,16 @@ public class CreateTicket
         public long? Id { get; init; }
         public string Title { get; init; } = null!;
         public string? Description { get; init; }
+
         /// <summary>
         /// Priority developer name. If null/empty, the default priority will be used.
         /// </summary>
         public string? Priority { get; init; }
+
+        /// <summary>
+        /// Language developer name. If null/empty, defaults to English.
+        /// </summary>
+        public string? Language { get; init; }
         public string? Category { get; init; }
         public List<string>? Tags { get; init; }
         public ShortGuid? OwningTeamId { get; init; }
@@ -43,60 +49,107 @@ public class CreateTicket
                 .When(x => x.Id.HasValue)
                 .WithMessage("Ticket ID must be a positive number.");
             RuleFor(x => x.Id)
-                .MustAsync(async (id, cancellationToken) =>
-                {
-                    if (!id.HasValue) return true;
-                    // Check both active and soft-deleted tickets
-                    var exists = await db.Tickets
-                        .IgnoreQueryFilters()
-                        .AnyAsync(t => t.Id == id.Value, cancellationToken);
-                    return !exists;
-                })
+                .MustAsync(
+                    async (id, cancellationToken) =>
+                    {
+                        if (!id.HasValue)
+                            return true;
+                        // Check both active and soft-deleted tickets
+                        var exists = await db
+                            .Tickets.IgnoreQueryFilters()
+                            .AnyAsync(t => t.Id == id.Value, cancellationToken);
+                        return !exists;
+                    }
+                )
                 .WithMessage("A ticket with this ID already exists.")
                 .When(x => x.Id.HasValue);
 
             // Validate priority against configured active priorities
             RuleFor(x => x.Priority)
-                .MustAsync(async (priority, cancellationToken) =>
-                {
-                    if (string.IsNullOrEmpty(priority)) return true; // Will use default
-                    return await db.TicketPriorityConfigs
-                        .AnyAsync(p => p.DeveloperName == priority.ToLower() && p.IsActive, cancellationToken);
-                })
+                .MustAsync(
+                    async (priority, cancellationToken) =>
+                    {
+                        if (string.IsNullOrEmpty(priority))
+                            return true; // Will use default
+                        return await db.TicketPriorityConfigs.AnyAsync(
+                            p => p.DeveloperName == priority.ToLower() && p.IsActive,
+                            cancellationToken
+                        );
+                    }
+                )
                 .WithMessage("Invalid or inactive priority value.");
 
-            RuleFor(x => x.OwningTeamId)
-                .MustAsync(async (teamId, cancellationToken) =>
+            // Validate language against supported types
+            RuleFor(x => x.Language)
+                .Must(language =>
                 {
-                    if (!teamId.HasValue) return true;
-                    return await db.Teams.AsNoTracking().AnyAsync(t => t.Id == teamId.Value.Guid, cancellationToken);
+                    if (string.IsNullOrEmpty(language))
+                        return true; // Will use default (English)
+                    return TicketLanguage.SupportedTypes.Any(l =>
+                        l.DeveloperName == language.ToLower()
+                    );
                 })
+                .WithMessage("Invalid language value.");
+
+            RuleFor(x => x.OwningTeamId)
+                .MustAsync(
+                    async (teamId, cancellationToken) =>
+                    {
+                        if (!teamId.HasValue)
+                            return true;
+                        return await db
+                            .Teams.AsNoTracking()
+                            .AnyAsync(t => t.Id == teamId.Value.Guid, cancellationToken);
+                    }
+                )
                 .WithMessage("Team not found.");
 
             RuleFor(x => x.AssigneeId)
-                .MustAsync(async (assigneeId, cancellationToken) =>
-                {
-                    if (!assigneeId.HasValue) return true;
-                    return await db.Users.AsNoTracking().AnyAsync(u => u.Id == assigneeId.Value.Guid && u.IsActive, cancellationToken);
-                })
+                .MustAsync(
+                    async (assigneeId, cancellationToken) =>
+                    {
+                        if (!assigneeId.HasValue)
+                            return true;
+                        return await db
+                            .Users.AsNoTracking()
+                            .AnyAsync(
+                                u => u.Id == assigneeId.Value.Guid && u.IsActive,
+                                cancellationToken
+                            );
+                    }
+                )
                 .WithMessage("Assignee not found or inactive.");
 
             // Validate that if both team and assignee are provided, assignee is a member of that team
             RuleFor(x => x)
-                .MustAsync(async (cmd, cancellationToken) =>
-                {
-                    if (!cmd.OwningTeamId.HasValue || !cmd.AssigneeId.HasValue) return true;
-                    return await db.TeamMemberships.AsNoTracking()
-                        .AnyAsync(m => m.TeamId == cmd.OwningTeamId.Value.Guid && m.StaffAdminId == cmd.AssigneeId.Value.Guid, cancellationToken);
-                })
+                .MustAsync(
+                    async (cmd, cancellationToken) =>
+                    {
+                        if (!cmd.OwningTeamId.HasValue || !cmd.AssigneeId.HasValue)
+                            return true;
+                        return await db
+                            .TeamMemberships.AsNoTracking()
+                            .AnyAsync(
+                                m =>
+                                    m.TeamId == cmd.OwningTeamId.Value.Guid
+                                    && m.StaffAdminId == cmd.AssigneeId.Value.Guid,
+                                cancellationToken
+                            );
+                    }
+                )
                 .WithMessage("Assignee must be a member of the specified team.");
 
             RuleFor(x => x.ContactId)
-                .MustAsync(async (contactId, cancellationToken) =>
-                {
-                    if (!contactId.HasValue) return true;
-                    return await db.Contacts.AsNoTracking().AnyAsync(c => c.Id == contactId.Value, cancellationToken);
-                })
+                .MustAsync(
+                    async (contactId, cancellationToken) =>
+                    {
+                        if (!contactId.HasValue)
+                            return true;
+                        return await db
+                            .Contacts.AsNoTracking()
+                            .AnyAsync(c => c.Id == contactId.Value, cancellationToken);
+                    }
+                )
                 .WithMessage("Contact not found.");
         }
     }
@@ -114,7 +167,8 @@ public class CreateTicket
             ICurrentUser currentUser,
             IRoundRobinService roundRobinService,
             ITicketConfigService configService,
-            INumericIdGenerator idGenerator)
+            INumericIdGenerator idGenerator
+        )
         {
             _db = db;
             _currentUser = currentUser;
@@ -133,8 +187,8 @@ public class CreateTicket
             if (request.Id.HasValue)
             {
                 // Double-check the ID doesn't exist (belt and suspenders)
-                var exists = await _db.Tickets
-                    .IgnoreQueryFilters()
+                var exists = await _db
+                    .Tickets.IgnoreQueryFilters()
                     .AnyAsync(t => t.Id == request.Id.Value, cancellationToken);
                 if (exists)
                     throw new BusinessException("A ticket with this ID already exists.");
@@ -152,7 +206,10 @@ public class CreateTicket
             // If ticket is assigned to a team but no assignee specified, try round-robin
             if (request.OwningTeamId.HasValue && !request.AssigneeId.HasValue)
             {
-                var autoAssignee = await _roundRobinService.GetNextAssigneeAsync(request.OwningTeamId.Value, cancellationToken);
+                var autoAssignee = await _roundRobinService.GetNextAssigneeAsync(
+                    request.OwningTeamId.Value,
+                    cancellationToken
+                );
                 if (autoAssignee.HasValue)
                 {
                     assigneeId = autoAssignee.Value.Guid;
@@ -170,13 +227,18 @@ public class CreateTicket
                 Title = request.Title,
                 Description = request.Description,
                 Status = defaultStatus.DeveloperName,
-                Priority = string.IsNullOrEmpty(request.Priority) ? defaultPriority.DeveloperName : request.Priority.ToLower(),
+                Priority = string.IsNullOrEmpty(request.Priority)
+                    ? defaultPriority.DeveloperName
+                    : request.Priority.ToLower(),
+                Language = string.IsNullOrEmpty(request.Language)
+                    ? TicketLanguage.ENGLISH
+                    : request.Language.ToLower(),
                 Category = request.Category,
                 Tags = request.Tags ?? new List<string>(),
                 OwningTeamId = request.OwningTeamId?.Guid,
                 AssigneeId = assigneeId,
                 ContactId = request.ContactId,
-                CreatedByStaffId = _currentUser.UserId?.Guid
+                CreatedByStaffId = _currentUser.UserId?.Guid,
             };
 
             ticket.AddDomainEvent(new TicketCreatedEvent(ticket));
@@ -187,8 +249,12 @@ public class CreateTicket
             // Record round-robin assignment if used
             if (wasAutoAssigned && assigneeId.HasValue && request.OwningTeamId.HasValue)
             {
-                var membership = await _db.TeamMemberships
-                    .FirstOrDefaultAsync(m => m.TeamId == request.OwningTeamId.Value.Guid && m.StaffAdminId == assigneeId.Value, cancellationToken);
+                var membership = await _db.TeamMemberships.FirstOrDefaultAsync(
+                    m =>
+                        m.TeamId == request.OwningTeamId.Value.Guid
+                        && m.StaffAdminId == assigneeId.Value,
+                    cancellationToken
+                );
                 if (membership != null)
                 {
                     membership.LastAssignedAt = DateTime.UtcNow;
@@ -205,7 +271,7 @@ public class CreateTicket
                 Id = Guid.NewGuid(),
                 TicketId = ticket.Id,
                 ActorStaffId = _currentUser.UserId?.Guid,
-                Message = changeLogMessage
+                Message = changeLogMessage,
             };
 
             _db.TicketChangeLogEntries.Add(changeLog);

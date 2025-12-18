@@ -153,6 +153,9 @@ public class ViewFilterBuilder
             // Priority with comparison
             "priority" => BuildPriorityExpression(param, filter),
 
+            // Language
+            "language" => BuildStringExpression(param, t => t.Language, filter),
+
             // SLA Status
             "slastatus" => BuildNullableStringExpression(param, t => t.SlaStatus, filter),
 
@@ -260,11 +263,11 @@ public class ViewFilterBuilder
 
         return filter.Operator switch
         {
-            EQ or EQUALS => Expression.AndAlso(
+            IS or EQ or EQUALS => Expression.AndAlso(
                 notNullCheck,
                 Expression.Equal(fieldLower, valueConst)
             ),
-            NEQ => Expression.OrElse(
+            IS_NOT or NEQ => Expression.OrElse(
                 Expression.Equal(field, Expression.Constant(null, typeof(string))),
                 Expression.NotEqual(fieldLower, valueConst)
             ),
@@ -727,8 +730,14 @@ public class ViewFilterBuilder
             );
             // Convert to UTC for PostgreSQL
             return (
-                DateTime.SpecifyKind(TimeZoneInfo.ConvertTimeToUtc(localStart, _timezone), DateTimeKind.Utc),
-                DateTime.SpecifyKind(TimeZoneInfo.ConvertTimeToUtc(localEnd, _timezone), DateTimeKind.Utc)
+                DateTime.SpecifyKind(
+                    TimeZoneInfo.ConvertTimeToUtc(localStart, _timezone),
+                    DateTimeKind.Utc
+                ),
+                DateTime.SpecifyKind(
+                    TimeZoneInfo.ConvertTimeToUtc(localEnd, _timezone),
+                    DateTimeKind.Utc
+                )
             );
         }
 
@@ -737,8 +746,25 @@ public class ViewFilterBuilder
         {
             // The date from the form is the local date in the org's timezone
             // Get start of day (00:00:00) and end of day (23:59:59.999) in local time
-            var localStart = new DateTime(date.Year, date.Month, date.Day, 0, 0, 0, DateTimeKind.Unspecified);
-            var localEnd = new DateTime(date.Year, date.Month, date.Day, 23, 59, 59, 999, DateTimeKind.Unspecified);
+            var localStart = new DateTime(
+                date.Year,
+                date.Month,
+                date.Day,
+                0,
+                0,
+                0,
+                DateTimeKind.Unspecified
+            );
+            var localEnd = new DateTime(
+                date.Year,
+                date.Month,
+                date.Day,
+                23,
+                59,
+                59,
+                999,
+                DateTimeKind.Unspecified
+            );
 
             // Convert to UTC for PostgreSQL
             var utcStart = TimeZoneInfo.ConvertTimeToUtc(localStart, _timezone);
@@ -960,17 +986,18 @@ public class ViewFilterBuilder
             "id" => t => t.Id,
             "title" => t => t.Title,
             // Status: use SortOrder from TicketStatusConfig (ascending = lower SortOrder first)
-            "status" => t => _db.TicketStatusConfigs
-                .Where(s => s.DeveloperName == t.Status)
-                .Select(s => s.SortOrder)
-                .FirstOrDefault(),
+            "status" => t =>
+                _db.TicketStatusConfigs.Where(s => s.DeveloperName == t.Status)
+                    .Select(s => s.SortOrder)
+                    .FirstOrDefault(),
             // Priority: use SortOrder from TicketPriorityConfig (ascending = lower SortOrder first = higher priority)
             // Note: In config, lower SortOrder = higher priority (e.g., Urgent=0, Low=3)
-            "priority" => t => _db.TicketPriorityConfigs
-                .Where(p => p.DeveloperName == t.Priority)
-                .Select(p => p.SortOrder)
-                .FirstOrDefault(),
+            "priority" => t =>
+                _db.TicketPriorityConfigs.Where(p => p.DeveloperName == t.Priority)
+                    .Select(p => p.SortOrder)
+                    .FirstOrDefault(),
             "category" => t => t.Category ?? "",
+            "language" => t => t.Language,
             "creationtime" => t => t.CreationTime,
             "lastmodificationtime" => t => t.LastModificationTime ?? DateTime.MinValue,
             "closedat" => t => t.ClosedAt ?? DateTime.MinValue,

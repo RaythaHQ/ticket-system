@@ -269,6 +269,10 @@ public class Create : BaseAdminPageModel
         FilterBuilder.Teams = teams;
         FilterBuilder.Statuses = statusOptions;
         FilterBuilder.Priorities = priorityOptions;
+        FilterBuilder.Languages = Domain
+            .ValueObjects.TicketLanguage.SupportedTypes.OrderBy(l => l.SortOrder)
+            .Select(l => new SelectOption { Value = l.DeveloperName, Label = l.Label })
+            .ToList();
 
         // Sort Configurator
         SortConfigurator = new SortConfiguratorViewModel

@@ -56,6 +56,14 @@ public static class RouteNames
     }
 
     /// <summary>
+    /// Route constants for activity log pages.
+    /// </summary>
+    public static class ActivityLog
+    {
+        public const string Index = "/ActivityLog/Index";
+    }
+
+    /// <summary>
     /// Route constants for error pages.
     /// </summary>
     public static class Error
@@ -63,4 +71,3 @@ public static class RouteNames
         public const string Index = "/Error";
     }
 }
-

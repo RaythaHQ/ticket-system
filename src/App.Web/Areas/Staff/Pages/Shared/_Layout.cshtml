@@ -109,6 +109,11 @@
                     <i class="bi bi-people"></i>
                     <span>Contacts</span>
                 </a>
+                <a asp-area="Staff" asp-page="@RouteNames.ActivityLog.Index"
+                    class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "ActivityLog" ? "active" : "")">
+                    <i class="bi bi-activity"></i>
+                    <span>Activity Log</span>
+                </a>
             </div>
         </nav>
 

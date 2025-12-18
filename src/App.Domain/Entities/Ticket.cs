@@ -14,6 +14,7 @@ public class Ticket : BaseNumericFullAuditableEntity
     public string? Description { get; set; }
     public string Status { get; set; } = TicketStatus.OPEN;
     public string Priority { get; set; } = TicketPriority.NORMAL;
+    public string Language { get; set; } = TicketLanguage.ENGLISH;
     public string? Category { get; set; }
 
     // Relationships
@@ -72,6 +73,12 @@ public class Ticket : BaseNumericFullAuditableEntity
     /// </summary>
     [NotMapped]
     public TicketPriority PriorityValue => TicketPriority.From(Priority);
+
+    /// <summary>
+    /// Gets the ticket language as a value object.
+    /// </summary>
+    [NotMapped]
+    public TicketLanguage LanguageValue => TicketLanguage.From(Language);
 
     /// <summary>
     /// Gets the SLA status as a value object, if set.

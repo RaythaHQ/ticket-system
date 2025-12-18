@@ -1,7 +1,7 @@
+using System.Text.Json;
 using App.Application.Common.Models;
 using App.Domain.Entities;
 using CSharpVitamins;
-using System.Text.Json;
 
 namespace App.Application.TicketViews;
 
@@ -24,25 +24,34 @@ public record TicketViewDto : BaseAuditableEntityDto
     public string? SortDirection => SortPrimaryDirection;
     public string? SortSecondaryField { get; init; }
     public string? SortSecondaryDirection { get; init; }
-    
+
     /// <summary>
     /// Multi-level sort configuration.
     /// </summary>
     public List<ViewSortLevelDto> SortLevels { get; init; } = new();
-    
+
     public List<string> VisibleColumns { get; init; } = new();
     public List<string> Columns => VisibleColumns;
-    public int FilterCount => Conditions?.Filters?.Count ?? 0;
+    public int FilterCount =>
+        (Conditions?.AndFilters?.Count ?? 0)
+        + (Conditions?.OrFilters?.Count ?? 0)
+        + (Conditions?.Filters?.Count ?? 0);
     public int ColumnCount => VisibleColumns.Count;
     public int SortLevelCount => SortLevels.Count;
     public List<ViewFilterCondition> Filters => Conditions?.Filters ?? new();
-    
+
     /// <summary>
     /// Formatted sort string for display (e.g., "Priority ↓, Created ↑").
     /// </summary>
-    public string SortDisplay => SortLevels.Count > 0
-        ? string.Join(", ", SortLevels.OrderBy(s => s.Order).Select(s => $"{s.FieldLabel} {(s.Direction == "desc" ? "↓" : "↑")}"))
-        : string.Empty;
+    public string SortDisplay =>
+        SortLevels.Count > 0
+            ? string.Join(
+                ", ",
+                SortLevels
+                    .OrderBy(s => s.Order)
+                    .Select(s => $"{s.FieldLabel} {(s.Direction == "desc" ? "↓" : "↑")}")
+            )
+            : string.Empty;
 
     public static TicketViewDto MapFrom(TicketView view)
     {
@@ -57,13 +66,15 @@ public record TicketViewDto : BaseAuditableEntityDto
         }
 
         // Map sort levels from entity
-        var sortLevels = view.SortLevels.Select(s => new ViewSortLevelDto
-        {
-            Order = s.Order,
-            Field = s.Field,
-            Direction = s.Direction,
-            FieldLabel = GetFieldLabel(s.Field)
-        }).ToList();
+        var sortLevels = view
+            .SortLevels.Select(s => new ViewSortLevelDto
+            {
+                Order = s.Order,
+                Field = s.Field,
+                Direction = s.Direction,
+                FieldLabel = GetFieldLabel(s.Field),
+            })
+            .ToList();
 
         return new TicketViewDto
         {
@@ -82,7 +93,7 @@ public record TicketViewDto : BaseAuditableEntityDto
             SortLevels = sortLevels,
             VisibleColumns = view.VisibleColumns,
             CreationTime = view.CreationTime,
-            LastModificationTime = view.LastModificationTime
+            LastModificationTime = view.LastModificationTime,
         };
     }
 
@@ -102,7 +113,7 @@ public record TicketViewDto : BaseAuditableEntityDto
             "AssigneeName" => "Assignee",
             "OwningTeamName" => "Team",
             "ContactName" => "Contact",
-            _ => field
+            _ => field,
         };
     }
 }
@@ -191,4 +202,3 @@ public record ViewFilterCondition
     /// </summary>
     public string? RelativeDatePreset { get; init; }
 }
-

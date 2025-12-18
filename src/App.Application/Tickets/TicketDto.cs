@@ -15,6 +15,8 @@ public record TicketDto : BaseNumericAuditableEntityDto
     public string StatusLabel { get; init; } = null!;
     public string Priority { get; init; } = null!;
     public string PriorityLabel { get; init; } = null!;
+    public string Language { get; init; } = null!;
+    public string LanguageLabel { get; init; } = null!;
     public string? Category { get; init; }
     public List<string> Tags { get; init; } = new();
 
@@ -51,6 +53,8 @@ public record TicketDto : BaseNumericAuditableEntityDto
             StatusLabel = ticket.StatusValue.Label,
             Priority = ticket.Priority,
             PriorityLabel = ticket.PriorityValue.Label,
+            Language = ticket.Language,
+            LanguageLabel = ticket.LanguageValue.Label,
             Category = ticket.Category,
             Tags = ticket.Tags,
             OwningTeamId = ticket.OwningTeamId,
@@ -72,8 +76,7 @@ public record TicketDto : BaseNumericAuditableEntityDto
             CreationTime = ticket.CreationTime,
             CreatorUserId = ticket.CreatorUserId,
             LastModifierUserId = ticket.LastModifierUserId,
-            LastModificationTime = ticket.LastModificationTime
+            LastModificationTime = ticket.LastModificationTime,
         };
     }
 }
-

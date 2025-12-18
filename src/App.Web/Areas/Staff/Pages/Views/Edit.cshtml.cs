@@ -70,29 +70,32 @@ public class Edit : BaseStaffPageModel
 
         await LoadOptionsAsync(cancellationToken);
 
-        Form = new EditViewForm
-        {
-            Name = view.Name,
-            Description = view.Description,
-        };
+        Form = new EditViewForm { Name = view.Name, Description = view.Description };
 
         // Load existing conditions into filter builder
         FilterBuilderModel.Conditions = view.Conditions;
 
         // Load existing sort levels
-        SortConfiguratorModel.SortLevels = view.SortLevels.Select(s => new SortLevelModel
-        {
-            Order = s.Order,
-            Field = s.Field,
-            Direction = s.Direction
-        }).ToList();
+        SortConfiguratorModel.SortLevels = view
+            .SortLevels.Select(s => new SortLevelModel
+            {
+                Order = s.Order,
+                Field = s.Field,
+                Direction = s.Direction,
+            })
+            .ToList();
 
         // If no sort levels, use legacy sort fields
         if (!SortConfiguratorModel.SortLevels.Any() && !string.IsNullOrEmpty(view.SortField))
         {
             SortConfiguratorModel.SortLevels = new List<SortLevelModel>
             {
-                new() { Order = 0, Field = view.SortField, Direction = view.SortDirection ?? "asc" }
+                new()
+                {
+                    Order = 0,
+                    Field = view.SortField,
+                    Direction = view.SortDirection ?? "asc",
+                },
             };
         }
 
@@ -122,9 +125,7 @@ public class Edit : BaseStaffPageModel
 
         // Get visible columns from form
         var formColumns = Request.Form["VisibleColumns"];
-        var columnList = formColumns.Count > 0
-            ? formColumns.ToList()
-            : VisibleColumns;
+        var columnList = formColumns.Count > 0 ? formColumns.ToList() : VisibleColumns;
 
         // Validate at least one column is selected
         if (!columnList.Any())
@@ -174,12 +175,14 @@ public class Edit : BaseStaffPageModel
 
             if (!string.IsNullOrEmpty(field))
             {
-                sortLevels.Add(new UpdateTicketView.SortLevelInput
-                {
-                    Order = int.TryParse(orderStr, out var order) ? order : i,
-                    Field = field,
-                    Direction = direction ?? "asc"
-                });
+                sortLevels.Add(
+                    new UpdateTicketView.SortLevelInput
+                    {
+                        Order = int.TryParse(orderStr, out var order) ? order : i,
+                        Field = field,
+                        Direction = direction ?? "asc",
+                    }
+                );
             }
             i++;
         }
@@ -187,12 +190,14 @@ public class Edit : BaseStaffPageModel
         // Default sort if none provided
         if (!sortLevels.Any())
         {
-            sortLevels.Add(new UpdateTicketView.SortLevelInput
-            {
-                Order = 0,
-                Field = "CreationTime",
-                Direction = "desc"
-            });
+            sortLevels.Add(
+                new UpdateTicketView.SortLevelInput
+                {
+                    Order = 0,
+                    Field = "CreationTime",
+                    Direction = "desc",
+                }
+            );
         }
 
         return sortLevels;
@@ -205,37 +210,52 @@ public class Edit : BaseStaffPageModel
 
         // Load users for assignee filter
         var usersResponse = await Mediator.Send(new GetUsers.Query(), cancellationToken);
-        FilterBuilderModel.Users = usersResponse.Result.Items.Select(u => new UserOption
-        {
-            Id = u.Id.ToString(),
-            Name = u.FullName,
-            IsDeactivated = !u.IsActive
-        }).ToList();
+        FilterBuilderModel.Users = usersResponse
+            .Result.Items.Select(u => new UserOption
+            {
+                Id = u.Id.ToString(),
+                Name = u.FullName,
+                IsDeactivated = !u.IsActive,
+            })
+            .ToList();
 
         // Load teams
         var teamsResponse = await Mediator.Send(new GetTeams.Query(), cancellationToken);
-        FilterBuilderModel.Teams = teamsResponse.Result.Items.Select(t => new TeamOption
-        {
-            Id = t.Id.ToString(),
-            Name = t.Name
-        }).ToList();
+        FilterBuilderModel.Teams = teamsResponse
+            .Result.Items.Select(t => new TeamOption { Id = t.Id.ToString(), Name = t.Name })
+            .ToList();
 
         // Load statuses and priorities dynamically from config service
-        var statuses = await _configService.GetAllStatusesAsync(includeInactive: true, cancellationToken);
-        FilterBuilderModel.Statuses = statuses.Select(s => new SelectOption
-        {
-            Value = s.DeveloperName,
-            Label = s.IsActive ? s.Label : $"{s.Label} (inactive)"
-        }).ToList();
+        var statuses = await _configService.GetAllStatusesAsync(
+            includeInactive: true,
+            cancellationToken
+        );
+        FilterBuilderModel.Statuses = statuses
+            .Select(s => new SelectOption
+            {
+                Value = s.DeveloperName,
+                Label = s.IsActive ? s.Label : $"{s.Label} (inactive)",
+            })
+            .ToList();
 
-        var priorities = await _configService.GetAllPrioritiesAsync(includeInactive: true, cancellationToken);
+        var priorities = await _configService.GetAllPrioritiesAsync(
+            includeInactive: true,
+            cancellationToken
+        );
         FilterBuilderModel.Priorities = priorities
             .OrderBy(p => p.SortOrder)
             .Select(p => new SelectOption
             {
                 Value = p.DeveloperName,
-                Label = p.IsActive ? p.Label : $"{p.Label} (inactive)"
-            }).ToList();
+                Label = p.IsActive ? p.Label : $"{p.Label} (inactive)",
+            })
+            .ToList();
+
+        // Load languages from ValueObject
+        FilterBuilderModel.Languages = Domain
+            .ValueObjects.TicketLanguage.SupportedTypes.OrderBy(l => l.SortOrder)
+            .Select(l => new SelectOption { Value = l.DeveloperName, Label = l.Label })
+            .ToList();
 
         // Load sort configurator data
         SortConfiguratorModel = SortConfiguratorViewModel.CreateWithDefaults();

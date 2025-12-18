@@ -38,6 +38,11 @@ public class FilterBuilderViewModel
     public List<SelectOption> Priorities { get; set; } = new();
 
     /// <summary>
+    /// Available languages for language filters.
+    /// </summary>
+    public List<SelectOption> Languages { get; set; } = new();
+
+    /// <summary>
     /// Relative date presets.
     /// </summary>
     public List<SelectOption> DatePresets { get; set; } = new();
@@ -54,24 +59,26 @@ public class FilterBuilderViewModel
     {
         var model = new FilterBuilderViewModel
         {
-            Attributes = FilterAttributes.All.Select(a => new FilterAttributeModel
-            {
-                Field = a.Field,
-                Label = a.Label,
-                Type = a.Type,
-                Operators = a.Operators.Select(o => new OperatorOption
+            Attributes = FilterAttributes
+                .All.Select(a => new FilterAttributeModel
                 {
-                    Value = o.Value,
-                    Label = o.Label,
-                    RequiresValue = o.RequiresValue,
-                    AllowsMultipleValues = o.AllowsMultipleValues
-                }).ToList()
-            }).ToList(),
-            DatePresets = RelativeDatePresets.Presets.Select(p => new SelectOption
-            {
-                Value = p.Value,
-                Label = p.Label
-            }).ToList()
+                    Field = a.Field,
+                    Label = a.Label,
+                    Type = a.Type,
+                    Operators = a
+                        .Operators.Select(o => new OperatorOption
+                        {
+                            Value = o.Value,
+                            Label = o.Label,
+                            RequiresValue = o.RequiresValue,
+                            AllowsMultipleValues = o.AllowsMultipleValues,
+                        })
+                        .ToList(),
+                })
+                .ToList(),
+            DatePresets = RelativeDatePresets
+                .Presets.Select(p => new SelectOption { Value = p.Value, Label = p.Label })
+                .ToList(),
         };
         return model;
     }
@@ -111,4 +118,3 @@ public class SelectOption
     public string Value { get; set; } = null!;
     public string Label { get; set; } = null!;
 }
-

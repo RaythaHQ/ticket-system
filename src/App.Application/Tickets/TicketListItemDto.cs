@@ -16,6 +16,8 @@ public record TicketListItemDto : BaseNumericEntityDto
     public string StatusLabel { get; init; } = null!;
     public string Priority { get; init; } = null!;
     public string PriorityLabel { get; init; } = null!;
+    public string Language { get; init; } = null!;
+    public string LanguageLabel { get; init; } = null!;
     public string? Category { get; init; }
     public List<string>? Tags { get; init; }
     public ShortGuid? AssigneeId { get; init; }
@@ -48,6 +50,8 @@ public record TicketListItemDto : BaseNumericEntityDto
             StatusLabel = Domain.ValueObjects.TicketStatus.From(ticket.Status).Label,
             Priority = ticket.Priority,
             PriorityLabel = Domain.ValueObjects.TicketPriority.From(ticket.Priority).Label,
+            Language = ticket.Language,
+            LanguageLabel = Domain.ValueObjects.TicketLanguage.From(ticket.Language).Label,
             Category = ticket.Category,
             Tags = ticket.Tags,
             AssigneeId = ticket.AssigneeId,
@@ -94,6 +98,8 @@ public record TicketListItemDto : BaseNumericEntityDto
             StatusLabel = ticket.StatusValue.Label,
             Priority = ticket.Priority,
             PriorityLabel = ticket.PriorityValue.Label,
+            Language = ticket.Language,
+            LanguageLabel = ticket.LanguageValue.Label,
             Category = ticket.Category,
             Tags = ticket.Tags,
             AssigneeId = ticket.AssigneeId,

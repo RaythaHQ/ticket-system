@@ -1,15 +1,15 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
+using App.Application.Common.Interfaces;
+using App.Application.Contacts.Commands;
+using App.Application.Contacts.Queries;
+using App.Application.TicketConfig;
 using App.Application.Tickets.Commands;
 using App.Application.Tickets.Queries;
-using App.Application.Contacts.Queries;
-using App.Application.Contacts.Commands;
-using App.Application.Common.Interfaces;
-using App.Application.TicketConfig;
 using App.Domain.ValueObjects;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using CSharpVitamins;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Staff.Pages.Tickets;
 
@@ -32,10 +32,17 @@ public class Create : BaseStaffPageModel
     public string? BackToListUrl { get; set; }
 
     public List<AssigneeSelectItem> AvailableAssignees { get; set; } = new();
-    public IReadOnlyList<TicketPriorityConfigDto> AvailablePriorities { get; set; } = new List<TicketPriorityConfigDto>();
+    public IReadOnlyList<TicketPriorityConfigDto> AvailablePriorities { get; set; } =
+        new List<TicketPriorityConfigDto>();
+    public IReadOnlyList<TicketLanguage> AvailableLanguages { get; set; } =
+        TicketLanguage.SupportedTypes.ToList();
     public string DefaultPriority { get; set; } = "normal";
 
-    public async Task<IActionResult> OnGet(long? contactId, string? backToListUrl, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnGet(
+        long? contactId,
+        string? backToListUrl,
+        CancellationToken cancellationToken
+    )
     {
         ViewData["Title"] = "Create Ticket";
         ViewData["ActiveMenu"] = "Tickets";
@@ -52,7 +59,10 @@ public class Create : BaseStaffPageModel
     }
 
     // Handler for contact search/lookup
-    public async Task<IActionResult> OnGetSearchContact(string searchTerm, CancellationToken cancellationToken)
+    public async Task<IActionResult> OnGetSearchContact(
+        string searchTerm,
+        CancellationToken cancellationToken
+    )
     {
         if (string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -71,7 +81,7 @@ public class Create : BaseStaffPageModel
             email = c.Email,
             phone = c.PrimaryPhone,
             organizationAccount = c.OrganizationAccount,
-            ticketCount = c.TicketCount
+            ticketCount = c.TicketCount,
         });
 
         return new JsonResult(new { results });
@@ -88,21 +98,23 @@ public class Create : BaseStaffPageModel
             );
 
             var contact = response.Result;
-            return new JsonResult(new
-            {
-                success = true,
-                contact = new
+            return new JsonResult(
+                new
                 {
-                    id = contact.Id,
-                    name = contact.Name,
-                    email = contact.Email,
-                    phoneNumbers = contact.PhoneNumbers,
-                    primaryPhone = contact.PhoneNumbers.FirstOrDefault(),
-                    address = contact.Address,
-                    organizationAccount = contact.OrganizationAccount,
-                    ticketCount = contact.TicketCount
+                    success = true,
+                    contact = new
+                    {
+                        id = contact.Id,
+                        name = contact.Name,
+                        email = contact.Email,
+                        phoneNumbers = contact.PhoneNumbers,
+                        primaryPhone = contact.PhoneNumbers.FirstOrDefault(),
+                        address = contact.Address,
+                        organizationAccount = contact.OrganizationAccount,
+                        ticketCount = contact.TicketCount,
+                    },
                 }
-            });
+            );
         }
         catch
         {
@@ -127,7 +139,7 @@ public class Create : BaseStaffPageModel
                     FirstName = Form.NewContactFirstName,
                     LastName = Form.NewContactLastName,
                     Email = Form.NewContactEmail,
-                    PhoneNumbers = phoneNumbers
+                    PhoneNumbers = phoneNumbers,
                 },
                 cancellationToken
             );
@@ -155,11 +167,15 @@ public class Create : BaseStaffPageModel
             Title = Form.Title,
             Description = Form.Description,
             Priority = Form.Priority,
+            Language = Form.Language,
             Category = Form.Category,
-            Tags = Form.Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(t => t.Trim()).ToList(),
+            Tags = Form
+                .Tags?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(t => t.Trim())
+                .ToList(),
             OwningTeamId = Form.OwningTeamId,
             AssigneeId = Form.AssigneeId,
-            ContactId = Form.ContactId
+            ContactId = Form.ContactId,
         };
 
         var response = await Mediator.Send(command, cancellationToken);
@@ -167,7 +183,10 @@ public class Create : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage($"Ticket #{response.Result} created successfully.");
-            return RedirectToPage(RouteNames.Tickets.Details, new { id = response.Result, backToListUrl = BackToListUrl });
+            return RedirectToPage(
+                RouteNames.Tickets.Details,
+                new { id = response.Result, backToListUrl = BackToListUrl }
+            );
         }
 
         SetErrorMessage(response.GetErrors());
@@ -178,23 +197,25 @@ public class Create : BaseStaffPageModel
     private async Task LoadSelectListsAsync(CancellationToken cancellationToken)
     {
         var canManageTickets = TicketPermissionService.CanManageTickets();
-        
+
         var assigneeOptionsResponse = await Mediator.Send(
             new GetAssigneeSelectOptions.Query
             {
                 CanManageTickets = canManageTickets,
-                CurrentUserId = CurrentUser.UserId?.Guid
+                CurrentUserId = CurrentUser.UserId?.Guid,
             },
             cancellationToken
         );
 
-        AvailableAssignees = assigneeOptionsResponse.Result.Select(a => new AssigneeSelectItem
-        {
-            Value = a.Value,
-            DisplayText = a.DisplayText,
-            TeamId = a.TeamId,
-            AssigneeId = a.AssigneeId
-        }).ToList();
+        AvailableAssignees = assigneeOptionsResponse
+            .Result.Select(a => new AssigneeSelectItem
+            {
+                Value = a.Value,
+                DisplayText = a.DisplayText,
+                TeamId = a.TeamId,
+                AssigneeId = a.AssigneeId,
+            })
+            .ToList();
 
         // Load priorities from config
         AvailablePriorities = await _configService.GetActivePrioritiesAsync(cancellationToken);
@@ -212,6 +233,9 @@ public class Create : BaseStaffPageModel
 
         [Required]
         public string Priority { get; set; } = string.Empty;
+
+        [Required]
+        public string Language { get; set; } = TicketLanguage.ENGLISH;
 
         public string? Category { get; set; }
 
@@ -250,4 +274,3 @@ public class Create : BaseStaffPageModel
         public ShortGuid? AssigneeId { get; init; }
     }
 }
-

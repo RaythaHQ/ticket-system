@@ -1,0 +1,375 @@
+@page "/staff/activity-log"
+@model App.Web.Areas.Staff.Pages.ActivityLog.Index
+@using App.Web.Areas.Staff.Pages.Shared
+
+@{
+    ViewData["Title"] = "Activity Log";
+    ViewData["ActiveMenu"] = "ActivityLog";
+}
+
+<div class="staff-page-heading mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-activity me-2"></i>Activity Log
+    </h1>
+    <div class="d-flex align-items-center gap-2">
+        <span class="connection-status" id="connection-status">
+            <i class="bi bi-circle-fill text-warning"></i>
+            <span class="ms-1">Connecting...</span>
+        </span>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Activity Stream (Left side - main content) -->
+    <div class="col-lg-8">
+        <div class="staff-card">
+            <div class="staff-card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-broadcast me-2"></i>Live Activity Stream
+                </h5>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-clear-stream" title="Clear stream">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-pause-stream" title="Pause stream">
+                        <i class="bi bi-pause-fill"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="staff-card-body p-0">
+                <div id="activity-stream" class="activity-stream">
+                    <div class="activity-stream-empty" id="stream-empty">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <p class="text-muted mt-3 mb-0">Waiting for activity...</p>
+                        <small class="text-muted">New ticket updates will appear here in real-time</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online Users (Right side - sidebar) -->
+    <div class="col-lg-4">
+        <div class="staff-card">
+            <div class="staff-card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-people me-2"></i>Online Users
+                    <span class="staff-badge staff-badge-primary ms-2" id="online-count">0</span>
+                </h5>
+            </div>
+            <div class="staff-card-body p-0">
+                <div id="online-users-list" class="online-users-list">
+                    <div class="online-users-empty" id="users-empty">
+                        <p class="text-muted mb-0 py-4 text-center">
+                            <i class="bi bi-person-slash me-1"></i>No other users online
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Legend -->
+        <div class="staff-card mt-4">
+            <div class="staff-card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-info-circle me-2"></i>Activity Types
+                </h5>
+            </div>
+            <div class="staff-card-body">
+                <div class="activity-legend">
+                    <div class="legend-item">
+                        <span class="activity-icon ticket-created"><i class="bi bi-plus-circle"></i></span>
+                        <span>Ticket Created</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="activity-icon ticket-assigned"><i class="bi bi-person-check"></i></span>
+                        <span>Ticket Assigned</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="activity-icon ticket-status-changed"><i class="bi bi-arrow-repeat"></i></span>
+                        <span>Status Changed</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="activity-icon comment-added"><i class="bi bi-chat-dots"></i></span>
+                        <span>Comment Added</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="activity-icon ticket-closed"><i class="bi bi-check-circle"></i></span>
+                        <span>Ticket Closed</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="activity-icon ticket-reopened"><i class="bi bi-arrow-counterclockwise"></i></span>
+                        <span>Ticket Reopened</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section headstyles {
+<style>
+    /* Activity Stream Styles */
+    .activity-stream {
+        max-height: 70vh;
+        overflow-y: auto;
+        min-height: 400px;
+    }
+
+    .activity-stream-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+
+    .activity-stream-empty.hidden {
+        display: none;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--staff-border);
+        transition: background-color 0.2s ease;
+        animation: slideIn 0.3s ease;
+    }
+
+    .activity-item:hover {
+        background-color: rgba(0, 157, 220, 0.03);
+    }
+
+    .activity-item.new-item {
+        background-color: rgba(0, 157, 220, 0.08);
+    }
+
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .activity-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1rem;
+    }
+
+    .activity-icon.ticket-created {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+
+    .activity-icon.ticket-assigned {
+        background-color: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+
+    .activity-icon.ticket-status-changed,
+    .activity-icon.ticket-updated {
+        background-color: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+    }
+
+    .activity-icon.comment-added {
+        background-color: rgba(0, 157, 220, 0.1);
+        color: rgb(0, 157, 220);
+    }
+
+    .activity-icon.ticket-closed {
+        background-color: rgba(102, 16, 242, 0.1);
+        color: #6610f2;
+    }
+
+    .activity-icon.ticket-reopened {
+        background-color: rgba(253, 126, 20, 0.1);
+        color: #fd7e14;
+    }
+
+    .activity-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .activity-message {
+        font-weight: 500;
+        color: var(--staff-text);
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-message a {
+        color: rgb(0, 157, 220);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .activity-message a:hover {
+        text-decoration: underline;
+    }
+
+    .activity-details {
+        font-size: 0.875rem;
+        color: var(--staff-text-muted);
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .activity-meta {
+        font-size: 0.75rem;
+        color: var(--staff-text-muted);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .activity-actor {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    /* Online Users Styles */
+    .online-users-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .online-users-empty {
+        display: block;
+    }
+
+    .online-users-empty.hidden {
+        display: none;
+    }
+
+    .online-user-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid var(--staff-border);
+    }
+
+    .online-user-item:last-child {
+        border-bottom: none;
+    }
+
+    .online-user-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: white;
+        position: relative;
+    }
+
+    .online-status-indicator {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+
+    .online-status-indicator.online {
+        background-color: #198754;
+    }
+
+    .online-status-indicator.idle {
+        background-color: #ffc107;
+    }
+
+    .online-user-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .online-user-name {
+        font-weight: 500;
+        color: var(--staff-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .online-user-status {
+        font-size: 0.75rem;
+        color: var(--staff-text-muted);
+    }
+
+    /* Connection Status */
+    .connection-status {
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .connection-status i {
+        font-size: 0.5rem;
+    }
+
+    /* Legend */
+    .activity-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .legend-item .activity-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+
+    /* Pause state */
+    .activity-stream.paused {
+        opacity: 0.7;
+    }
+
+    .activity-stream.paused::after {
+        content: 'PAUSED';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+</style>
+}
+
+@section Scripts {
+<script src="~/js/activity-stream.js" asp-append-version="true"></script>
+}

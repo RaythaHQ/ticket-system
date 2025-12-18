@@ -43,6 +43,7 @@ public static class ColumnRegistry
         },
         new() { Field = "Status", Label = "Status" },
         new() { Field = "Priority", Label = "Priority" },
+        new() { Field = "Language", Label = "Language" },
         new() { Field = "Category", Label = "Category" },
         new() { Field = "AssigneeName", Label = "Assignee" },
         new() { Field = "OwningTeamName", Label = "Team" },

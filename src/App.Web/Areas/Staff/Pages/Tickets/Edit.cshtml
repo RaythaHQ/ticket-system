@@ -497,6 +497,27 @@
                                                 }
                     </div>
 
+                    <!-- Language Picker -->
+                    <div class="edit-section-header">
+                        <div class="section-icon assignment">
+                            <i class="bi bi-translate"></i>
+                        </div>
+                        <h6>Language</h6>
+                    </div>
+
+                    <div class="status-priority-picker mb-2">
+                        @foreach (var language in Model.AvailableLanguages)
+                        {
+                            var isSelected = Model.Form.Language == language.DeveloperName;
+                            <label class="status-priority-option @(isSelected ? "selected" : "")"
+                                data-language="@language.DeveloperName">
+                                <input type="radio" name="Form.Language" value="@language.DeveloperName" @(isSelected ?
+                                                                                                                                         "checked" : "") />
+                            <span class="option-label">@language.Label</span>
+                        </label>
+                                                }
+                    </div>
+
                     <!-- Category & Tags -->
                     <div class="row">
                         <div class="col-md-6 mb-2">
@@ -666,6 +687,15 @@
                 });
             });
 
+            // Language picker handling
+            const languageOptions = document.querySelectorAll('.status-priority-option[data-language]');
+            languageOptions.forEach(option => {
+                option.addEventListener('click', function () {
+                    languageOptions.forEach(o => o.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+            });
+
             // Contact search handling
             const contactSearch = document.getElementById('contact-search');
             const contactSearchResults = document.getElementById('contact-search-results');
@@ -700,24 +730,24 @@
                                     contactSearchResults.innerHTML = '<div class="list-group-item text-muted">No contacts found</div>';
                                 } else {
                                     contactSearchResults.innerHTML = results.map(contact => `
-                                            <button type="button" class="list-group-item list-group-item-action" 
-                                                    data-contact-id="${contact.id}"
-                                                    data-contact-name="${contact.name || ''}"
-                                                    data-contact-email="${contact.email || ''}"
-                                                    data-contact-phone="${contact.phone || ''}">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="me-3">
-                                                        <div style="width: 32px; height: 32px; border-radius: 50%; background: #198754; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">
-                                                            ${(contact.name || '?').charAt(0).toUpperCase()}
+                                                <button type="button" class="list-group-item list-group-item-action" 
+                                                        data-contact-id="${contact.id}"
+                                                        data-contact-name="${contact.name || ''}"
+                                                        data-contact-email="${contact.email || ''}"
+                                                        data-contact-phone="${contact.phone || ''}">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="me-3">
+                                                            <div style="width: 32px; height: 32px; border-radius: 50%; background: #198754; color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem;">
+                                                                ${(contact.name || '?').charAt(0).toUpperCase()}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-medium">${contact.name || 'Unknown'}</div>
+                                                            <small class="text-muted">${contact.email || contact.phone || 'ID: ' + contact.id}</small>
                                                         </div>
                                                     </div>
-                                                    <div>
-                                                        <div class="fw-medium">${contact.name || 'Unknown'}</div>
-                                                        <small class="text-muted">${contact.email || contact.phone || 'ID: ' + contact.id}</small>
-                                                    </div>
-                                                </div>
-                                            </button>
-                                        `).join('');
+                                                </button>
+                                            `).join('');
                                 }
                                 contactSearchResults.style.display = 'block';
                             })

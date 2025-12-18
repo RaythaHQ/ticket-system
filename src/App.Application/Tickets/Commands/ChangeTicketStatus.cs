@@ -66,8 +66,6 @@ public class ChangeTicketStatus
             CancellationToken cancellationToken
         )
         {
-            _permissionService.RequireCanManageTickets();
-
             var ticket = await _db.Tickets.FirstOrDefaultAsync(
                 t => t.Id == request.Id,
                 cancellationToken
@@ -75,6 +73,13 @@ public class ChangeTicketStatus
 
             if (ticket == null)
                 throw new NotFoundException("Ticket", request.Id);
+
+            // Check permission - user can change status if they have CanManageTickets, are assigned, or are in the team
+            await _permissionService.RequireCanEditTicketAsync(
+                ticket.AssigneeId,
+                ticket.OwningTeamId,
+                cancellationToken
+            );
 
             var oldStatus = ticket.Status;
             var newStatusLower = request.NewStatus.ToLower();
