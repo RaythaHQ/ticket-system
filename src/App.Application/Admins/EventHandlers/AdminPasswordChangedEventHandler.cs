@@ -1,10 +1,10 @@
-﻿using CSharpVitamins;
-using Mediator;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models.RenderModels;
 using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Events;
+using CSharpVitamins;
+using Mediator;
 
 namespace App.Application.Admins.EventHandlers;
 
@@ -74,7 +74,7 @@ public class AdminPasswordChangedEventHandler : INotificationHandler<AdminPasswo
                 To = new List<string> { entity.EmailAddress },
                 Subject = subject,
             };
-            _emailerService.SendEmail(emailMessage);
+            await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
         }
     }
 }

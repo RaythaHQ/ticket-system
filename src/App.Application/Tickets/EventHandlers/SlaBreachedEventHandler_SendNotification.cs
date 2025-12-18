@@ -142,7 +142,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                         Subject = subject,
                     };
 
-                    _emailerService.SendEmail(emailMessage);
+                    await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
                     _logger.LogInformation(
                         "Sent SLA breach notification for ticket {TicketId} to assignee {Email}",
@@ -170,7 +170,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                         Subject = subject,
                     };
 
-                    _emailerService.SendEmail(emailMessage);
+                    await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
                     _logger.LogInformation(
                         "Sent SLA breach notification for ticket {TicketId} to additional recipient {Email}",

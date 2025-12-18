@@ -128,6 +128,9 @@ public static class ConfigureServices
         services.AddScoped<INumericIdGenerator, NumericIdGenerator>();
         services.AddScoped<IFavoriteViewsService, FavoriteViewsService>();
 
+        // Cached services for performance - IMemoryCache is singleton, so caching works across requests
+        services.AddScoped<ICachedOrganizationService, CachedOrganizationService>();
+
         return services;
     }
 }

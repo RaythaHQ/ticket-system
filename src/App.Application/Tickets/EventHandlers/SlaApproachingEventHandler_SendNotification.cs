@@ -125,7 +125,7 @@ public class SlaApproachingEventHandler_SendNotification
                 Subject = subject,
             };
 
-            _emailerService.SendEmail(emailMessage);
+            await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
             _logger.LogInformation(
                 "Sent SLA approaching notification for ticket {TicketId} to {Email}",

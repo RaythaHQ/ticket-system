@@ -189,7 +189,7 @@ public class TicketCommentAddedEventHandler_SendNotification
                     Subject = subject,
                 };
 
-                _emailerService.SendEmail(emailMessage);
+                await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
                 _logger.LogInformation(
                     "Sent comment notification for ticket {TicketId} to {Email}",

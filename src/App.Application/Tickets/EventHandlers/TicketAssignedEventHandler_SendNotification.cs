@@ -157,7 +157,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
             Subject = subject,
         };
 
-        _emailerService.SendEmail(emailMessage);
+        await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
         _logger.LogInformation(
             "Sent ticket assignment notification for ticket {TicketId} to {Email}",
@@ -273,7 +273,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
                 Subject = subject,
             };
 
-            _emailerService.SendEmail(emailMessage);
+            await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
             _logger.LogInformation(
                 "Sent team assignment notification for ticket {TicketId} to team member {Email}",

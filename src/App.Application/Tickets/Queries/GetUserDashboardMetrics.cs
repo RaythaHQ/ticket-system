@@ -33,28 +33,40 @@ public class GetUserDashboardMetrics
             var thirtyDaysAgo = now.AddDays(-30);
 
             var userIdGuid = request.UserId.Guid;
-            
-            // Open tickets assigned to user
-            var openTicketsAssigned = await _db.Tickets
-                .AsNoTracking()
-                .CountAsync(t => t.AssigneeId == userIdGuid &&
-                    t.Status != TicketStatus.CLOSED && t.Status != TicketStatus.RESOLVED, cancellationToken);
 
-            // Tickets resolved in last 7 days
-            var ticketsResolvedLast7Days = await _db.Tickets
-                .AsNoTracking()
-                .CountAsync(t => t.AssigneeId == userIdGuid &&
-                    t.ResolvedAt.HasValue && t.ResolvedAt.Value >= sevenDaysAgo, cancellationToken);
+            // NOTE: DbContext is not thread-safe, so queries must be sequential
+            var openTicketsAssigned = await _db
+                .Tickets.AsNoTracking()
+                .CountAsync(
+                    t =>
+                        t.AssigneeId == userIdGuid
+                        && t.Status != TicketStatus.CLOSED
+                        && t.Status != TicketStatus.RESOLVED,
+                    cancellationToken
+                );
 
-            // Tickets resolved in last 30 days
-            var ticketsResolvedLast30Days = await _db.Tickets
-                .AsNoTracking()
-                .CountAsync(t => t.AssigneeId == userIdGuid &&
-                    t.ResolvedAt.HasValue && t.ResolvedAt.Value >= thirtyDaysAgo, cancellationToken);
+            var ticketsResolvedLast7Days = await _db
+                .Tickets.AsNoTracking()
+                .CountAsync(
+                    t =>
+                        t.AssigneeId == userIdGuid
+                        && t.ResolvedAt.HasValue
+                        && t.ResolvedAt.Value >= sevenDaysAgo,
+                    cancellationToken
+                );
 
-            // Calculate median close time for closed tickets
-            var closedTickets = await _db.Tickets
-                .AsNoTracking()
+            var ticketsResolvedLast30Days = await _db
+                .Tickets.AsNoTracking()
+                .CountAsync(
+                    t =>
+                        t.AssigneeId == userIdGuid
+                        && t.ResolvedAt.HasValue
+                        && t.ResolvedAt.Value >= thirtyDaysAgo,
+                    cancellationToken
+                );
+
+            var closedTickets = await _db
+                .Tickets.AsNoTracking()
                 .Where(t => t.AssigneeId == userIdGuid && t.ClosedAt.HasValue)
                 .Select(t => new { t.CreationTime, t.ClosedAt })
                 .ToListAsync(cancellationToken);
@@ -66,16 +78,16 @@ public class GetUserDashboardMetrics
                     .Select(t => (t.ClosedAt!.Value - t.CreationTime).TotalHours)
                     .OrderBy(h => h)
                     .ToList();
-                
+
                 int mid = closeTimes.Count / 2;
-                medianCloseTimeHours = closeTimes.Count % 2 == 0
-                    ? (closeTimes[mid - 1] + closeTimes[mid]) / 2
-                    : closeTimes[mid];
+                medianCloseTimeHours =
+                    closeTimes.Count % 2 == 0
+                        ? (closeTimes[mid - 1] + closeTimes[mid]) / 2
+                        : closeTimes[mid];
             }
 
-            // Reopen count - count of status changes to OPEN from closed/resolved
-            var reopenCount = await _db.TicketChangeLogEntries
-                .AsNoTracking()
+            var reopenCount = await _db
+                .TicketChangeLogEntries.AsNoTracking()
                 .Where(e => e.Ticket.AssigneeId == userIdGuid)
                 .Where(e => e.Message != null && e.Message.Contains("Ticket reopened"))
                 .CountAsync(cancellationToken);
@@ -83,21 +95,22 @@ public class GetUserDashboardMetrics
             var totalResolved = closedTickets.Count;
             var reopenRate = totalResolved > 0 ? (double)reopenCount / totalResolved * 100 : 0;
 
-            // SLA breach count
-            var slaBreachCount = await _db.Tickets
-                .AsNoTracking()
-                .CountAsync(t => t.AssigneeId == userIdGuid &&
-                    t.SlaStatus == SlaStatus.BREACHED, cancellationToken);
+            var slaBreachCount = await _db
+                .Tickets.AsNoTracking()
+                .CountAsync(
+                    t => t.AssigneeId == userIdGuid && t.SlaStatus == SlaStatus.BREACHED,
+                    cancellationToken
+                );
 
-            // SLA approaching count
-            var slaApproachingCount = await _db.Tickets
-                .AsNoTracking()
-                .CountAsync(t => t.AssigneeId == userIdGuid &&
-                    t.SlaStatus == SlaStatus.APPROACHING_BREACH, cancellationToken);
+            var slaApproachingCount = await _db
+                .Tickets.AsNoTracking()
+                .CountAsync(
+                    t => t.AssigneeId == userIdGuid && t.SlaStatus == SlaStatus.APPROACHING_BREACH,
+                    cancellationToken
+                );
 
-            // Get teams the user is a member of
-            var userTeamIds = await _db.TeamMemberships
-                .AsNoTracking()
+            var userTeamIds = await _db
+                .TeamMemberships.AsNoTracking()
                 .Where(m => m.StaffAdminId == userIdGuid)
                 .Select(m => m.TeamId)
                 .ToListAsync(cancellationToken);
@@ -105,40 +118,47 @@ public class GetUserDashboardMetrics
             var teamSummaries = new List<TeamSummaryDto>();
             if (userTeamIds.Any())
             {
-                var teams = await _db.Teams
-                    .AsNoTracking()
+                var teams = await _db
+                    .Teams.AsNoTracking()
                     .Where(t => userTeamIds.Contains(t.Id))
                     .Select(t => new
                     {
                         t.Id,
                         t.Name,
-                        OpenTickets = t.Tickets.Count(x => x.Status != TicketStatus.CLOSED && x.Status != TicketStatus.RESOLVED),
-                        UnassignedTickets = t.Tickets.Count(x => x.AssigneeId == null && x.Status != TicketStatus.CLOSED)
+                        OpenTickets = t.Tickets.Count(x =>
+                            x.Status != TicketStatus.CLOSED && x.Status != TicketStatus.RESOLVED
+                        ),
+                        UnassignedTickets = t.Tickets.Count(x =>
+                            x.AssigneeId == null && x.Status != TicketStatus.CLOSED
+                        ),
                     })
                     .ToListAsync(cancellationToken);
 
-                teamSummaries = teams.Select(t => new TeamSummaryDto
-                {
-                    TeamId = t.Id,
-                    TeamName = t.Name,
-                    OpenTickets = t.OpenTickets,
-                    UnassignedTickets = t.UnassignedTickets
-                }).ToList();
+                teamSummaries = teams
+                    .Select(t => new TeamSummaryDto
+                    {
+                        TeamId = t.Id,
+                        TeamName = t.Name,
+                        OpenTickets = t.OpenTickets,
+                        UnassignedTickets = t.UnassignedTickets,
+                    })
+                    .ToList();
             }
 
-            return new QueryResponseDto<UserDashboardMetricsDto>(new UserDashboardMetricsDto
-            {
-                OpenTicketsAssigned = openTicketsAssigned,
-                TicketsResolvedLast7Days = ticketsResolvedLast7Days,
-                TicketsResolvedLast30Days = ticketsResolvedLast30Days,
-                MedianCloseTimeHours = medianCloseTimeHours,
-                ReopenCount = reopenCount,
-                ReopenRate = Math.Round(reopenRate, 2),
-                SlaBreachCount = slaBreachCount,
-                SlaApproachingCount = slaApproachingCount,
-                TeamSummaries = teamSummaries
-            });
+            return new QueryResponseDto<UserDashboardMetricsDto>(
+                new UserDashboardMetricsDto
+                {
+                    OpenTicketsAssigned = openTicketsAssigned,
+                    TicketsResolvedLast7Days = ticketsResolvedLast7Days,
+                    TicketsResolvedLast30Days = ticketsResolvedLast30Days,
+                    MedianCloseTimeHours = medianCloseTimeHours,
+                    ReopenCount = reopenCount,
+                    ReopenRate = Math.Round(reopenRate, 2),
+                    SlaBreachCount = slaBreachCount,
+                    SlaApproachingCount = slaApproachingCount,
+                    TeamSummaries = teamSummaries,
+                }
+            );
         }
     }
 }
-

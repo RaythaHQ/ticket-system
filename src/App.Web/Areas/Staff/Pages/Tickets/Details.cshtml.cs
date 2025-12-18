@@ -6,6 +6,7 @@ using App.Application.Tickets.Commands;
 using App.Application.Tickets.Queries;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
+using CSharpVitamins;
 using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Staff.Pages.Tickets;
@@ -43,6 +44,7 @@ public class Details : BaseStaffPageModel
         ViewData["Title"] = $"Ticket #{id}";
         ViewData["ActiveMenu"] = "Tickets";
 
+        // NOTE: DbContext is scoped per-request and not thread-safe, so queries must be sequential
         var ticketResponse = await Mediator.Send(
             new GetTicketById.Query { Id = id },
             cancellationToken
@@ -61,7 +63,6 @@ public class Details : BaseStaffPageModel
         );
         ChangeLog = changeLogResponse.Result;
 
-        // Load following status and followers list
         var isFollowingResponse = await Mediator.Send(
             new IsFollowingTicket.Query { TicketId = id },
             cancellationToken
@@ -74,7 +75,7 @@ public class Details : BaseStaffPageModel
         );
         Followers = followersResponse.Result;
 
-        // Load full contact details if contact is assigned
+        // Load full contact details if contact is assigned (depends on ticket result)
         if (Ticket.ContactId.HasValue)
         {
             var contactResponse = await Mediator.Send(
@@ -206,6 +207,52 @@ public class Details : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage("You are no longer following this ticket.");
+        }
+        else
+        {
+            SetErrorMessage(response.GetErrors());
+        }
+
+        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+    }
+
+    public async Task<IActionResult> OnPostAddFollower(
+        long id,
+        ShortGuid staffAdminId,
+        CancellationToken cancellationToken
+    )
+    {
+        var command = new AddTicketFollower.Command { TicketId = id, StaffAdminId = staffAdminId };
+        var response = await Mediator.Send(command, cancellationToken);
+
+        if (response.Success)
+        {
+            SetSuccessMessage("Follower added successfully.");
+        }
+        else
+        {
+            SetErrorMessage(response.GetErrors());
+        }
+
+        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+    }
+
+    public async Task<IActionResult> OnPostRemoveFollower(
+        long id,
+        ShortGuid staffAdminId,
+        CancellationToken cancellationToken
+    )
+    {
+        var command = new RemoveTicketFollower.Command
+        {
+            TicketId = id,
+            StaffAdminId = staffAdminId,
+        };
+        var response = await Mediator.Send(command, cancellationToken);
+
+        if (response.Success)
+        {
+            SetSuccessMessage("Follower removed.");
         }
         else
         {

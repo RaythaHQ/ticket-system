@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using App.Application.Common.Models;
 using App.Domain.Entities;
 using CSharpVitamins;
@@ -32,6 +33,56 @@ public record TicketListItemDto : BaseNumericEntityDto
     public DateTime? ClosedAt { get; init; }
     public string? CreatedByStaffName { get; init; }
 
+    /// <summary>
+    /// Gets an Expression-based projection for EF Core translation.
+    /// This allows CommentCount to be calculated as a SQL subquery instead of loading all comments.
+    /// </summary>
+    public static Expression<Func<Ticket, TicketListItemDto>> GetProjection()
+    {
+        return ticket => new TicketListItemDto
+        {
+            Id = ticket.Id,
+            Title = ticket.Title,
+            Description = ticket.Description,
+            Status = ticket.Status,
+            StatusLabel = Domain.ValueObjects.TicketStatus.From(ticket.Status).Label,
+            Priority = ticket.Priority,
+            PriorityLabel = Domain.ValueObjects.TicketPriority.From(ticket.Priority).Label,
+            Category = ticket.Category,
+            Tags = ticket.Tags,
+            AssigneeId = ticket.AssigneeId,
+            AssigneeName =
+                ticket.Assignee != null
+                    ? ticket.Assignee.FirstName + " " + ticket.Assignee.LastName
+                    : null,
+            OwningTeamId = ticket.OwningTeamId,
+            OwningTeamName = ticket.OwningTeam != null ? ticket.OwningTeam.Name : null,
+            ContactName =
+                ticket.Contact != null
+                    ? ticket.Contact.FirstName
+                        + (ticket.Contact.LastName != null ? " " + ticket.Contact.LastName : "")
+                    : null,
+            ContactId = ticket.ContactId,
+            CommentCount = ticket.Comments.Count, // Translated to SQL COUNT subquery
+            SlaDueAt = ticket.SlaDueAt,
+            SlaStatus = ticket.SlaStatus,
+            SlaStatusLabel =
+                ticket.SlaStatus != null
+                    ? Domain.ValueObjects.SlaStatus.From(ticket.SlaStatus).Label
+                    : null,
+            CreationTime = ticket.CreationTime,
+            LastModificationTime = ticket.LastModificationTime,
+            ClosedAt = ticket.ClosedAt,
+            CreatedByStaffName =
+                ticket.CreatedByStaff != null
+                    ? ticket.CreatedByStaff.FirstName + " " + ticket.CreatedByStaff.LastName
+                    : null,
+        };
+    }
+
+    /// <summary>
+    /// Maps from an entity when already loaded (for use outside of EF Core queries).
+    /// </summary>
     public static TicketListItemDto MapFrom(Ticket ticket)
     {
         return new TicketListItemDto
@@ -58,8 +109,7 @@ public record TicketListItemDto : BaseNumericEntityDto
             CreationTime = ticket.CreationTime,
             LastModificationTime = ticket.LastModificationTime,
             ClosedAt = ticket.ClosedAt,
-            CreatedByStaffName = ticket.CreatedByStaff?.FullName
+            CreatedByStaffName = ticket.CreatedByStaff?.FullName,
         };
     }
 }
-

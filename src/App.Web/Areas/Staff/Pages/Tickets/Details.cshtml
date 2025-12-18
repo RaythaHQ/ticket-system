@@ -388,31 +388,45 @@
 
         <!-- Followers -->
         <div class="staff-card">
-            <div class="staff-card-header">
-                <h5><i class="bi bi-bell me-2"></i>Followers (@Model.Followers.Count())</h5>
+            <div class="staff-card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-bell me-2"></i>Followers (@Model.Followers.Count())</h5>
+                <div class="position-relative">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="add-follower-btn" title="Add follower">
+                        <i class="bi bi-plus-lg"></i>
+                    </button>
+                    <div id="add-follower-dropdown" class="follower-dropdown" style="display: none;">
+                        <div class="follower-dropdown-search">
+                            <input type="text" class="form-control form-control-sm" id="follower-search-input" 
+                                   placeholder="Search users..." autocomplete="off">
+                        </div>
+                        <div id="follower-search-results" class="follower-dropdown-results"></div>
+                    </div>
+                </div>
             </div>
             <div class="staff-card-body">
                 @if (!Model.Followers.Any())
                 {
-                    <p class="text-muted mb-0 small fst-italic">No one is following this ticket yet.</p>
+                    <p class="text-muted mb-0 small fst-italic" id="no-followers-msg">No one is following this ticket yet.</p>
                 }
-                else
-                {
-                    <div class="d-flex flex-wrap gap-2">
-                        @foreach (var follower in Model.Followers)
-                        {
-                            <div class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded-pill" 
-                                 style="background: rgba(0, 157, 220, 0.1); font-size: 0.8125rem;"
-                                 title="Following since @follower.FollowedAt.ToString("MMM dd, yyyy")">
-                                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
-                                     style="width: 22px; height: 22px; background: var(--staff-primary); font-size: 0.625rem;">
-                                    @(follower.StaffAdminName?.FirstOrDefault().ToString().ToUpper() ?? "?")
-                                </div>
-                                <span class="fw-medium" style="color: var(--staff-primary);">@follower.StaffAdminName</span>
+                <div class="d-flex flex-wrap gap-2" id="followers-list">
+                    @foreach (var follower in Model.Followers)
+                    {
+                        <div class="follower-pill d-inline-flex align-items-center gap-1 px-2 py-1 rounded-pill"
+                             title="Following since @follower.FollowedAt.ToString("MMM dd, yyyy")">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold"
+                                 style="width: 22px; height: 22px; background: var(--staff-primary); font-size: 0.625rem;">
+                                @(follower.StaffAdminName?.FirstOrDefault().ToString().ToUpper() ?? "?")
                             </div>
-                        }
-                    </div>
-                }
+                            <span class="fw-medium" style="color: var(--staff-primary);">@follower.StaffAdminName</span>
+                            <form method="post" asp-page-handler="RemoveFollower" asp-route-id="@Model.Ticket.Id" 
+                                  asp-route-staffAdminId="@follower.StaffAdminId" class="d-inline follower-remove-form">
+                                <button type="submit" class="follower-remove-btn" title="Remove follower">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
     </div>
@@ -587,6 +601,126 @@
             color: #64748b;
             margin-left: auto;
         }
+        
+        /* Follower management styles */
+        .follower-pill {
+            background: rgba(0, 157, 220, 0.1);
+            font-size: 0.8125rem;
+            position: relative;
+        }
+        
+        .follower-remove-btn {
+            display: none;
+            background: none;
+            border: none;
+            padding: 0;
+            margin-left: 2px;
+            cursor: pointer;
+            color: #64748b;
+            line-height: 1;
+            font-size: 0.875rem;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .follower-remove-btn:hover {
+            color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+        }
+        
+        .follower-pill:hover .follower-remove-btn {
+            display: inline-flex;
+        }
+        
+        .follower-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            width: 280px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid #e2e8f0;
+            z-index: 1000;
+        }
+        
+        .follower-dropdown-search {
+            padding: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .follower-dropdown-results {
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        
+        .follower-dropdown-item {
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+        
+        .follower-dropdown-item:hover {
+            background: rgba(0, 157, 220, 0.1);
+        }
+        
+        .follower-dropdown-item .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--staff-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .follower-dropdown-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .follower-dropdown-item .name {
+            font-weight: 500;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .follower-dropdown-item .email {
+            font-size: 0.75rem;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .follower-dropdown-empty {
+            padding: 1rem;
+            text-align: center;
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+        
+        .follower-dropdown-loading {
+            padding: 1rem;
+            text-align: center;
+            color: #64748b;
+        }
     </style>
 }
 
@@ -675,6 +809,107 @@
             });
             
             tribute.attach(textarea);
+        });
+
+        // Follower management functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const addBtn = document.getElementById('add-follower-btn');
+            const dropdown = document.getElementById('add-follower-dropdown');
+            const searchInput = document.getElementById('follower-search-input');
+            const resultsContainer = document.getElementById('follower-search-results');
+            const ticketId = @Model.Ticket.Id;
+            
+            if (!addBtn || !dropdown) return;
+            
+            // Get current follower IDs to filter them out of search results
+            const currentFollowerIds = new Set([
+                @foreach (var follower in Model.Followers)
+                {
+                    @:  '@follower.StaffAdminId',
+                }
+            ]);
+            
+            // Toggle dropdown
+            addBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isVisible = dropdown.style.display !== 'none';
+                dropdown.style.display = isVisible ? 'none' : 'block';
+                if (!isVisible) {
+                    searchInput.value = '';
+                    searchInput.focus();
+                    searchFollowers('');
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!dropdown.contains(e.target) && e.target !== addBtn) {
+                    dropdown.style.display = 'none';
+                }
+            });
+            
+            // Debounce function
+            function debounce(func, wait) {
+                let timeout;
+                return function(...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), wait);
+                };
+            }
+            
+            // Search for users
+            const searchFollowers = debounce(function(query) {
+                resultsContainer.innerHTML = '<div class="follower-dropdown-loading"><i class="bi bi-arrow-repeat"></i> Searching...</div>';
+                
+                fetch(`?handler=SearchMentionables&query=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Filter out teams and already-following users
+                        const availableUsers = data.users.filter(u => !currentFollowerIds.has(u.id));
+                        
+                        if (availableUsers.length === 0) {
+                            resultsContainer.innerHTML = '<div class="follower-dropdown-empty">No users found</div>';
+                            return;
+                        }
+                        
+                        resultsContainer.innerHTML = availableUsers.map(user => `
+                            <form method="post" action="?handler=AddFollower&id=${ticketId}&staffAdminId=${user.id}" class="follower-add-form">
+                                <button type="submit" class="follower-dropdown-item">
+                                    <div class="avatar">${(user.name || '?').charAt(0).toUpperCase()}</div>
+                                    <div class="info">
+                                        <div class="name">${escapeHtml(user.name)}</div>
+                                        <div class="email">${escapeHtml(user.email || '')}</div>
+                                    </div>
+                                </button>
+                            </form>
+                        `).join('');
+                        
+                        // Add anti-forgery token to forms
+                        document.querySelectorAll('.follower-add-form').forEach(form => {
+                            const tokenInput = document.createElement('input');
+                            tokenInput.type = 'hidden';
+                            tokenInput.name = '__RequestVerificationToken';
+                            tokenInput.value = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                            form.appendChild(tokenInput);
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Error searching users:', err);
+                        resultsContainer.innerHTML = '<div class="follower-dropdown-empty">Error searching users</div>';
+                    });
+            }, 200);
+            
+            // Handle search input
+            searchInput.addEventListener('input', function() {
+                searchFollowers(this.value);
+            });
+            
+            // HTML escape helper
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text || '';
+                return div.innerHTML;
+            }
         });
 
         // Initialize presence tracking for this ticket

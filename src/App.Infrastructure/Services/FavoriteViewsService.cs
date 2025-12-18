@@ -18,7 +18,8 @@ public class FavoriteViewsService : IFavoriteViewsService
     }
 
     public async Task<IEnumerable<GetUserFavoriteViews.FavoriteViewDto>> GetUserFavoriteViewsAsync(
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default
+    )
     {
         var userId = _currentUser.UserId?.Guid;
         if (!userId.HasValue)
@@ -26,8 +27,8 @@ public class FavoriteViewsService : IFavoriteViewsService
             return Enumerable.Empty<GetUserFavoriteViews.FavoriteViewDto>();
         }
 
-        var favorites = await _db.UserFavoriteViews
-            .AsNoTracking()
+        var favorites = await _db
+            .UserFavoriteViews.AsNoTracking()
             .Include(f => f.TicketView)
             .Where(f => f.UserId == userId.Value)
             .OrderBy(f => f.DisplayOrder)
@@ -36,11 +37,10 @@ public class FavoriteViewsService : IFavoriteViewsService
                 ViewId = f.TicketViewId,
                 Name = f.TicketView.Name,
                 Description = f.TicketView.Description,
-                DisplayOrder = f.DisplayOrder
+                DisplayOrder = f.DisplayOrder,
             })
             .ToListAsync(cancellationToken);
 
         return favorites;
     }
 }
-

@@ -1,43 +1,41 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
-using CSharpVitamins;
-using Mediator;
 using App.Application.AuthenticationSchemes;
-using App.Application.AuthenticationSchemes.Queries;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Utils;
 using App.Application.OrganizationSettings;
-using App.Application.OrganizationSettings.Queries;
 using App.Domain.ValueObjects;
+using App.Infrastructure.Services;
+using CSharpVitamins;
 
 namespace App.Web.Services;
 
 public class CurrentOrganization : ICurrentOrganization
 {
-    private OrganizationSettingsDto _organizationSettings;
-    private IEnumerable<AuthenticationSchemeDto> _authenticationSchemes;
+    private OrganizationSettingsDto? _organizationSettings;
+    private IEnumerable<AuthenticationSchemeDto>? _authenticationSchemes;
 
-    private readonly ISender Mediator;
-    private readonly ICurrentOrganizationConfiguration Configuration;
+    private readonly ICachedOrganizationService _cachedOrganizationService;
+    private readonly ICurrentOrganizationConfiguration _configuration;
 
-    public CurrentOrganization(ISender mediator, ICurrentOrganizationConfiguration configuration)
+    public CurrentOrganization(
+        ICachedOrganizationService cachedOrganizationService,
+        ICurrentOrganizationConfiguration configuration
+    )
     {
-        Mediator = mediator;
-        Configuration = configuration;
+        _cachedOrganizationService = cachedOrganizationService;
+        _configuration = configuration;
     }
 
-    private OrganizationSettingsDto OrganizationSettings
+    private OrganizationSettingsDto? OrganizationSettings
     {
         get
         {
-            if (_organizationSettings == null)
-            {
-                var response = Mediator
-                    .Send(new GetOrganizationSettings.Query())
-                    .GetAwaiter()
-                    .GetResult();
-                _organizationSettings = response.Result;
-            }
+            // Use cached service - still sync but now hits memory cache instead of DB
+            _organizationSettings ??= _cachedOrganizationService
+                .GetOrganizationSettingsAsync()
+                .GetAwaiter()
+                .GetResult();
             return _organizationSettings;
         }
     }
@@ -46,14 +44,11 @@ public class CurrentOrganization : ICurrentOrganization
     {
         get
         {
-            if (_authenticationSchemes == null)
-            {
-                var response = Mediator
-                    .Send(new GetAuthenticationSchemes.Query())
-                    .GetAwaiter()
-                    .GetResult();
-                _authenticationSchemes = response.Result.Items;
-            }
+            // Use cached service - still sync but now hits memory cache instead of DB
+            _authenticationSchemes ??= _cachedOrganizationService
+                .GetAuthenticationSchemesAsync()
+                .GetAwaiter()
+                .GetResult();
             return _authenticationSchemes;
         }
     }
@@ -86,6 +81,6 @@ public class CurrentOrganization : ICurrentOrganization
     public OrganizationTimeZoneConverter TimeZoneConverter =>
         OrganizationTimeZoneConverter.From(TimeZone, DateFormat);
 
-    public string PathBase => Configuration.PathBase;
-    public string RedirectWebsite => Configuration.RedirectWebsite;
+    public string PathBase => _configuration.PathBase;
+    public string RedirectWebsite => _configuration.RedirectWebsite;
 }

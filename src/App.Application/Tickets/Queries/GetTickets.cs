@@ -107,14 +107,7 @@ public class GetTickets
             CancellationToken cancellationToken
         )
         {
-            var query = _db
-                .Tickets.AsNoTracking()
-                .Include(t => t.Assignee)
-                .Include(t => t.OwningTeam)
-                .Include(t => t.Contact)
-                .Include(t => t.Comments)
-                .Include(t => t.CreatedByStaff)
-                .AsQueryable();
+            var query = _db.Tickets.AsNoTracking().AsQueryable();
 
             var filterBuilder = new ViewFilterBuilder(_db);
             List<string> visibleColumns = request.VisibleColumns ?? new List<string>();
@@ -264,12 +257,13 @@ public class GetTickets
             var total = await query.CountAsync(cancellationToken);
 
             // Apply sorting: use view's multi-level sort if sortBy=view, otherwise use OrderBy
+            // Using GetProjection() allows EF Core to translate CommentCount as a SQL subquery
             if (useViewSort && viewSortLevels?.Any() == true)
             {
                 query = filterBuilder.ApplySorting(query, viewSortLevels);
                 var items = query
                     .ApplyPaginationInputWithoutSorting(request)
-                    .Select(t => TicketListItemDto.MapFrom(t))
+                    .Select(TicketListItemDto.GetProjection())
                     .ToArray();
 
                 return new QueryResponseDto<ListResultDto<TicketListItemDto>>(
@@ -280,7 +274,7 @@ public class GetTickets
             {
                 var items = query
                     .ApplyPaginationInput(request)
-                    .Select(t => TicketListItemDto.MapFrom(t))
+                    .Select(TicketListItemDto.GetProjection())
                     .ToArray();
 
                 return new QueryResponseDto<ListResultDto<TicketListItemDto>>(
