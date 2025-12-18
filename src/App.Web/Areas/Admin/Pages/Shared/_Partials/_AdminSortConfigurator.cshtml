@@ -28,17 +28,20 @@
                                 <i class="bi bi-grip-vertical"></i>
                             </span>
                             <input type="hidden" name="SortLevels[@index].Order" class="order-input" value="@index">
-                            <select name="SortLevels[@index].Field" class="form-select form-select-sm field-select" style="flex: 1;">
+                            <select name="SortLevels[@index].Field" class="form-select form-select-sm field-select"
+                                style="flex: 1;">
                                 @foreach (var field in Model.SortableFields)
                                 {
                                     <option value="@field.Field" selected="@(level.Field == field.Field)">@field.Label</option>
                                 }
                             </select>
-                            <button type="button" class="btn btn-sm btn-outline-secondary direction-toggle-btn" data-direction="@level.Direction">
+                            <button type="button" class="btn btn-sm btn-outline-secondary direction-toggle-btn"
+                                data-direction="@level.Direction">
                                 <i class="bi bi-arrow-@(level.Direction == "desc" ? "down" : "up")"></i>
                                 <span class="ms-1">@(level.Direction == "desc" ? "DESC" : "ASC")</span>
                             </button>
-                            <input type="hidden" name="SortLevels[@index].Direction" class="direction-input" value="@level.Direction">
+                            <input type="hidden" name="SortLevels[@index].Direction" class="direction-input"
+                                value="@level.Direction">
                             <button type="button" class="btn btn-sm btn-outline-danger remove-level-btn">
                                 <i class="bi bi-x-lg"></i>
                             </button>
@@ -54,7 +57,7 @@
                     </div>
                 }
             </div>
-            
+
             <div class="text-muted small">
                 <i class="bi bi-lightbulb me-1"></i>
                 Drag to reorder. First level is primary sort, subsequent levels break ties.
@@ -64,48 +67,48 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const card = document.getElementById('sortConfiguratorCard');
-    if (!card) return;
-    
-    const configurator = card.querySelector('[data-sort-configurator]');
-    const fieldsData = configurator?.dataset.sortFields;
-    const fields = fieldsData ? JSON.parse(fieldsData) : [];
-    const sortList = document.getElementById('sortLevelsList');
-    
-    // No longer need sortIndex - using current count when adding
-    
-    // Initialize SortableJS
-    if (typeof Sortable !== 'undefined' && sortList) {
-        new Sortable(sortList, {
-            handle: '.drag-handle',
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            onEnd: updateSortOrders
-        });
-    }
-    
-    // Add sort level button
-    const addBtn = document.getElementById('addSortLevelBtn');
-    if (addBtn) {
-        addBtn.addEventListener('click', addSortLevel);
-    }
-    
-    function addSortLevel() {
-        if (!sortList) return;
-        
-        // Remove empty message
-        const emptyMsg = sortList.querySelector('.empty-message');
-        if (emptyMsg) emptyMsg.remove();
-        
-        // Use current count for new index (ensures sequential indices)
-        const currentCount = sortList.querySelectorAll('.sort-level').length;
-        
-        const row = document.createElement('div');
-        row.className = 'sort-level d-flex gap-2 align-items-center mb-2 p-2 bg-light rounded';
-        row.dataset.index = currentCount;
-        
-        row.innerHTML = `
+    document.addEventListener('DOMContentLoaded', function () {
+        const card = document.getElementById('sortConfiguratorCard');
+        if (!card) return;
+
+        const configurator = card.querySelector('[data-sort-configurator]');
+        const fieldsData = configurator?.dataset.sortFields;
+        const fields = fieldsData ? JSON.parse(fieldsData) : [];
+        const sortList = document.getElementById('sortLevelsList');
+
+        // No longer need sortIndex - using current count when adding
+
+        // Initialize SortableJS
+        if (typeof Sortable !== 'undefined' && sortList) {
+            new Sortable(sortList, {
+                handle: '.drag-handle',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: reindexSortLevels
+            });
+        }
+
+        // Add sort level button
+        const addBtn = document.getElementById('addSortLevelBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', addSortLevel);
+        }
+
+        function addSortLevel() {
+            if (!sortList) return;
+
+            // Remove empty message
+            const emptyMsg = sortList.querySelector('.empty-message');
+            if (emptyMsg) emptyMsg.remove();
+
+            // Use current count for new index (ensures sequential indices)
+            const currentCount = sortList.querySelectorAll('.sort-level').length;
+
+            const row = document.createElement('div');
+            row.className = 'sort-level d-flex gap-2 align-items-center mb-2 p-2 bg-light rounded';
+            row.dataset.index = currentCount;
+
+            row.innerHTML = `
             <span class="drag-handle text-muted" style="cursor: grab;">
                 <i class="bi bi-grip-vertical"></i>
             </span>
@@ -122,64 +125,64 @@ document.addEventListener('DOMContentLoaded', function() {
                 <i class="bi bi-x-lg"></i>
             </button>
         `;
-        
-        sortList.appendChild(row);
-        
-        attachSortHandlers(row);
-        reindexSortLevels();
-    }
-    
-    function attachSortHandlers(row) {
-        const dirBtn = row.querySelector('.direction-toggle-btn');
-        const dirInput = row.querySelector('.direction-input');
-        const removeBtn = row.querySelector('.remove-level-btn');
-        
-        dirBtn?.addEventListener('click', function() {
-            const current = this.dataset.direction;
-            const next = current === 'desc' ? 'asc' : 'desc';
-            this.dataset.direction = next;
-            this.innerHTML = `<i class="bi bi-arrow-${next === 'desc' ? 'down' : 'up'}"></i> <span class="ms-1">${next.toUpperCase()}</span>`;
-            if (dirInput) dirInput.value = next;
-        });
-        
-        removeBtn?.addEventListener('click', function() {
-            row.remove();
+
+            sortList.appendChild(row);
+
+            attachSortHandlers(row);
             reindexSortLevels();
-            // Show empty message if no levels left
-            if (sortList.querySelectorAll('.sort-level').length === 0) {
-                sortList.innerHTML = `
+        }
+
+        function attachSortHandlers(row) {
+            const dirBtn = row.querySelector('.direction-toggle-btn');
+            const dirInput = row.querySelector('.direction-input');
+            const removeBtn = row.querySelector('.remove-level-btn');
+
+            dirBtn?.addEventListener('click', function () {
+                const current = this.dataset.direction;
+                const next = current === 'desc' ? 'asc' : 'desc';
+                this.dataset.direction = next;
+                this.innerHTML = `<i class="bi bi-arrow-${next === 'desc' ? 'down' : 'up'}"></i> <span class="ms-1">${next.toUpperCase()}</span>`;
+                if (dirInput) dirInput.value = next;
+            });
+
+            removeBtn?.addEventListener('click', function () {
+                row.remove();
+                reindexSortLevels();
+                // Show empty message if no levels left
+                if (sortList.querySelectorAll('.sort-level').length === 0) {
+                    sortList.innerHTML = `
                     <div class="text-muted small p-3 bg-light rounded empty-message">
                         <i class="bi bi-info-circle me-1"></i>
                         No sort levels defined. Default sorting will be newest first.
                     </div>`;
-            }
+                }
+            });
+        }
+
+        function reindexSortLevels() {
+            if (!sortList) return;
+            sortList.querySelectorAll('.sort-level').forEach((row, idx) => {
+                row.dataset.index = idx;
+                const orderInput = row.querySelector('.order-input');
+                const fieldSelect = row.querySelector('.field-select');
+                const dirInput = row.querySelector('.direction-input');
+
+                if (orderInput) {
+                    orderInput.name = `SortLevels[${idx}].Order`;
+                    orderInput.value = idx;
+                }
+                if (fieldSelect) {
+                    fieldSelect.name = `SortLevels[${idx}].Field`;
+                }
+                if (dirInput) {
+                    dirInput.name = `SortLevels[${idx}].Direction`;
+                }
+            });
+        }
+
+        // Attach handlers to existing sort levels
+        sortList?.querySelectorAll('.sort-level').forEach(row => {
+            attachSortHandlers(row);
         });
-    }
-    
-    function reindexSortLevels() {
-        if (!sortList) return;
-        sortList.querySelectorAll('.sort-level').forEach((row, idx) => {
-            row.dataset.index = idx;
-            const orderInput = row.querySelector('.order-input');
-            const fieldSelect = row.querySelector('.field-select');
-            const dirInput = row.querySelector('.direction-input');
-            
-            if (orderInput) {
-                orderInput.name = `SortLevels[${idx}].Order`;
-                orderInput.value = idx;
-            }
-            if (fieldSelect) {
-                fieldSelect.name = `SortLevels[${idx}].Field`;
-            }
-            if (dirInput) {
-                dirInput.name = `SortLevels[${idx}].Direction`;
-            }
-        });
-    }
-    
-    // Attach handlers to existing sort levels
-    sortList?.querySelectorAll('.sort-level').forEach(row => {
-        attachSortHandlers(row);
     });
-});
 </script>

@@ -1,12 +1,12 @@
 #nullable enable
+using App.Application.Common.Interfaces;
+using App.Application.Common.Utils;
+using App.Domain.ValueObjects;
 using FluentValidation.Results;
 using Mediator;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using App.Application.Common.Interfaces;
-using App.Application.Common.Utils;
-using App.Domain.ValueObjects;
 
 namespace App.Web.Areas.Shared.Models;
 
@@ -327,6 +327,28 @@ public abstract class BasePageModel : PageModel
         return ValidationFailures != null && ValidationFailures.ContainsKey(propertyName)
             ? "is-invalid"
             : string.Empty;
+    }
+
+    /// <summary>
+    /// Populates ValidationFailures from ModelState errors and sets an error message.
+    /// Use this when ModelState.IsValid is false to show field-level validation errors.
+    /// </summary>
+    /// <param name="message">Optional custom error message. If not provided, uses first ModelState error or default message.</param>
+    protected void SetModelStateErrors(string? message = null)
+    {
+        ValidationFailures = ModelState
+            .Where(kvp => kvp.Value?.Errors.Any() == true)
+            .ToDictionary(
+                kvp => kvp.Key.Replace("Form.", ""), // Strip "Form." prefix to match property names
+                kvp => kvp.Value!.Errors.First().ErrorMessage
+            );
+
+        var errorMessage =
+            message
+            ?? ValidationFailures.Values.FirstOrDefault()
+            ?? "Please correct the errors below.";
+
+        SetErrorMessage(errorMessage);
     }
 
     /// <summary>

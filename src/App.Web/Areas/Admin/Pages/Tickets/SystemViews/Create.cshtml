@@ -30,16 +30,19 @@
                             <div class="card-body">
                                 <div class="mb-3">
                                     <label class="form-label raytha-required" asp-for="Form.Name"></label>
-                                    <input type="text" class="form-control @Model.HasError("Name")" asp-for="Form.Name" required>
+                                    <input type="text" class="form-control @Model.HasError("Name")" asp-for="Form.Name"
+                                        required>
                                     <div class="invalid-feedback">@Model.ErrorMessageFor("Name")</div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label" asp-for="Form.Description"></label>
-                                    <textarea class="form-control @Model.HasError("Description")" asp-for="Form.Description" rows="2"></textarea>
+                                    <textarea class="form-control @Model.HasError("Description")"
+                                        asp-for="Form.Description" rows="2"></textarea>
                                     <div class="invalid-feedback">@Model.ErrorMessageFor("Description")</div>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input @Model.HasError("IsDefault")" type="checkbox" asp-for="Form.IsDefault">
+                                    <input class="form-check-input @Model.HasError("IsDefault")" type="checkbox"
+                                        asp-for="Form.IsDefault">
                                     <label class="form-check-label" asp-for="Form.IsDefault">
                                         Set as default view for all users
                                     </label>
@@ -56,8 +59,8 @@
 
                         <!-- Column Selector -->
                         <partial name="_Partials/_AdminColumnSelector" model="Model.ColumnSelector" />
-                        
-                        <button type="submit" class="btn btn-success mt-4">Save changes</button> 
+
+                        <button type="submit" class="btn btn-success mt-4">Save changes</button>
                     </form>
                 </div>
             </div>

@@ -78,6 +78,7 @@ public class Create : BaseAdminPageModel
 
         if (!ModelState.IsValid)
         {
+            SetModelStateErrors();
             await LoadOptionsAsync(cancellationToken);
             await LoadAdvancedViewModelsAsync(cancellationToken);
             return Page();
@@ -144,12 +145,14 @@ public class Create : BaseAdminPageModel
 
             if (!string.IsNullOrEmpty(field) && !string.IsNullOrEmpty(op))
             {
-                andFilters.Add(new ViewFilterCondition
-                {
-                    Field = field,
-                    Operator = op,
-                    Value = value
-                });
+                andFilters.Add(
+                    new ViewFilterCondition
+                    {
+                        Field = field,
+                        Operator = op,
+                        Value = value,
+                    }
+                );
             }
             index++;
         }
@@ -164,12 +167,14 @@ public class Create : BaseAdminPageModel
 
             if (!string.IsNullOrEmpty(field) && !string.IsNullOrEmpty(op))
             {
-                orFilters.Add(new ViewFilterCondition
-                {
-                    Field = field,
-                    Operator = op,
-                    Value = value
-                });
+                orFilters.Add(
+                    new ViewFilterCondition
+                    {
+                        Field = field,
+                        Operator = op,
+                        Value = value,
+                    }
+                );
             }
             index++;
         }
@@ -177,11 +182,7 @@ public class Create : BaseAdminPageModel
         if (!andFilters.Any() && !orFilters.Any())
             return null;
 
-        return new ViewConditions
-        {
-            AndFilters = andFilters,
-            OrFilters = orFilters
-        };
+        return new ViewConditions { AndFilters = andFilters, OrFilters = orFilters };
     }
 
     private List<CreateTicketView.SortLevelInput>? ParseSortLevelsFromForm()
@@ -192,18 +193,21 @@ public class Create : BaseAdminPageModel
         while (Request.Form.ContainsKey($"SortLevels[{index}].Field"))
         {
             var field = Request.Form[$"SortLevels[{index}].Field"].FirstOrDefault();
-            var direction = Request.Form[$"SortLevels[{index}].Direction"].FirstOrDefault() ?? "asc";
+            var direction =
+                Request.Form[$"SortLevels[{index}].Direction"].FirstOrDefault() ?? "asc";
             var orderStr = Request.Form[$"SortLevels[{index}].Order"].FirstOrDefault();
             var order = int.TryParse(orderStr, out var o) ? o : index;
 
             if (!string.IsNullOrEmpty(field))
             {
-                sortLevels.Add(new CreateTicketView.SortLevelInput
-                {
-                    Order = order,
-                    Field = field,
-                    Direction = direction
-                });
+                sortLevels.Add(
+                    new CreateTicketView.SortLevelInput
+                    {
+                        Order = order,
+                        Field = field,
+                        Direction = direction,
+                    }
+                );
             }
             index++;
         }
@@ -214,37 +218,50 @@ public class Create : BaseAdminPageModel
     private async Task LoadAdvancedViewModelsAsync(CancellationToken cancellationToken)
     {
         // Load users for filter dropdowns
-        var usersResponse = await Mediator.Send(new GetUsers.Query { PageSize = 1000 }, cancellationToken);
-        var users = usersResponse.Result.Items.Select(u => new UserOption
-        {
-            Id = u.Id.ToString(),
-            Name = u.FullName,
-            IsDeactivated = !u.IsActive
-        }).ToList();
+        var usersResponse = await Mediator.Send(
+            new GetUsers.Query { PageSize = 1000 },
+            cancellationToken
+        );
+        var users = usersResponse
+            .Result.Items.Select(u => new UserOption
+            {
+                Id = u.Id.ToString(),
+                Name = u.FullName,
+                IsDeactivated = !u.IsActive,
+            })
+            .ToList();
 
         // Load teams
         var teamsResponse = await Mediator.Send(new GetTeams.Query(), cancellationToken);
-        var teams = teamsResponse.Result.Items.Select(t => new TeamOption
-        {
-            Id = t.Id.ToString(),
-            Name = t.Name
-        }).ToList();
+        var teams = teamsResponse
+            .Result.Items.Select(t => new TeamOption { Id = t.Id.ToString(), Name = t.Name })
+            .ToList();
 
         // Load statuses
-        var statuses = await _configService.GetAllStatusesAsync(includeInactive: true, cancellationToken);
-        var statusOptions = statuses.Select(s => new SelectOption
-        {
-            Value = s.DeveloperName,
-            Label = s.Label + (s.IsActive ? "" : " (inactive)")
-        }).ToList();
+        var statuses = await _configService.GetAllStatusesAsync(
+            includeInactive: true,
+            cancellationToken
+        );
+        var statusOptions = statuses
+            .Select(s => new SelectOption
+            {
+                Value = s.DeveloperName,
+                Label = s.Label + (s.IsActive ? "" : " (inactive)"),
+            })
+            .ToList();
 
         // Load priorities
-        var priorities = await _configService.GetAllPrioritiesAsync(includeInactive: true, cancellationToken);
-        var priorityOptions = priorities.Select(p => new SelectOption
-        {
-            Value = p.DeveloperName,
-            Label = p.Label + (p.IsActive ? "" : " (inactive)")
-        }).ToList();
+        var priorities = await _configService.GetAllPrioritiesAsync(
+            includeInactive: true,
+            cancellationToken
+        );
+        var priorityOptions = priorities
+            .Select(p => new SelectOption
+            {
+                Value = p.DeveloperName,
+                Label = p.Label + (p.IsActive ? "" : " (inactive)"),
+            })
+            .ToList();
 
         // Filter Builder
         FilterBuilder = FilterBuilderViewModel.CreateWithDefaults();
@@ -256,19 +273,27 @@ public class Create : BaseAdminPageModel
         // Sort Configurator
         SortConfigurator = new SortConfiguratorViewModel
         {
-            SortableFields = FilterAttributes.All
-                .Where(a => a.IsSortable)
+            SortableFields = FilterAttributes
+                .All.Where(a => a.IsSortable)
                 .Select(a => new SortFieldModel { Field = a.Field, Label = a.Label })
-                .ToList()
+                .ToList(),
         };
 
         // Column Selector
         ColumnSelector = new ColumnSelectorViewModel
         {
-            AvailableColumns = ColumnRegistry.Columns
-                .Select(c => new ColumnModel { Field = c.Field, Label = c.Label })
+            AvailableColumns = ColumnRegistry
+                .Columns.Select(c => new ColumnModel { Field = c.Field, Label = c.Label })
                 .ToList(),
-            SelectedColumns = new List<string> { "Id", "Title", "Status", "Priority", "AssigneeName", "CreationTime" }
+            SelectedColumns = new List<string>
+            {
+                "Id",
+                "Title",
+                "Status",
+                "Priority",
+                "AssigneeName",
+                "CreationTime",
+            },
         };
     }
 
@@ -281,20 +306,30 @@ public class Create : BaseAdminPageModel
             .ToList();
 
         // Status options from config
-        var statuses = await _configService.GetAllStatusesAsync(includeInactive: true, cancellationToken);
-        AvailableStatuses = statuses.Select(s => new SelectListItem
-        {
-            Value = s.DeveloperName,
-            Text = s.Label + (s.IsActive ? "" : " (inactive)"),
-        }).ToList();
+        var statuses = await _configService.GetAllStatusesAsync(
+            includeInactive: true,
+            cancellationToken
+        );
+        AvailableStatuses = statuses
+            .Select(s => new SelectListItem
+            {
+                Value = s.DeveloperName,
+                Text = s.Label + (s.IsActive ? "" : " (inactive)"),
+            })
+            .ToList();
 
         // Priority options from config
-        var priorities = await _configService.GetAllPrioritiesAsync(includeInactive: true, cancellationToken);
-        AvailablePriorities = priorities.Select(p => new SelectListItem
-        {
-            Value = p.DeveloperName,
-            Text = p.Label + (p.IsActive ? "" : " (inactive)"),
-        }).ToList();
+        var priorities = await _configService.GetAllPrioritiesAsync(
+            includeInactive: true,
+            cancellationToken
+        );
+        AvailablePriorities = priorities
+            .Select(p => new SelectListItem
+            {
+                Value = p.DeveloperName,
+                Text = p.Label + (p.IsActive ? "" : " (inactive)"),
+            })
+            .ToList();
 
         // Available columns
         AvailableColumns = new List<ColumnOption>
