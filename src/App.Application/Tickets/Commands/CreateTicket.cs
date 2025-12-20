@@ -278,7 +278,7 @@ public class CreateTicket
             {
                 Id = Guid.NewGuid(),
                 TicketId = ticket.Id,
-                ActorStaffId = _currentUser.UserId?.Guid,
+                ActorStaffId = createdByStaffId,
                 Message = changeLogMessage,
             };
 
