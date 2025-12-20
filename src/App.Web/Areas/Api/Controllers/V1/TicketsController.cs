@@ -32,6 +32,16 @@ public class TicketsController : BaseController
         [FromQuery] bool? unassigned = null
     )
     {
+        // Parse nullable ShortGuids - only create if string has value
+        ShortGuid? parsedAssigneeId = null;
+        ShortGuid? parsedTeamId = null;
+        
+        if (!string.IsNullOrEmpty(assigneeId))
+            parsedAssigneeId = new ShortGuid(assigneeId);
+        
+        if (!string.IsNullOrEmpty(teamId))
+            parsedTeamId = new ShortGuid(teamId);
+        
         var query = new GetTickets.Query
         {
             Search = search,
@@ -40,8 +50,8 @@ public class TicketsController : BaseController
             OrderBy = orderBy ?? "CreationTime desc",
             Status = status,
             Priority = priority,
-            AssigneeId = !string.IsNullOrEmpty(assigneeId) ? new ShortGuid(assigneeId) : null,
-            TeamId = !string.IsNullOrEmpty(teamId) ? new ShortGuid(teamId) : null,
+            AssigneeId = parsedAssigneeId,
+            TeamId = parsedTeamId,
             ContactId = contactId,
             Unassigned = unassigned,
         };
@@ -73,6 +83,16 @@ public class TicketsController : BaseController
         [FromBody] CreateTicketRequest request
     )
     {
+        // Parse nullable ShortGuids - only create if string has value
+        ShortGuid? owningTeamId = null;
+        ShortGuid? assigneeId = null;
+        
+        if (!string.IsNullOrEmpty(request.OwningTeamId))
+            owningTeamId = new ShortGuid(request.OwningTeamId);
+        
+        if (!string.IsNullOrEmpty(request.AssigneeId))
+            assigneeId = new ShortGuid(request.AssigneeId);
+        
         var command = new CreateTicket.Command
         {
             Title = request.Title,
@@ -80,12 +100,8 @@ public class TicketsController : BaseController
             Priority = request.Priority ?? "normal",
             Category = request.Category,
             Tags = request.Tags,
-            OwningTeamId = !string.IsNullOrEmpty(request.OwningTeamId)
-                ? new ShortGuid(request.OwningTeamId)
-                : null,
-            AssigneeId = !string.IsNullOrEmpty(request.AssigneeId)
-                ? new ShortGuid(request.AssigneeId)
-                : null,
+            OwningTeamId = owningTeamId,
+            AssigneeId = assigneeId,
             ContactId = request.ContactId,
         };
 
@@ -114,20 +130,27 @@ public class TicketsController : BaseController
         [FromBody] UpdateTicketRequest request
     )
     {
+        // Parse nullable ShortGuids - only create if string has value
+        ShortGuid? owningTeamId = null;
+        ShortGuid? assigneeId = null;
+        
+        if (!string.IsNullOrEmpty(request.OwningTeamId))
+            owningTeamId = new ShortGuid(request.OwningTeamId);
+        
+        if (!string.IsNullOrEmpty(request.AssigneeId))
+            assigneeId = new ShortGuid(request.AssigneeId);
+        
         var command = new UpdateTicket.Command
         {
             Id = id,
             Title = request.Title,
             Description = request.Description,
             Priority = request.Priority,
+            Language = request.Language,
             Category = request.Category,
             Tags = request.Tags,
-            OwningTeamId = !string.IsNullOrEmpty(request.OwningTeamId)
-                ? new ShortGuid(request.OwningTeamId)
-                : null,
-            AssigneeId = !string.IsNullOrEmpty(request.AssigneeId)
-                ? new ShortGuid(request.AssigneeId)
-                : null,
+            OwningTeamId = owningTeamId,
+            AssigneeId = assigneeId,
             ContactId = request.ContactId,
         };
 
@@ -171,15 +194,21 @@ public class TicketsController : BaseController
         [FromBody] AssignTicketRequest request
     )
     {
+        // Parse nullable ShortGuids - only create if string has value
+        ShortGuid? owningTeamId = null;
+        ShortGuid? assigneeId = null;
+        
+        if (!string.IsNullOrEmpty(request.OwningTeamId))
+            owningTeamId = new ShortGuid(request.OwningTeamId);
+        
+        if (!string.IsNullOrEmpty(request.AssigneeId))
+            assigneeId = new ShortGuid(request.AssigneeId);
+        
         var command = new AssignTicket.Command
         {
             Id = id,
-            OwningTeamId = !string.IsNullOrEmpty(request.OwningTeamId)
-                ? new ShortGuid(request.OwningTeamId)
-                : null,
-            AssigneeId = !string.IsNullOrEmpty(request.AssigneeId)
-                ? new ShortGuid(request.AssigneeId)
-                : null,
+            OwningTeamId = owningTeamId,
+            AssigneeId = assigneeId,
         };
 
         var response = await Mediator.Send(command);
@@ -283,6 +312,7 @@ public record UpdateTicketRequest
     public string Title { get; init; } = null!;
     public string? Description { get; init; }
     public string Priority { get; init; } = null!;
+    public string Language { get; init; } = "english";
     public string? Category { get; init; }
     public List<string>? Tags { get; init; }
     public string? OwningTeamId { get; init; }
