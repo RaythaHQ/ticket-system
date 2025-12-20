@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Utils;
 using App.Application.OrganizationSettings.Commands;
+using App.Infrastructure.Services;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Shared.Models;
 
@@ -9,6 +10,12 @@ namespace App.Web.Areas.Admin.Pages.Setup;
 
 public class Index : BasePageModel
 {
+    private readonly ICachedOrganizationService _cachedOrganizationService;
+
+    public Index(ICachedOrganizationService cachedOrganizationService)
+    {
+        _cachedOrganizationService = cachedOrganizationService;
+    }
     [BindProperty]
     public FormModel Form { get; set; }
     public bool MissingSmtpEnvironmentVariables { get; set; }
@@ -52,6 +59,9 @@ public class Index : BasePageModel
         var response = await Mediator.Send(input);
         if (response.Success)
         {
+            // Invalidate the cached organization settings so the app recognizes setup is complete
+            _cachedOrganizationService.InvalidateOrganizationSettingsCache();
+            _cachedOrganizationService.InvalidateAuthenticationSchemesCache();
             return RedirectToPage(RouteNames.Dashboard.Index);
         }
 

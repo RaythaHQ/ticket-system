@@ -7,6 +7,7 @@ using App.Application.AuthenticationSchemes.Commands;
 using App.Application.AuthenticationSchemes.Queries;
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
+using App.Infrastructure.Services;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
@@ -16,6 +17,12 @@ namespace App.Web.Areas.Admin.Pages.AuthenticationSchemes;
 [Authorize(Policy = BuiltInSystemPermission.MANAGE_SYSTEM_SETTINGS_PERMISSION)]
 public class Edit : BaseAdminPageModel
 {
+    private readonly ICachedOrganizationService _cachedOrganizationService;
+
+    public Edit(ICachedOrganizationService cachedOrganizationService)
+    {
+        _cachedOrganizationService = cachedOrganizationService;
+    }
     [BindProperty]
     public FormModel Form { get; set; }
     public bool IsBuiltInAuth { get; set; }
@@ -113,6 +120,7 @@ public class Edit : BaseAdminPageModel
 
         if (response.Success)
         {
+            _cachedOrganizationService.InvalidateAuthenticationSchemesCache();
             SetSuccessMessage($"Authentication scheme was updated successfully.");
             return RedirectToPage(RouteNames.AuthenticationSchemes.Edit, new { id });
         }

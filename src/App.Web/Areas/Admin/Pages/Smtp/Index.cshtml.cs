@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using App.Application.OrganizationSettings.Queries;
+using App.Infrastructure.Services;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
@@ -9,6 +10,12 @@ namespace App.Web.Areas.Admin.Pages.Smtp;
 
 public class Index : BaseAdminPageModel
 {
+    private readonly ICachedOrganizationService _cachedOrganizationService;
+
+    public Index(ICachedOrganizationService cachedOrganizationService)
+    {
+        _cachedOrganizationService = cachedOrganizationService;
+    }
     [BindProperty]
     public FormModel Form { get; set; }
     public bool MissingSmtpEnvironmentVariables { get; set; }
@@ -67,6 +74,7 @@ public class Index : BaseAdminPageModel
 
         if (response.Success)
         {
+            _cachedOrganizationService.InvalidateOrganizationSettingsCache();
             SetSuccessMessage("SMTP has been updated successfully.");
             return RedirectToPage(RouteNames.Smtp.Index);
         }

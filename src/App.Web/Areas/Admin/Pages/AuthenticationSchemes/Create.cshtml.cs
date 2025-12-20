@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using App.Application.AuthenticationSchemes.Commands;
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
+using App.Infrastructure.Services;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
@@ -15,6 +16,12 @@ namespace App.Web.Areas.Admin.Pages.AuthenticationSchemes;
 [Authorize(Policy = BuiltInSystemPermission.MANAGE_SYSTEM_SETTINGS_PERMISSION)]
 public class Create : BaseAdminPageModel
 {
+    private readonly ICachedOrganizationService _cachedOrganizationService;
+
+    public Create(ICachedOrganizationService cachedOrganizationService)
+    {
+        _cachedOrganizationService = cachedOrganizationService;
+    }
     [BindProperty]
     public FormModel Form { get; set; }
     public SelectList SupportedAuthenticationSchemeTypes { get; set; }
@@ -80,6 +87,7 @@ public class Create : BaseAdminPageModel
 
         if (response.Success)
         {
+            _cachedOrganizationService.InvalidateAuthenticationSchemesCache();
             SetSuccessMessage($"Authentication scheme was created successfully.");
             return RedirectToPage(
                 RouteNames.AuthenticationSchemes.Edit,

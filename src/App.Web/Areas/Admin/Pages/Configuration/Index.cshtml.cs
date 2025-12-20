@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Utils;
 using App.Application.OrganizationSettings.Queries;
 using App.Domain.Entities;
+using App.Infrastructure.Services;
 using App.Web.Areas.Admin.Pages.Shared;
 using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
@@ -13,6 +14,12 @@ namespace App.Web.Areas.Admin.Pages.Configuration;
 [Authorize(Policy = BuiltInSystemPermission.MANAGE_SYSTEM_SETTINGS_PERMISSION)]
 public class Index : BaseAdminPageModel
 {
+    private readonly ICachedOrganizationService _cachedOrganizationService;
+
+    public Index(ICachedOrganizationService cachedOrganizationService)
+    {
+        _cachedOrganizationService = cachedOrganizationService;
+    }
     [BindProperty]
     public FormModel Form { get; set; }
 
@@ -82,6 +89,7 @@ public class Index : BaseAdminPageModel
 
         if (response.Success)
         {
+            _cachedOrganizationService.InvalidateOrganizationSettingsCache();
             SetSuccessMessage("Configuration has been updated successfully.");
             return RedirectToPage(RouteNames.Configuration.Index);
         }
