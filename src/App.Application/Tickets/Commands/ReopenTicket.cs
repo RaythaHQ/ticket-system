@@ -97,14 +97,14 @@ public class ReopenTicket
             var changeLog = new TicketChangeLogEntry
             {
                 TicketId = ticket.Id,
-                ActorStaffId = _currentUser.UserId?.Guid,
+                ActorStaffId = _currentUser.UserIdAsGuid,
                 FieldChangesJson = JsonSerializer.Serialize(changes),
                 Message =
                     $"Ticket reopened (status changed from {oldLabel} to {defaultStatus.Label})",
             };
             ticket.ChangeLogEntries.Add(changeLog);
 
-            ticket.AddDomainEvent(new TicketReopenedEvent(ticket, _currentUser.UserId?.Guid));
+            ticket.AddDomainEvent(new TicketReopenedEvent(ticket, _currentUser.UserIdAsGuid));
 
             await _db.SaveChangesAsync(cancellationToken);
             return new CommandResponseDto<long>(ticket.Id);

@@ -49,7 +49,7 @@ public class DeleteContact
             // Soft-delete: mark as deleted but preserve the record for historical reference
             contact.IsDeleted = true;
             contact.DeletionTime = DateTime.UtcNow;
-            contact.DeleterUserId = _currentUser.UserId?.Guid;
+            contact.DeleterUserId = _currentUser.UserIdAsGuid;
 
             await _db.SaveChangesAsync(cancellationToken);
 

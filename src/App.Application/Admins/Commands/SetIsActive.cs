@@ -104,7 +104,7 @@ public class SetIsActive
                     var changeLog = new TicketChangeLogEntry
                     {
                         TicketId = ticket.Id,
-                        ActorStaffId = _currentUser.UserId?.Guid,
+                        ActorStaffId = _currentUser.UserIdAsGuid,
                         Message =
                             $"Assignee removed (admin account {entity.FullName} was deactivated)",
                     };

@@ -87,7 +87,7 @@ public class CloseTicket
             var oldStatus = ticket.Status;
             ticket.Status = closedStatus.DeveloperName;
             ticket.ClosedAt = DateTime.UtcNow;
-            ticket.ClosedByStaffId = _currentUser.UserId?.Guid;
+            ticket.ClosedByStaffId = _currentUser.UserIdAsGuid;
 
             if (ticket.ResolvedAt == null)
             {
@@ -110,13 +110,13 @@ public class CloseTicket
             var changeLog = new TicketChangeLogEntry
             {
                 TicketId = ticket.Id,
-                ActorStaffId = _currentUser.UserId?.Guid,
+                ActorStaffId = _currentUser.UserIdAsGuid,
                 FieldChangesJson = JsonSerializer.Serialize(changes),
                 Message = $"Ticket closed (status changed from {oldLabel} to {closedStatus.Label})",
             };
             ticket.ChangeLogEntries.Add(changeLog);
 
-            ticket.AddDomainEvent(new TicketClosedEvent(ticket, _currentUser.UserId?.Guid));
+            ticket.AddDomainEvent(new TicketClosedEvent(ticket, _currentUser.UserIdAsGuid));
 
             await _db.SaveChangesAsync(cancellationToken);
             return new CommandResponseDto<long>(ticket.Id);

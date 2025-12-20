@@ -102,7 +102,7 @@ public class AddTicketAttachment
             var changeLog = new TicketChangeLogEntry
             {
                 TicketId = request.TicketId,
-                ActorStaffId = _currentUser.UserId?.Guid,
+                ActorStaffId = _currentUser.UserIdAsGuid,
                 Message = $"Attached file \"{displayName}\""
             };
             _db.TicketChangeLogEntries.Add(changeLog);

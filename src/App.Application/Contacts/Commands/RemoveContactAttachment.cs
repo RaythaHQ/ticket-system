@@ -64,7 +64,7 @@ public class RemoveContactAttachment
             var changeLog = new ContactChangeLogEntry
             {
                 ContactId = contactId,
-                ActorStaffId = _currentUser.UserId?.Guid,
+                ActorStaffId = _currentUser.UserIdAsGuid,
                 Message = $"Removed file \"{displayName}\""
             };
             _db.ContactChangeLogEntries.Add(changeLog);

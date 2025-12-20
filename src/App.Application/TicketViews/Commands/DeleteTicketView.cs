@@ -53,7 +53,7 @@ public class DeleteTicketView
             else
             {
                 // Can only delete own views
-                if (view.OwnerStaffId != _currentUser.UserId?.Guid)
+                if (view.OwnerStaffId != _currentUser.UserIdAsGuid)
                     throw new ForbiddenAccessException("Cannot delete views you do not own.");
             }
 

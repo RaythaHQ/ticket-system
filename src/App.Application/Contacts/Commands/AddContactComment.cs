@@ -50,7 +50,7 @@ public class AddContactComment
             if (!contactExists)
                 throw new NotFoundException("Contact", request.ContactId);
 
-            var authorId = _currentUser.UserId?.Guid ?? throw new ForbiddenAccessException("User not authenticated.");
+            var authorId = _currentUser.UserIdAsGuid ?? throw new ForbiddenAccessException("User not authenticated.");
 
             var comment = new ContactComment
             {

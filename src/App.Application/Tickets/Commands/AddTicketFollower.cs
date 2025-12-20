@@ -74,7 +74,7 @@ public class AddTicketFollower
             }
 
             // Get actor's name for the changelog
-            var actorId = _currentUser.UserId?.Guid;
+            var actorId = _currentUser.UserIdAsGuid;
             var actor = actorId.HasValue
                 ? await _db
                     .Users.AsNoTracking()

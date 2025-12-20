@@ -119,7 +119,7 @@ public class ChangeContactId
                 CreationTime = existingContact.CreationTime,
                 CreatorUserId = existingContact.CreatorUserId,
                 LastModificationTime = DateTime.UtcNow,
-                LastModifierUserId = _currentUser.UserId?.Guid,
+                LastModifierUserId = _currentUser.UserIdAsGuid,
                 IsDeleted = false,
             };
 
@@ -177,7 +177,7 @@ public class ChangeContactId
             {
                 ContactId = request.NewId,
                 CreationTime = DateTime.UtcNow,
-                ActorStaffId = _currentUser.UserId?.Guid,
+                ActorStaffId = _currentUser.UserIdAsGuid,
                 FieldChangesJson = fieldChangesJson,
                 Message = changeLogMessage,
             };

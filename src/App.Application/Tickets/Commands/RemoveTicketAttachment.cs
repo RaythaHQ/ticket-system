@@ -64,7 +64,7 @@ public class RemoveTicketAttachment
             var changeLog = new TicketChangeLogEntry
             {
                 TicketId = ticketId,
-                ActorStaffId = _currentUser.UserId?.Guid,
+                ActorStaffId = _currentUser.UserIdAsGuid,
                 Message = $"Removed file \"{displayName}\""
             };
             _db.TicketChangeLogEntries.Add(changeLog);

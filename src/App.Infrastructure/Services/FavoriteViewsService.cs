@@ -21,7 +21,7 @@ public class FavoriteViewsService : IFavoriteViewsService
         CancellationToken cancellationToken = default
     )
     {
-        var userId = _currentUser.UserId?.Guid;
+        var userId = _currentUser.UserIdAsGuid;
         if (!userId.HasValue)
         {
             return Enumerable.Empty<GetUserFavoriteViews.FavoriteViewDto>();

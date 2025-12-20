@@ -109,7 +109,7 @@ public class ChangeTicketStatus
                     ticket.ResolvedAt = DateTime.UtcNow;
                 }
                 ticket.ClosedAt = DateTime.UtcNow;
-                ticket.ClosedByStaffId = _currentUser.UserId?.Guid;
+                ticket.ClosedByStaffId = _currentUser.UserIdAsGuid;
             }
             else if (oldStatusConfig?.IsClosedType == true && newStatusConfig?.IsOpenType == true)
             {
@@ -131,7 +131,7 @@ public class ChangeTicketStatus
             var changeLog = new TicketChangeLogEntry
             {
                 TicketId = ticket.Id,
-                ActorStaffId = _currentUser.UserId?.Guid,
+                ActorStaffId = _currentUser.UserIdAsGuid,
                 FieldChangesJson = JsonSerializer.Serialize(changes),
                 Message = $"Status changed from {oldLabel} to {newLabel}",
             };
@@ -142,7 +142,7 @@ public class ChangeTicketStatus
                     ticket,
                     oldStatus,
                     newStatusLower,
-                    _currentUser.UserId?.Guid
+                    _currentUser.UserIdAsGuid
                 )
             );
 

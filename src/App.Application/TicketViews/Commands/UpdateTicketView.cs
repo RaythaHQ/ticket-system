@@ -119,7 +119,7 @@ public class UpdateTicketView
             else
             {
                 // Can only edit own views
-                if (view.OwnerStaffId != _currentUser.UserId?.Guid)
+                if (view.OwnerStaffId != _currentUser.UserIdAsGuid)
                     throw new ForbiddenAccessException("Cannot modify views you do not own.");
             }
 

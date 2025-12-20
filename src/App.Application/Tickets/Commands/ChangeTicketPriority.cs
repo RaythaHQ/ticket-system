@@ -93,7 +93,7 @@ public class ChangeTicketPriority
             var changeLog = new TicketChangeLogEntry
             {
                 TicketId = ticket.Id,
-                ActorStaffId = _currentUser.UserId?.Guid,
+                ActorStaffId = _currentUser.UserIdAsGuid,
                 FieldChangesJson = JsonSerializer.Serialize(changes),
                 Message =
                     $"Priority changed from {TicketPriority.From(oldPriority).Label} to {TicketPriority.From(request.NewPriority).Label}",
@@ -109,7 +109,7 @@ public class ChangeTicketPriority
                 var slaChangeLog = new TicketChangeLogEntry
                 {
                     TicketId = ticket.Id,
-                    ActorStaffId = _currentUser.UserId?.Guid,
+                    ActorStaffId = _currentUser.UserIdAsGuid,
                     Message = ticket.SlaRuleId.HasValue
                         ? $"SLA rule re-evaluated and updated"
                         : $"SLA rule removed after re-evaluation",

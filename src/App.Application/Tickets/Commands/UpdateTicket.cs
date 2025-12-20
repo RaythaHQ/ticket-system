@@ -321,7 +321,7 @@ public class UpdateTicket
                 var changeLog = new TicketChangeLogEntry
                 {
                     TicketId = ticket.Id,
-                    ActorStaffId = _currentUser.UserId?.Guid,
+                    ActorStaffId = _currentUser.UserIdAsGuid,
                     FieldChangesJson = JsonSerializer.Serialize(changes),
                     Message = string.Join("; ", messageParts),
                 };
@@ -337,7 +337,7 @@ public class UpdateTicket
                             effectiveAssigneeId,
                             oldTeamId,
                             request.OwningTeamId?.Guid,
-                            _currentUser.UserId?.Guid
+                            _currentUser.UserIdAsGuid
                         )
                     );
                 }
@@ -390,7 +390,7 @@ public class UpdateTicket
                             newDescription,
                             oldPriority,
                             newPriority,
-                            _currentUser.UserId?.Guid
+                            _currentUser.UserIdAsGuid
                         )
                     );
                 }
@@ -426,7 +426,7 @@ public class UpdateTicket
                     var slaChangeLog = new TicketChangeLogEntry
                     {
                         TicketId = ticket.Id,
-                        ActorStaffId = _currentUser.UserId?.Guid,
+                        ActorStaffId = _currentUser.UserIdAsGuid,
                         Message = ticket.SlaRuleId.HasValue
                             ? $"SLA rule re-evaluated and updated"
                             : $"SLA rule removed after re-evaluation",

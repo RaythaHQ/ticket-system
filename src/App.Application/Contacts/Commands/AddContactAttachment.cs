@@ -102,7 +102,7 @@ public class AddContactAttachment
             var changeLog = new ContactChangeLogEntry
             {
                 ContactId = request.ContactId,
-                ActorStaffId = _currentUser.UserId?.Guid,
+                ActorStaffId = _currentUser.UserIdAsGuid,
                 Message = $"Attached file \"{displayName}\""
             };
             _db.ContactChangeLogEntries.Add(changeLog);

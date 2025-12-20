@@ -60,7 +60,7 @@ public class AddTicketComment
                 throw new NotFoundException("Ticket", request.TicketId);
 
             var authorId =
-                _currentUser.UserId?.Guid
+                _currentUser.UserIdAsGuid
                 ?? throw new ForbiddenAccessException("User not authenticated.");
 
             var comment = new TicketComment

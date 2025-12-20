@@ -37,7 +37,7 @@ public class GetTicketViews
             CancellationToken cancellationToken
         )
         {
-            var userId = _currentUser.UserId?.Guid;
+            var userId = _currentUser.UserIdAsGuid;
 
             var query = _db.TicketViews
                 .AsNoTracking()

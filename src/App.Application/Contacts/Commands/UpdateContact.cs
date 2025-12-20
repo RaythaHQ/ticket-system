@@ -130,7 +130,7 @@ public class UpdateContact
                 var changeLog = new ContactChangeLogEntry
                 {
                     ContactId = contact.Id,
-                    ActorStaffId = _currentUser.UserId?.Guid,
+                    ActorStaffId = _currentUser.UserIdAsGuid,
                     FieldChangesJson = JsonSerializer.Serialize(changes),
                     Message = string.Join("; ", messageParts)
                 };

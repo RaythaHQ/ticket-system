@@ -29,6 +29,15 @@ public class CurrentUser : ICurrentUser
                 ?.HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)
                 ?.Value
             : null;
+
+    public Guid? UserIdAsGuid
+    {
+        get
+        {
+            var guid = UserId?.Guid;
+            return guid == Guid.Empty ? null : guid;
+        }
+    }
     public string FirstName =>
         IsAuthenticated
             ? _httpContextAccessor

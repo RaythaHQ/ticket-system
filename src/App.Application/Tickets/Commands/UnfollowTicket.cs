@@ -49,7 +49,7 @@ public class UnfollowTicket
                 throw new NotFoundException("Ticket", request.TicketId);
 
             var userId =
-                _currentUser.UserId?.Guid
+                _currentUser.UserIdAsGuid
                 ?? throw new ForbiddenAccessException("User not authenticated.");
 
             var follower = await _db.TicketFollowers.FirstOrDefaultAsync(

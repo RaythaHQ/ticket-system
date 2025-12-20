@@ -51,7 +51,7 @@ public class UpdateNotificationPreferences
         )
         {
             // Users can only update their own preferences
-            if (_currentUser.UserId?.Guid != request.StaffAdminId.Guid)
+            if (_currentUser.UserIdAsGuid != request.StaffAdminId.Guid)
             {
                 throw new UnauthorizedAccessException(
                     "Cannot update preferences for another user."

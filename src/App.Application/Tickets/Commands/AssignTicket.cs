@@ -294,7 +294,7 @@ public class AssignTicket
                 var changeLog = new TicketChangeLogEntry
                 {
                     TicketId = ticket.Id,
-                    ActorStaffId = _currentUser.UserId?.Guid,
+                    ActorStaffId = _currentUser.UserIdAsGuid,
                     FieldChangesJson = JsonSerializer.Serialize(changes),
                     Message = message,
                 };
@@ -307,7 +307,7 @@ public class AssignTicket
                         newAssigneeId,
                         oldTeamId,
                         request.OwningTeamId?.Guid,
-                        _currentUser.UserId?.Guid
+                        _currentUser.UserIdAsGuid
                     )
                 );
 

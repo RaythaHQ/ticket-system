@@ -31,7 +31,7 @@ public class GetExportJobsForUser
             Query request,
             CancellationToken cancellationToken)
         {
-            var userId = request.UserId?.Guid ?? _currentUser.UserId?.Guid;
+            var userId = request.UserId?.Guid ?? _currentUser.UserIdAsGuid;
             
             if (!userId.HasValue)
                 return new QueryResponseDto<ListResultDto<ExportJobDto>>(new ListResultDto<ExportJobDto>(

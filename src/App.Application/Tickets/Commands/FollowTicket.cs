@@ -48,7 +48,7 @@ public class FollowTicket
                 throw new NotFoundException("Ticket", request.TicketId);
 
             var userId =
-                _currentUser.UserId?.Guid
+                _currentUser.UserIdAsGuid
                 ?? throw new ForbiddenAccessException("User not authenticated.");
 
             // Check if already following

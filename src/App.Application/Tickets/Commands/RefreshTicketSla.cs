@@ -177,7 +177,7 @@ public class RefreshTicketSla
             var changeLog = new TicketChangeLogEntry
             {
                 TicketId = ticket.Id,
-                ActorStaffId = _currentUser.UserId?.Guid,
+                ActorStaffId = _currentUser.UserIdAsGuid,
                 FieldChangesJson = changes.Any() ? JsonSerializer.Serialize(changes) : null,
                 Message = baseMessage,
             };

@@ -142,7 +142,7 @@ public class CreateTicketView
                 Id = Guid.NewGuid(),
                 Name = request.Name,
                 Description = request.Description,
-                OwnerStaffId = request.OwnerUserId?.Guid ?? _currentUser.UserId?.Guid,
+                OwnerStaffId = request.OwnerUserId?.Guid ?? _currentUser.UserIdAsGuid,
                 IsDefault = request.IsDefault,
                 IsSystem = request.IsSystemView,
                 ConditionsJson = conditionsJson,
