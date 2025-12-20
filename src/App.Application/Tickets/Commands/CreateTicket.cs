@@ -221,6 +221,13 @@ public class CreateTicket
             var defaultStatus = await _configService.GetDefaultStatusAsync(cancellationToken);
             var defaultPriority = await _configService.GetDefaultPriorityAsync(cancellationToken);
 
+            // Get CreatedByStaffId - ensure we don't use empty GUIDs
+            Guid? createdByStaffId = null;
+            if (_currentUser.UserId.HasValue && _currentUser.UserId.Value.Guid != Guid.Empty)
+            {
+                createdByStaffId = _currentUser.UserId.Value.Guid;
+            }
+
             var ticket = new Ticket
             {
                 Id = ticketId,
@@ -239,7 +246,7 @@ public class CreateTicket
                 AssigneeId = assigneeId,
                 AssignedAt = assigneeId.HasValue ? DateTime.UtcNow : null,
                 ContactId = request.ContactId,
-                CreatedByStaffId = _currentUser.UserId?.Guid,
+                CreatedByStaffId = createdByStaffId,
             };
 
             ticket.AddDomainEvent(new TicketCreatedEvent(ticket));
