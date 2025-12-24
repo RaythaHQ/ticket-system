@@ -134,6 +134,7 @@ public static class ConfigureServices
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ICurrentOrganization, CurrentOrganization>();
         services.AddScoped<IRelativeUrlBuilder, RelativeUrlBuilder>();
+        services.AddScoped<INotificationSuppressionService, NotificationSuppressionService>();
         services.AddScoped<IRenderEngine, RenderEngine>();
         services.AddSingleton<IFileStorageProviderSettings, FileStorageProviderSettings>();
         services.AddSingleton<ICurrentVersion, CurrentVersion>();

@@ -24,6 +24,7 @@ public class SlaApproachingEventHandler_SendNotification
     private readonly ICurrentOrganization _currentOrganization;
     private readonly INotificationPreferenceService _notificationPreferenceService;
     private readonly IInAppNotificationService _inAppNotificationService;
+    private readonly INotificationSuppressionService _notificationSuppressionService;
     private readonly ILogger<SlaApproachingEventHandler_SendNotification> _logger;
 
     public SlaApproachingEventHandler_SendNotification(
@@ -34,6 +35,7 @@ public class SlaApproachingEventHandler_SendNotification
         ICurrentOrganization currentOrganization,
         INotificationPreferenceService notificationPreferenceService,
         IInAppNotificationService inAppNotificationService,
+        INotificationSuppressionService notificationSuppressionService,
         ILogger<SlaApproachingEventHandler_SendNotification> logger
     )
     {
@@ -44,6 +46,7 @@ public class SlaApproachingEventHandler_SendNotification
         _currentOrganization = currentOrganization;
         _notificationPreferenceService = notificationPreferenceService;
         _inAppNotificationService = inAppNotificationService;
+        _notificationSuppressionService = notificationSuppressionService;
         _logger = logger;
     }
 
@@ -52,6 +55,15 @@ public class SlaApproachingEventHandler_SendNotification
         CancellationToken cancellationToken
     )
     {
+        // Check if notifications should be suppressed
+        if (_notificationSuppressionService.ShouldSuppressNotifications())
+        {
+            _logger.LogDebug(
+                "Notifications suppressed for SLA approaching event on ticket {TicketId}",
+                notification.Ticket.Id
+            );
+            return;
+        }
         var ticket = notification.Ticket;
 
         if (!ticket.AssigneeId.HasValue)

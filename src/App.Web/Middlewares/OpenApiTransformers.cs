@@ -39,6 +39,21 @@ internal sealed class ApiKeySecuritySchemeTransformer(
                     [new OpenApiSecuritySchemeReference("ApiKey", document)] = [],
                 }
             );
+
+            // Add X-API-SuppressNotifications header parameter to all operations
+            operation.Value.Parameters ??= [];
+            var suppressNotificationsParam = new OpenApiParameter
+            {
+                Name = "X-API-SuppressNotifications",
+                In = ParameterLocation.Header,
+                Required = false,
+                Description =
+                    "Set to 'true', '1', or 'yes' (case-insensitive) to suppress email and in-app notifications for this operation. "
+                    + "Useful for API automation to prevent notification spam. "
+                    + "When set, no notifications will be sent for ticket creation, updates, assignments, status changes, comments, or SLA events.",
+            };
+            suppressNotificationsParam.Schema = new OpenApiSchema();
+            operation.Value.Parameters.Add(suppressNotificationsParam);
         }
     }
 }

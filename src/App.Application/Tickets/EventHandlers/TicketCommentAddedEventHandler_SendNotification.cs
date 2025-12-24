@@ -29,6 +29,7 @@ public class TicketCommentAddedEventHandler_SendNotification
     private readonly ICurrentOrganization _currentOrganization;
     private readonly INotificationPreferenceService _notificationPreferenceService;
     private readonly IInAppNotificationService _inAppNotificationService;
+    private readonly INotificationSuppressionService _notificationSuppressionService;
     private readonly ILogger<TicketCommentAddedEventHandler_SendNotification> _logger;
 
     public TicketCommentAddedEventHandler_SendNotification(
@@ -39,6 +40,7 @@ public class TicketCommentAddedEventHandler_SendNotification
         ICurrentOrganization currentOrganization,
         INotificationPreferenceService notificationPreferenceService,
         IInAppNotificationService inAppNotificationService,
+        INotificationSuppressionService notificationSuppressionService,
         ILogger<TicketCommentAddedEventHandler_SendNotification> logger
     )
     {
@@ -49,6 +51,7 @@ public class TicketCommentAddedEventHandler_SendNotification
         _currentOrganization = currentOrganization;
         _notificationPreferenceService = notificationPreferenceService;
         _inAppNotificationService = inAppNotificationService;
+        _notificationSuppressionService = notificationSuppressionService;
         _logger = logger;
     }
 
@@ -57,6 +60,16 @@ public class TicketCommentAddedEventHandler_SendNotification
         CancellationToken cancellationToken
     )
     {
+        // Check if notifications should be suppressed
+        if (_notificationSuppressionService.ShouldSuppressNotifications())
+        {
+            _logger.LogDebug(
+                "Notifications suppressed for comment added event on ticket {TicketId}",
+                notification.Ticket.Id
+            );
+            return;
+        }
+
         try
         {
             var ticket = notification.Ticket;

@@ -23,6 +23,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
     private readonly ICurrentOrganization _currentOrganization;
     private readonly INotificationPreferenceService _notificationPreferenceService;
     private readonly IInAppNotificationService _inAppNotificationService;
+    private readonly INotificationSuppressionService _notificationSuppressionService;
     private readonly ILogger<TicketAssignedEventHandler_SendNotification> _logger;
 
     public TicketAssignedEventHandler_SendNotification(
@@ -33,6 +34,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         ICurrentOrganization currentOrganization,
         INotificationPreferenceService notificationPreferenceService,
         IInAppNotificationService inAppNotificationService,
+        INotificationSuppressionService notificationSuppressionService,
         ILogger<TicketAssignedEventHandler_SendNotification> logger
     )
     {
@@ -43,6 +45,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         _currentOrganization = currentOrganization;
         _notificationPreferenceService = notificationPreferenceService;
         _inAppNotificationService = inAppNotificationService;
+        _notificationSuppressionService = notificationSuppressionService;
         _logger = logger;
     }
 
@@ -51,6 +54,16 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         CancellationToken cancellationToken
     )
     {
+        // Check if notifications should be suppressed
+        if (_notificationSuppressionService.ShouldSuppressNotifications())
+        {
+            _logger.LogDebug(
+                "Notifications suppressed for ticket assigned event on ticket {TicketId}",
+                notification.Ticket.Id
+            );
+            return;
+        }
+
         try
         {
             var ticket = notification.Ticket;

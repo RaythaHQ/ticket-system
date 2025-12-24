@@ -25,6 +25,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
     private readonly ICurrentOrganization _currentOrganization;
     private readonly INotificationPreferenceService _notificationPreferenceService;
     private readonly IInAppNotificationService _inAppNotificationService;
+    private readonly INotificationSuppressionService _notificationSuppressionService;
     private readonly ILogger<SlaBreachedEventHandler_SendNotification> _logger;
 
     public SlaBreachedEventHandler_SendNotification(
@@ -35,6 +36,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
         ICurrentOrganization currentOrganization,
         INotificationPreferenceService notificationPreferenceService,
         IInAppNotificationService inAppNotificationService,
+        INotificationSuppressionService notificationSuppressionService,
         ILogger<SlaBreachedEventHandler_SendNotification> logger
     )
     {
@@ -45,6 +47,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
         _currentOrganization = currentOrganization;
         _notificationPreferenceService = notificationPreferenceService;
         _inAppNotificationService = inAppNotificationService;
+        _notificationSuppressionService = notificationSuppressionService;
         _logger = logger;
     }
 
@@ -53,6 +56,15 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
         CancellationToken cancellationToken
     )
     {
+        // Check if notifications should be suppressed
+        if (_notificationSuppressionService.ShouldSuppressNotifications())
+        {
+            _logger.LogDebug(
+                "Notifications suppressed for SLA breached event on ticket {TicketId}",
+                notification.Ticket.Id
+            );
+            return;
+        }
         var ticket = notification.Ticket;
 
         try
