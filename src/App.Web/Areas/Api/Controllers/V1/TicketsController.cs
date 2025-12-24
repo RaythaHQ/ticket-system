@@ -98,6 +98,7 @@ public class TicketsController : BaseController
             Title = request.Title,
             Description = request.Description,
             Priority = request.Priority ?? "normal",
+            Language = request.Language ?? "english",
             Category = request.Category,
             Tags = request.Tags,
             OwningTeamId = owningTeamId,
@@ -300,6 +301,7 @@ public record CreateTicketRequest
     public string Title { get; init; } = null!;
     public string? Description { get; init; }
     public string? Priority { get; init; }
+    public string? Language { get; init; }
     public string? Category { get; init; }
     public List<string>? Tags { get; init; }
     public string? OwningTeamId { get; init; }
