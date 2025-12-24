@@ -98,6 +98,14 @@
                                                 <i class="bi bi-play-fill"></i>
                                             </button>
                                         }
+                                        @if (!priority.IsBuiltIn)
+                                        {
+                                            <button type="button" class="btn btn-outline-danger delete-btn"
+                                                    data-id="@priority.Id" data-label="@priority.Label"
+                                                    title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        }
                                     </div>
                                 </td>
                             </tr>
@@ -122,6 +130,28 @@
                 <span class="badge bg-secondary">Secondary</span>
                 <span class="badge bg-light text-dark border">Light</span>
                 <span class="badge bg-dark">Dark</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Delete Priority</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the priority "<strong id="deletePriorityLabel"></strong>"? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
             </div>
         </div>
     </div>
@@ -196,6 +226,20 @@
                         console.error('Error:', error);
                         alert('Failed to update status');
                     });
+                });
+            });
+
+            // Delete handlers
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.dataset.id;
+                    const label = this.dataset.label;
+                    
+                    document.getElementById('deletePriorityLabel').textContent = label;
+                    document.getElementById('deleteForm').action = '/admin/tickets/priorities/delete/' + id;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                    modal.show();
                 });
             });
         });

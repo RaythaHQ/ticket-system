@@ -378,6 +378,7 @@ public static class RouteNames
         public const string Index = "/Tickets/Priorities/Index";
         public const string Create = "/Tickets/Priorities/Create";
         public const string Edit = "/Tickets/Priorities/Edit";
+        public const string Delete = "/Tickets/Priorities/Delete";
     }
 
     /// <summary>
