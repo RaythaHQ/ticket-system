@@ -1,23 +1,25 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using CSharpVitamins;
 using Mediator;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
-using App.Application.Common.Utils;
-using App.Domain.Entities;
 
 namespace App.Application.Common.Behaviors;
 
+/// <summary>
+/// Pipeline behavior that logs command (write) operations to all registered audit log writers.
+/// Only writes to sinks - queries are handled by QueryLoggingBehavior.
+/// </summary>
 public class AuditBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TResponse>
     where TMessage : IMessage
 {
-    private readonly IAppDbContext _db;
+    private readonly IEnumerable<IAuditLogWriter> _writers;
     private readonly ICurrentUser _currentUser;
 
-    public AuditBehavior(IAppDbContext db, ICurrentUser currentUser)
-        : base()
+    public AuditBehavior(IEnumerable<IAuditLogWriter> writers, ICurrentUser currentUser)
     {
-        _db = db;
+        _writers = writers;
         _currentUser = currentUser;
     }
 
@@ -27,10 +29,11 @@ public class AuditBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TR
         CancellationToken cancellationToken
     )
     {
+        var stopwatch = Stopwatch.StartNew();
         var response = await next(message, cancellationToken);
+        stopwatch.Stop();
 
         var interfaces = message.GetType().GetInterfaces();
-
         bool isLoggableRequest = interfaces.Any(p => p == typeof(ILoggableRequest));
         bool isLoggableEntityRequest = interfaces.Any(p => p == typeof(ILoggableEntityRequest));
 
@@ -38,21 +41,38 @@ public class AuditBehavior<TMessage, TResponse> : IPipelineBehavior<TMessage, TR
         {
             dynamic responseAsDynamic = response as dynamic;
             dynamic messageAsDynamic = message as dynamic;
+
             if (responseAsDynamic.Success)
             {
-                var auditLog = new AuditLog
+                Guid? entityId = null;
+                if (isLoggableEntityRequest)
+                {
+                    ShortGuid shortGuid = messageAsDynamic.Id;
+                    entityId = shortGuid.Guid;
+                }
+
+                var entry = new AuditLogEntry
                 {
                     Id = Guid.NewGuid(),
-                    Request = JsonSerializer.Serialize(messageAsDynamic),
                     Category = messageAsDynamic.GetLogName(),
+                    RequestType = "Command",
+                    RequestPayload = JsonSerializer.Serialize(messageAsDynamic),
+                    ResponsePayload = null,
+                    Success = true,
+                    DurationMs = stopwatch.ElapsedMilliseconds,
                     UserEmail = _currentUser.EmailAddress,
                     IpAddress = _currentUser.RemoteIpAddress,
-                    EntityId = isLoggableEntityRequest ? (ShortGuid)messageAsDynamic.Id : null,
+                    EntityId = entityId,
+                    Timestamp = DateTime.UtcNow
                 };
-                _db.AuditLogs.Add(auditLog);
-                await _db.SaveChangesAsync(cancellationToken);
+
+                // Write to all registered writers
+                // Commands go to all writers (regardless of mode)
+                var writeTasks = _writers.Select(w => w.WriteAsync(entry, cancellationToken));
+                await Task.WhenAll(writeTasks);
             }
         }
+
         return response;
     }
 }

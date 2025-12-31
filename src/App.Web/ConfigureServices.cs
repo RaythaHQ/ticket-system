@@ -1,5 +1,6 @@
 using System.Text.Json;
 using App.Application.Common.Interfaces;
+using App.Application.Common.Models;
 using App.Application.Common.Security;
 using App.Domain.Entities;
 using App.Infrastructure.Persistence;
@@ -12,8 +13,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.OpenApi;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -21,9 +27,27 @@ public static class ConfigureServices
 {
     public static IServiceCollection AddWebUIServices(
         this IServiceCollection services,
-        IWebHostEnvironment environment
+        IWebHostEnvironment environment,
+        IConfiguration configuration
     )
     {
+        // Bind observability options
+        services.Configure<ObservabilityOptions>(
+            configuration.GetSection(ObservabilityOptions.SectionName));
+        
+        var obsOptions = configuration
+            .GetSection(ObservabilityOptions.SectionName)
+            .Get<ObservabilityOptions>() ?? new ObservabilityOptions();
+
+        // Configure OpenTelemetry (optional)
+        if (obsOptions.OpenTelemetry.Enabled)
+        {
+            ConfigureOpenTelemetry(services, obsOptions, environment);
+        }
+
+        // Sentry configuration is done in the host builder via UseSentry()
+        // The DSN and environment are configured there
+
         // In development, use less restrictive cookie settings to allow non-HTTPS access
         // from non-localhost hosts (e.g., http://machinename:8888). SameSite=None requires
         // Secure, and Secure cookies are rejected from non-secure origins except localhost.
@@ -166,5 +190,77 @@ public static class ConfigureServices
         });
         services.AddRazorPages();
         return services;
+    }
+
+    private static void ConfigureOpenTelemetry(
+        IServiceCollection services,
+        ObservabilityOptions options,
+        IWebHostEnvironment environment)
+    {
+        var resourceBuilder = ResourceBuilder.CreateDefault()
+            .AddService(
+                serviceName: options.OpenTelemetry.ServiceName,
+                serviceVersion: typeof(ConfigureServices).Assembly.GetName().Version?.ToString() ?? "1.0.0")
+            .AddAttributes(new Dictionary<string, object>
+            {
+                ["deployment.environment"] = environment.EnvironmentName
+            });
+
+        services.AddOpenTelemetry()
+            .ConfigureResource(r => r.AddService(options.OpenTelemetry.ServiceName))
+            .WithTracing(tracing =>
+            {
+                tracing
+                    .SetResourceBuilder(resourceBuilder)
+                    .AddAspNetCoreInstrumentation(opts =>
+                    {
+                        opts.RecordException = true;
+                    })
+                    .AddHttpClientInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation(opts =>
+                    {
+                        opts.SetDbStatementForText = true;
+                    });
+
+                if (!string.IsNullOrEmpty(options.OpenTelemetry.OtlpEndpoint))
+                {
+                    tracing.AddOtlpExporter(otlp =>
+                    {
+                        otlp.Endpoint = new Uri(options.OpenTelemetry.OtlpEndpoint);
+                    });
+                }
+            })
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .SetResourceBuilder(resourceBuilder)
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddRuntimeInstrumentation();
+
+                if (!string.IsNullOrEmpty(options.OpenTelemetry.OtlpEndpoint))
+                {
+                    metrics.AddOtlpExporter(otlp =>
+                    {
+                        otlp.Endpoint = new Uri(options.OpenTelemetry.OtlpEndpoint);
+                    });
+                }
+            });
+
+        // Configure OTEL logging if enabled
+        if (options.Logging.EnableOpenTelemetry && !string.IsNullOrEmpty(options.OpenTelemetry.OtlpEndpoint))
+        {
+            services.AddLogging(logging =>
+            {
+                logging.AddOpenTelemetry(otelLogging =>
+                {
+                    otelLogging.SetResourceBuilder(resourceBuilder);
+                    otelLogging.AddOtlpExporter(otlp =>
+                    {
+                        otlp.Endpoint = new Uri(options.OpenTelemetry.OtlpEndpoint);
+                    });
+                });
+            });
+        }
     }
 }

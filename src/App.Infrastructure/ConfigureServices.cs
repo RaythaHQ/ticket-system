@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using App.Application.Common.Interfaces;
+using App.Application.Common.Models;
 using App.Application.Common.Utils;
 using App.Application.SlaRules.Services;
 using App.Application.Teams.Services;
@@ -10,6 +11,7 @@ using App.Application.Webhooks.Services;
 using App.Infrastructure.BackgroundTasks;
 using App.Infrastructure.Configurations;
 using App.Infrastructure.FileStorage;
+using App.Infrastructure.Logging;
 using App.Infrastructure.Persistence;
 using App.Infrastructure.Persistence.Interceptors;
 using App.Infrastructure.Services;
@@ -131,6 +133,35 @@ public static class ConfigureServices
         // Cached services for performance - IMemoryCache is singleton, so caching works across requests
         services.AddScoped<ICachedOrganizationService, CachedOrganizationService>();
 
+        // Audit log writers
+        RegisterAuditLogWriters(services, configuration);
+
         return services;
+    }
+
+    private static void RegisterAuditLogWriters(IServiceCollection services, IConfiguration configuration)
+    {
+        var obsOptions = configuration
+            .GetSection(ObservabilityOptions.SectionName)
+            .Get<ObservabilityOptions>() ?? new ObservabilityOptions();
+
+        // PostgreSQL writer is always registered (source for in-app UI, always WritesOnly)
+        services.AddScoped<IAuditLogWriter, PostgresAuditLogWriter>();
+
+        // Loki writer (optional, configurable mode)
+        var lokiSink = obsOptions.AuditLog.AdditionalSinks.Loki;
+        if (lokiSink?.Enabled == true && !string.IsNullOrEmpty(lokiSink.Url))
+        {
+            services.AddSingleton<LokiAuditLogWriter>();
+            services.AddSingleton<IAuditLogWriter>(sp => sp.GetRequiredService<LokiAuditLogWriter>());
+            services.AddSingleton<IHostedService>(sp => sp.GetRequiredService<LokiAuditLogWriter>());
+        }
+
+        // OpenTelemetry writer (optional, configurable mode)
+        var otelSink = obsOptions.AuditLog.AdditionalSinks.OpenTelemetry;
+        if (otelSink?.Enabled == true)
+        {
+            services.AddSingleton<IAuditLogWriter, OtelAuditLogWriter>();
+        }
     }
 }
