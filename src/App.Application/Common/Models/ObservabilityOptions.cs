@@ -33,6 +33,13 @@ public class OpenTelemetryOptions
     public bool Enabled { get; set; } = false;
     public string? OtlpEndpoint { get; set; }
     public string ServiceName { get; set; } = "app";
+    
+    /// <summary>
+    /// Optional authorization header value for OTLP endpoint.
+    /// For OpenObserve: "Basic {base64(email:password)}"
+    /// For other backends: "Bearer {token}" or leave empty if no auth required.
+    /// </summary>
+    public string? Authorization { get; set; }
 }
 
 /// <summary>

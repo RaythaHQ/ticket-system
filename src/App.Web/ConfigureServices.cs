@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
+using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -226,7 +227,7 @@ public static class ConfigureServices
                 {
                     tracing.AddOtlpExporter(otlp =>
                     {
-                        otlp.Endpoint = new Uri(options.OpenTelemetry.OtlpEndpoint);
+                        ConfigureOtlpExporter(otlp, options.OpenTelemetry);
                     });
                 }
             })
@@ -242,7 +243,7 @@ public static class ConfigureServices
                 {
                     metrics.AddOtlpExporter(otlp =>
                     {
-                        otlp.Endpoint = new Uri(options.OpenTelemetry.OtlpEndpoint);
+                        ConfigureOtlpExporter(otlp, options.OpenTelemetry);
                     });
                 }
             });
@@ -257,10 +258,24 @@ public static class ConfigureServices
                     otelLogging.SetResourceBuilder(resourceBuilder);
                     otelLogging.AddOtlpExporter(otlp =>
                     {
-                        otlp.Endpoint = new Uri(options.OpenTelemetry.OtlpEndpoint);
+                        ConfigureOtlpExporter(otlp, options.OpenTelemetry);
                     });
                 });
             });
+        }
+    }
+
+    private static void ConfigureOtlpExporter(OtlpExporterOptions otlp, OpenTelemetryOptions options)
+    {
+        otlp.Endpoint = new Uri(options.OtlpEndpoint!);
+        
+        // Use HTTP/protobuf protocol (required for OpenObserve and many cloud backends)
+        otlp.Protocol = OtlpExportProtocol.HttpProtobuf;
+
+        // Add authorization header if configured
+        if (!string.IsNullOrEmpty(options.Authorization))
+        {
+            otlp.Headers = $"Authorization={options.Authorization}";
         }
     }
 }
