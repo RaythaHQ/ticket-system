@@ -12,7 +12,7 @@ namespace App.Application.Contacts.Queries;
 /// </summary>
 public class QuickSearchContacts
 {
-    public record Query : IRequest<IQueryResponseDto<IEnumerable<ContactListItemDto>>>
+    public record Query : LoggableQuery<IQueryResponseDto<IEnumerable<ContactListItemDto>>>
     {
         /// <summary>
         /// Optional filter by first name (contains search).

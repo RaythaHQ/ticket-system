@@ -8,7 +8,7 @@ namespace App.Application.Contacts.Queries;
 
 public class GetContactById
 {
-    public record Query : IRequest<IQueryResponseDto<ContactDto>>
+    public record Query : LoggableQuery<IQueryResponseDto<ContactDto>>
     {
         public long Id { get; init; }
     }

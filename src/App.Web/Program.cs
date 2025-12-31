@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.Grafana.Loki;
+using Serilog.Sinks.OpenTelemetry;
 
 namespace App.Web;
 
@@ -39,6 +40,8 @@ public class Program
                             "Microsoft.EntityFrameworkCore",
                             LogEventLevel.Warning
                         )
+                        // Suppress verbose HTTP client logs (OTLP exporter traffic)
+                        .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
                         .Enrich.FromLogContext()
                         .Enrich.WithEnvironmentName();
 
@@ -76,7 +79,55 @@ public class Program
                         );
                     }
 
-                    // OpenTelemetry logging sink is configured via OTEL SDK in ConfigureServices
+                    // OpenTelemetry sink (optional)
+                    if (
+                        obsOptions.Logging.EnableOpenTelemetry
+                        && !string.IsNullOrEmpty(obsOptions.OpenTelemetry.OtlpEndpoint)
+                    )
+                    {
+                        var otelEndpoint = obsOptions.OpenTelemetry.OtlpEndpoint.TrimEnd('/');
+                        var logsEndpoint = $"{otelEndpoint}/v1/logs";
+
+                        configuration.WriteTo.OpenTelemetry(options =>
+                        {
+                            options.Endpoint = logsEndpoint;
+                            options.Protocol = OtlpProtocol.HttpProtobuf;
+
+                            if (!string.IsNullOrEmpty(obsOptions.OpenTelemetry.Authorization))
+                            {
+                                options.Headers = new Dictionary<string, string>
+                                {
+                                    ["Authorization"] = obsOptions.OpenTelemetry.Authorization,
+                                };
+                            }
+
+                            if (!string.IsNullOrEmpty(obsOptions.OpenTelemetry.StreamName))
+                            {
+                                options.Headers ??= new Dictionary<string, string>();
+                                options.Headers["stream-name"] = obsOptions
+                                    .OpenTelemetry
+                                    .StreamName;
+                            }
+
+                            if (!string.IsNullOrEmpty(obsOptions.OpenTelemetry.Organization))
+                            {
+                                options.Headers ??= new Dictionary<string, string>();
+                                options.Headers["organization"] = obsOptions
+                                    .OpenTelemetry
+                                    .Organization;
+                            }
+
+                            options.ResourceAttributes = new Dictionary<string, object>
+                            {
+                                ["service.name"] = obsOptions.OpenTelemetry.ServiceName,
+                            };
+                        });
+
+                        Log.Information(
+                            "OpenTelemetry logging enabled at {Endpoint}",
+                            logsEndpoint
+                        );
+                    }
                 }
             )
             .ConfigureWebHostDefaults(webBuilder =>

@@ -34,11 +34,12 @@ public static class ConfigureServices
     {
         // Bind observability options
         services.Configure<ObservabilityOptions>(
-            configuration.GetSection(ObservabilityOptions.SectionName));
-        
-        var obsOptions = configuration
-            .GetSection(ObservabilityOptions.SectionName)
-            .Get<ObservabilityOptions>() ?? new ObservabilityOptions();
+            configuration.GetSection(ObservabilityOptions.SectionName)
+        );
+
+        var obsOptions =
+            configuration.GetSection(ObservabilityOptions.SectionName).Get<ObservabilityOptions>()
+            ?? new ObservabilityOptions();
 
         // Configure OpenTelemetry (optional)
         if (obsOptions.OpenTelemetry.Enabled)
@@ -196,18 +197,25 @@ public static class ConfigureServices
     private static void ConfigureOpenTelemetry(
         IServiceCollection services,
         ObservabilityOptions options,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment
+    )
     {
-        var resourceBuilder = ResourceBuilder.CreateDefault()
+        var resourceBuilder = ResourceBuilder
+            .CreateDefault()
             .AddService(
                 serviceName: options.OpenTelemetry.ServiceName,
-                serviceVersion: typeof(ConfigureServices).Assembly.GetName().Version?.ToString() ?? "1.0.0")
-            .AddAttributes(new Dictionary<string, object>
-            {
-                ["deployment.environment"] = environment.EnvironmentName
-            });
+                serviceVersion: typeof(ConfigureServices).Assembly.GetName().Version?.ToString()
+                    ?? "1.0.0"
+            )
+            .AddAttributes(
+                new Dictionary<string, object>
+                {
+                    ["deployment.environment"] = environment.EnvironmentName,
+                }
+            );
 
-        services.AddOpenTelemetry()
+        services
+            .AddOpenTelemetry()
             .ConfigureResource(r => r.AddService(options.OpenTelemetry.ServiceName))
             .WithTracing(tracing =>
             {
@@ -227,7 +235,7 @@ public static class ConfigureServices
                 {
                     tracing.AddOtlpExporter(otlp =>
                     {
-                        ConfigureOtlpExporter(otlp, options.OpenTelemetry);
+                        ConfigureOtlpExporter(otlp, options.OpenTelemetry, "traces");
                     });
                 }
             })
@@ -243,13 +251,16 @@ public static class ConfigureServices
                 {
                     metrics.AddOtlpExporter(otlp =>
                     {
-                        ConfigureOtlpExporter(otlp, options.OpenTelemetry);
+                        ConfigureOtlpExporter(otlp, options.OpenTelemetry, "metrics");
                     });
                 }
             });
 
         // Configure OTEL logging if enabled
-        if (options.Logging.EnableOpenTelemetry && !string.IsNullOrEmpty(options.OpenTelemetry.OtlpEndpoint))
+        if (
+            options.Logging.EnableOpenTelemetry
+            && !string.IsNullOrEmpty(options.OpenTelemetry.OtlpEndpoint)
+        )
         {
             services.AddLogging(logging =>
             {
@@ -258,24 +269,52 @@ public static class ConfigureServices
                     otelLogging.SetResourceBuilder(resourceBuilder);
                     otelLogging.AddOtlpExporter(otlp =>
                     {
-                        ConfigureOtlpExporter(otlp, options.OpenTelemetry);
+                        ConfigureOtlpExporter(otlp, options.OpenTelemetry, "logs");
                     });
                 });
             });
         }
     }
 
-    private static void ConfigureOtlpExporter(OtlpExporterOptions otlp, OpenTelemetryOptions options)
+    private static void ConfigureOtlpExporter(
+        OtlpExporterOptions otlp,
+        OpenTelemetryOptions options,
+        string signalType
+    )
     {
-        otlp.Endpoint = new Uri(options.OtlpEndpoint!);
-        
-        // Use HTTP/protobuf protocol (required for OpenObserve and many cloud backends)
-        otlp.Protocol = OtlpExportProtocol.HttpProtobuf;
+        // Build the full endpoint with signal path for OpenObserve compatibility
+        // OpenObserve expects: /api/{org}/v1/{signal}
+        var baseEndpoint = options.OtlpEndpoint!.TrimEnd('/');
+        var fullEndpoint = $"{baseEndpoint}/v1/{signalType}";
+        otlp.Endpoint = new Uri(fullEndpoint);
+
+        // Use gRPC or HTTP/protobuf protocol based on configuration
+        otlp.Protocol = options.UseGrpc ? OtlpExportProtocol.Grpc : OtlpExportProtocol.HttpProtobuf;
+
+        // Build headers for OTLP exporter
+        var headers = new List<string>();
 
         // Add authorization header if configured
         if (!string.IsNullOrEmpty(options.Authorization))
         {
-            otlp.Headers = $"Authorization={options.Authorization}";
+            headers.Add($"Authorization={options.Authorization}");
+        }
+
+        // Add organization header for OpenObserve
+        if (!string.IsNullOrEmpty(options.Organization))
+        {
+            headers.Add($"organization={options.Organization}");
+        }
+
+        // Add stream-name header for OpenObserve
+        if (!string.IsNullOrEmpty(options.StreamName))
+        {
+            headers.Add($"stream-name={options.StreamName}");
+        }
+
+        if (headers.Count > 0)
+        {
+            otlp.Headers = string.Join(",", headers);
         }
     }
 }

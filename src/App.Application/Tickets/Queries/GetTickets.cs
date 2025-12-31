@@ -14,9 +14,12 @@ public class GetTickets
 {
     public record Query
         : GetPagedEntitiesInputDto,
-            IRequest<IQueryResponseDto<ListResultDto<TicketListItemDto>>>
+            IRequest<IQueryResponseDto<ListResultDto<TicketListItemDto>>>,
+            ILoggableQuery
     {
         public override string OrderBy { get; init; } = $"CreationTime {SortOrder.DESCENDING}";
+
+        public string GetLogName() => "Tickets.Queries.GetTickets";
 
         /// <summary>
         /// Optional filter by status (exact status developer name).

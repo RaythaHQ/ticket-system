@@ -8,7 +8,7 @@ namespace App.Application.Contacts.Queries;
 
 public class SearchContacts
 {
-    public record Query : IRequest<IQueryResponseDto<IEnumerable<ContactListItemDto>>>
+    public record Query : LoggableQuery<IQueryResponseDto<IEnumerable<ContactListItemDto>>>
     {
         /// <summary>
         /// Search term - can be name, email, or phone number in any format.

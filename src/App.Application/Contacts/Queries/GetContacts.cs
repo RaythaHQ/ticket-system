@@ -12,9 +12,12 @@ public class GetContacts
 {
     public record Query
         : GetPagedEntitiesInputDto,
-            IRequest<IQueryResponseDto<ListResultDto<ContactListItemDto>>>
+            IRequest<IQueryResponseDto<ListResultDto<ContactListItemDto>>>,
+            ILoggableQuery
     {
         public override string OrderBy { get; init; } = $"CreationTime {SortOrder.DESCENDING}";
+
+        public string GetLogName() => "Contacts.Queries.GetContacts";
     }
 
     public class Handler : IRequestHandler<Query, IQueryResponseDto<ListResultDto<ContactListItemDto>>>

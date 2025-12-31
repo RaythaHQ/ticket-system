@@ -8,7 +8,7 @@ namespace App.Application.Tickets.Queries;
 
 public class GetTicketById
 {
-    public record Query : IRequest<IQueryResponseDto<TicketDto>>
+    public record Query : LoggableQuery<IQueryResponseDto<TicketDto>>
     {
         public long Id { get; init; }
     }

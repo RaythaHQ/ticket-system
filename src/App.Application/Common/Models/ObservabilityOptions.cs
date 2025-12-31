@@ -1,7 +1,7 @@
 namespace App.Application.Common.Models;
 
 /// <summary>
-/// Configuration options for the observability stack including logging, 
+/// Configuration options for the observability stack including logging,
 /// OpenTelemetry, Sentry, and audit log destinations.
 /// </summary>
 public class ObservabilityOptions
@@ -33,13 +33,31 @@ public class OpenTelemetryOptions
     public bool Enabled { get; set; } = false;
     public string? OtlpEndpoint { get; set; }
     public string ServiceName { get; set; } = "app";
-    
+
     /// <summary>
     /// Optional authorization header value for OTLP endpoint.
     /// For OpenObserve: "Basic {base64(email:password)}"
     /// For other backends: "Bearer {token}" or leave empty if no auth required.
     /// </summary>
     public string? Authorization { get; set; }
+
+    /// <summary>
+    /// Optional stream name for OpenObserve.
+    /// Default is "default" if not specified.
+    /// </summary>
+    public string StreamName { get; set; } = "default";
+
+    /// <summary>
+    /// Optional organization name for OpenObserve.
+    /// Default is "default" if not specified.
+    /// </summary>
+    public string Organization { get; set; } = "default";
+
+    /// <summary>
+    /// Use gRPC protocol instead of HTTP.
+    /// Set to true for backends that prefer gRPC (e.g., OpenObserve on port 5081).
+    /// </summary>
+    public bool UseGrpc { get; set; } = false;
 }
 
 /// <summary>
@@ -107,6 +125,5 @@ public enum AuditLogMode
     /// Log both commands and queries (reads + writes).
     /// Default for additional sinks for HIPAA compliance.
     /// </summary>
-    All
+    All,
 }
-

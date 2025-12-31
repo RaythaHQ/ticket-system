@@ -13,7 +13,7 @@ namespace App.Application.Tickets.Queries;
 /// </summary>
 public class QuickSearchTickets
 {
-    public record Query : IRequest<IQueryResponseDto<IEnumerable<TicketListItemDto>>>
+    public record Query : LoggableQuery<IQueryResponseDto<IEnumerable<TicketListItemDto>>>
     {
         /// <summary>
         /// Optional filter by contact ID.
