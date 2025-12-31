@@ -2,70 +2,125 @@ namespace App.Application.Common.Models;
 
 /// <summary>
 /// Configuration options for the observability stack including logging,
-/// OpenTelemetry, Sentry, and audit log destinations.
+/// OpenTelemetry, Loki, Sentry, and audit log destinations.
 /// </summary>
 public class ObservabilityOptions
 {
     public const string SectionName = "Observability";
 
+    /// <summary>
+    /// Controls which logging sinks are enabled.
+    /// </summary>
     public LoggingOptions Logging { get; set; } = new();
+
+    /// <summary>
+    /// OpenTelemetry connection details (OTLP endpoint, auth).
+    /// Used when Logging.EnableOpenTelemetry is true.
+    /// </summary>
     public OpenTelemetryOptions OpenTelemetry { get; set; } = new();
-    public SentryConfigOptions Sentry { get; set; } = new();
+
+    /// <summary>
+    /// Loki/VictoriaLogs connection details.
+    /// Used when Logging.EnableLoki is true.
+    /// </summary>
+    public LokiOptions Loki { get; set; } = new();
+
+    /// <summary>
+    /// Sentry error tracking connection details.
+    /// Enabled when Dsn is set.
+    /// </summary>
+    public SentryOptions Sentry { get; set; } = new();
+
+    /// <summary>
+    /// Audit log configuration.
+    /// </summary>
     public AuditLogOptions AuditLog { get; set; } = new();
 }
 
 /// <summary>
-/// Configuration for logging sinks (console, Loki, OpenTelemetry).
+/// Controls which logging sinks are enabled.
 /// </summary>
 public class LoggingOptions
 {
     public bool EnableConsole { get; set; } = true;
     public bool EnableOpenTelemetry { get; set; } = false;
     public bool EnableLoki { get; set; } = false;
-    public string? LokiUrl { get; set; }
 }
 
 /// <summary>
-/// Configuration for OpenTelemetry tracing and metrics.
+/// OpenTelemetry connection details for traces, metrics, and logs.
 /// </summary>
 public class OpenTelemetryOptions
 {
-    public bool Enabled { get; set; } = false;
+    /// <summary>
+    /// OTLP endpoint URL (e.g., https://openobserve.example.com/api/default).
+    /// </summary>
     public string? OtlpEndpoint { get; set; }
+
+    /// <summary>
+    /// Service name for resource attribution.
+    /// </summary>
     public string ServiceName { get; set; } = "app";
 
     /// <summary>
-    /// Optional authorization header value for OTLP endpoint.
+    /// Authorization header value for OTLP endpoint.
     /// For OpenObserve: "Basic {base64(email:password)}"
-    /// For other backends: "Bearer {token}" or leave empty if no auth required.
+    /// For other backends: "Bearer {token}" or leave empty.
     /// </summary>
     public string? Authorization { get; set; }
 
     /// <summary>
-    /// Optional stream name for OpenObserve.
-    /// Default is "default" if not specified.
+    /// Stream name for OpenObserve.
     /// </summary>
     public string StreamName { get; set; } = "default";
 
     /// <summary>
-    /// Optional organization name for OpenObserve.
-    /// Default is "default" if not specified.
+    /// Organization name for OpenObserve.
     /// </summary>
     public string Organization { get; set; } = "default";
 
     /// <summary>
-    /// Use gRPC protocol instead of HTTP.
-    /// Set to true for backends that prefer gRPC (e.g., OpenObserve on port 5081).
+    /// Use gRPC protocol instead of HTTP/protobuf.
     /// </summary>
     public bool UseGrpc { get; set; } = false;
 }
 
 /// <summary>
-/// Configuration for Sentry error tracking.
+/// Loki/VictoriaLogs connection details.
 /// </summary>
-public class SentryConfigOptions
+public class LokiOptions
 {
+    /// <summary>
+    /// Loki push endpoint URL.
+    /// For VictoriaLogs: http://host:9428/insert/loki/api/v1/push
+    /// </summary>
+    public string? Url { get; set; }
+
+    /// <summary>
+    /// Optional username for basic auth.
+    /// </summary>
+    public string? Username { get; set; }
+
+    /// <summary>
+    /// Optional password for basic auth.
+    /// </summary>
+    public string? Password { get; set; }
+}
+
+/// <summary>
+/// Sentry error tracking connection details.
+/// Enabled automatically when Dsn is set.
+/// </summary>
+public class SentryOptions
+{
+    /// <summary>
+    /// Sentry DSN (Data Source Name).
+    /// </summary>
     public string? Dsn { get; set; }
+
+    /// <summary>
+    /// Environment tag for filtering errors.
+    /// </summary>
     public string Environment { get; set; } = "production";
 }
 
@@ -94,11 +149,19 @@ public class AdditionalAuditSinkOptions
 
 /// <summary>
 /// Configuration for Loki audit sink.
+/// Uses the main Serilog Loki sink (configured in Logging section).
 /// </summary>
 public class LokiAuditSinkOptions
 {
+    /// <summary>
+    /// Enable writing audit logs to Loki via Serilog.
+    /// Requires Logging.EnableLoki to also be true.
+    /// </summary>
     public bool Enabled { get; set; } = false;
-    public string? Url { get; set; }
+
+    /// <summary>
+    /// Which operations to log: WritesOnly (commands) or All (commands + queries).
+    /// </summary>
     public AuditLogMode Mode { get; set; } = AuditLogMode.All;
 }
 

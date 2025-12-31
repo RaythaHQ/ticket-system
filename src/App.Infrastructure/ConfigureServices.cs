@@ -148,9 +148,10 @@ public static class ConfigureServices
         // PostgreSQL writer is always registered (source for in-app UI, always WritesOnly)
         services.AddScoped<IAuditLogWriter, PostgresAuditLogWriter>();
 
-        // Loki writer (optional, configurable mode)
+        // Loki writer (optional, uses main Serilog Loki sink)
+        // Requires Logging.EnableLoki to be true for logs to actually reach Loki
         var lokiSink = obsOptions.AuditLog.AdditionalSinks.Loki;
-        if (lokiSink?.Enabled == true && !string.IsNullOrEmpty(lokiSink.Url))
+        if (lokiSink?.Enabled == true)
         {
             services.AddSingleton<LokiAuditLogWriter>();
             services.AddSingleton<IAuditLogWriter>(sp => sp.GetRequiredService<LokiAuditLogWriter>());

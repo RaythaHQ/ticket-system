@@ -40,8 +40,9 @@ public class Program
                             "Microsoft.EntityFrameworkCore",
                             LogEventLevel.Warning
                         )
-                        // Suppress verbose HTTP client logs (OTLP exporter traffic)
                         .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning)
+                        // Suppress noisy Sentry SDK logs
+                        .MinimumLevel.Override("Sentry", LogEventLevel.Warning)
                         .Enrich.FromLogContext()
                         .Enrich.WithEnvironmentName();
 
@@ -53,29 +54,38 @@ public class Program
                         );
                     }
 
-                    // Loki sink (optional)
-                    if (
-                        obsOptions.Logging.EnableLoki
-                        && !string.IsNullOrEmpty(obsOptions.Logging.LokiUrl)
-                    )
+                    // Loki sink (optional) - supports VictoriaLogs via Loki-compatible API
+                    if (obsOptions.Logging.EnableLoki && !string.IsNullOrEmpty(obsOptions.Loki.Url))
                     {
-                        configuration.WriteTo.GrafanaLoki(
-                            obsOptions.Logging.LokiUrl,
-                            labels: new List<LokiLabel>
+                        var lokiLabels = new List<LokiLabel>
+                        {
+                            new() { Key = "app", Value = obsOptions.OpenTelemetry.ServiceName },
+                            new()
                             {
-                                new() { Key = "app", Value = obsOptions.OpenTelemetry.ServiceName },
-                                new()
-                                {
-                                    Key = "env",
-                                    Value = context.HostingEnvironment.EnvironmentName,
-                                },
+                                Key = "env",
+                                Value = context.HostingEnvironment.EnvironmentName,
                             },
-                            restrictedToMinimumLevel: LogEventLevel.Information
-                        );
+                        };
 
-                        Log.Information(
-                            "Loki logging enabled at {LokiUrl}",
-                            obsOptions.Logging.LokiUrl
+                        // Configure credentials if provided
+                        LokiCredentials? credentials = null;
+                        if (
+                            !string.IsNullOrEmpty(obsOptions.Loki.Username)
+                            && !string.IsNullOrEmpty(obsOptions.Loki.Password)
+                        )
+                        {
+                            credentials = new LokiCredentials
+                            {
+                                Login = obsOptions.Loki.Username,
+                                Password = obsOptions.Loki.Password,
+                            };
+                        }
+
+                        configuration.WriteTo.GrafanaLoki(
+                            obsOptions.Loki.Url,
+                            labels: lokiLabels,
+                            credentials: credentials,
+                            restrictedToMinimumLevel: LogEventLevel.Information
                         );
                     }
 
@@ -150,19 +160,12 @@ public class Program
                 // Only configure Sentry if DSN is provided
                 if (!string.IsNullOrEmpty(obsOptions.Sentry.Dsn))
                 {
-                    Console.WriteLine($"[Sentry] Initializing with DSN: {obsOptions.Sentry.Dsn}");
-                    Console.WriteLine($"[Sentry] Environment: {obsOptions.Sentry.Environment}");
                     webBuilder.UseSentry(options =>
                     {
                         options.Dsn = obsOptions.Sentry.Dsn;
                         options.Environment = obsOptions.Sentry.Environment;
                         options.TracesSampleRate = 1.0;
-                        options.Debug = true; // Enable Sentry debug mode
                     });
-                }
-                else
-                {
-                    Console.WriteLine("[Sentry] DSN not configured, Sentry disabled");
                 }
 
                 webBuilder.UseStartup<Startup>();

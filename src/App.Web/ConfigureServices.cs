@@ -41,8 +41,8 @@ public static class ConfigureServices
             configuration.GetSection(ObservabilityOptions.SectionName).Get<ObservabilityOptions>()
             ?? new ObservabilityOptions();
 
-        // Configure OpenTelemetry (optional)
-        if (obsOptions.OpenTelemetry.Enabled)
+        // Configure OpenTelemetry tracing/metrics (enabled if OtlpEndpoint is set)
+        if (!string.IsNullOrEmpty(obsOptions.OpenTelemetry.OtlpEndpoint))
         {
             ConfigureOpenTelemetry(services, obsOptions, environment);
         }
