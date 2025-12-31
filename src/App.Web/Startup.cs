@@ -23,6 +23,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
+using Sentry;
 
 namespace App.Web;
 
@@ -63,10 +64,24 @@ public class Startup
         string pathBase = Configuration["PATHBASE"] ?? string.Empty;
         app.UsePathBase(new PathString(pathBase));
         app.UseForwardedHeaders();
+
         app.UseExceptionHandler(
             new ExceptionHandlerOptions
             {
-                ExceptionHandler = ExceptionsMiddleware.ErrorHandlerDelegate(pathBase, env),
+                ExceptionHandler = async context =>
+                {
+                    var error = context.Features.Get<IExceptionHandlerFeature>();
+                    if (error?.Error != null)
+                    {
+                        // Capture exception to Sentry before handling
+                        Console.WriteLine($"[Sentry] Capturing exception: {error.Error.GetType().Name}: {error.Error.Message}");
+                        var eventId = SentrySdk.CaptureException(error.Error);
+                        Console.WriteLine($"[Sentry] Captured with event ID: {eventId}");
+                    }
+
+                    // Delegate to original handler
+                    await ExceptionsMiddleware.ErrorHandlerDelegate(pathBase, env)(context);
+                },
                 AllowStatusCode404Response = true,
             }
         );

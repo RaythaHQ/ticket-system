@@ -133,12 +133,12 @@ public class Program
             .ConfigureWebHostDefaults(webBuilder =>
             {
                 // Read config to check if Sentry should be enabled
+                var env =
+                    Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
                 var configuration = new ConfigurationBuilder()
                     .AddJsonFile("appsettings.json", optional: true)
-                    .AddJsonFile(
-                        $"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json",
-                        optional: true
-                    )
+                    .AddJsonFile($"appsettings.{env}.json", optional: true)
+                    .AddUserSecrets<Program>(optional: true) // Include User Secrets for local dev
                     .AddEnvironmentVariables()
                     .Build();
 
@@ -150,12 +150,19 @@ public class Program
                 // Only configure Sentry if DSN is provided
                 if (!string.IsNullOrEmpty(obsOptions.Sentry.Dsn))
                 {
+                    Console.WriteLine($"[Sentry] Initializing with DSN: {obsOptions.Sentry.Dsn}");
+                    Console.WriteLine($"[Sentry] Environment: {obsOptions.Sentry.Environment}");
                     webBuilder.UseSentry(options =>
                     {
                         options.Dsn = obsOptions.Sentry.Dsn;
                         options.Environment = obsOptions.Sentry.Environment;
                         options.TracesSampleRate = 1.0;
+                        options.Debug = true; // Enable Sentry debug mode
                     });
+                }
+                else
+                {
+                    Console.WriteLine("[Sentry] DSN not configured, Sentry disabled");
                 }
 
                 webBuilder.UseStartup<Startup>();

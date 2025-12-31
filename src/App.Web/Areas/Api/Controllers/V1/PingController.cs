@@ -21,6 +21,16 @@ public class PingController : BaseController
             OrganizationName = response.Result.OrganizationName,
         };
     }
+
+    /// <summary>
+    /// Test endpoint to trigger a crash for Sentry testing. Remove in production.
+    /// </summary>
+    [HttpGet("crash", Name = "ping-crash")]
+    [AllowAnonymous]
+    public IActionResult Crash()
+    {
+        throw new InvalidOperationException("This is a test exception for Sentry verification!");
+    }
 }
 
 public class HealthCheckResult
