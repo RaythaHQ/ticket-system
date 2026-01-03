@@ -43,6 +43,11 @@ public record TicketDto : BaseNumericAuditableEntityDto
     public string? SlaStatus { get; init; }
     public string? SlaStatusLabel { get; init; }
 
+    /// <summary>
+    /// Number of times this ticket's SLA has been extended.
+    /// </summary>
+    public int SlaExtensionCount { get; init; }
+
     public static TicketDto MapFrom(Ticket ticket)
     {
         return new TicketDto
@@ -75,6 +80,7 @@ public record TicketDto : BaseNumericAuditableEntityDto
             SlaBreachedAt = ticket.SlaBreachedAt,
             SlaStatus = ticket.SlaStatus,
             SlaStatusLabel = ticket.SlaStatusValue?.Label,
+            SlaExtensionCount = ticket.SlaExtensionCount,
             CreationTime = ticket.CreationTime,
             CreatorUserId = ticket.CreatorUserId,
             LastModifierUserId = ticket.LastModifierUserId,

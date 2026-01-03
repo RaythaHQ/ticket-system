@@ -225,6 +225,44 @@ public class SlaService : ISlaService
         return true;
     }
 
+    public int CalculateDefaultExtensionHours(DateTime? currentSlaDueAt, string? timezone)
+    {
+        var effectiveTimezone = string.IsNullOrEmpty(timezone)
+            ? DateTimeExtensions.DEFAULT_TIMEZONE
+            : timezone;
+
+        var now = DateTime.UtcNow;
+        var baseTime = currentSlaDueAt ?? now;
+
+        // Convert to local timezone for business day calculation
+        var localNow = now.UtcToTimeZone(effectiveTimezone);
+
+        // Target 4pm next business day
+        var targetDate = localNow.Date.AddDays(1);
+
+        // Skip weekends
+        while (targetDate.DayOfWeek == DayOfWeek.Saturday || targetDate.DayOfWeek == DayOfWeek.Sunday)
+        {
+            targetDate = targetDate.AddDays(1);
+        }
+
+        // Target 4pm (16:00) on that day
+        var targetTimeLocal = targetDate.AddHours(16);
+
+        // Convert target back to UTC and calculate hours from baseTime
+        var targetTimeUtc = targetTimeLocal.TimeZoneToUtc(effectiveTimezone);
+        var hoursUntilTarget = (targetTimeUtc - baseTime).TotalHours;
+
+        // Ensure at least 1 hour
+        return Math.Max(1, (int)Math.Ceiling(hoursUntilTarget));
+    }
+
+    public DateTime CalculateExtendedDueDate(DateTime? currentSlaDueAt, int extensionHours)
+    {
+        var baseTime = currentSlaDueAt ?? DateTime.UtcNow;
+        return baseTime.AddHours(extensionHours);
+    }
+
     private DateTime CalculateBusinessHoursDue(
         DateTime startTimeUtc,
         int targetMinutes,

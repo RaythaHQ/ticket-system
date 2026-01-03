@@ -5,6 +5,8 @@ Auto-generated from all feature plans. Last updated: 2025-12-13
 ## Active Technologies
 - C# 12 / .NET 8.0 + ASP.NET Core Razor Pages, Entity Framework Core, MediatR, FluentValidation (003-advanced-views)
 - PostgreSQL via EF Core (existing `TicketView` entity with JSON columns) (003-advanced-views)
+- C# 12 / .NET 8 + ASP.NET Core Razor Pages, MediatR (CQRS), FluentValidation, Entity Framework Core (004-sla-extension-controls)
+- PostgreSQL with EF Core migrations (004-sla-extension-controls)
 
 - C# / .NET 8 + ASP.NET Core, Entity Framework Core, Mediator, FluentValidation, CsvHelper (new) (002-ticket-enhancements)
 
@@ -24,6 +26,7 @@ tests/
 C# / .NET 8: Follow standard conventions
 
 ## Recent Changes
+- 004-sla-extension-controls: Added C# 12 / .NET 8 + ASP.NET Core Razor Pages, MediatR (CQRS), FluentValidation, Entity Framework Core
 - 003-advanced-views: Added C# 12 / .NET 8.0 + ASP.NET Core Razor Pages, Entity Framework Core, MediatR, FluentValidation
 
 - 002-ticket-enhancements: Added C# / .NET 8 + ASP.NET Core, Entity Framework Core, Mediator, FluentValidation, CsvHelper (new)

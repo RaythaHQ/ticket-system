@@ -66,6 +66,12 @@ public class Ticket : BaseNumericFullAuditableEntity
     public DateTime? SlaBreachedAt { get; set; }
     public string? SlaStatus { get; set; }
 
+    /// <summary>
+    /// Number of times the SLA due date has been extended for this ticket.
+    /// Used for enforcing extension limits for non-privileged users.
+    /// </summary>
+    public int SlaExtensionCount { get; set; } = 0;
+
     // Collections
     public virtual ICollection<TicketChangeLogEntry> ChangeLogEntries { get; set; } =
         new List<TicketChangeLogEntry>();

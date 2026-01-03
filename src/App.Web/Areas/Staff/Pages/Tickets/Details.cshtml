@@ -321,55 +321,130 @@
         </div>
 
         <!-- SLA Info -->
-        @if (Model.Ticket.SlaRuleId.HasValue)
+        @if (Model.Ticket.SlaRuleId.HasValue || Model.SlaExtensionInfo.CanExtend)
         {
             <div class="staff-card mb-4">
                 <div class="staff-card-header d-flex justify-content-between align-items-center">
                     <h5><i class="bi bi-hourglass-split me-2"></i>SLA</h5>
-                    @if (Model.CanManageTickets && Model.Ticket.Status != TicketStatus.CLOSED && Model.Ticket.Status != TicketStatus.RESOLVED)
-                    {
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <form method="post" asp-page-handler="RefreshSla" asp-route-id="@Model.Ticket.Id" asp-route-restartFromNow="true" class="d-inline">
-                                        <button type="submit" class="dropdown-item">
-                                            <i class="bi bi-arrow-counterclockwise me-2"></i>Restart SLA from now
-                                            <small class="d-block text-muted">Recalculates due date from current time</small>
-                                        </button>
-                                    </form>
-                                </li>
-                                <li>
-                                    <form method="post" asp-page-handler="RefreshSla" asp-route-id="@Model.Ticket.Id" asp-route-restartFromNow="false" class="d-inline">
-                                        <button type="submit" class="dropdown-item">
-                                            <i class="bi bi-arrow-repeat me-2"></i>Re-evaluate SLA rules
-                                            <small class="d-block text-muted">Keeps original creation time</small>
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
-                    }
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- Extension status badge -->
+                        @if (Model.SlaExtensionInfo.HasUnlimitedExtensions)
+                        {
+                            <span class="staff-badge staff-badge-primary" title="You have unlimited extension capability">
+                                <i class="bi bi-infinity me-1"></i>Unlimited
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="staff-badge staff-badge-secondary" title="Extensions used out of maximum allowed">
+                                @Model.SlaExtensionInfo.ExtensionCount of @Model.SlaExtensionInfo.MaxExtensions used
+                            </span>
+                        }
+                        @if (Model.CanManageTickets && Model.Ticket.Status != TicketStatus.CLOSED && Model.Ticket.Status != TicketStatus.RESOLVED)
+                        {
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <form method="post" asp-page-handler="RefreshSla" asp-route-id="@Model.Ticket.Id" asp-route-restartFromNow="true" class="d-inline">
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bi bi-arrow-counterclockwise me-2"></i>Restart SLA from now
+                                                <small class="d-block text-muted">Recalculates due date from current time</small>
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <form method="post" asp-page-handler="RefreshSla" asp-route-id="@Model.Ticket.Id" asp-route-restartFromNow="false" class="d-inline">
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="bi bi-arrow-repeat me-2"></i>Re-evaluate SLA rules
+                                                <small class="d-block text-muted">Keeps original creation time</small>
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                    </div>
                 </div>
                 <div class="staff-card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-5 text-muted fw-medium">Rule</dt>
-                        <dd class="col-7">@Model.Ticket.SlaRuleName</dd>
+                    @if (Model.Ticket.SlaRuleId.HasValue)
+                    {
+                        <dl class="row mb-3">
+                            <dt class="col-5 text-muted fw-medium">Rule</dt>
+                            <dd class="col-7">@Model.Ticket.SlaRuleName</dd>
 
-                        <dt class="col-5 text-muted fw-medium">Due</dt>
-                        <dd class="col-7 @GetSlaDueClass(Model.Ticket.SlaStatus)">
-                            @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.SlaDueAt)
-                        </dd>
+                            <dt class="col-5 text-muted fw-medium">Due</dt>
+                            <dd class="col-7 @GetSlaDueClass(Model.Ticket.SlaStatus)">
+                                @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.SlaDueAt)
+                            </dd>
 
-                        <dt class="col-5 text-muted fw-medium">Status</dt>
-                        <dd class="col-7">
-                            <span class="staff-badge @GetSlaBadgeClass(Model.Ticket.SlaStatus)">
-                                @Model.Ticket.SlaStatusLabel
-                            </span>
-                        </dd>
-                    </dl>
+                            <dt class="col-5 text-muted fw-medium">Status</dt>
+                            <dd class="col-7">
+                                <span class="staff-badge @GetSlaBadgeClass(Model.Ticket.SlaStatus)">
+                                    @Model.Ticket.SlaStatusLabel
+                                </span>
+                            </dd>
+                        </dl>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-3 fst-italic">No SLA rule assigned. You can set a custom due date below.</p>
+                    }
+
+                    <!-- Inline SLA Extension UI -->
+                    <div class="sla-extension-section pt-3 border-top">
+                        @if (Model.SlaExtensionInfo.CanExtend)
+                        {
+                            <div id="sla-extend-collapsed">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="sla-extend-toggle">
+                                    <i class="bi bi-clock-history me-1"></i>Extend SLA
+                                </button>
+                            </div>
+                            <div id="sla-extend-expanded" style="display: none;">
+                                <form method="post" asp-page-handler="ExtendSla" asp-route-id="@Model.Ticket.Id" id="sla-extend-form">
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-medium">Extend by hours</label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" 
+                                                   name="ExtensionHours" 
+                                                   id="extension-hours-input"
+                                                   class="form-control" 
+                                                   value="@Model.SlaExtensionInfo.DefaultExtensionHours" 
+                                                   min="1" 
+                                                   @(Model.SlaExtensionInfo.HasUnlimitedExtensions ? "" : $"max=\"{Model.SlaExtensionInfo.MaxExtensionHours}\"")
+                                                   required />
+                                            <span class="input-group-text">hours</span>
+                                        </div>
+                                        @if (!Model.SlaExtensionInfo.HasUnlimitedExtensions)
+                                        {
+                                            <small class="text-muted">Maximum: @Model.SlaExtensionInfo.MaxExtensionHours hours</small>
+                                        }
+                                    </div>
+                                    <div id="sla-preview" class="mb-2" style="display: none;">
+                                        <span class="text-muted small">New due date: </span>
+                                        <span id="sla-preview-date" class="fw-medium text-primary"></span>
+                                    </div>
+                                    <div id="sla-preview-error" class="text-danger small mb-2" style="display: none;"></div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="bi bi-check-lg me-1"></i>Apply
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="sla-extend-cancel">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        }
+                        else if (!string.IsNullOrEmpty(Model.SlaExtensionInfo.CannotExtendReason))
+                        {
+                            <div class="text-muted small fst-italic" title="@Model.SlaExtensionInfo.CannotExtendReason">
+                                <i class="bi bi-info-circle me-1"></i>@Model.SlaExtensionInfo.CannotExtendReason
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         }
@@ -727,6 +802,37 @@
             text-align: center;
             color: #64748b;
         }
+        
+        /* SLA Extension inline UI styles */
+        .sla-extension-section {
+            margin-top: 0.5rem;
+        }
+        
+        #sla-extend-expanded {
+            animation: slaSlideDown 0.2s ease-out;
+        }
+        
+        @@keyframes slaSlideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        #sla-preview {
+            background: rgba(0, 157, 220, 0.08);
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border-left: 3px solid var(--staff-primary);
+        }
+        
+        #extension-hours-input {
+            max-width: 100px;
+        }
     </style>
 }
 
@@ -928,6 +1034,86 @@
             if (window.AppNotifications) {
                 window.AppNotifications.leaveTicketView(@Model.Ticket.Id);
             }
+        });
+
+        // SLA Extension inline UI functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById('sla-extend-toggle');
+            const collapsedSection = document.getElementById('sla-extend-collapsed');
+            const expandedSection = document.getElementById('sla-extend-expanded');
+            const cancelBtn = document.getElementById('sla-extend-cancel');
+            const hoursInput = document.getElementById('extension-hours-input');
+            const previewContainer = document.getElementById('sla-preview');
+            const previewDate = document.getElementById('sla-preview-date');
+            const previewError = document.getElementById('sla-preview-error');
+            const ticketId = @Model.Ticket.Id;
+            const maxHours = @(Model.SlaExtensionInfo.HasUnlimitedExtensions ? "null" : Model.SlaExtensionInfo.MaxExtensionHours.ToString());
+            
+            if (!toggleBtn) return;
+            
+            // Toggle expand/collapse
+            toggleBtn.addEventListener('click', function() {
+                collapsedSection.style.display = 'none';
+                expandedSection.style.display = 'block';
+                hoursInput.focus();
+                hoursInput.select();
+                updatePreview();
+            });
+            
+            cancelBtn.addEventListener('click', function() {
+                expandedSection.style.display = 'none';
+                collapsedSection.style.display = 'block';
+                previewContainer.style.display = 'none';
+                previewError.style.display = 'none';
+            });
+            
+            // Debounced preview update
+            let previewTimeout;
+            function updatePreview() {
+                const hours = parseInt(hoursInput.value, 10);
+                
+                clearTimeout(previewTimeout);
+                
+                if (isNaN(hours) || hours <= 0) {
+                    previewContainer.style.display = 'none';
+                    previewError.style.display = 'block';
+                    previewError.textContent = 'Hours must be greater than zero';
+                    return;
+                }
+                
+                // Check max hours limit for non-privileged users
+                if (maxHours !== null && hours > maxHours) {
+                    previewContainer.style.display = 'none';
+                    previewError.style.display = 'block';
+                    previewError.textContent = `Extension cannot exceed ${maxHours} hours`;
+                    return;
+                }
+                
+                previewTimeout = setTimeout(function() {
+                    fetch(`?handler=PreviewSlaExtension&id=${ticketId}&hours=${hours}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.valid) {
+                                previewContainer.style.display = 'block';
+                                previewDate.textContent = '→ ' + data.dueDateFormatted;
+                                previewError.style.display = 'none';
+                            } else {
+                                previewContainer.style.display = 'none';
+                                previewError.style.display = 'block';
+                                previewError.textContent = data.error;
+                            }
+                        })
+                        .catch(err => {
+                            console.error('Preview error:', err);
+                            previewError.style.display = 'block';
+                            previewError.textContent = 'Failed to calculate preview';
+                            previewContainer.style.display = 'none';
+                        });
+                }, 150);
+            }
+            
+            hoursInput.addEventListener('input', updatePreview);
+            hoursInput.addEventListener('change', updatePreview);
         });
     </script>
 }

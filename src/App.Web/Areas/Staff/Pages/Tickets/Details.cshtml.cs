@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using App.Application.Common.Interfaces;
+using App.Application.Common.Models;
 using App.Application.Contacts;
 using App.Application.Contacts.Queries;
 using App.Application.Tickets;
@@ -34,6 +36,12 @@ public class Details : BaseStaffPageModel
     public bool IsFollowing { get; set; }
     public IEnumerable<GetTicketFollowers.TicketFollowerDto> Followers { get; set; } =
         Enumerable.Empty<GetTicketFollowers.TicketFollowerDto>();
+
+    // SLA Extension feature
+    public SlaExtensionInfo SlaExtensionInfo { get; set; } = new();
+
+    [BindProperty]
+    public int ExtensionHours { get; set; }
 
     public async Task<IActionResult> OnGet(
         long id,
@@ -96,10 +104,63 @@ public class Details : BaseStaffPageModel
         CanDeleteTicket = TicketPermissionService.CanManageTickets();
         CanManageTickets = TicketPermissionService.CanManageTickets();
 
+        // Load SLA extension info
+        SlaExtensionInfo = await GetSlaExtensionInfoAsync(Ticket, cancellationToken);
+
         // Store back URL for the view
         ViewData["BackToListUrl"] = backToListUrl;
 
         return Page();
+    }
+
+    private async Task<SlaExtensionInfo> GetSlaExtensionInfoAsync(
+        TicketDto ticket,
+        CancellationToken cancellationToken
+    )
+    {
+        var settings = SlaExtensionSettings.FromEnvironment();
+        var hasUnlimited = TicketPermissionService.CanManageTickets();
+        var canEdit = await TicketPermissionService.CanEditTicketAsync(
+            ticket.AssigneeId?.Guid,
+            ticket.OwningTeamId?.Guid,
+            cancellationToken
+        );
+
+        var isClosed =
+            ticket.Status == Domain.ValueObjects.TicketStatus.CLOSED
+            || ticket.Status == Domain.ValueObjects.TicketStatus.RESOLVED;
+
+        var atLimit = !hasUnlimited && ticket.SlaExtensionCount >= settings.MaxExtensions;
+
+        string? cannotExtendReason = null;
+        var canExtend = canEdit && !isClosed && !atLimit;
+
+        if (!canEdit)
+            cannotExtendReason = "You do not have permission to modify this ticket.";
+        else if (isClosed)
+            cannotExtendReason = "Cannot extend SLA on closed or resolved tickets.";
+        else if (atLimit)
+            cannotExtendReason = $"Maximum extensions ({settings.MaxExtensions}) reached.";
+
+        // Get default extension hours from service
+        var slaService = HttpContext.RequestServices.GetRequiredService<ISlaService>();
+        var defaultHours = slaService.CalculateDefaultExtensionHours(
+            ticket.SlaDueAt,
+            CurrentOrganization.TimeZone
+        );
+
+        return new SlaExtensionInfo
+        {
+            CurrentSlaDueAt = ticket.SlaDueAt,
+            ExtensionCount = ticket.SlaExtensionCount,
+            MaxExtensions = settings.MaxExtensions,
+            MaxExtensionHours = settings.MaxExtensionHours,
+            HasUnlimitedExtensions = hasUnlimited,
+            CanExtend = canExtend,
+            CannotExtendReason = cannotExtendReason,
+            DefaultExtensionHours = defaultHours,
+            HasSlaRule = ticket.SlaRuleId.HasValue,
+        };
     }
 
     public async Task<IActionResult> OnPostDelete(long id, CancellationToken cancellationToken)
@@ -148,6 +209,93 @@ public class Details : BaseStaffPageModel
         }
 
         return RedirectToPage(RouteNames.Tickets.Details, new { id });
+    }
+
+    public async Task<IActionResult> OnPostExtendSla(long id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new ExtendTicketSla.Command { Id = id, ExtensionHours = ExtensionHours };
+
+            var response = await Mediator.Send(command, cancellationToken);
+
+            if (response.Success)
+            {
+                SetSuccessMessage(
+                    $"SLA extended by {ExtensionHours} hour{(ExtensionHours != 1 ? "s" : "")}."
+                );
+            }
+            else
+            {
+                SetErrorMessage(response.GetErrors());
+            }
+        }
+        catch (Application.Common.Exceptions.BusinessException ex)
+        {
+            SetErrorMessage(ex.Message);
+        }
+        catch (Application.Common.Exceptions.ForbiddenAccessException ex)
+        {
+            SetErrorMessage(ex.Message);
+        }
+
+        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+    }
+
+    public async Task<IActionResult> OnGetPreviewSlaExtension(
+        long id,
+        int hours,
+        CancellationToken cancellationToken
+    )
+    {
+        if (hours <= 0)
+        {
+            return new JsonResult(
+                new
+                {
+                    dueDateUtc = (DateTime?)null,
+                    dueDateFormatted = (string?)null,
+                    valid = false,
+                    error = "Hours must be greater than zero",
+                }
+            );
+        }
+
+        var ticketResponse = await Mediator.Send(
+            new GetTicketById.Query { Id = id },
+            cancellationToken
+        );
+        var ticket = ticketResponse.Result;
+
+        var slaService = HttpContext.RequestServices.GetRequiredService<ISlaService>();
+        var newDueDate = slaService.CalculateExtendedDueDate(ticket.SlaDueAt, hours);
+
+        if (newDueDate <= DateTime.UtcNow)
+        {
+            return new JsonResult(
+                new
+                {
+                    dueDateUtc = (DateTime?)null,
+                    dueDateFormatted = (string?)null,
+                    valid = false,
+                    error = "Extension would result in a due date in the past",
+                }
+            );
+        }
+
+        var formatted = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+            newDueDate
+        );
+
+        return new JsonResult(
+            new
+            {
+                dueDateUtc = newDueDate,
+                dueDateFormatted = formatted,
+                valid = true,
+                error = (string?)null,
+            }
+        );
     }
 
     public async Task<IActionResult> OnPostRefreshSla(
@@ -302,4 +450,20 @@ public class Details : BaseStaffPageModel
         [Required]
         public string Body { get; set; } = string.Empty;
     }
+}
+
+/// <summary>
+/// View model for SLA extension state and capabilities.
+/// </summary>
+public class SlaExtensionInfo
+{
+    public DateTime? CurrentSlaDueAt { get; init; }
+    public int ExtensionCount { get; init; }
+    public int MaxExtensions { get; init; }
+    public int MaxExtensionHours { get; init; }
+    public bool HasUnlimitedExtensions { get; init; }
+    public bool CanExtend { get; init; }
+    public string? CannotExtendReason { get; init; }
+    public int DefaultExtensionHours { get; init; }
+    public bool HasSlaRule { get; init; }
 }
