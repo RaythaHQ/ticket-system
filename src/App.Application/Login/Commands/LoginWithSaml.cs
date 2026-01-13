@@ -311,9 +311,19 @@ public class LoginWithSaml
             }
         }
 
-        public string EmailAddress => GetSingleAttribute(JwtRegisteredClaimNames.Email);
-        public string FirstName => GetSingleAttribute(JwtRegisteredClaimNames.GivenName);
-        public string LastName => GetSingleAttribute(JwtRegisteredClaimNames.FamilyName);
+        // Support both short claim names and full Microsoft/OASIS URIs
+        public string EmailAddress =>
+            GetSingleAttribute(JwtRegisteredClaimNames.Email)
+            ?? GetSingleAttribute("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")
+            ?? GetSingleAttribute("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/email");
+        public string FirstName =>
+            GetSingleAttribute(JwtRegisteredClaimNames.GivenName)
+            ?? GetSingleAttribute("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname")
+            ?? GetSingleAttribute("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/given_name");
+        public string LastName =>
+            GetSingleAttribute(JwtRegisteredClaimNames.FamilyName)
+            ?? GetSingleAttribute("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname")
+            ?? GetSingleAttribute("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/family_name");
         public string[] UserGroups => GetArrayAttribute(RaythaClaimTypes.UserGroups);
 
         public bool IsValid
