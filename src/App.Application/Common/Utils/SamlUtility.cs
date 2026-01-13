@@ -1,4 +1,5 @@
-﻿using System.Xml;
+﻿using System.IO.Compression;
+using System.Xml;
 
 namespace App.Application.Common.Utils;
 
@@ -41,7 +42,7 @@ public static class SamlUtility
                 );
                 xw.WriteAttributeString(
                     "Format",
-                    "urn:oasis:names:tc:SAML:2.0:nameid-format:unspecified"
+                    "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
                 );
                 xw.WriteAttributeString("AllowCreate", "true");
                 xw.WriteEndElement();
@@ -66,8 +67,14 @@ public static class SamlUtility
                 xw.WriteEndElement();
             }
 
+            // SAML HTTP-Redirect binding requires DEFLATE compression before Base64 encoding
             byte[] toEncodeAsBytes = System.Text.Encoding.UTF8.GetBytes(sw.ToString());
-            return System.Convert.ToBase64String(toEncodeAsBytes);
+            using var memoryStream = new MemoryStream();
+            using (var deflateStream = new DeflateStream(memoryStream, CompressionLevel.Optimal))
+            {
+                deflateStream.Write(toEncodeAsBytes, 0, toEncodeAsBytes.Length);
+            }
+            return System.Convert.ToBase64String(memoryStream.ToArray());
         }
     }
 }
