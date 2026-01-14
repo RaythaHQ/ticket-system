@@ -25,7 +25,7 @@ body {
 /* Sidebar Styles */
 .staff-sidebar {
     background: linear-gradient(180deg, var(--staff-sidebar-bg) 0%, #0d2137 100%);
-    min-height: 100vh;
+    height: 100vh;
     position: fixed;
     left: 0;
     top: 0;
@@ -34,6 +34,7 @@ body {
     display: flex;
     flex-direction: column;
     border-right: 1px solid rgba(255, 255, 255, 0.05);
+    overflow: hidden;
 }
 
 .staff-sidebar-brand {
@@ -77,6 +78,25 @@ body {
     padding: 1rem 0.75rem;
     flex-grow: 1;
     overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.staff-nav::-webkit-scrollbar {
+    width: 6px;
+}
+
+.staff-nav::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.staff-nav::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.staff-nav::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.3);
 }
 
 .staff-nav-section {
