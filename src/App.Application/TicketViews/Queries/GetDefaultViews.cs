@@ -51,9 +51,9 @@ public class GetDefaultViews
                             new() { Field = "AssigneeId", Operator = "isnotnull" },
                             new()
                             {
-                                Field = "Status",
-                                Operator = "notin",
-                                Values = new List<string> { "CLOSED", "CANCELLED" },
+                                Field = "StatusType",
+                                Operator = "equals",
+                                Value = "open",
                             },
                         },
                     },
@@ -137,9 +137,9 @@ public class GetDefaultViews
                             new() { Field = "AssigneeId", Operator = "isnull" },
                             new()
                             {
-                                Field = "Status",
+                                Field = "StatusType",
                                 Operator = "equals",
-                                Value = "OPEN",
+                                Value = "open",
                             },
                         },
                     },
@@ -156,9 +156,9 @@ public class GetDefaultViews
                         {
                             new()
                             {
-                                Field = "Status",
+                                Field = "StatusType",
                                 Operator = "equals",
-                                Value = "OPEN",
+                                Value = "open",
                             },
                         },
                     },
@@ -192,9 +192,9 @@ public class GetDefaultViews
                         {
                             new()
                             {
-                                Field = "Status",
+                                Field = "StatusType",
                                 Operator = "equals",
-                                Value = "CLOSED",
+                                Value = "closed",
                             },
                         },
                     },

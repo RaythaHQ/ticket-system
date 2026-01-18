@@ -150,6 +150,9 @@ public class ViewFilterBuilder
             // Status with meta-groups
             "status" => BuildStatusExpression(param, filter),
 
+            // Status Type (filters by all statuses of a given type: "open" or "closed")
+            "statustype" => BuildStatusTypeExpression(param, filter),
+
             // Priority with comparison
             "priority" => BuildPriorityExpression(param, filter),
 
@@ -359,6 +362,50 @@ public class ViewFilterBuilder
             ),
             _ => null,
         };
+    }
+
+    /// <summary>
+    /// Build expression for StatusType filter.
+    /// Filters tickets by checking if their status belongs to the specified status type (open/closed).
+    /// Uses a subquery against TicketStatusConfigs for proper database-level filtering.
+    /// </summary>
+    private Expression? BuildStatusTypeExpression(
+        ParameterExpression param,
+        ViewFilterCondition filter
+    )
+    {
+        var statusTypeValue = filter.Value?.ToLower() ?? "";
+        if (string.IsNullOrEmpty(statusTypeValue))
+            return null;
+
+        // Get the ticket's Status field
+        var statusField = Expression.Property(param, nameof(Ticket.Status));
+
+        // Build a subquery: _db.TicketStatusConfigs.Where(sc => sc.StatusType == statusTypeValue).Select(sc => sc.DeveloperName)
+        var statusConfigs = _db.TicketStatusConfigs.AsQueryable();
+        var statusesOfType = statusConfigs
+            .Where(sc => sc.StatusType == statusTypeValue)
+            .Select(sc => sc.DeveloperName);
+
+        // Build: statusesOfType.Contains(t.Status)
+        var containsMethod = typeof(Enumerable)
+            .GetMethods()
+            .First(m => m.Name == "Contains" && m.GetParameters().Length == 2)
+            .MakeGenericMethod(typeof(string));
+
+        var containsCall = Expression.Call(
+            containsMethod,
+            Expression.Constant(statusesOfType),
+            statusField
+        );
+
+        // Handle NOT equals operator
+        if (filter.Operator is IS_NOT or NEQ)
+        {
+            return Expression.Not(containsCall);
+        }
+
+        return containsCall;
     }
 
     #endregion
