@@ -26,7 +26,10 @@ public abstract record PaginationViewModel : IPaginationViewModel
     public int PageSize { get; set; } = 0;
     public string OrderByPropertyName { get; set; } = string.Empty;
     public string OrderByDirection { get; set; } = string.Empty;
-    public string OrderByAsString => $"{OrderByPropertyName} {OrderByDirection}";
+    public string OrderByAsString =>
+        string.IsNullOrEmpty(OrderByPropertyName) && string.IsNullOrEmpty(OrderByDirection)
+            ? string.Empty
+            : $"{OrderByPropertyName} {OrderByDirection}";
     public string PageName { get; set; }
     public int TotalCount { get; }
 
