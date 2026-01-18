@@ -40,6 +40,13 @@ public class GetOrganizationReport
             startDate = DateTime.SpecifyKind(startDate, DateTimeKind.Utc);
             endDate = DateTime.SpecifyKind(endDate, DateTimeKind.Utc);
 
+            // Get open-type status developer names for filtering
+            var openStatusNames = await _db
+                .TicketStatusConfigs.AsNoTracking()
+                .Where(s => s.StatusType == TicketStatusType.OPEN)
+                .Select(s => s.DeveloperName)
+                .ToListAsync(cancellationToken);
+
             var ticketsInPeriod = await _db
                 .Tickets.AsNoTracking()
                 .Where(t => t.CreationTime >= startDate && t.CreationTime <= endDate)
@@ -55,10 +62,10 @@ public class GetOrganizationReport
                 t.ClosedAt.HasValue && t.ClosedAt.Value >= startDate
             );
             var currentOpenTickets = allCurrentTickets.Count(t =>
-                t.Status != TicketStatus.CLOSED && t.Status != TicketStatus.RESOLVED
+                openStatusNames.Contains(t.Status)
             );
             var currentUnassignedTickets = allCurrentTickets.Count(t =>
-                t.AssigneeId == null && t.Status != TicketStatus.CLOSED
+                t.AssigneeId == null && openStatusNames.Contains(t.Status)
             );
 
             var totalSlaBreaches = ticketsInPeriod.Count(t =>
@@ -116,9 +123,7 @@ public class GetOrganizationReport
                         TeamName = team.Name,
                         TicketsCreated = teamTickets.Count,
                         TicketsResolved = teamTickets.Count(t => t.ResolvedAt.HasValue),
-                        OpenTickets = teamTickets.Count(t =>
-                            t.Status != TicketStatus.CLOSED && t.Status != TicketStatus.RESOLVED
-                        ),
+                        OpenTickets = teamTickets.Count(t => openStatusNames.Contains(t.Status)),
                         SlaComplianceRate =
                             teamSlaTotal > 0
                                 ? Math.Round((double)teamMet / teamSlaTotal * 100, 2)

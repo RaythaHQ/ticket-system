@@ -50,6 +50,19 @@ public class GetTeamReport
             startDate = DateTime.SpecifyKind(startDate, DateTimeKind.Utc);
             endDate = DateTime.SpecifyKind(endDate, DateTimeKind.Utc);
 
+            // Get open-type status developer names for filtering
+            var openStatusNames = await _db
+                .TicketStatusConfigs.AsNoTracking()
+                .Where(s => s.StatusType == TicketStatusType.OPEN)
+                .Select(s => s.DeveloperName)
+                .ToListAsync(cancellationToken);
+
+            var closedStatusNames = await _db
+                .TicketStatusConfigs.AsNoTracking()
+                .Where(s => s.StatusType == TicketStatusType.CLOSED)
+                .Select(s => s.DeveloperName)
+                .ToListAsync(cancellationToken);
+
             var tickets = await _db
                 .Tickets.AsNoTracking()
                 .Where(t => t.OwningTeamId == teamId)
@@ -57,13 +70,11 @@ public class GetTeamReport
                 .ToListAsync(cancellationToken);
 
             var totalTickets = tickets.Count;
-            var openTickets = tickets.Count(t =>
-                t.Status != TicketStatus.CLOSED && t.Status != TicketStatus.RESOLVED
-            );
+            var openTickets = tickets.Count(t => openStatusNames.Contains(t.Status));
             var resolvedTickets = tickets.Count(t => t.ResolvedAt.HasValue);
-            var closedTickets = tickets.Count(t => t.Status == TicketStatus.CLOSED);
+            var closedTickets = tickets.Count(t => closedStatusNames.Contains(t.Status));
             var unassignedTickets = tickets.Count(t =>
-                t.AssigneeId == null && t.Status != TicketStatus.CLOSED
+                t.AssigneeId == null && openStatusNames.Contains(t.Status)
             );
 
             var slaBreachedCount = tickets.Count(t => t.SlaStatus == SlaStatus.BREACHED);
@@ -103,9 +114,20 @@ public class GetTeamReport
                     .Where(t => t.AssigneeId == member.StaffAdminId)
                     .ToList();
                 var memberResolved = memberTickets.Where(t => t.ResolvedAt.HasValue).ToList();
-                var memberAvgTime = memberResolved.Any()
-                    ? memberResolved.Average(t => (t.ResolvedAt!.Value - t.CreationTime).TotalHours)
-                    : (double?)null;
+
+                // Calculate median resolution time
+                double? memberMedianTime = null;
+                if (memberResolved.Any())
+                {
+                    var resolutionTimes = memberResolved
+                        .Select(t => (t.ResolvedAt!.Value - t.CreationTime).TotalHours)
+                        .OrderBy(h => h)
+                        .ToList();
+                    int mid = resolutionTimes.Count / 2;
+                    memberMedianTime = resolutionTimes.Count % 2 == 0
+                        ? (resolutionTimes[mid - 1] + resolutionTimes[mid]) / 2
+                        : resolutionTimes[mid];
+                }
 
                 memberMetrics.Add(
                     new MemberMetricsDto
@@ -114,7 +136,9 @@ public class GetTeamReport
                         UserName = member.StaffAdmin?.FullName ?? "Unknown",
                         AssignedTickets = memberTickets.Count,
                         ResolvedTickets = memberResolved.Count,
-                        AverageResolutionTimeHours = memberAvgTime,
+                        MedianResolutionTimeHours = memberMedianTime.HasValue
+                            ? Math.Round(memberMedianTime.Value, 2)
+                            : null,
                     }
                 );
             }

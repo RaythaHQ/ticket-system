@@ -173,7 +173,7 @@
                         <th>Member</th>
                         <th class="text-center">Assigned</th>
                         <th class="text-center">Resolved</th>
-                        <th class="text-center">Avg Resolution Time</th>
+                        <th class="text-center">Median Resolution Time</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -186,9 +186,9 @@
                                 <span class="badge bg-success">@member.ResolvedTickets</span>
                             </td>
                             <td class="text-center">
-                                @if (member.AverageResolutionTimeHours.HasValue)
+                                @if (member.MedianResolutionTimeHours.HasValue)
                                 {
-                                    @($"{member.AverageResolutionTimeHours:F1}h")
+                                    @($"{member.MedianResolutionTimeHours:F1}h")
                                 }
                                 else
                                 {

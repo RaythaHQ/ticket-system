@@ -36,6 +36,6 @@ public record MemberMetricsDto
     public string UserName { get; init; } = string.Empty;
     public int AssignedTickets { get; init; }
     public int ResolvedTickets { get; init; }
-    public double? AverageResolutionTimeHours { get; init; }
+    public double? MedianResolutionTimeHours { get; init; }
 }
 
