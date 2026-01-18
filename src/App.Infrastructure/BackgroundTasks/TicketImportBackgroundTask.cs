@@ -356,7 +356,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         );
 
         // Title is only required for modes that can insert new records
-        var requireTitle = importJob.Mode != ImportMode.UpdateExistingOnly;
+        var requireTitle = importJob.Mode.DeveloperName != ImportMode.UPDATE_EXISTING_ONLY;
         var (rows, parseErrors) = ParseCsv(fileBytes, requireTitle);
 
         if (parseErrors.Any())

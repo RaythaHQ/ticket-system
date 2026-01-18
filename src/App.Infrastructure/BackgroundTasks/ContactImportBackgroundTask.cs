@@ -350,7 +350,7 @@ public class ContactImportBackgroundTask : ContactImportJob
         );
 
         // FirstName is only required for modes that can insert new records
-        var requireFirstName = importJob.Mode != ImportMode.UpdateExistingOnly;
+        var requireFirstName = importJob.Mode.DeveloperName != ImportMode.UPDATE_EXISTING_ONLY;
         var (rows, parseErrors) = ParseCsv(fileBytes, requireFirstName);
 
         if (parseErrors.Any())
