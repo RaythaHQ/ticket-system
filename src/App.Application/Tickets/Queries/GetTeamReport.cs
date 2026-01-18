@@ -58,9 +58,9 @@ public class GetTeamReport
 
             var totalTickets = tickets.Count;
             var openTickets = tickets.Count(t =>
-                t.Status == TicketStatus.OPEN || t.Status == TicketStatus.IN_PROGRESS
+                t.Status != TicketStatus.CLOSED && t.Status != TicketStatus.RESOLVED
             );
-            var resolvedTickets = tickets.Count(t => t.Status == TicketStatus.RESOLVED);
+            var resolvedTickets = tickets.Count(t => t.ResolvedAt.HasValue);
             var closedTickets = tickets.Count(t => t.Status == TicketStatus.CLOSED);
             var unassignedTickets = tickets.Count(t =>
                 t.AssigneeId == null && t.Status != TicketStatus.CLOSED
