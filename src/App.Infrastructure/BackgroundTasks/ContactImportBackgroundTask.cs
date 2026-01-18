@@ -224,6 +224,86 @@ public class ContactImportBackgroundTask : ContactImportJob
         }
     }
 
+    /// <summary>
+    /// Updates the import job stage using a fresh context (safe to call after entity is detached).
+    /// </summary>
+    private async Task UpdateStageAsync(
+        Guid importJobId,
+        string stage,
+        int percent,
+        int? totalRows = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+
+            var importJob = await db.ImportJobs.FirstOrDefaultAsync(
+                e => e.Id == importJobId,
+                cancellationToken
+            );
+
+            if (importJob != null)
+            {
+                importJob.ProgressStage = stage;
+                importJob.ProgressPercent = percent;
+                if (totalRows.HasValue)
+                {
+                    importJob.TotalRows = totalRows.Value;
+                }
+                await db.SaveChangesAsync(cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Non-fatal - just log and continue
+            _logger.LogWarning(
+                ex,
+                "ContactImportBackgroundTask: Failed to update stage for job {ImportJobId}",
+                importJobId
+            );
+        }
+    }
+
+    /// <summary>
+    /// Saves a failure status using a fresh context (safe to call after entity is detached).
+    /// </summary>
+    private async Task SaveFailureWithMessageAsync(
+        Guid importJobId,
+        string errorMessage,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+
+            var importJob = await db.ImportJobs.FirstOrDefaultAsync(
+                e => e.Id == importJobId,
+                cancellationToken
+            );
+
+            if (importJob != null)
+            {
+                importJob.Status = ImportJobStatus.Failed;
+                importJob.ErrorMessage = errorMessage;
+                importJob.CompletedAt = DateTime.UtcNow;
+                await db.SaveChangesAsync(cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "ContactImportBackgroundTask: Failed to save failure status for job {ImportJobId}",
+                importJobId
+            );
+        }
+    }
+
     private async Task ProcessImportAsync(
         IAppDbContext db,
         IFileStorageProvider fileStorage,
@@ -262,29 +342,32 @@ public class ContactImportBackgroundTask : ContactImportJob
         }
 
         // Parse CSV
-        importJob.ProgressStage = "Parsing CSV";
-        importJob.ProgressPercent = 10;
-        await db.SaveChangesAsync(cancellationToken);
+        await UpdateStageAsync(
+            importJob.Id,
+            "Parsing CSV",
+            10,
+            cancellationToken: cancellationToken
+        );
 
-        var (rows, parseErrors) = ParseCsv(fileBytes);
+        // FirstName is only required for modes that can insert new records
+        var requireFirstName = importJob.Mode != ImportMode.UpdateExistingOnly;
+        var (rows, parseErrors) = ParseCsv(fileBytes, requireFirstName);
 
         if (parseErrors.Any())
         {
-            // If we can't even parse the CSV, fail immediately
-            importJob.Status = ImportJobStatus.Failed;
-            importJob.ErrorMessage =
-                $"CSV parsing failed: {string.Join("; ", parseErrors.Take(5))}";
-            importJob.CompletedAt = DateTime.UtcNow;
-            await db.SaveChangesAsync(cancellationToken);
+            var errorMessage = $"CSV parsing failed: {string.Join("; ", parseErrors.Take(5))}";
+            await SaveFailureWithMessageAsync(importJob.Id, errorMessage, cancellationToken);
             return;
         }
 
-        importJob.TotalRows = rows.Count;
-
-        // Process rows
-        importJob.ProgressStage = "Processing rows";
-        importJob.ProgressPercent = 20;
-        await db.SaveChangesAsync(cancellationToken);
+        // Update total rows count
+        await UpdateStageAsync(
+            importJob.Id,
+            "Processing rows",
+            20,
+            rows.Count,
+            cancellationToken
+        );
 
         var errorRows = new List<ImportErrorRow>();
         var processedCount = 0;
@@ -391,7 +474,10 @@ public class ContactImportBackgroundTask : ContactImportJob
         );
     }
 
-    private (List<Dictionary<string, string>> rows, List<string> errors) ParseCsv(byte[] fileBytes)
+    private (List<Dictionary<string, string>> rows, List<string> errors) ParseCsv(
+        byte[] fileBytes,
+        bool requireFirstName = true
+    )
     {
         var rows = new List<Dictionary<string, string>>();
         var errors = new List<string>();
@@ -414,9 +500,18 @@ public class ContactImportBackgroundTask : ContactImportJob
             csv.ReadHeader();
 
             var headers = csv.HeaderRecord;
-            if (headers == null || !headers.Contains(ColumnNames.FirstName))
+
+            // FirstName is required for insert modes, but not for update-only mode
+            if (requireFirstName && (headers == null || !headers.Contains(ColumnNames.FirstName)))
             {
                 errors.Add($"Missing required column: {ColumnNames.FirstName}");
+                return (rows, errors);
+            }
+
+            // Id column is always required for update-only mode
+            if (!requireFirstName && (headers == null || !headers.Contains(ColumnNames.Id)))
+            {
+                errors.Add($"Missing required column: {ColumnNames.Id} (required for update mode)");
                 return (rows, errors);
             }
 
