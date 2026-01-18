@@ -10,11 +10,19 @@ public class GetDefaultViews
 {
     public record Query : IRequest<IQueryResponseDto<IEnumerable<DefaultViewDefinition>>>;
 
-    public class Handler : IRequestHandler<Query, IQueryResponseDto<IEnumerable<DefaultViewDefinition>>>
+    public class Handler
+        : IRequestHandler<Query, IQueryResponseDto<IEnumerable<DefaultViewDefinition>>>
     {
         private static readonly List<string> DefaultColumns = new()
         {
-            "Id", "Title", "Status", "Priority", "Category", "AssigneeName", "TeamName", "CreationTime"
+            "Id",
+            "Title",
+            "Status",
+            "Priority",
+            "Category",
+            "AssigneeName",
+            "TeamName",
+            "CreationTime",
         };
 
         public ValueTask<IQueryResponseDto<IEnumerable<DefaultViewDefinition>>> Handle(
@@ -29,7 +37,7 @@ public class GetDefaultViews
                     Name = "All Tickets",
                     Key = "all",
                     Conditions = null,
-                    VisibleColumns = DefaultColumns
+                    VisibleColumns = DefaultColumns,
                 },
                 new()
                 {
@@ -41,12 +49,17 @@ public class GetDefaultViews
                         Filters = new List<ViewFilterCondition>
                         {
                             new() { Field = "AssigneeId", Operator = "isnotnull" },
-                            new() { Field = "Status", Operator = "notin", Values = new List<string> { "CLOSED", "CANCELLED" } }
-                        }
+                            new()
+                            {
+                                Field = "Status",
+                                Operator = "notin",
+                                Values = new List<string> { "CLOSED", "CANCELLED" },
+                            },
+                        },
                     },
                     VisibleColumns = DefaultColumns,
                     RequiresCurrentUser = true,
-                    CurrentUserField = "AssigneeId"
+                    CurrentUserField = "AssigneeId",
                 },
                 new()
                 {
@@ -57,12 +70,12 @@ public class GetDefaultViews
                         Logic = "AND",
                         Filters = new List<ViewFilterCondition>
                         {
-                            new() { Field = "AssigneeId", Operator = "isnotnull" }
-                        }
+                            new() { Field = "AssigneeId", Operator = "isnotnull" },
+                        },
                     },
                     VisibleColumns = DefaultColumns,
                     RequiresCurrentUser = true,
-                    CurrentUserField = "AssigneeId"
+                    CurrentUserField = "AssigneeId",
                 },
                 new()
                 {
@@ -73,12 +86,12 @@ public class GetDefaultViews
                         Logic = "AND",
                         Filters = new List<ViewFilterCondition>
                         {
-                            new() { Field = "CreatedByStaffId", Operator = "isnotnull" }
-                        }
+                            new() { Field = "CreatedByStaffId", Operator = "isnotnull" },
+                        },
                     },
                     VisibleColumns = DefaultColumns,
                     RequiresCurrentUser = true,
-                    CurrentUserField = "CreatedByStaffId"
+                    CurrentUserField = "CreatedByStaffId",
                 },
                 new()
                 {
@@ -89,12 +102,12 @@ public class GetDefaultViews
                         Logic = "AND",
                         Filters = new List<ViewFilterCondition>
                         {
-                            new() { Field = "CreatedByStaffId", Operator = "isnotnull" }
-                        }
+                            new() { Field = "CreatedByStaffId", Operator = "isnotnull" },
+                        },
                     },
                     VisibleColumns = DefaultColumns,
                     RequiresCurrentUser = true,
-                    CurrentUserField = "CreatedByStaffId"
+                    CurrentUserField = "CreatedByStaffId",
                 },
                 new()
                 {
@@ -105,12 +118,12 @@ public class GetDefaultViews
                         Logic = "AND",
                         Filters = new List<ViewFilterCondition>
                         {
-                            new() { Field = "OwningTeamId", Operator = "isnotnull" }
-                        }
+                            new() { Field = "OwningTeamId", Operator = "isnotnull" },
+                        },
                     },
                     VisibleColumns = DefaultColumns,
                     RequiresCurrentUser = true,
-                    CurrentUserField = "OwningTeamId"
+                    CurrentUserField = "OwningTeamId",
                 },
                 new()
                 {
@@ -122,10 +135,15 @@ public class GetDefaultViews
                         Filters = new List<ViewFilterCondition>
                         {
                             new() { Field = "AssigneeId", Operator = "isnull" },
-                            new() { Field = "Status", Operator = "notin", Values = new List<string> { "CLOSED", "CANCELLED" } }
-                        }
+                            new()
+                            {
+                                Field = "Status",
+                                Operator = "equals",
+                                Value = "OPEN",
+                            },
+                        },
                     },
-                    VisibleColumns = DefaultColumns
+                    VisibleColumns = DefaultColumns,
                 },
                 new()
                 {
@@ -136,10 +154,15 @@ public class GetDefaultViews
                         Logic = "AND",
                         Filters = new List<ViewFilterCondition>
                         {
-                            new() { Field = "Status", Operator = "equals", Value = "OPEN" }
-                        }
+                            new()
+                            {
+                                Field = "Status",
+                                Operator = "equals",
+                                Value = "OPEN",
+                            },
+                        },
                     },
-                    VisibleColumns = DefaultColumns
+                    VisibleColumns = DefaultColumns,
                 },
                 new()
                 {
@@ -148,10 +171,15 @@ public class GetDefaultViews
                     Conditions = null,
                     SortPrimaryField = "LastModificationTime",
                     SortPrimaryDirection = "DESC",
-                    VisibleColumns = new List<string> 
-                    { 
-                        "Id", "Title", "Status", "Priority", "AssigneeName", "LastModificationTime" 
-                    }
+                    VisibleColumns = new List<string>
+                    {
+                        "Id",
+                        "Title",
+                        "Status",
+                        "Priority",
+                        "AssigneeName",
+                        "LastModificationTime",
+                    },
                 },
                 new()
                 {
@@ -162,16 +190,25 @@ public class GetDefaultViews
                         Logic = "AND",
                         Filters = new List<ViewFilterCondition>
                         {
-                            new() { Field = "Status", Operator = "equals", Value = "CLOSED" }
-                        }
+                            new()
+                            {
+                                Field = "Status",
+                                Operator = "equals",
+                                Value = "CLOSED",
+                            },
+                        },
                     },
                     SortPrimaryField = "ClosedAt",
                     SortPrimaryDirection = "DESC",
-                    VisibleColumns = new List<string> 
-                    { 
-                        "Id", "Title", "Priority", "AssigneeName", "ClosedAt" 
-                    }
-                }
+                    VisibleColumns = new List<string>
+                    {
+                        "Id",
+                        "Title",
+                        "Priority",
+                        "AssigneeName",
+                        "ClosedAt",
+                    },
+                },
             };
 
             return ValueTask.FromResult<IQueryResponseDto<IEnumerable<DefaultViewDefinition>>>(
@@ -192,4 +229,3 @@ public record DefaultViewDefinition
     public bool RequiresCurrentUser { get; init; }
     public string? CurrentUserField { get; init; }
 }
-
