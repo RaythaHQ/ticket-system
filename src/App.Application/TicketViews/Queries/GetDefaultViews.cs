@@ -159,6 +159,7 @@ public class GetDefaultViews
                         Filters = new List<ViewFilterCondition>
                         {
                             new() { Field = "AssigneeId", Operator = "isnull" },
+                            new() { Field = "OwningTeamId", Operator = "isnull" },
                             new()
                             {
                                 Field = "StatusType",
