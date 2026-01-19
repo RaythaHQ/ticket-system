@@ -59,6 +59,11 @@ public class Edit : BaseStaffPageModel
     /// </summary>
     public ContactSummaryDto? SelectedContact { get; set; }
 
+    /// <summary>
+    /// Whether the current user can delete tickets.
+    /// </summary>
+    public bool CanDeleteTicket { get; set; }
+
     public async Task<IActionResult> OnGet(
         long id,
         string? backToListUrl = null,
@@ -83,6 +88,9 @@ public class Edit : BaseStaffPageModel
         {
             return Forbid();
         }
+
+        // Check if user can delete tickets (requires Can Manage Tickets permission)
+        CanDeleteTicket = TicketPermissionService.CanManageTickets();
 
         Form = new EditTicketViewModel
         {
@@ -220,6 +228,23 @@ public class Edit : BaseStaffPageModel
         }
 
         return RedirectToPage(RouteNames.Tickets.Edit, new { id });
+    }
+
+    public async Task<IActionResult> OnPostDelete(long id, CancellationToken cancellationToken)
+    {
+        var command = new DeleteTicket.Command { Id = id };
+        var response = await Mediator.Send(command, cancellationToken);
+
+        if (response.Success)
+        {
+            SetSuccessMessage("Ticket deleted successfully.");
+            return RedirectToPage(RouteNames.Tickets.Index);
+        }
+        else
+        {
+            SetErrorMessage(response.GetErrors());
+            return RedirectToPage(RouteNames.Tickets.Edit, new { id });
+        }
     }
 
     /// <summary>
