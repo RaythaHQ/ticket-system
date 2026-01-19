@@ -615,6 +615,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 Filters = new List<ViewFilterCondition>
                 {
                     new() { Field = "AssigneeId", Operator = "isnull" },
+                    new() { Field = "OwningTeamId", Operator = "isnull" },
                     new()
                     {
                         Field = "StatusType",
