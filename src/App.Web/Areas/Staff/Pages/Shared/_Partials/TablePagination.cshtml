@@ -22,7 +22,10 @@
             <li class="page-item @Model.PreviousDisabledCss">
                 <a asp-area="Staff" asp-page="@Model.PageName" asp-route-search="@Model.Search" asp-route-orderBy="@Model.OrderByAsString"
                     asp-route-pageNumber="@(Model.PageNumber - 1)" asp-route-pageSize="@Model.PageSize"
-                    asp-route-builtInView="@Model.BuiltInView" asp-route-viewId="@Model.ViewId" class="page-link">
+                    asp-route-builtInView="@Model.BuiltInView" asp-route-viewId="@Model.ViewId"
+                    asp-route-sortBy="@Model.SortBy" asp-route-status="@Model.Status" asp-route-priority="@Model.Priority"
+                    asp-route-assigneeId="@Model.AssigneeId" asp-route-teamId="@Model.TeamId"
+                    asp-route-createdById="@Model.CreatedById" asp-route-contactId="@Model.ContactId" class="page-link">
                     <i class="bi bi-chevron-double-left"></i>
                 </a>
             </li>
@@ -37,7 +40,10 @@
                 <li class="page-item @(i == Model.PageNumber ? "active" : "")">
                     <a asp-area="Staff" asp-page="@Model.PageName" asp-route-search="@Model.Search" asp-route-orderBy="@Model.OrderByAsString"
                         asp-route-pageNumber="@i" asp-route-pageSize="@Model.PageSize"
-                        asp-route-builtInView="@Model.BuiltInView" asp-route-viewId="@Model.ViewId" class="page-link">
+                        asp-route-builtInView="@Model.BuiltInView" asp-route-viewId="@Model.ViewId"
+                        asp-route-sortBy="@Model.SortBy" asp-route-status="@Model.Status" asp-route-priority="@Model.Priority"
+                        asp-route-assigneeId="@Model.AssigneeId" asp-route-teamId="@Model.TeamId"
+                        asp-route-createdById="@Model.CreatedById" asp-route-contactId="@Model.ContactId" class="page-link">
                         @i
                     </a>
                 </li>
@@ -51,7 +57,10 @@
             <li class="page-item @Model.NextDisabledCss">
                 <a asp-area="Staff" asp-page="@Model.PageName" asp-route-search="@Model.Search" asp-route-orderBy="@Model.OrderByAsString"
                     asp-route-pageNumber="@(Model.PageNumber + 1)" asp-route-pageSize="@Model.PageSize"
-                    asp-route-builtInView="@Model.BuiltInView" asp-route-viewId="@Model.ViewId" class="page-link">
+                    asp-route-builtInView="@Model.BuiltInView" asp-route-viewId="@Model.ViewId"
+                    asp-route-sortBy="@Model.SortBy" asp-route-status="@Model.Status" asp-route-priority="@Model.Priority"
+                    asp-route-assigneeId="@Model.AssigneeId" asp-route-teamId="@Model.TeamId"
+                    asp-route-createdById="@Model.CreatedById" asp-route-contactId="@Model.ContactId" class="page-link">
                     <i class="bi bi-chevron-double-right"></i>
                 </a>
             </li>

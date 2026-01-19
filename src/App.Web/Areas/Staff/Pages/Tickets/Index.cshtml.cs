@@ -421,6 +421,13 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             PageSize = pageSize,
             BuiltInView = builtInView,
             ViewId = viewId,
+            SortBy = sortBy,
+            Status = status,
+            Priority = priority,
+            AssigneeId = assigneeId,
+            TeamId = teamId,
+            CreatedById = createdById,
+            ContactId = contactId,
         };
 
         // Check if user can export (has ImportExportTickets permission)

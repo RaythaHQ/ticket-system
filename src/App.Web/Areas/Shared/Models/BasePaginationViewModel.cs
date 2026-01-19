@@ -26,6 +26,15 @@ public interface IPaginationViewModel
     /// Custom view ID for pagination retention.
     /// </summary>
     string? ViewId { get; set; }
+
+    // Filter retention properties
+    string? SortBy { get; set; }
+    string? Status { get; set; }
+    string? Priority { get; set; }
+    string? AssigneeId { get; set; }
+    string? TeamId { get; set; }
+    string? CreatedById { get; set; }
+    long? ContactId { get; set; }
 }
 
 public abstract record PaginationViewModel : IPaginationViewModel
@@ -44,6 +53,15 @@ public abstract record PaginationViewModel : IPaginationViewModel
     public int TotalCount { get; }
     public string? BuiltInView { get; set; }
     public string? ViewId { get; set; }
+
+    // Filter retention properties
+    public string? SortBy { get; set; }
+    public string? Status { get; set; }
+    public string? Priority { get; set; }
+    public string? AssigneeId { get; set; }
+    public string? TeamId { get; set; }
+    public string? CreatedById { get; set; }
+    public long? ContactId { get; set; }
 
     public string PreviousDisabledCss =>
         TotalPages == 0 || PageNumber == 1 ? "disabled" : string.Empty;
