@@ -419,6 +419,8 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             Search = search,
             PageNumber = pageNumber,
             PageSize = pageSize,
+            BuiltInView = builtInView,
+            ViewId = viewId,
         };
 
         // Check if user can export (has ImportExportTickets permission)

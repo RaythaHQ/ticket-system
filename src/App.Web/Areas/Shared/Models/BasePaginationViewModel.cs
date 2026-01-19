@@ -16,6 +16,16 @@ public interface IPaginationViewModel
     public string NextDisabledCss { get; }
     public int FirstVisiblePageNumber { get; }
     public int LastVisiblePageNumber { get; }
+
+    /// <summary>
+    /// Built-in view key (e.g., "unassigned", "my-tickets") for pagination retention.
+    /// </summary>
+    string? BuiltInView { get; set; }
+
+    /// <summary>
+    /// Custom view ID for pagination retention.
+    /// </summary>
+    string? ViewId { get; set; }
 }
 
 public abstract record PaginationViewModel : IPaginationViewModel
@@ -32,6 +42,8 @@ public abstract record PaginationViewModel : IPaginationViewModel
             : $"{OrderByPropertyName} {OrderByDirection}";
     public string PageName { get; set; }
     public int TotalCount { get; }
+    public string? BuiltInView { get; set; }
+    public string? ViewId { get; set; }
 
     public string PreviousDisabledCss =>
         TotalPages == 0 || PageNumber == 1 ? "disabled" : string.Empty;
