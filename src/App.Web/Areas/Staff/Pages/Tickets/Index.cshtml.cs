@@ -635,6 +635,12 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                             Operator = "equals",
                             Value = new ShortGuid(currentUserId.Value).ToString(),
                         },
+                        new()
+                        {
+                            Field = "StatusType",
+                            Operator = "equals",
+                            Value = TicketStatusType.OPEN,
+                        },
                     },
                 }
                 : null,
@@ -650,11 +656,43 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                             Operator = "equals",
                             Value = new ShortGuid(currentUserId.Value).ToString(),
                         },
+                        new()
+                        {
+                            Field = "StatusType",
+                            Operator = "equals",
+                            Value = TicketStatusType.OPEN,
+                        },
                     },
                 }
                 : null,
-            // team-tickets is handled via TeamTickets flag in the query
-            "team-tickets" => null,
+            // team-tickets is handled via TeamTickets flag in the query, but still filter by open status
+            "team-tickets" => new ViewConditions
+            {
+                Logic = "AND",
+                Filters = new List<ViewFilterCondition>
+                {
+                    new()
+                    {
+                        Field = "StatusType",
+                        Operator = "equals",
+                        Value = TicketStatusType.OPEN,
+                    },
+                },
+            },
+            // following is handled via Following flag in the query, but still filter by open status
+            "following" => new ViewConditions
+            {
+                Logic = "AND",
+                Filters = new List<ViewFilterCondition>
+                {
+                    new()
+                    {
+                        Field = "StatusType",
+                        Operator = "equals",
+                        Value = TicketStatusType.OPEN,
+                    },
+                },
+            },
             "overdue" => new ViewConditions
             {
                 Logic = "AND",

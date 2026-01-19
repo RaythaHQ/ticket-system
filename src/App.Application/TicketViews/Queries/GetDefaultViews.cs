@@ -71,6 +71,12 @@ public class GetDefaultViews
                         Filters = new List<ViewFilterCondition>
                         {
                             new() { Field = "AssigneeId", Operator = "isnotnull" },
+                            new()
+                            {
+                                Field = "StatusType",
+                                Operator = "equals",
+                                Value = "open",
+                            },
                         },
                     },
                     VisibleColumns = DefaultColumns,
@@ -87,6 +93,12 @@ public class GetDefaultViews
                         Filters = new List<ViewFilterCondition>
                         {
                             new() { Field = "CreatedByStaffId", Operator = "isnotnull" },
+                            new()
+                            {
+                                Field = "StatusType",
+                                Operator = "equals",
+                                Value = "open",
+                            },
                         },
                     },
                     VisibleColumns = DefaultColumns,
@@ -103,6 +115,12 @@ public class GetDefaultViews
                         Filters = new List<ViewFilterCondition>
                         {
                             new() { Field = "CreatedByStaffId", Operator = "isnotnull" },
+                            new()
+                            {
+                                Field = "StatusType",
+                                Operator = "equals",
+                                Value = "open",
+                            },
                         },
                     },
                     VisibleColumns = DefaultColumns,
@@ -119,6 +137,12 @@ public class GetDefaultViews
                         Filters = new List<ViewFilterCondition>
                         {
                             new() { Field = "OwningTeamId", Operator = "isnotnull" },
+                            new()
+                            {
+                                Field = "StatusType",
+                                Operator = "equals",
+                                Value = "open",
+                            },
                         },
                     },
                     VisibleColumns = DefaultColumns,
