@@ -239,10 +239,19 @@ public class GetTickets
                 {
                     // Search all searchable fields
                     var searchQuery = request.Search.ToLower();
+
+                    // Try to parse as Contact ID (numeric)
+                    long? searchContactId = null;
+                    if (long.TryParse(request.Search, out var parsedContactId))
+                    {
+                        searchContactId = parsedContactId;
+                    }
+
                     query = query.Where(t =>
                         t.Title.ToLower().Contains(searchQuery)
                         || (t.Description != null && t.Description.ToLower().Contains(searchQuery))
                         || t.Id.ToString().Contains(searchQuery)
+                        || (searchContactId.HasValue && t.ContactId == searchContactId.Value)
                         || (
                             t.Contact != null
                             && (
