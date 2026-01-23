@@ -382,6 +382,15 @@
                     <input type="hidden" asp-for="Form.Id" />
                     <input type="hidden" asp-for="Form.Status" id="status-input" />
 
+                    <!-- Top Action Buttons -->
+                    <div class="d-flex gap-2 mb-3">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg me-2"></i>Save Changes
+                        </button>
+                        <a asp-page="@RouteNames.Tickets.Details" asp-route-id="@Model.Form.Id"
+                            class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+
                     <!-- Assignment (First Section) -->
                     <div class="edit-section-header">
                         <div class="section-icon assignment">
