@@ -93,24 +93,6 @@
             </div>
         </div>
 
-        <!-- File Attachments -->
-        <div class="staff-card mb-4">
-            <div class="staff-card-header">
-                <h5><i class="bi bi-paperclip me-2"></i>Attachments</h5>
-            </div>
-            <div class="staff-card-body">
-                @{
-                    var attachmentOptions = new FileAttachmentOptions
-                    {
-                        EntityType = "ticket",
-                        EntityId = Model.Ticket.Id.ToString(),
-                        UniqueId = "ticket-attachments"
-                    };
-                }
-                <partial name="_Partials/FileAttachments" model="attachmentOptions" />
-            </div>
-        </div>
-
         <!-- Comments -->
         <div class="staff-card mb-4">
             <div class="staff-card-header">
@@ -154,6 +136,24 @@
                         <p class="mb-0 ms-5 comment-body" style="white-space: pre-wrap;">@Html.Raw(HighlightMentions(comment.Body))</p>
                     </div>
                 }
+            </div>
+        </div>
+
+        <!-- File Attachments -->
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-paperclip me-2"></i>Attachments</h5>
+            </div>
+            <div class="staff-card-body">
+                @{
+                    var attachmentOptions = new FileAttachmentOptions
+                    {
+                        EntityType = "ticket",
+                        EntityId = Model.Ticket.Id.ToString(),
+                        UniqueId = "ticket-attachments"
+                    };
+                }
+                <partial name="_Partials/FileAttachments" model="attachmentOptions" />
             </div>
         </div>
 
