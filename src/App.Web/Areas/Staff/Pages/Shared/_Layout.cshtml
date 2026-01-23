@@ -175,6 +175,30 @@
 
     <!-- Main Content -->
     <div class="staff-main">
+        @if (CurrentUser.IsImpersonating)
+        {
+            <div class="impersonation-hellobar">
+                <div class="impersonation-hellobar-content">
+                    <i class="bi bi-eye-fill"></i>
+                    <span>
+                        <strong>Impersonation Active:</strong>
+                        You (@CurrentUser.OriginalUserFullName) are viewing as <strong>@CurrentUser.FullName</strong>
+                    </span>
+                    @if (CurrentUser.ImpersonationStartedAt.HasValue)
+                    {
+                        <span class="impersonation-time">
+                            Started: @CurrentUser.ImpersonationStartedAt.Value.ToString("HH:mm:ss") UTC
+                        </span>
+                    }
+                </div>
+                <form method="post" asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Login.EndImpersonation" class="d-inline">
+                    <button type="submit" class="impersonation-end-btn" onclick="return confirm('End impersonation and return to your account?');">
+                        <i class="bi bi-box-arrow-right"></i>
+                        End Impersonation
+                    </button>
+                </form>
+            </div>
+        }
         <header class="staff-topbar">
             <div class="staff-topbar-left">
                 <span class="staff-topbar-breadcrumb">

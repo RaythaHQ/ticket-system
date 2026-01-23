@@ -3,6 +3,7 @@
 @inject ICurrentUser CurrentUser
 @using Microsoft.AspNetCore.Mvc.TagHelpers
 @using App.Web.Areas.Admin.Pages.Shared.Models
+@using App.Domain.Entities
 @model ISubActionViewModel
 @{
     Layout = "SidebarLayout";
@@ -20,6 +21,23 @@
     public string DisableIfEditingMyselfOrAdmin()
     {
         return Model.Id == CurrentUser.UserId || Model.IsAdmin ? "disabled" : string.Empty;
+    }
+
+    public bool IsSuperAdmin()
+    {
+        return CurrentUser.Roles?.Contains(BuiltInRole.SuperAdmin.DeveloperName) ?? false;
+    }
+
+    public bool CanImpersonate()
+    {
+        // Can impersonate if:
+        // 1. Current user is a Super Admin
+        // 2. Not already impersonating
+        // 3. Not editing yourself
+        // 4. Target is not a Super Admin (checked server-side, but we hide for UX)
+        return IsSuperAdmin() 
+            && !CurrentUser.IsImpersonating 
+            && Model.Id != CurrentUser.UserId;
     }
 }
 
@@ -107,6 +125,20 @@
                                 </button>
                             </form>
                         </li>
+                        @if (CanImpersonate())
+                        {
+                            <li class="nav-item">
+                                <form method="post" asp-page="@RouteNames.Users.Impersonate" asp-route-id="@Model.Id" onsubmit="return confirm('Are you sure you want to impersonate this user?\n\nYou will be logged in as this user and can see exactly what they see.\n\nAll impersonation actions are logged for security.');">
+                                    <button type="submit" class="nav-link d-inline-flex align-items-center justify-content-center text-primary"
+                                            aria-label="Impersonate user">
+                                        <svg class="icon icon-sm mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                        </svg>
+                                        Impersonate
+                                    </button>
+                                </form>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>

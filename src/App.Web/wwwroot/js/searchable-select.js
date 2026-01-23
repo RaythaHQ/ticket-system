@@ -143,7 +143,7 @@ class SearchableSelect {
 
     handleKeydown(e) {
         const visibleOptions = this.optionsContainer.querySelectorAll('.searchable-select-option:not(.disabled)');
-        
+
         switch (e.key) {
             case 'ArrowDown':
                 e.preventDefault();
@@ -163,10 +163,10 @@ class SearchableSelect {
                 break;
             case 'Escape':
                 e.preventDefault();
-                this.close();
+                this.close(true); // Return focus to trigger on Escape
                 break;
             case 'Tab':
-                this.close();
+                this.close(); // Don't steal focus on Tab - let browser handle it
                 break;
         }
     }
@@ -175,7 +175,7 @@ class SearchableSelect {
         visibleOptions.forEach((opt, i) => {
             opt.classList.toggle('highlighted', i === this.highlightedIndex);
         });
-        
+
         // Scroll into view
         if (visibleOptions[this.highlightedIndex]) {
             visibleOptions[this.highlightedIndex].scrollIntoView({
@@ -208,10 +208,10 @@ class SearchableSelect {
         this.searchInput.value = '';
         this.filterOptions('');
         this.highlightedIndex = -1;
-        
+
         // Check if dropdown would go off-screen and flip if needed
         this.positionDropdown();
-        
+
         // Focus search input after a brief delay for animation
         setTimeout(() => {
             this.searchInput.focus();
@@ -224,13 +224,13 @@ class SearchableSelect {
         this.dropdown.style.bottom = '';
         this.container.classList.remove('dropdown-above');
         this.trigger.style.borderRadius = '';
-        
+
         const triggerRect = this.trigger.getBoundingClientRect();
         const dropdownHeight = this.dropdown.offsetHeight || 350; // Estimate if not yet rendered
         const viewportHeight = window.innerHeight;
         const spaceBelow = viewportHeight - triggerRect.bottom;
         const spaceAbove = triggerRect.top;
-        
+
         // If not enough space below and more space above, flip the dropdown
         if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
             this.container.classList.add('dropdown-above');
@@ -240,7 +240,7 @@ class SearchableSelect {
         }
     }
 
-    close() {
+    close(returnFocus = false) {
         this.isOpen = false;
         this.trigger.classList.remove('open');
         this.dropdown.classList.remove('show');
@@ -248,7 +248,11 @@ class SearchableSelect {
         this.trigger.style.borderRadius = '';
         this.dropdown.style.top = '';
         this.dropdown.style.bottom = '';
-        this.trigger.focus();
+        // Only focus trigger if explicitly requested (e.g., Escape key)
+        // Don't steal focus when clicking outside - let the clicked element keep focus
+        if (returnFocus) {
+            this.trigger.focus();
+        }
     }
 
     updateOptions() {
@@ -261,17 +265,17 @@ class SearchableSelect {
             avatarType: opt.dataset.avatarType || 'user',
             subtext: opt.dataset.subtext || null,
         }));
-        
+
         this.filteredOptions = [...this.allOptions];
     }
 
     filterOptions(query) {
         const q = query.toLowerCase().trim();
-        
+
         if (!q) {
             this.filteredOptions = [...this.allOptions];
         } else {
-            this.filteredOptions = this.allOptions.filter(opt => 
+            this.filteredOptions = this.allOptions.filter(opt =>
                 opt.text.toLowerCase().includes(q) ||
                 (opt.subtext && opt.subtext.toLowerCase().includes(q))
             );
@@ -361,7 +365,7 @@ class SearchableSelect {
         if (val === '' || val === 'unassigned' || opt.text.toLowerCase().includes('unassigned')) {
             return `<div class="searchable-select-option-avatar unassigned"><i class="bi bi-person-dash"></i></div>`;
         }
-        
+
         // Team check
         if (val.startsWith('team:') && !val.includes('assignee:')) {
             const initial = opt.text.replace(/^[^a-zA-Z]*/, '').charAt(0).toUpperCase() || 'T';
@@ -375,25 +379,25 @@ class SearchableSelect {
 
     highlightMatch(text, query) {
         if (!query) return this.escapeHtml(text);
-        
+
         const escaped = this.escapeHtml(text);
         const q = query.toLowerCase();
         const lowerText = text.toLowerCase();
         const index = lowerText.indexOf(q);
-        
+
         if (index === -1) return escaped;
-        
+
         const before = this.escapeHtml(text.substring(0, index));
         const match = this.escapeHtml(text.substring(index, index + query.length));
         const after = this.escapeHtml(text.substring(index + query.length));
-        
+
         return `${before}<span class="searchable-select-match">${match}</span>${after}`;
     }
 
     selectOption(value) {
         this.select.value = value;
         this.select.dispatchEvent(new Event('change', { bubbles: true }));
-        
+
         this.updateDisplay();
         this.close();
 
@@ -405,7 +409,7 @@ class SearchableSelect {
     updateDisplay() {
         const selectedOption = this.select.options[this.select.selectedIndex];
         const valueEl = this.trigger.querySelector('.searchable-select-value');
-        
+
         // Check if there's a selected option with text content
         // Even if value is empty, if there's text, show it (e.g., "All Assignees")
         if (selectedOption && selectedOption.textContent.trim()) {
@@ -445,7 +449,7 @@ class SearchableSelect {
 }
 
 // Auto-initialize on elements with data-searchable-select attribute
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('select[data-searchable-select]').forEach(select => {
         new SearchableSelect(select);
     });

@@ -137,4 +137,61 @@ public class CurrentUser : ICurrentUser
             ?.HttpContext.User.Claims.Where(c => c.Type == RaythaClaimTypes.SystemPermissions)
             .Select(p => p.Value)
             .ToArray();
+
+    // Impersonation properties
+    public bool IsImpersonating
+    {
+        get
+        {
+            var claim = _httpContextAccessor
+                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.IsImpersonating);
+            return claim != null && bool.TryParse(claim.Value, out var result) && result;
+        }
+    }
+
+    public ShortGuid? OriginalUserId
+    {
+        get
+        {
+            if (!IsImpersonating) return null;
+            var claim = _httpContextAccessor
+                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.OriginalUserId);
+            return claim?.Value;
+        }
+    }
+
+    public string? OriginalUserEmail
+    {
+        get
+        {
+            if (!IsImpersonating) return null;
+            return _httpContextAccessor
+                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.OriginalUserEmail)
+                ?.Value;
+        }
+    }
+
+    public string? OriginalUserFullName
+    {
+        get
+        {
+            if (!IsImpersonating) return null;
+            return _httpContextAccessor
+                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.OriginalUserFullName)
+                ?.Value;
+        }
+    }
+
+    public DateTime? ImpersonationStartedAt
+    {
+        get
+        {
+            if (!IsImpersonating) return null;
+            var claim = _httpContextAccessor
+                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.ImpersonationStartedAt);
+            if (claim != null && DateTime.TryParse(claim.Value, out var result))
+                return result;
+            return null;
+        }
+    }
 }

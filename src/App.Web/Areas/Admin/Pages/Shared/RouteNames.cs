@@ -18,6 +18,7 @@ public static class RouteNames
         public const string Suspend = "/Users/Suspend";
         public const string Restore = "/Users/Restore";
         public const string ResetPassword = "/Users/ResetPassword";
+        public const string Impersonate = "/Users/Impersonate";
     }
 
     /// <summary>
@@ -33,6 +34,7 @@ public static class RouteNames
         public const string RemoveAccess = "/Admins/RemoveAccess";
         public const string ResetPassword = "/Admins/ResetPassword";
         public const string ApiKeys = "/Admins/ApiKeys";
+        public const string Impersonate = "/Admins/Impersonate";
     }
 
     /// <summary>
@@ -329,6 +331,7 @@ public static class RouteNames
         public const string ForgotPasswordSent = "/Login/ForgotPasswordSent";
         public const string ForgotPasswordComplete = "/Login/ForgotPasswordComplete";
         public const string Logout = "/Login/Logout";
+        public const string EndImpersonation = "/Login/EndImpersonation";
     }
 
     /// <summary>

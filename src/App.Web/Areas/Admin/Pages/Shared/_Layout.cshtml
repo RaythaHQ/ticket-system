@@ -1,3 +1,5 @@
+@inject App.Application.Common.Interfaces.ICurrentUser CurrentUser
+@using App.Web.Areas.Admin.Pages.Shared
 <!DOCTYPE html>
 <html lang="en">
 
@@ -15,6 +17,32 @@
 </head>
 
 <body data-active-menu="@ViewData["ActiveMenu"]">
+    @if (CurrentUser.IsImpersonating)
+    {
+        <div class="impersonation-hellobar" style="position: sticky; top: 0; z-index: 1050; display: flex; align-items: center; justify-content: center; gap: 1.5rem; padding: 0.625rem 1rem; background: linear-gradient(135deg, #ff6b00 0%, #ff4500 50%, #dc3545 100%); color: white; font-size: 0.875rem; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3); flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: center;">
+                <i class="bi bi-eye-fill" style="font-size: 1rem;"></i>
+                <span>
+                    <strong>Impersonation Active:</strong>
+                    You (@CurrentUser.OriginalUserFullName) are viewing as <strong>@CurrentUser.FullName</strong> (@CurrentUser.EmailAddress)
+                </span>
+                @if (CurrentUser.ImpersonationStartedAt.HasValue)
+                {
+                    <span style="background: rgba(0, 0, 0, 0.2); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; margin-left: 0.5rem;">
+                        Started: @CurrentUser.ImpersonationStartedAt.Value.ToString("HH:mm:ss") UTC
+                    </span>
+                }
+            </div>
+            <form method="post" asp-area="Admin" asp-page="@RouteNames.Login.EndImpersonation" class="d-inline">
+                <button type="submit" 
+                        style="display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.875rem; background: white; color: #dc3545; border: none; border-radius: 6px; font-size: 0.8125rem; font-weight: 600; cursor: pointer; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);"
+                        onclick="return confirm('End impersonation and return to your account?');">
+                    <i class="bi bi-box-arrow-right"></i>
+                    End Impersonation
+                </button>
+            </form>
+        </div>
+    }
     @RenderBody()
     <script src="~/admin/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/admin/lib/sortablejs/Sortable.min.js"></script>
