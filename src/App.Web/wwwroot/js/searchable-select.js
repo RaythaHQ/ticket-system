@@ -21,6 +21,12 @@ class SearchableSelect {
             return;
         }
 
+        // Prevent double initialization
+        if (selectElement.dataset.searchableSelectInitialized) {
+            return;
+        }
+        selectElement.dataset.searchableSelectInitialized = 'true';
+
         this.select = selectElement;
         this.options = {
             placeholder: options.placeholder || selectElement.dataset.placeholder || 'Select...',
