@@ -64,6 +64,12 @@ public class Edit : BaseStaffPageModel
     /// </summary>
     public bool CanDeleteTicket { get; set; }
 
+    /// <summary>
+    /// Back to list URL - preserved across navigation and form submissions.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? BackToListUrl { get; set; }
+
     public async Task<IActionResult> OnGet(
         long id,
         string? backToListUrl = null,
@@ -72,7 +78,9 @@ public class Edit : BaseStaffPageModel
     {
         ViewData["Title"] = "Edit Ticket";
         ViewData["ActiveMenu"] = "Tickets";
-        ViewData["BackToListUrl"] = backToListUrl;
+        // Use parameter if provided, otherwise use property (from form submission)
+        BackToListUrl = backToListUrl ?? BackToListUrl;
+        ViewData["BackToListUrl"] = BackToListUrl;
 
         var response = await Mediator.Send(new GetTicketById.Query { Id = id }, cancellationToken);
         Ticket = response.Result;
@@ -160,11 +168,12 @@ public class Edit : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage("Ticket updated successfully.");
-            return RedirectToPage(RouteNames.Tickets.Details, new { id = Form.Id });
+            return RedirectToPage(RouteNames.Tickets.Details, new { id = Form.Id, backToListUrl = BackToListUrl });
         }
 
         SetErrorMessage(response.GetErrors());
         Ticket = ticket;
+        ViewData["BackToListUrl"] = BackToListUrl;
         await LoadSelectListsAsync(cancellationToken);
         return Page();
     }
@@ -195,7 +204,7 @@ public class Edit : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage(RouteNames.Tickets.Edit, new { id });
+        return RedirectToPage(RouteNames.Tickets.Edit, new { id, backToListUrl = BackToListUrl });
     }
 
     public async Task<IActionResult> OnPostClose(long id, CancellationToken cancellationToken)
@@ -206,11 +215,11 @@ public class Edit : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage("Ticket closed.");
-            return RedirectToPage(RouteNames.Tickets.Details, new { id });
+            return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl = BackToListUrl });
         }
 
         SetErrorMessage(response.GetErrors());
-        return RedirectToPage(RouteNames.Tickets.Edit, new { id });
+        return RedirectToPage(RouteNames.Tickets.Edit, new { id, backToListUrl = BackToListUrl });
     }
 
     public async Task<IActionResult> OnPostReopen(long id, CancellationToken cancellationToken)
@@ -227,7 +236,7 @@ public class Edit : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage(RouteNames.Tickets.Edit, new { id });
+        return RedirectToPage(RouteNames.Tickets.Edit, new { id, backToListUrl = BackToListUrl });
     }
 
     public async Task<IActionResult> OnPostDelete(long id, CancellationToken cancellationToken)
@@ -238,12 +247,15 @@ public class Edit : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage("Ticket deleted successfully.");
+            // Return to the list URL if available, otherwise go to index
+            if (!string.IsNullOrEmpty(BackToListUrl))
+                return Redirect(BackToListUrl);
             return RedirectToPage(RouteNames.Tickets.Index);
         }
         else
         {
             SetErrorMessage(response.GetErrors());
-            return RedirectToPage(RouteNames.Tickets.Edit, new { id });
+            return RedirectToPage(RouteNames.Tickets.Edit, new { id, backToListUrl = BackToListUrl });
         }
     }
 

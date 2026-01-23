@@ -43,6 +43,12 @@ public class Details : BaseStaffPageModel
     [BindProperty]
     public int ExtensionHours { get; set; }
 
+    /// <summary>
+    /// Back to list URL - preserved across navigation and form submissions.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? BackToListUrl { get; set; }
+
     public async Task<IActionResult> OnGet(
         long id,
         string? backToListUrl = null,
@@ -107,8 +113,9 @@ public class Details : BaseStaffPageModel
         // Load SLA extension info
         SlaExtensionInfo = await GetSlaExtensionInfoAsync(Ticket, cancellationToken);
 
-        // Store back URL for the view
-        ViewData["BackToListUrl"] = backToListUrl;
+        // Store back URL for the view (use property if set, otherwise use parameter)
+        BackToListUrl = backToListUrl ?? BackToListUrl;
+        ViewData["BackToListUrl"] = BackToListUrl;
 
         return Page();
     }
@@ -171,23 +178,24 @@ public class Details : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage("Ticket deleted successfully.");
+            // Return to the list URL if available, otherwise go to index
+            if (!string.IsNullOrEmpty(BackToListUrl))
+                return Redirect(BackToListUrl);
             return RedirectToPage(RouteNames.Tickets.Index);
         }
         else
         {
             SetErrorMessage(response.GetErrors());
-            return await OnGet(id, null, cancellationToken);
+            return await OnGet(id, BackToListUrl, cancellationToken);
         }
     }
 
     public async Task<IActionResult> OnPostAddComment(long id, CancellationToken cancellationToken)
     {
-        var backToListUrl = Request.Query["backToListUrl"].ToString();
-
         if (string.IsNullOrWhiteSpace(CommentForm.Body))
         {
             ModelState.AddModelError("CommentForm.Body", "Comment cannot be empty.");
-            return await OnGet(id, backToListUrl, cancellationToken);
+            return await OnGet(id, BackToListUrl, cancellationToken);
         }
 
         var command = new AddTicketComment.Command { TicketId = id, Body = CommentForm.Body };
@@ -203,12 +211,7 @@ public class Details : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        if (!string.IsNullOrEmpty(backToListUrl))
-        {
-            return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl });
-        }
-
-        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+        return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl = BackToListUrl });
     }
 
     public async Task<IActionResult> OnPostExtendSla(long id, CancellationToken cancellationToken)
@@ -239,7 +242,7 @@ public class Details : BaseStaffPageModel
             SetErrorMessage(ex.Message);
         }
 
-        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+        return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl = BackToListUrl });
     }
 
     public async Task<IActionResult> OnGetPreviewSlaExtension(
@@ -327,7 +330,7 @@ public class Details : BaseStaffPageModel
             SetErrorMessage(ex.Message);
         }
 
-        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+        return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl = BackToListUrl });
     }
 
     public async Task<IActionResult> OnPostFollow(long id, CancellationToken cancellationToken)
@@ -344,7 +347,7 @@ public class Details : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+        return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl = BackToListUrl });
     }
 
     public async Task<IActionResult> OnPostUnfollow(long id, CancellationToken cancellationToken)
@@ -361,7 +364,7 @@ public class Details : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+        return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl = BackToListUrl });
     }
 
     public async Task<IActionResult> OnPostAddFollower(
@@ -382,7 +385,7 @@ public class Details : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+        return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl = BackToListUrl });
     }
 
     public async Task<IActionResult> OnPostRemoveFollower(
@@ -407,7 +410,7 @@ public class Details : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        return RedirectToPage(RouteNames.Tickets.Details, new { id });
+        return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl = BackToListUrl });
     }
 
     /// <summary>

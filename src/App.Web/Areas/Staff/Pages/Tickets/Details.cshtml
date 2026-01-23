@@ -42,6 +42,7 @@
         @if (Model.IsFollowing)
         {
             <form method="post" asp-page-handler="Unfollow" asp-route-id="@Model.Ticket.Id" class="d-inline">
+                <input type="hidden" asp-for="BackToListUrl" />
                 <button type="submit" class="btn btn-outline-secondary" title="Stop receiving notifications for this ticket">
                     <i class="bi bi-bell-slash me-2"></i>Following
                 </button>
@@ -50,6 +51,7 @@
         else
         {
             <form method="post" asp-page-handler="Follow" asp-route-id="@Model.Ticket.Id" class="d-inline">
+                <input type="hidden" asp-for="BackToListUrl" />
                 <button type="submit" class="btn btn-outline-primary" title="Get notified when comments are added">
                     <i class="bi bi-bell me-2"></i>Follow
                 </button>
@@ -57,7 +59,7 @@
         }
         @if (Model.CanEditTicket)
         {
-            <a asp-page="@RouteNames.Tickets.Edit" asp-route-id="@Model.Ticket.Id" class="btn btn-outline-primary">
+            <a asp-page="@RouteNames.Tickets.Edit" asp-route-id="@Model.Ticket.Id" asp-route-backToListUrl="@Model.BackToListUrl" class="btn btn-outline-primary">
                 <i class="bi bi-pencil me-2"></i>Edit
             </a>
         }
@@ -65,6 +67,7 @@
         {
             <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Ticket.Id" class="d-inline"
                   onsubmit="return confirm('Are you sure you want to delete this ticket? This action cannot be undone.');">
+                <input type="hidden" asp-for="BackToListUrl" />
                 <button type="submit" class="btn btn-outline-danger">
                     <i class="bi bi-trash me-2"></i>Delete
                 </button>
@@ -100,6 +103,7 @@
             </div>
             <div class="staff-card-body">
                 <form method="post" asp-page-handler="AddComment" asp-route-id="@Model.Ticket.Id" class="mb-4">
+                    <input type="hidden" asp-for="BackToListUrl" />
                     <div class="mb-3">
                         <label asp-for="CommentForm.Body" class="form-label fw-medium">Add a comment</label>
                         <textarea asp-for="CommentForm.Body" class="form-control" rows="3" id="comment-textarea"
@@ -349,6 +353,7 @@
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
                                         <form method="post" asp-page-handler="RefreshSla" asp-route-id="@Model.Ticket.Id" asp-route-restartFromNow="true" class="d-inline">
+                                            <input type="hidden" asp-for="BackToListUrl" />
                                             <button type="submit" class="dropdown-item">
                                                 <i class="bi bi-arrow-counterclockwise me-2"></i>Restart SLA from now
                                                 <small class="d-block text-muted">Recalculates due date from current time</small>
@@ -357,6 +362,7 @@
                                     </li>
                                     <li>
                                         <form method="post" asp-page-handler="RefreshSla" asp-route-id="@Model.Ticket.Id" asp-route-restartFromNow="false" class="d-inline">
+                                            <input type="hidden" asp-for="BackToListUrl" />
                                             <button type="submit" class="dropdown-item">
                                                 <i class="bi bi-arrow-repeat me-2"></i>Re-evaluate SLA rules
                                                 <small class="d-block text-muted">Keeps original creation time</small>
@@ -404,6 +410,7 @@
                             </div>
                             <div id="sla-extend-expanded" style="display: none;">
                                 <form method="post" asp-page-handler="ExtendSla" asp-route-id="@Model.Ticket.Id" id="sla-extend-form">
+                                    <input type="hidden" asp-for="BackToListUrl" />
                                     <div class="mb-2">
                                         <label class="form-label small fw-medium">Extend by hours</label>
                                         <div class="input-group input-group-sm">
@@ -501,6 +508,7 @@
                             <span class="fw-medium" style="color: var(--staff-primary);">@follower.StaffAdminName</span>
                             <form method="post" asp-page-handler="RemoveFollower" asp-route-id="@Model.Ticket.Id" 
                                   asp-route-staffAdminId="@follower.StaffAdminId" class="d-inline follower-remove-form">
+                                <input type="hidden" asp-for="BackToListUrl" />
                                 <button type="submit" class="follower-remove-btn" title="Remove follower">
                                     <i class="bi bi-x"></i>
                                 </button>
@@ -930,6 +938,7 @@
             const searchInput = document.getElementById('follower-search-input');
             const resultsContainer = document.getElementById('follower-search-results');
             const ticketId = @Model.Ticket.Id;
+            const backToListUrl = '@Html.Raw(Model.BackToListUrl ?? "")';
             
             if (!addBtn || !dropdown) return;
             
@@ -996,13 +1005,21 @@
                             </form>
                         `).join('');
                         
-                        // Add anti-forgery token to forms
+                        // Add anti-forgery token and backToListUrl to forms
                         document.querySelectorAll('.follower-add-form').forEach(form => {
                             const tokenInput = document.createElement('input');
                             tokenInput.type = 'hidden';
                             tokenInput.name = '__RequestVerificationToken';
                             tokenInput.value = document.querySelector('input[name="__RequestVerificationToken"]').value;
                             form.appendChild(tokenInput);
+                            
+                            if (backToListUrl) {
+                                const backUrlInput = document.createElement('input');
+                                backUrlInput.type = 'hidden';
+                                backUrlInput.name = 'BackToListUrl';
+                                backUrlInput.value = backToListUrl;
+                                form.appendChild(backUrlInput);
+                            }
                         });
                     })
                     .catch(err => {
