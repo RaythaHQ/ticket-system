@@ -36,7 +36,11 @@ public class GetNotifications
         private readonly ICurrentUser _currentUser;
         private readonly ICurrentOrganization _currentOrganization;
 
-        public Handler(IAppDbContext db, ICurrentUser currentUser, ICurrentOrganization currentOrganization)
+        public Handler(
+            IAppDbContext db,
+            ICurrentUser currentUser,
+            ICurrentOrganization currentOrganization
+        )
         {
             _db = db;
             _currentUser = currentUser;
@@ -59,7 +63,8 @@ public class GetNotifications
                 );
             }
 
-            var query = _db.Notifications.AsNoTracking()
+            var query = _db
+                .Notifications.AsNoTracking()
                 .Where(n => n.RecipientUserId == userId.Value);
 
             // Apply status filter
@@ -86,8 +91,23 @@ public class GetNotifications
             var total = await query.CountAsync(cancellationToken);
 
             // Apply sorting and pagination
-            var items = await query
+            var dbItems = await query
                 .ApplyPaginationInput(request)
+                .Select(n => new
+                {
+                    n.Id,
+                    n.EventType,
+                    n.Title,
+                    n.Message,
+                    n.Url,
+                    n.TicketId,
+                    n.IsRead,
+                    n.CreatedAt,
+                })
+                .ToListAsync(cancellationToken);
+
+            // Map to DTOs with relative time
+            var items = dbItems
                 .Select(n => new NotificationListItemDto
                 {
                     Id = n.Id,
@@ -99,20 +119,9 @@ public class GetNotifications
                     TicketId = n.TicketId,
                     IsRead = n.IsRead,
                     CreatedAt = n.CreatedAt,
-                    CreatedAtRelative = string.Empty // Will be set below
+                    CreatedAtRelative = GetRelativeTime(n.CreatedAt),
                 })
-                .ToListAsync(cancellationToken);
-
-            // Set relative time for each item
-            foreach (var item in items)
-            {
-                // Update relative time
-                var dto = item with
-                {
-                    CreatedAtRelative = GetRelativeTime(item.CreatedAt)
-                };
-                items[items.IndexOf(item)] = dto;
-            }
+                .ToList();
 
             return new QueryResponseDto<ListResultDto<NotificationListItemDto>>(
                 new ListResultDto<NotificationListItemDto>(items, total)
@@ -160,4 +169,3 @@ public class GetNotifications
         }
     }
 }
-
