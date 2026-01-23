@@ -215,7 +215,10 @@
                 </select>
             </div>
             <div class="col-lg-2 col-md-3">
-                <select name="assigneeId" class="form-select">
+                <select name="assigneeId" class="form-select"
+                        data-searchable-select 
+                        data-placeholder="All Assignees"
+                        data-search-placeholder="Search assignees...">
                     <option value="">All Assignees</option>
                     @foreach (var assignee in Model.AvailableAssignees)
                     {

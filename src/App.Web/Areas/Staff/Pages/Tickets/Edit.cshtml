@@ -405,7 +405,10 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Assignee</label>
-                            <select id="assignee-dropdown" class="form-select">
+                            <select id="assignee-dropdown" class="form-select" 
+                                    data-searchable-select 
+                                    data-placeholder="Select assignee..."
+                                    data-search-placeholder="Search assignees...">
                                 @foreach (var assignee in Model.AvailableAssignees)
                                 {
                                     bool isSelected = false;

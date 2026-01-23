@@ -16,6 +16,7 @@
     <link rel="icon" type="image/x-icon" href="~/favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/staff-layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/searchable-select.css" asp-append-version="true" />
 
     @RenderSection("headstyles", false)
 </head>
@@ -225,6 +226,9 @@
             }
         }
     </script>
+
+    <!-- Searchable Select Component -->
+    <script src="~/js/searchable-select.js" asp-append-version="true"></script>
 
     <!-- SignalR for real-time notifications -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>

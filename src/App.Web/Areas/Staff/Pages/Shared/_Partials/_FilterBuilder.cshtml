@@ -328,16 +328,40 @@
                 </select>`;
                     break;
                 case 'user':
-                    container.innerHTML = `<select name="${fieldName}" class="form-select form-select-sm">
-                    <option value="">Select user...</option>
-                    ${users.map(u => `<option value="${u.id}" ${u.id === existingValue ? 'selected' : ''}>${u.name}${u.isDeactivated ? ' (deactivated)' : ''}</option>`).join('')}
-                </select>`;
+                    const userSelectId = `user-select-${index}-${Date.now()}`;
+                    container.innerHTML = `<select id="${userSelectId}" name="${fieldName}" class="form-select form-select-sm"
+                        data-searchable-select 
+                        data-placeholder="Select user..."
+                        data-search-placeholder="Search users..."
+                        data-size="sm">
+                        <option value="">Select user...</option>
+                        ${users.map(u => `<option value="${u.id}" ${u.id === existingValue ? 'selected' : ''}>${u.name}${u.isDeactivated ? ' (deactivated)' : ''}</option>`).join('')}
+                    </select>`;
+                    // Initialize searchable select
+                    setTimeout(() => {
+                        const selectEl = document.getElementById(userSelectId);
+                        if (selectEl && typeof SearchableSelect !== 'undefined') {
+                            new SearchableSelect(selectEl, { size: 'sm' });
+                        }
+                    }, 0);
                     break;
                 case 'team':
-                    container.innerHTML = `<select name="${fieldName}" class="form-select form-select-sm">
-                    <option value="">Select team...</option>
-                    ${teams.map(t => `<option value="${t.id}" ${t.id === existingValue ? 'selected' : ''}>${t.name}</option>`).join('')}
-                </select>`;
+                    const teamSelectId = `team-select-${index}-${Date.now()}`;
+                    container.innerHTML = `<select id="${teamSelectId}" name="${fieldName}" class="form-select form-select-sm"
+                        data-searchable-select 
+                        data-placeholder="Select team..."
+                        data-search-placeholder="Search teams..."
+                        data-size="sm">
+                        <option value="">Select team...</option>
+                        ${teams.map(t => `<option value="${t.id}" ${t.id === existingValue ? 'selected' : ''}>${t.name}</option>`).join('')}
+                    </select>`;
+                    // Initialize searchable select
+                    setTimeout(() => {
+                        const selectEl = document.getElementById(teamSelectId);
+                        if (selectEl && typeof SearchableSelect !== 'undefined') {
+                            new SearchableSelect(selectEl, { size: 'sm' });
+                        }
+                    }, 0);
                     break;
                 case 'boolean':
                     container.innerHTML = `<input type="hidden" name="${fieldName}" value="">
