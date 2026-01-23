@@ -209,7 +209,10 @@ public class Edit : BaseStaffPageModel
         FilterBuilderModel = FilterBuilderViewModel.CreateWithDefaults();
 
         // Load users for assignee filter
-        var usersResponse = await Mediator.Send(new GetUsers.Query(), cancellationToken);
+        var usersResponse = await Mediator.Send(
+            new GetUsers.Query { PageSize = 1000, OrderBy = "FirstName ASC, LastName ASC" },
+            cancellationToken
+        );
         FilterBuilderModel.Users = usersResponse
             .Result.Items.Select(u => new UserOption
             {

@@ -253,7 +253,7 @@ public class Edit : BaseAdminPageModel
     {
         // Load users for filter dropdowns
         var usersResponse = await Mediator.Send(
-            new GetUsers.Query { PageSize = 1000 },
+            new GetUsers.Query { PageSize = 1000, OrderBy = "FirstName ASC, LastName ASC" },
             cancellationToken
         );
         var users = usersResponse
