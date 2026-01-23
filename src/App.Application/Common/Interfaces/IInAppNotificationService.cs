@@ -2,11 +2,13 @@ namespace App.Application.Common.Interfaces;
 
 /// <summary>
 /// Service for sending real-time in-app notifications via SignalR.
+/// Also records all notifications to the database for the notification center.
 /// </summary>
 public interface IInAppNotificationService
 {
     /// <summary>
     /// Sends a notification to a specific user.
+    /// This also records the notification to the database regardless of delivery preferences.
     /// </summary>
     Task SendToUserAsync(
         Guid userId,
@@ -20,6 +22,7 @@ public interface IInAppNotificationService
 
     /// <summary>
     /// Sends a notification to multiple users.
+    /// This also records the notification to the database for each user regardless of delivery preferences.
     /// </summary>
     Task SendToUsersAsync(
         IEnumerable<Guid> userIds,
@@ -30,6 +33,16 @@ public interface IInAppNotificationService
         long? ticketId = null,
         CancellationToken cancellationToken = default
     );
+
+    /// <summary>
+    /// Gets the count of unread notifications for a user.
+    /// </summary>
+    Task<int> GetUnreadCountAsync(Guid userId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Broadcasts the updated unread count to a specific user via SignalR.
+    /// </summary>
+    Task BroadcastUnreadCountUpdateAsync(Guid userId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

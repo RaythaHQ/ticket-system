@@ -48,6 +48,9 @@ public interface IAppDbContext
     public DbSet<Webhook> Webhooks { get; }
     public DbSet<WebhookLog> WebhookLogs { get; }
 
+    // Notification entities
+    public DbSet<Notification> Notifications { get; }
+
     public DbContext DbContext { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);

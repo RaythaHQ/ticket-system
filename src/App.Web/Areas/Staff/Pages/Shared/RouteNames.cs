@@ -70,4 +70,12 @@ public static class RouteNames
     {
         public const string Index = "/Error";
     }
+
+    /// <summary>
+    /// Route constants for notification pages.
+    /// </summary>
+    public static class Notifications
+    {
+        public const string Index = "/Notifications/Index";
+    }
 }

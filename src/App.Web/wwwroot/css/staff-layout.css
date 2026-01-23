@@ -154,6 +154,32 @@ body {
     border-radius: 999px;
 }
 
+.staff-nav-link .notification-badge {
+    margin-left: auto;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    min-width: 18px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.4);
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% {
+        box-shadow: 0 2px 4px rgba(220, 38, 38, 0.4);
+    }
+    50% {
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.6);
+    }
+}
+
 .staff-nav-link.has-submenu {
     cursor: pointer;
 }

@@ -1,0 +1,412 @@
+@page "/staff/notifications"
+@model App.Web.Areas.Staff.Pages.Notifications.Index
+@using App.Web.Areas.Staff.Pages.Shared
+@using App.Domain.ValueObjects
+
+@{
+    ViewData["Title"] = "My Notifications";
+    ViewData["ActiveMenu"] = "Notifications";
+}
+
+<div class="staff-page-heading mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-bell me-2"></i>My Notifications
+    </h1>
+</div>
+
+<!-- Filters -->
+<div class="staff-card mb-4">
+    <div class="staff-card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <!-- Status Filter -->
+            <div class="col-lg-2 col-md-4">
+                <label for="filterStatus" class="form-label small text-muted mb-1">Status</label>
+                <select name="filterStatus" id="filterStatus" class="form-select">
+                    <option value="unread" selected="@(Model.FilterStatus == "unread")">Unread</option>
+                    <option value="read" selected="@(Model.FilterStatus == "read")">Read</option>
+                    <option value="all" selected="@(Model.FilterStatus == "all")">All</option>
+                </select>
+            </div>
+
+            <!-- Type Filter -->
+            <div class="col-lg-3 col-md-4">
+                <label for="filterType" class="form-label small text-muted mb-1">Type</label>
+                <select name="filterType" id="filterType" class="form-select">
+                    <option value="">All Types</option>
+                    @foreach (var notificationType in Model.NotificationTypes)
+                    {
+                        <option value="@notificationType.DeveloperName"
+                                selected="@(Model.FilterType == notificationType.DeveloperName)">
+                            @notificationType.Label
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- Sort Direction -->
+            <div class="col-lg-2 col-md-4">
+                <label for="sortDirection" class="form-label small text-muted mb-1">Sort</label>
+                <select name="sortDirection" id="sortDirection" class="form-select">
+                    <option value="desc" selected="@(Model.SortDirection == "desc")">Newest First</option>
+                    <option value="asc" selected="@(Model.SortDirection == "asc")">Oldest First</option>
+                </select>
+            </div>
+
+            <!-- Search -->
+            <div class="col-lg-3 col-md-6">
+                <label for="search" class="form-label small text-muted mb-1">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" name="search" id="search" class="form-control border-start-0 ps-0"
+                           placeholder="Search notifications..."
+                           value="@Model.ListView.Search" />
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="col-lg-2 col-md-6">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="bi bi-funnel me-1"></i>Filter
+                    </button>
+                    <a asp-page="@RouteNames.Notifications.Index" class="btn btn-outline-secondary" title="Clear filters">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Notifications List -->
+<div class="staff-card">
+    <div class="staff-card-header d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fw-medium">
+                @Model.ListView.TotalCount notification@(Model.ListView.TotalCount == 1 ? "" : "s")
+            </span>
+            @if (Model.FilterStatus == "unread")
+            {
+                <span class="text-muted ms-2">unread</span>
+            }
+            else if (Model.FilterStatus == "read")
+            {
+                <span class="text-muted ms-2">read</span>
+            }
+        </div>
+        @if (Model.ListView.Items.Any() && Model.FilterStatus != "read")
+        {
+            <form method="post" asp-page-handler="MarkAllAsRead" class="d-inline">
+                <input type="hidden" name="filterStatus" value="@Model.FilterStatus" />
+                <input type="hidden" name="filterType" value="@Model.FilterType" />
+                <button type="submit" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-check2-all me-1"></i>Mark All as Read
+                </button>
+            </form>
+        }
+    </div>
+
+    @if (!Model.ListView.Items.Any())
+    {
+        <div class="staff-card-body text-center py-5">
+            <i class="bi bi-bell-slash" style="font-size: 3rem; opacity: 0.5; color: var(--staff-text-muted);"></i>
+            <p class="mt-3 mb-0 fw-medium">No notifications found</p>
+            @if (Model.FilterStatus == "unread")
+            {
+                <p class="small text-muted">You're all caught up! No unread notifications.</p>
+            }
+            else
+            {
+                <p class="small text-muted">Try adjusting your filters</p>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="notification-list" role="list" aria-label="Notifications">
+            @foreach (var notification in Model.ListView.Items)
+            {
+                <div class="notification-item @Model.GetNotificationRowClass(notification)" tabindex="0" role="listitem">
+                    <div class="notification-icon @Model.GetNotificationIconColor(notification.EventType)">
+                        <i class="bi @Model.GetNotificationIcon(notification.EventType)"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-header">
+                            <span class="notification-type-badge">@notification.EventTypeLabel</span>
+                            <span class="notification-time">@notification.CreatedAtRelative</span>
+                        </div>
+                        <div class="notification-title">
+                            @if (!string.IsNullOrEmpty(notification.Url))
+                            {
+                                <a href="@notification.Url" class="notification-link">
+                                    @notification.Title
+                                </a>
+                            }
+                            else
+                            {
+                                @notification.Title
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(notification.Message) && notification.Message != notification.Title)
+                        {
+                            <div class="notification-message text-muted small">
+                                @notification.Message
+                            </div>
+                        }
+                        @if (notification.TicketId.HasValue)
+                        {
+                            <div class="notification-ticket mt-1">
+                                @if (!string.IsNullOrEmpty(notification.Url))
+                                {
+                                    <a href="/staff/tickets/@notification.TicketId" class="text-decoration-none small">
+                                        <i class="bi bi-ticket-detailed me-1"></i>Ticket #@notification.TicketId
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small" title="This ticket may have been deleted">
+                                        <i class="bi bi-ticket-detailed me-1"></i>Ticket #@notification.TicketId
+                                        <i class="bi bi-exclamation-triangle-fill text-warning ms-1" title="Ticket may no longer exist"></i>
+                                    </span>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="notification-actions">
+                        @if (!notification.IsRead)
+                        {
+                            <form method="post" asp-page-handler="MarkAsRead" class="d-inline">
+                                <input type="hidden" name="id" value="@notification.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Mark as read">
+                                    <i class="bi bi-check2"></i>
+                                </button>
+                            </form>
+                            <span class="unread-indicator" title="Unread"></span>
+                        }
+                        else
+                        {
+                            <form method="post" asp-page-handler="MarkAsUnread" class="d-inline">
+                                <input type="hidden" name="id" value="@notification.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Mark as unread">
+                                    <i class="bi bi-envelope"></i>
+                                </button>
+                            </form>
+                        }
+                        @if (!string.IsNullOrEmpty(notification.Url))
+                        {
+                            <form method="post" asp-page-handler="Navigate" class="d-inline">
+                                <input type="hidden" name="id" value="@notification.Id" />
+                                <input type="hidden" name="url" value="@notification.Url" />
+                                <button type="submit" class="btn btn-sm btn-primary" title="View">
+                                    <i class="bi bi-arrow-right"></i>
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (Model.ListView.TotalCount > 0)
+    {
+        <partial name="_Partials/TablePagination" model="@Model.ListView" />
+    }
+</div>
+
+@section headstyles {
+<style>
+    /* Notification List Styles */
+    .notification-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .notification-item {
+        display: flex;
+        gap: 1rem;
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--staff-border);
+        transition: background-color 0.15s ease;
+        align-items: flex-start;
+    }
+
+    .notification-item:last-child {
+        border-bottom: none;
+    }
+
+    .notification-item:hover,
+    .notification-item:focus {
+        background-color: rgba(0, 157, 220, 0.03);
+        outline: none;
+    }
+
+    .notification-item:focus {
+        box-shadow: inset 0 0 0 2px var(--staff-primary);
+    }
+
+    .notification-item.notification-unread {
+        background-color: rgba(0, 157, 220, 0.05);
+    }
+
+    .notification-item.notification-read {
+        opacity: 0.75;
+    }
+
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1.1rem;
+        background-color: rgba(108, 117, 125, 0.1);
+    }
+
+    .notification-icon.text-primary {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+
+    .notification-icon.text-info {
+        background-color: rgba(13, 202, 240, 0.1);
+    }
+
+    .notification-icon.text-success {
+        background-color: rgba(25, 135, 84, 0.1);
+    }
+
+    .notification-icon.text-warning {
+        background-color: rgba(255, 193, 7, 0.15);
+    }
+
+    .notification-icon.text-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+
+    .notification-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.25rem;
+        gap: 0.5rem;
+    }
+
+    .notification-type-badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.15rem 0.5rem;
+        border-radius: 3px;
+        background-color: rgba(108, 117, 125, 0.1);
+        color: var(--staff-text-muted);
+    }
+
+    .notification-time {
+        font-size: 0.75rem;
+        color: var(--staff-text-muted);
+        white-space: nowrap;
+    }
+
+    .notification-title {
+        font-weight: 500;
+        color: var(--staff-text);
+        margin-bottom: 0.25rem;
+        line-height: 1.4;
+    }
+
+    .notification-link {
+        color: var(--staff-text);
+        text-decoration: none;
+    }
+
+    .notification-link:hover {
+        color: var(--staff-primary);
+        text-decoration: underline;
+    }
+
+    .notification-message {
+        line-height: 1.4;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .notification-ticket a {
+        color: var(--staff-primary);
+    }
+
+    .notification-ticket a:hover {
+        text-decoration: underline;
+    }
+
+    .notification-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding-left: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    .notification-actions form {
+        margin: 0;
+    }
+
+    .notification-actions .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .unread-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: var(--staff-primary);
+        flex-shrink: 0;
+    }
+
+    /* Filter form adjustments */
+    .form-label {
+        font-weight: 500;
+    }
+
+    /* Empty state icon */
+    .bi-bell-slash {
+        color: var(--staff-text-muted);
+    }
+
+    /* Animation for new notification banner */
+    @@keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-20px);
+        }
+    }
+</style>
+}
+

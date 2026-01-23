@@ -72,6 +72,9 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     public DbSet<Webhook> Webhooks => Set<Webhook>();
     public DbSet<WebhookLog> WebhookLogs => Set<WebhookLog>();
 
+    // Notification entities
+    public DbSet<Notification> Notifications => Set<Notification>();
+
     public DbContext DbContext => this;
 
     protected override void OnModelCreating(ModelBuilder builder)

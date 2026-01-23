@@ -7,6 +7,7 @@ Auto-generated from all feature plans. Last updated: 2025-12-13
 - PostgreSQL via EF Core (existing `TicketView` entity with JSON columns) (003-advanced-views)
 - C# 12 / .NET 8 + ASP.NET Core Razor Pages, MediatR (CQRS), FluentValidation, Entity Framework Core (004-sla-extension-controls)
 - PostgreSQL with EF Core migrations (004-sla-extension-controls)
+- C# 12 / .NET 8 + ASP.NET Core Razor Pages, MediatR (CQRS), FluentValidation, Entity Framework Core, SignalR (005-staff-notifications)
 
 - C# / .NET 8 + ASP.NET Core, Entity Framework Core, Mediator, FluentValidation, CsvHelper (new) (002-ticket-enhancements)
 
@@ -26,10 +27,10 @@ tests/
 C# / .NET 8: Follow standard conventions
 
 ## Recent Changes
+- 005-staff-notifications: Added C# 12 / .NET 8 + ASP.NET Core Razor Pages, MediatR (CQRS), FluentValidation, Entity Framework Core, SignalR
 - 004-sla-extension-controls: Added C# 12 / .NET 8 + ASP.NET Core Razor Pages, MediatR (CQRS), FluentValidation, Entity Framework Core
 - 003-advanced-views: Added C# 12 / .NET 8.0 + ASP.NET Core Razor Pages, Entity Framework Core, MediatR, FluentValidation
 
-- 002-ticket-enhancements: Added C# / .NET 8 + ASP.NET Core, Entity Framework Core, Mediator, FluentValidation, CsvHelper (new)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

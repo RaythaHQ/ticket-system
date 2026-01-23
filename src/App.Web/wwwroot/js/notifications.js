@@ -117,6 +117,9 @@
             // Handle incoming notifications
             connection.on('ReceiveNotification', handleNotification);
 
+            // Handle unread count updates for notification badge
+            connection.on('ReceiveUnreadCountUpdate', handleUnreadCountUpdate);
+
             // Handle presence updates
             connection.on('TicketViewersChanged', handleViewersChanged);
 
@@ -164,6 +167,76 @@
         if (notification.playSound) {
             notificationSound.play();
         }
+    }
+
+    /**
+     * Handle unread notification count update for sidebar badge.
+     */
+    function handleUnreadCountUpdate(data) {
+        const badge = document.getElementById('notification-badge');
+        if (!badge) return;
+
+        const count = data.count || 0;
+        const display = data.display || count.toString();
+
+        if (count > 0) {
+            badge.textContent = display;
+            badge.style.display = 'inline-flex';
+        } else {
+            badge.style.display = 'none';
+        }
+
+        // Show refresh banner if on notifications page
+        if (window.location.pathname.includes('/staff/notifications')) {
+            showRefreshBanner();
+        }
+    }
+
+    /**
+     * Show a banner indicating new notifications are available.
+     */
+    function showRefreshBanner() {
+        // Don't show if already visible
+        if (document.getElementById('new-notifications-banner')) return;
+
+        const banner = document.createElement('div');
+        banner.id = 'new-notifications-banner';
+        banner.style.cssText = `
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--staff-primary, #009DDC) 0%, #0077a8 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0, 157, 220, 0.4);
+            cursor: pointer;
+            z-index: 1050;
+            font-weight: 500;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: slideDown 0.3s ease;
+        `;
+        banner.innerHTML = `
+            <i class="bi bi-arrow-clockwise"></i>
+            New notifications available - click to refresh
+        `;
+        banner.addEventListener('click', () => {
+            window.location.reload();
+        });
+
+        document.body.appendChild(banner);
+
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+            if (banner.parentNode) {
+                banner.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => banner.remove(), 300);
+            }
+        }, 10000);
     }
 
     /**
