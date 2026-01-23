@@ -4,5 +4,5 @@ namespace App.Web.Services;
 
 public class CurrentVersion : ICurrentVersion
 {
-    public string Version => "1.0.0";
+    public string Version => "1.0.1";
 }
