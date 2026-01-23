@@ -65,7 +65,7 @@ public class GetOrganizationReport
                 openStatusNames.Contains(t.Status)
             );
             var currentUnassignedTickets = allCurrentTickets.Count(t =>
-                t.AssigneeId == null && openStatusNames.Contains(t.Status)
+                t.AssigneeId == null && t.OwningTeamId == null && openStatusNames.Contains(t.Status)
             );
 
             var totalSlaBreaches = ticketsInPeriod.Count(t =>
