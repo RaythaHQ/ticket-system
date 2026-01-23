@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Mvc;
 using App.Web.Areas.Public.Pages.Shared;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Public.Pages.Login;
 
@@ -64,7 +64,10 @@ public class LoginWithMagicLinkComplete : BasePublicLoginPageModel
         else
         {
             SetErrorMessage(response.Error);
-            return RedirectToPage(RouteNames.Login.LoginWithMagicLink, new { returnUrl = ReturnUrl });
+            return RedirectToPage(
+                RouteNames.Login.LoginWithMagicLink,
+                new { returnUrl = ReturnUrl }
+            );
         }
     }
 }
