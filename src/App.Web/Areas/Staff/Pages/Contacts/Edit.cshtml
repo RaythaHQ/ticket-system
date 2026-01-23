@@ -6,10 +6,17 @@
     ViewData["Title"] = $"Edit Contact #{Model.Form.Id}";
     ViewData["ActiveMenu"] = "Contacts";
 
+    var backToListUrl = Model.BackToListUrl;
+    var routeValues = new Microsoft.AspNetCore.Routing.RouteValueDictionary { { "id", Model.Form.Id } };
+    if (!string.IsNullOrEmpty(backToListUrl))
+    {
+        routeValues["backToListUrl"] = backToListUrl;
+    }
+
     var back = new BackLinkOptions
     {
         Page = RouteNames.Contacts.Details,
-        RouteValues = new Microsoft.AspNetCore.Routing.RouteValueDictionary { { "id", Model.Form.Id } },
+        RouteValues = routeValues,
         Text = "Back to Details"
     };
 }
@@ -23,11 +30,13 @@
                 @(await Html.PartialAsync("_Partials/BackToList", back))
 
                 <form method="post" class="mt-4">
+                    <input type="hidden" asp-for="BackToListUrl" />
                     <div class="mb-4">
                         <label asp-for="Form.Id" class="form-label">Contact ID</label>
                         <div class="input-group">
                             <input asp-for="Form.Id" type="number" class="form-control" readonly />
                             <a asp-page="@RouteNames.Contacts.ChangeId" asp-route-id="@Model.Form.Id"
+                                asp-route-backToListUrl="@Model.BackToListUrl"
                                 class="btn btn-outline-warning" title="Change this contact's ID number">
                                 <i class="bi bi-arrow-repeat me-1"></i>Change ID
                             </a>
@@ -81,6 +90,7 @@
                             <i class="bi bi-check-lg me-2"></i>Save Changes
                         </button>
                         <a asp-page="@RouteNames.Contacts.Details" asp-route-id="@Model.Form.Id"
+                            asp-route-backToListUrl="@Model.BackToListUrl"
                             class="btn btn-outline-secondary">Cancel</a>
                     </div>
                 </form>

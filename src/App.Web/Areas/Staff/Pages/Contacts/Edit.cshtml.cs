@@ -18,7 +18,13 @@ public class Edit : BaseStaffPageModel
     [BindProperty]
     public EditContactViewModel Form { get; set; } = new();
 
-    public async Task<IActionResult> OnGet(long id, CancellationToken cancellationToken)
+    /// <summary>
+    /// Back to list URL - preserved across navigation and form submissions.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? BackToListUrl { get; set; }
+
+    public async Task<IActionResult> OnGet(long id, string? backToListUrl = null, CancellationToken cancellationToken = default)
     {
         ViewData["Title"] = "Edit Contact";
         ViewData["ActiveMenu"] = "Contacts";
@@ -36,6 +42,10 @@ public class Edit : BaseStaffPageModel
             Address = Contact.Address,
             OrganizationAccount = Contact.OrganizationAccount
         };
+
+        // Store back URL (use parameter if provided, otherwise use property)
+        BackToListUrl = backToListUrl ?? BackToListUrl;
+        ViewData["BackToListUrl"] = BackToListUrl;
 
         return Page();
     }
@@ -66,7 +76,7 @@ public class Edit : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage("Contact updated successfully.");
-            return RedirectToPage(RouteNames.Contacts.Details, new { id = Form.Id });
+            return RedirectToPage(RouteNames.Contacts.Details, new { id = Form.Id, backToListUrl = BackToListUrl });
         }
 
         SetErrorMessage(response.GetErrors());

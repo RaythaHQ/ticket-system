@@ -25,6 +25,12 @@ public class Details : BaseStaffPageModel
     [BindProperty]
     public AddCommentViewModel CommentForm { get; set; } = new();
 
+    /// <summary>
+    /// Back to list URL - preserved across navigation and form submissions.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? BackToListUrl { get; set; }
+
     public async Task<IActionResult> OnGet(
         long id,
         string? backToListUrl = null,
@@ -58,20 +64,19 @@ public class Details : BaseStaffPageModel
         );
         ChangeLog = changeLogResponse.Result;
 
-        // Store back URL for the view
-        ViewData["BackToListUrl"] = backToListUrl;
+        // Store back URL (use parameter if provided, otherwise use property)
+        BackToListUrl = backToListUrl ?? BackToListUrl;
+        ViewData["BackToListUrl"] = BackToListUrl;
 
         return Page();
     }
 
     public async Task<IActionResult> OnPostAddComment(long id, CancellationToken cancellationToken)
     {
-        var backToListUrl = Request.Query["backToListUrl"].ToString();
-
         if (string.IsNullOrWhiteSpace(CommentForm.Body))
         {
             ModelState.AddModelError("CommentForm.Body", "Comment cannot be empty.");
-            return await OnGet(id, backToListUrl, cancellationToken);
+            return await OnGet(id, BackToListUrl, cancellationToken);
         }
 
         var command = new AddContactComment.Command { ContactId = id, Body = CommentForm.Body };
@@ -87,12 +92,7 @@ public class Details : BaseStaffPageModel
             SetErrorMessage(response.GetErrors());
         }
 
-        if (!string.IsNullOrEmpty(backToListUrl))
-        {
-            return RedirectToPage(RouteNames.Contacts.Details, new { id, backToListUrl });
-        }
-
-        return RedirectToPage(RouteNames.Contacts.Details, new { id });
+        return RedirectToPage(RouteNames.Contacts.Details, new { id, backToListUrl = BackToListUrl });
     }
 
     public record AddCommentViewModel

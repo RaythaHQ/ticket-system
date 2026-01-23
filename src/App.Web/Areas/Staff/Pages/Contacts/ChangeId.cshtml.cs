@@ -20,7 +20,13 @@ public class ChangeId : BaseStaffPageModel
     [BindProperty]
     public ChangeIdViewModel Form { get; set; } = new();
 
-    public async Task<IActionResult> OnGet(long id, CancellationToken cancellationToken)
+    /// <summary>
+    /// Back to list URL - preserved across navigation and form submissions.
+    /// </summary>
+    [BindProperty(SupportsGet = true)]
+    public string? BackToListUrl { get; set; }
+
+    public async Task<IActionResult> OnGet(long id, string? backToListUrl = null, CancellationToken cancellationToken = default)
     {
         ViewData["Title"] = $"Change Contact ID #{id}";
         ViewData["ActiveMenu"] = "Contacts";
@@ -32,6 +38,10 @@ public class ChangeId : BaseStaffPageModel
         {
             CurrentId = Contact.Id
         };
+
+        // Store back URL (use parameter if provided, otherwise use property)
+        BackToListUrl = backToListUrl ?? BackToListUrl;
+        ViewData["BackToListUrl"] = BackToListUrl;
 
         return Page();
     }
@@ -60,7 +70,7 @@ public class ChangeId : BaseStaffPageModel
         if (response.Success)
         {
             SetSuccessMessage($"Contact ID successfully changed from #{Form.CurrentId} to #{Form.NewId}. All associated tickets and records have been updated.");
-            return RedirectToPage(RouteNames.Contacts.Details, new { id = Form.NewId });
+            return RedirectToPage(RouteNames.Contacts.Details, new { id = Form.NewId, backToListUrl = BackToListUrl });
         }
 
         // Reload contact for display
