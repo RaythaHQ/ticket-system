@@ -131,6 +131,23 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
             var subject = _renderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
             var content = _renderEngineService.RenderAsHtml(renderTemplate.Content, wrappedModel);
 
+            // === ALWAYS RECORD TO MY NOTIFICATIONS (database) for assignee ===
+            // InAppNotificationService handles the SignalR popup preference check internally
+            if (ticket.AssigneeId.HasValue && (breachBehavior?.NotifyAssignee ?? true))
+            {
+                await _inAppNotificationService.SendToUserAsync(
+                    ticket.AssigneeId.Value,
+                    NotificationType.SlaBreach,
+                    $"SLA Breached: #{ticket.Id}",
+                    $"{ticket.Title} - SLA has been breached",
+                    _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                    ticket.Id,
+                    cancellationToken
+                );
+            }
+
+            // === SEND EMAIL NOTIFICATIONS (preference-based) ===
+
             // Send to assignee if enabled
             if (
                 ticket.AssigneeId.HasValue
@@ -157,14 +174,14 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                     await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
                     _logger.LogInformation(
-                        "Sent SLA breach notification for ticket {TicketId} to assignee {Email}",
+                        "Sent SLA breach email notification for ticket {TicketId} to assignee {Email}",
                         ticket.Id,
                         assignee.EmailAddress
                     );
                 }
             }
 
-            // Send to additional notification emails
+            // Send to additional notification emails (these are external addresses, always send)
             if (!string.IsNullOrWhiteSpace(breachBehavior?.AdditionalNotificationEmails))
             {
                 var additionalEmails = breachBehavior
@@ -185,32 +202,9 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                     await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
                     _logger.LogInformation(
-                        "Sent SLA breach notification for ticket {TicketId} to additional recipient {Email}",
+                        "Sent SLA breach email notification for ticket {TicketId} to additional recipient {Email}",
                         ticket.Id,
                         email
-                    );
-                }
-            }
-
-            // Send in-app notification to assignee
-            if (ticket.AssigneeId.HasValue && (breachBehavior?.NotifyAssignee ?? true))
-            {
-                var inAppEnabled = await _notificationPreferenceService.IsInAppEnabledAsync(
-                    ticket.AssigneeId.Value,
-                    NotificationEventType.SLA_BREACHED,
-                    cancellationToken
-                );
-
-                if (inAppEnabled)
-                {
-                    await _inAppNotificationService.SendToUserAsync(
-                        ticket.AssigneeId.Value,
-                        NotificationType.SlaBreach,
-                        $"SLA Breached: #{ticket.Id}",
-                        $"{ticket.Title} - SLA has been breached",
-                        _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
-                        ticket.Id,
-                        cancellationToken
                     );
                 }
             }

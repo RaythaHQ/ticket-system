@@ -114,7 +114,19 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         if (assignedByUserId.HasValue && assigneeId == assignedByUserId.Value)
             return;
 
-        // Check notification preferences
+        // ALWAYS record to My Notifications (database) regardless of delivery preferences
+        // The InAppNotificationService handles the preference check for the SignalR popup
+        await _inAppNotificationService.SendToUserAsync(
+            assigneeId,
+            NotificationType.TicketAssigned,
+            $"Ticket #{ticket.Id} assigned to you",
+            $"{ticket.Title}",
+            _relativeUrlBuilderService.StaffTicketUrl(ticket.Id),
+            ticket.Id,
+            cancellationToken
+        );
+
+        // Check email notification preferences
         var emailEnabled = await _notificationPreferenceService.IsEmailEnabledAsync(
             assigneeId,
             NotificationEventType.TICKET_ASSIGNED,
@@ -177,26 +189,6 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
             ticket.Id,
             assignee.EmailAddress
         );
-
-        // Send in-app notification
-        var inAppEnabled = await _notificationPreferenceService.IsInAppEnabledAsync(
-            assigneeId,
-            NotificationEventType.TICKET_ASSIGNED,
-            cancellationToken
-        );
-
-        if (inAppEnabled)
-        {
-            await _inAppNotificationService.SendToUserAsync(
-                assigneeId,
-                NotificationType.TicketAssigned,
-                $"Ticket #{ticket.Id} assigned to you",
-                $"{ticket.Title}",
-                _relativeUrlBuilderService.StaffTicketUrl(ticket.Id),
-                ticket.Id,
-                cancellationToken
-            );
-        }
     }
 
     private async Task SendTeamAssignmentNotificationAsync(
@@ -213,7 +205,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         if (team == null)
             return;
 
-        // Get all team members
+        // Get all team members (excluding the person who made the assignment)
         var teamMemberIds = await _db
             .TeamMemberships.AsNoTracking()
             .Where(m => m.TeamId == teamId)
@@ -223,10 +215,30 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         if (!teamMemberIds.Any())
             return;
 
-        // Filter by notification preferences
+        // Filter out the person who made the assignment
+        var recipientIds = teamMemberIds
+            .Where(id => !assignedByUserId.HasValue || id != assignedByUserId.Value)
+            .ToList();
+
+        if (!recipientIds.Any())
+            return;
+
+        // ALWAYS record to My Notifications (database) for all team members
+        // The InAppNotificationService handles the preference check for the SignalR popup
+        await _inAppNotificationService.SendToUsersAsync(
+            recipientIds,
+            NotificationType.TicketAssigned,
+            $"Ticket #{ticket.Id} assigned to {team.Name}",
+            $"{ticket.Title}",
+            _relativeUrlBuilderService.StaffTicketUrl(ticket.Id),
+            ticket.Id,
+            cancellationToken
+        );
+
+        // Now handle email notifications (preference-based)
         var usersWithEmailEnabled =
             await _notificationPreferenceService.FilterUsersWithEmailEnabledAsync(
-                teamMemberIds,
+                recipientIds,
                 NotificationEventType.TICKET_ASSIGNED_TEAM,
                 cancellationToken
             );
@@ -275,10 +287,6 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
 
         foreach (var member in teamMembers)
         {
-            // Don't notify the person who made the assignment
-            if (assignedByUserId.HasValue && member.Id == assignedByUserId.Value)
-                continue;
-
             var emailMessage = new EmailMessage
             {
                 Content = content,
@@ -292,29 +300,6 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
                 "Sent team assignment notification for ticket {TicketId} to team member {Email}",
                 ticket.Id,
                 member.EmailAddress
-            );
-        }
-
-        // Send in-app notifications to team members
-        var usersWithInAppEnabled =
-            await _notificationPreferenceService.FilterUsersWithInAppEnabledAsync(
-                teamMemberIds.Where(id =>
-                    !assignedByUserId.HasValue || id != assignedByUserId.Value
-                ),
-                NotificationEventType.TICKET_ASSIGNED_TEAM,
-                cancellationToken
-            );
-
-        if (usersWithInAppEnabled.Any())
-        {
-            await _inAppNotificationService.SendToUsersAsync(
-                usersWithInAppEnabled,
-                NotificationType.TicketAssigned,
-                $"Ticket #{ticket.Id} assigned to {team.Name}",
-                $"{ticket.Title}",
-                _relativeUrlBuilderService.StaffTicketUrl(ticket.Id),
-                ticket.Id,
-                cancellationToken
             );
         }
     }

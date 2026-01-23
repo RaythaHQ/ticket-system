@@ -96,9 +96,30 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
 
             var forcedRecipients = new HashSet<Guid>(followerIds);
 
-            // === FILTER AND DEDUPLICATE ===
+            // === COMBINE ALL RECIPIENTS ===
+            // All recipients (both forced and standard) should have notifications recorded
+            var allRecipients = new HashSet<Guid>(forcedRecipients);
+            foreach (var recipientId in standardRecipients)
+                allRecipients.Add(recipientId);
 
-            // Filter standard recipients by their notification preferences
+            if (!allRecipients.Any())
+                return;
+
+            // === ALWAYS RECORD TO MY NOTIFICATIONS (database) ===
+            // InAppNotificationService handles the SignalR popup preference check internally
+            await _inAppNotificationService.SendToUsersAsync(
+                allRecipients,
+                NotificationType.TicketReopened,
+                $"Ticket #{ticket.Id} reopened",
+                ticket.Title,
+                _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                ticket.Id,
+                cancellationToken
+            );
+
+            // === SEND EMAIL NOTIFICATIONS (preference-based) ===
+
+            // Filter standard recipients by their email preferences
             var standardRecipientsFiltered = standardRecipients.Any()
                 ? await _notificationPreferenceService.FilterUsersWithEmailEnabledAsync(
                     standardRecipients,
@@ -107,15 +128,13 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
                 )
                 : new List<Guid>();
 
-            // Combine: forced recipients always get notified, standard only if preferences allow
-            var finalRecipients = new HashSet<Guid>(forcedRecipients);
+            // Combine: forced recipients always get email, standard only if preferences allow
+            var emailRecipients = new HashSet<Guid>(forcedRecipients);
             foreach (var recipientId in standardRecipientsFiltered)
-                finalRecipients.Add(recipientId);
+                emailRecipients.Add(recipientId);
 
-            if (!finalRecipients.Any())
+            if (!emailRecipients.Any())
                 return;
-
-            // === GET EMAIL TEMPLATE ===
 
             var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
                 p.DeveloperName == BuiltInEmailTemplate.TicketReopenedEmail.DeveloperName
@@ -124,11 +143,9 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
             if (renderTemplate == null)
                 return;
 
-            // === GET RECIPIENT DETAILS AND SEND EMAILS ===
-
             var recipients = await _db
                 .Users.AsNoTracking()
-                .Where(u => finalRecipients.Contains(u.Id) && !string.IsNullOrEmpty(u.EmailAddress))
+                .Where(u => emailRecipients.Contains(u.Id) && !string.IsNullOrEmpty(u.EmailAddress))
                 .ToListAsync(cancellationToken);
 
             foreach (var recipient in recipients)
@@ -170,38 +187,9 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
                 await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
                 _logger.LogInformation(
-                    "Sent ticket reopened notification for ticket {TicketId} to {Email}",
+                    "Sent ticket reopened email notification for ticket {TicketId} to {Email}",
                     ticket.Id,
                     recipient.EmailAddress
-                );
-            }
-
-            // === SEND IN-APP NOTIFICATIONS ===
-
-            // For standard recipients, check their in-app preferences
-            var standardRecipientsInApp = standardRecipients.Any()
-                ? await _notificationPreferenceService.FilterUsersWithInAppEnabledAsync(
-                    standardRecipients,
-                    NotificationEventType.TICKET_REOPENED,
-                    cancellationToken
-                )
-                : new List<Guid>();
-
-            // Combine: forced recipients always get in-app, standard only if preferences allow
-            var finalInAppRecipients = new HashSet<Guid>(forcedRecipients);
-            foreach (var recipientId in standardRecipientsInApp)
-                finalInAppRecipients.Add(recipientId);
-
-            if (finalInAppRecipients.Any())
-            {
-                await _inAppNotificationService.SendToUsersAsync(
-                    finalInAppRecipients,
-                    NotificationType.TicketReopened,
-                    $"Ticket #{ticket.Id} reopened",
-                    ticket.Title,
-                    _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
-                    ticket.Id,
-                    cancellationToken
                 );
             }
         }

@@ -116,24 +116,13 @@ public class TicketCommentAddedEventHandler_SendNotification
                     forcedRecipients.Add(memberId);
             }
 
-            // === FILTER AND DEDUPLICATE ===
+            // === COMBINE ALL RECIPIENTS ===
+            // All recipients (both forced and standard) should have notifications recorded
+            var allRecipients = new HashSet<Guid>(forcedRecipients);
+            foreach (var id in standardRecipients)
+                allRecipients.Add(id);
 
-            // Filter standard recipients by their notification preferences
-            var standardRecipientsFiltered = standardRecipients.Any()
-                ? await _notificationPreferenceService.FilterUsersWithEmailEnabledAsync(
-                    standardRecipients,
-                    NotificationEventType.COMMENT_ADDED,
-                    cancellationToken
-                )
-                : new List<Guid>();
-
-            // Combine: forced recipients always get notified, standard only if preferences allow
-            // If a user is in both sets, they still only get ONE email (HashSet deduplication)
-            var finalRecipients = new HashSet<Guid>(forcedRecipients);
-            foreach (var id in standardRecipientsFiltered)
-                finalRecipients.Add(id);
-
-            if (!finalRecipients.Any())
+            if (!allRecipients.Any())
             {
                 _logger.LogDebug(
                     "No recipients for comment notification on ticket {TicketId}",
@@ -142,7 +131,51 @@ public class TicketCommentAddedEventHandler_SendNotification
                 return;
             }
 
-            // === SEND NOTIFICATIONS ===
+            var commenter = await _db
+                .Users.AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == commenterId, cancellationToken);
+
+            var truncatedBody =
+                comment.Body.Length > 100
+                    ? comment.Body.Substring(0, 100) + "..."
+                    : comment.Body;
+
+            // === ALWAYS RECORD TO MY NOTIFICATIONS (database) ===
+            // InAppNotificationService handles the SignalR popup preference check internally
+            await _inAppNotificationService.SendToUsersAsync(
+                allRecipients,
+                NotificationType.CommentAdded,
+                $"New comment on #{ticket.Id}",
+                $"{commenter?.FullName ?? "Someone"}: {truncatedBody}",
+                _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                ticket.Id,
+                cancellationToken
+            );
+
+            _logger.LogInformation(
+                "Recorded comment notification for ticket {TicketId} to {Count} users",
+                ticket.Id,
+                allRecipients.Count
+            );
+
+            // === SEND EMAIL NOTIFICATIONS (preference-based) ===
+
+            // Filter standard recipients by their email preferences
+            var standardRecipientsFiltered = standardRecipients.Any()
+                ? await _notificationPreferenceService.FilterUsersWithEmailEnabledAsync(
+                    standardRecipients,
+                    NotificationEventType.COMMENT_ADDED,
+                    cancellationToken
+                )
+                : new List<Guid>();
+
+            // Combine: forced recipients always get email, standard only if preferences allow
+            var emailRecipients = new HashSet<Guid>(forcedRecipients);
+            foreach (var id in standardRecipientsFiltered)
+                emailRecipients.Add(id);
+
+            if (!emailRecipients.Any())
+                return;
 
             var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
                 p.DeveloperName == BuiltInEmailTemplate.TicketCommentAddedEmail.DeveloperName
@@ -157,16 +190,12 @@ public class TicketCommentAddedEventHandler_SendNotification
                 return;
             }
 
-            var commenter = await _db
-                .Users.AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == commenterId, cancellationToken);
-
             var users = await _db
                 .Users.AsNoTracking()
-                .Where(u => finalRecipients.Contains(u.Id) && u.IsActive)
+                .Where(u => emailRecipients.Contains(u.Id) && u.IsActive && !string.IsNullOrEmpty(u.EmailAddress))
                 .ToListAsync(cancellationToken);
 
-            foreach (var user in users.Where(u => !string.IsNullOrEmpty(u.EmailAddress)))
+            foreach (var user in users)
             {
                 var renderModel = new TicketCommentAdded_RenderModel
                 {
@@ -205,49 +234,9 @@ public class TicketCommentAddedEventHandler_SendNotification
                 await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
                 _logger.LogInformation(
-                    "Sent comment notification for ticket {TicketId} to {Email}",
+                    "Sent comment email notification for ticket {TicketId} to {Email}",
                     ticket.Id,
                     user.EmailAddress
-                );
-            }
-
-            // === SEND IN-APP NOTIFICATIONS ===
-
-            // Filter by in-app preferences for standard recipients
-            var inAppStandardRecipients = standardRecipients.Any()
-                ? await _notificationPreferenceService.FilterUsersWithInAppEnabledAsync(
-                    standardRecipients,
-                    NotificationEventType.COMMENT_ADDED,
-                    cancellationToken
-                )
-                : new List<Guid>();
-
-            // Combine forced and filtered standard recipients
-            var inAppRecipients = new HashSet<Guid>(forcedRecipients);
-            foreach (var id in inAppStandardRecipients)
-                inAppRecipients.Add(id);
-
-            if (inAppRecipients.Any())
-            {
-                var truncatedBody =
-                    comment.Body.Length > 100
-                        ? comment.Body.Substring(0, 100) + "..."
-                        : comment.Body;
-
-                await _inAppNotificationService.SendToUsersAsync(
-                    inAppRecipients,
-                    NotificationType.CommentAdded,
-                    $"New comment on #{ticket.Id}",
-                    $"{commenter?.FullName ?? "Someone"}: {truncatedBody}",
-                    _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
-                    ticket.Id,
-                    cancellationToken
-                );
-
-                _logger.LogInformation(
-                    "Sent in-app comment notification for ticket {TicketId} to {Count} users",
-                    ticket.Id,
-                    inAppRecipients.Count
                 );
             }
         }

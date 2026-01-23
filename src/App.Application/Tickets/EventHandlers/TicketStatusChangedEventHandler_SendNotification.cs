@@ -98,9 +98,30 @@ public class TicketStatusChangedEventHandler_SendNotification
 
             var forcedRecipients = new HashSet<Guid>(followerIds);
 
-            // === FILTER AND DEDUPLICATE ===
+            // === COMBINE ALL RECIPIENTS ===
+            // All recipients (both forced and standard) should have notifications recorded
+            var allRecipients = new HashSet<Guid>(forcedRecipients);
+            foreach (var recipientId in standardRecipients)
+                allRecipients.Add(recipientId);
 
-            // Filter standard recipients by their notification preferences
+            if (!allRecipients.Any())
+                return;
+
+            // === ALWAYS RECORD TO MY NOTIFICATIONS (database) ===
+            // InAppNotificationService handles the SignalR popup preference check internally
+            await _inAppNotificationService.SendToUsersAsync(
+                allRecipients,
+                NotificationType.StatusChanged,
+                $"Status changed: #{ticket.Id}",
+                $"{notification.OldStatus} → {notification.NewStatus}",
+                _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                ticket.Id,
+                cancellationToken
+            );
+
+            // === SEND EMAIL NOTIFICATIONS (preference-based) ===
+
+            // Filter standard recipients by their email preferences
             var standardRecipientsFiltered = standardRecipients.Any()
                 ? await _notificationPreferenceService.FilterUsersWithEmailEnabledAsync(
                     standardRecipients,
@@ -109,15 +130,13 @@ public class TicketStatusChangedEventHandler_SendNotification
                 )
                 : new List<Guid>();
 
-            // Combine: forced recipients always get notified, standard only if preferences allow
-            var finalRecipients = new HashSet<Guid>(forcedRecipients);
+            // Combine: forced recipients always get email, standard only if preferences allow
+            var emailRecipients = new HashSet<Guid>(forcedRecipients);
             foreach (var recipientId in standardRecipientsFiltered)
-                finalRecipients.Add(recipientId);
+                emailRecipients.Add(recipientId);
 
-            if (!finalRecipients.Any())
+            if (!emailRecipients.Any())
                 return;
-
-            // === GET EMAIL TEMPLATE ===
 
             var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
                 p.DeveloperName == BuiltInEmailTemplate.TicketStatusChangedEmail.DeveloperName
@@ -126,11 +145,9 @@ public class TicketStatusChangedEventHandler_SendNotification
             if (renderTemplate == null)
                 return;
 
-            // === GET RECIPIENT DETAILS AND SEND EMAILS ===
-
             var recipients = await _db
                 .Users.AsNoTracking()
-                .Where(u => finalRecipients.Contains(u.Id) && !string.IsNullOrEmpty(u.EmailAddress))
+                .Where(u => emailRecipients.Contains(u.Id) && !string.IsNullOrEmpty(u.EmailAddress))
                 .ToListAsync(cancellationToken);
 
             foreach (var recipient in recipients)
@@ -173,38 +190,9 @@ public class TicketStatusChangedEventHandler_SendNotification
                 await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
                 _logger.LogInformation(
-                    "Sent status change notification for ticket {TicketId} to {Email}",
+                    "Sent status change email notification for ticket {TicketId} to {Email}",
                     ticket.Id,
                     recipient.EmailAddress
-                );
-            }
-
-            // === SEND IN-APP NOTIFICATIONS ===
-
-            // For standard recipients, check their in-app preferences
-            var standardRecipientsInApp = standardRecipients.Any()
-                ? await _notificationPreferenceService.FilterUsersWithInAppEnabledAsync(
-                    standardRecipients,
-                    NotificationEventType.STATUS_CHANGED,
-                    cancellationToken
-                )
-                : new List<Guid>();
-
-            // Combine: forced recipients always get in-app, standard only if preferences allow
-            var finalInAppRecipients = new HashSet<Guid>(forcedRecipients);
-            foreach (var recipientId in standardRecipientsInApp)
-                finalInAppRecipients.Add(recipientId);
-
-            if (finalInAppRecipients.Any())
-            {
-                await _inAppNotificationService.SendToUsersAsync(
-                    finalInAppRecipients,
-                    NotificationType.StatusChanged,
-                    $"Status changed: #{ticket.Id}",
-                    $"{notification.OldStatus} → {notification.NewStatus}",
-                    _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
-                    ticket.Id,
-                    cancellationToken
                 );
             }
         }

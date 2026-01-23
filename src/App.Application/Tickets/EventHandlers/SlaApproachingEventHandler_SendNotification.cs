@@ -71,7 +71,23 @@ public class SlaApproachingEventHandler_SendNotification
 
         try
         {
-            // Check notification preferences
+            var timeRemaining = ticket.SlaDueAt.HasValue
+                ? FormatTimeRemaining(ticket.SlaDueAt.Value - DateTime.UtcNow)
+                : "Unknown";
+
+            // === ALWAYS RECORD TO MY NOTIFICATIONS (database) ===
+            // InAppNotificationService handles the SignalR popup preference check internally
+            await _inAppNotificationService.SendToUserAsync(
+                ticket.AssigneeId.Value,
+                NotificationType.SlaApproaching,
+                $"SLA Warning: #{ticket.Id}",
+                $"{ticket.Title} - {timeRemaining} remaining",
+                _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                ticket.Id,
+                cancellationToken
+            );
+
+            // === SEND EMAIL NOTIFICATION (preference-based) ===
             var emailEnabled = await _notificationPreferenceService.IsEmailEnabledAsync(
                 ticket.AssigneeId.Value,
                 NotificationEventType.SLA_APPROACHING,
@@ -100,10 +116,6 @@ public class SlaApproachingEventHandler_SendNotification
                     .SlaRules.AsNoTracking()
                     .FirstOrDefaultAsync(r => r.Id == ticket.SlaRuleId.Value, cancellationToken)
                 : null;
-
-            var timeRemaining = ticket.SlaDueAt.HasValue
-                ? FormatTimeRemaining(ticket.SlaDueAt.Value - DateTime.UtcNow)
-                : "Unknown";
 
             var renderModel = new SlaApproaching_RenderModel
             {
@@ -140,30 +152,10 @@ public class SlaApproachingEventHandler_SendNotification
             await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
 
             _logger.LogInformation(
-                "Sent SLA approaching notification for ticket {TicketId} to {Email}",
+                "Sent SLA approaching email notification for ticket {TicketId} to {Email}",
                 ticket.Id,
                 assignee.EmailAddress
             );
-
-            // Send in-app notification
-            var inAppEnabled = await _notificationPreferenceService.IsInAppEnabledAsync(
-                ticket.AssigneeId.Value,
-                NotificationEventType.SLA_APPROACHING,
-                cancellationToken
-            );
-
-            if (inAppEnabled)
-            {
-                await _inAppNotificationService.SendToUserAsync(
-                    ticket.AssigneeId.Value,
-                    NotificationType.SlaApproaching,
-                    $"SLA Warning: #{ticket.Id}",
-                    $"{ticket.Title} - {timeRemaining} remaining",
-                    _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
-                    ticket.Id,
-                    cancellationToken
-                );
-            }
         }
         catch (Exception ex)
         {
