@@ -69,7 +69,12 @@ public class Impersonate : BaseAdminPageModel
         
         var claims = new List<Claim>
         {
+            // Standard identity claims
             new Claim(ClaimTypes.NameIdentifier, impersonatedUser.Id.ToString()),
+            new Claim(ClaimTypes.GivenName, impersonatedUser.FirstName ?? string.Empty),
+            new Claim(ClaimTypes.Surname, impersonatedUser.LastName ?? string.Empty),
+            new Claim(ClaimTypes.Email, impersonatedUser.EmailAddress ?? string.Empty),
+            new Claim(RaythaClaimTypes.IsAdmin, impersonatedUser.IsAdmin.ToString()),
             new Claim(RaythaClaimTypes.LastModificationTime, impersonatedUser.LastModificationTime?.ToString() ?? DateTime.UtcNow.ToString()),
             // Impersonation-specific claims
             new Claim(RaythaClaimTypes.IsImpersonating, "true"),
@@ -78,6 +83,24 @@ public class Impersonate : BaseAdminPageModel
             new Claim(RaythaClaimTypes.OriginalUserFullName, result.OriginalUserFullName),
             new Claim(RaythaClaimTypes.ImpersonationStartedAt, result.ImpersonationStartedAt.ToString("O")),
         };
+
+        // Add role claims and collect system permissions
+        if (impersonatedUser.Roles != null)
+        {
+            foreach (var role in impersonatedUser.Roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role.DeveloperName));
+                
+                // Add system permissions from each role
+                if (role.SystemPermissions != null)
+                {
+                    foreach (var permission in role.SystemPermissions)
+                    {
+                        claims.Add(new Claim(RaythaClaimTypes.SystemPermissions, permission));
+                    }
+                }
+            }
+        }
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);

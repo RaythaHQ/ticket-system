@@ -24,6 +24,24 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
     {
         var userPrincipal = context.Principal;
 
+        // Preserve impersonation claims (otherwise they get wiped out when we rehydrate claims below)
+        var isImpersonating =
+            userPrincipal?.Claims.FirstOrDefault(p => p.Type == RaythaClaimTypes.IsImpersonating)?.Value
+            is "true";
+
+        var originalUserId = userPrincipal
+            ?.Claims.FirstOrDefault(p => p.Type == RaythaClaimTypes.OriginalUserId)
+            ?.Value;
+        var originalUserEmail = userPrincipal
+            ?.Claims.FirstOrDefault(p => p.Type == RaythaClaimTypes.OriginalUserEmail)
+            ?.Value;
+        var originalUserFullName = userPrincipal
+            ?.Claims.FirstOrDefault(p => p.Type == RaythaClaimTypes.OriginalUserFullName)
+            ?.Value;
+        var impersonationStartedAt = userPrincipal
+            ?.Claims.FirstOrDefault(p => p.Type == RaythaClaimTypes.ImpersonationStartedAt)
+            ?.Value;
+
         // Look for the LastChanged claim.
         var lastModifiedAsString = userPrincipal
             .Claims.FirstOrDefault(p => p.Type == "LastModificationTime")
@@ -62,6 +80,20 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
             new Claim(RaythaClaimTypes.SsoId, user.Result.SsoId.IfNullOrEmpty(string.Empty)),
             new Claim(RaythaClaimTypes.AuthenticationScheme, user.Result.AuthenticationScheme),
         };
+
+        // Re-add impersonation claims if this session is impersonating
+        if (isImpersonating)
+        {
+            claims.Add(new Claim(RaythaClaimTypes.IsImpersonating, "true"));
+            if (!string.IsNullOrWhiteSpace(originalUserId))
+                claims.Add(new Claim(RaythaClaimTypes.OriginalUserId, originalUserId));
+            if (!string.IsNullOrWhiteSpace(originalUserEmail))
+                claims.Add(new Claim(RaythaClaimTypes.OriginalUserEmail, originalUserEmail));
+            if (!string.IsNullOrWhiteSpace(originalUserFullName))
+                claims.Add(new Claim(RaythaClaimTypes.OriginalUserFullName, originalUserFullName));
+            if (!string.IsNullOrWhiteSpace(impersonationStartedAt))
+                claims.Add(new Claim(RaythaClaimTypes.ImpersonationStartedAt, impersonationStartedAt));
+        }
 
         var systemPermissions = new List<string>();
 
