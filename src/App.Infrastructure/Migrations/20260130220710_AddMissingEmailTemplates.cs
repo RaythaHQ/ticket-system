@@ -14,7 +14,7 @@ namespace App.Infrastructure.Migrations
             // This template was added with the snooze feature but only gets created during InitialSetup
             // Existing production environments need this migration to add it
             migrationBuilder.Sql(@"
-                INSERT INTO ""EmailTemplates"" (""Id"", ""DeveloperName"", ""Subject"", ""Content"", ""IsBuiltInTemplate"", ""Cc"", ""Bcc"")
+                INSERT INTO ""EmailTemplates"" (""Id"", ""DeveloperName"", ""Subject"", ""Content"", ""IsBuiltInTemplate"", ""Cc"", ""Bcc"", ""CreationTime"")
                 SELECT 
                     gen_random_uuid(),
                     'email_ticket_unsnoozed',
@@ -51,7 +51,8 @@ namespace App.Infrastructure.Migrations
 <p>Thank you,<br>{{ CurrentOrganization.OrganizationName }}</p>',
                     true,
                     NULL,
-                    NULL
+                    NULL,
+                    NOW() AT TIME ZONE 'UTC'
                 WHERE NOT EXISTS (
                     SELECT 1 FROM ""EmailTemplates"" WHERE ""DeveloperName"" = 'email_ticket_unsnoozed'
                 );
