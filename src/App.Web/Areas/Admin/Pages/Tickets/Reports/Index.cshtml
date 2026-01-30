@@ -15,14 +15,34 @@
     <!-- Date Range Filter -->
     <div class="card mb-4">
         <div class="card-body">
+            <!-- Quick Date Presets -->
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="text-muted me-2 align-self-center">Quick select:</span>
+                <a href="?preset=today"
+                   class="btn @(Model.ActivePreset == "today" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-calendar-day me-1"></i>Today
+                </a>
+                <a href="?preset=week"
+                   class="btn @(Model.ActivePreset == "week" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-calendar-week me-1"></i>This Week
+                </a>
+                <a href="?preset=month"
+                   class="btn @(Model.ActivePreset == "month" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-calendar-month me-1"></i>This Month
+                </a>
+            </div>
+
+            <hr class="my-3">
+
+            <!-- Custom Date Range -->
             <form method="get" class="row g-3 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label">Start Date</label>
+                    <label class="form-label text-muted small mb-1">Start Date</label>
                     <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")"
                         class="form-control" />
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">End Date</label>
+                    <label class="form-label text-muted small mb-1">End Date</label>
                     <input type="date" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")"
                         class="form-control" />
                 </div>
@@ -31,61 +51,100 @@
                         <i class="bi bi-funnel me-1"></i> Apply Filter
                     </button>
                 </div>
+                <div class="col-md-3 text-end align-self-center">
+                    <span class="text-muted small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        @Model.Report.PeriodStart.ToString("MMM dd, yyyy") — @Model.Report.PeriodEnd.ToString("MMM dd, yyyy")
+                    </span>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="row mb-4">
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-primary">@Model.Report.TotalTicketsCreated</h3>
+    <!-- Summary Cards - Period Stats -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <small class="text-muted text-uppercase fw-semibold">Period Statistics</small>
+        </div>
+    </div>
+    <div class="row mb-4 g-3">
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-primary mb-1">@Model.Report.TotalTicketsCreated</h3>
                     <p class="text-muted mb-0 small">Created</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-success">@Model.Report.TotalTicketsResolved</h3>
-                    <p class="text-muted mb-0 small">Resolved</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-secondary">@Model.Report.TotalTicketsClosed</h3>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-success mb-1">@Model.Report.TotalTicketsClosed</h3>
                     <p class="text-muted mb-0 small">Closed</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-info">@Model.Report.CurrentOpenTickets</h3>
-                    <p class="text-muted mb-0 small">Open Now</p>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-warning mb-1">@Model.Report.TotalTicketsReopened</h3>
+                    <p class="text-muted mb-0 small">Reopened</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3 class="text-warning">@Model.Report.CurrentUnassignedTickets</h3>
-                    <p class="text-muted mb-0 small">Unassigned</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card text-center">
-                <div class="card-body">
-                    <h3
-                        class="@(Model.Report.OverallSlaComplianceRate >= 90 ? "text-success" : Model.Report.OverallSlaComplianceRate >= 70 ? "text-warning" : "text-danger")">
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="@(Model.Report.OverallSlaComplianceRate >= 90 ? "text-success" : Model.Report.OverallSlaComplianceRate >= 70 ? "text-warning" : "text-danger") mb-1">
                         @($"{Model.Report.OverallSlaComplianceRate:F1}%")
                     </h3>
                     <p class="text-muted mb-0 small">SLA Compliance</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards - Current State -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <small class="text-muted text-uppercase fw-semibold">Current State</small>
+        </div>
+    </div>
+    <div class="row mb-4 g-3">
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-info mb-1">@Model.Report.CurrentOpenTickets</h3>
+                    <p class="text-muted mb-0 small">Open Now</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-secondary mb-1">@Model.Report.CurrentSnoozedTickets</h3>
+                    <p class="text-muted mb-0 small">Snoozed Now</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-danger mb-1">@Model.Report.CurrentUnassignedTickets</h3>
+                    <p class="text-muted mb-0 small">Unassigned</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Tickets Chart -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Daily Ticket Activity</h5>
+        </div>
+        <div class="card-body">
+            <div style="height: 300px;">
+                <canvas id="dailyTicketsChart"></canvas>
             </div>
         </div>
     </div>
@@ -236,7 +295,7 @@
                         <tr>
                             <th>Team</th>
                             <th class="text-center">Created</th>
-                            <th class="text-center">Resolved</th>
+                            <th class="text-center">Closed</th>
                             <th class="text-center">Open</th>
                             <th class="text-center">SLA Compliance</th>
                             <th></th>
@@ -248,7 +307,7 @@
                             <tr>
                                 <td>@team.TeamName</td>
                                 <td class="text-center">@team.TicketsCreated</td>
-                                <td class="text-center">@team.TicketsResolved</td>
+                                <td class="text-center">@team.TicketsClosed</td>
                                 <td class="text-center">@team.OpenTickets</td>
                                 <td class="text-center">
                                     <span
@@ -271,3 +330,87 @@
             </div>
         </div>
     </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('dailyTicketsChart').getContext('2d');
+
+            const dailyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                Model.Report.DailyBreakdown.Select(d => new {
+                    date = d.Date.ToString("MMM dd"),
+                    created = d.TicketsCreated,
+                    closed = d.TicketsClosed
+                })
+            ));
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dailyData.map(d => d.date),
+                    datasets: [
+                        {
+                            label: 'Created',
+                            data: dailyData.map(d => d.created),
+                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'Closed',
+                            data: dailyData.map(d => d.closed),
+                            backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                            borderColor: 'rgba(25, 135, 84, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 },
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                precision: 0
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}
