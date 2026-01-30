@@ -186,6 +186,7 @@ public class ViewFilterBuilder
             "slabreached" => BuildBooleanExpression(param, filter, t => t.SlaBreachedAt != null),
             "hascontact" => BuildBooleanExpression(param, filter, t => t.ContactId != null),
             "hasattachments" => BuildBooleanExpression(param, filter, t => t.Attachments.Any()),
+            "hascomments" => BuildBooleanExpression(param, filter, t => t.Comments.Any()),
 
             // Contact fields
             "contact.firstname" => BuildContactStringExpression(param, c => c.FirstName, filter),

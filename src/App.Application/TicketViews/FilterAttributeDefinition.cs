@@ -165,6 +165,13 @@ public static class FilterAttributes
                 Type = "boolean",
                 Operators = OperatorDefinitions.BooleanOperators,
             },
+            new()
+            {
+                Field = "HasComments",
+                Label = "Has Comments",
+                Type = "boolean",
+                Operators = OperatorDefinitions.BooleanOperators,
+            },
             // Contact Fields
             new()
             {
