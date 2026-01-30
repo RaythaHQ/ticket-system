@@ -40,10 +40,12 @@ public class GetOrganizationReport
             startDate = DateTime.SpecifyKind(startDate, DateTimeKind.Utc);
             endDate = DateTime.SpecifyKind(endDate, DateTimeKind.Utc);
 
-            // Get open-type status developer names for filtering
-            var openStatusNames = await _db
+            // Get closed-type status developer names for filtering
+            // Use negative matching (NOT closed) to be consistent with custom view filters
+            // This ensures tickets with orphaned/missing status configs are counted as open
+            var closedStatusNames = await _db
                 .TicketStatusConfigs.AsNoTracking()
-                .Where(s => s.StatusType == TicketStatusType.OPEN)
+                .Where(s => s.StatusType == TicketStatusType.CLOSED)
                 .Select(s => s.DeveloperName)
                 .ToListAsync(cancellationToken);
 
@@ -62,10 +64,10 @@ public class GetOrganizationReport
                 t.ClosedAt.HasValue && t.ClosedAt.Value >= startDate
             );
             var currentOpenTickets = allCurrentTickets.Count(t =>
-                openStatusNames.Contains(t.Status)
+                !closedStatusNames.Contains(t.Status)
             );
             var currentUnassignedTickets = allCurrentTickets.Count(t =>
-                t.AssigneeId == null && t.OwningTeamId == null && openStatusNames.Contains(t.Status)
+                t.AssigneeId == null && t.OwningTeamId == null && !closedStatusNames.Contains(t.Status)
             );
 
             var totalSlaBreaches = ticketsInPeriod.Count(t =>
@@ -123,7 +125,7 @@ public class GetOrganizationReport
                         TeamName = team.Name,
                         TicketsCreated = teamTickets.Count,
                         TicketsResolved = teamTickets.Count(t => t.ResolvedAt.HasValue),
-                        OpenTickets = teamTickets.Count(t => openStatusNames.Contains(t.Status)),
+                        OpenTickets = teamTickets.Count(t => !closedStatusNames.Contains(t.Status)),
                         SlaComplianceRate =
                             teamSlaTotal > 0
                                 ? Math.Round((double)teamMet / teamSlaTotal * 100, 2)

@@ -50,13 +50,9 @@ public class GetTeamReport
             startDate = DateTime.SpecifyKind(startDate, DateTimeKind.Utc);
             endDate = DateTime.SpecifyKind(endDate, DateTimeKind.Utc);
 
-            // Get open-type status developer names for filtering
-            var openStatusNames = await _db
-                .TicketStatusConfigs.AsNoTracking()
-                .Where(s => s.StatusType == TicketStatusType.OPEN)
-                .Select(s => s.DeveloperName)
-                .ToListAsync(cancellationToken);
-
+            // Get closed-type status developer names for filtering
+            // Use negative matching (NOT closed) to be consistent with custom view filters
+            // This ensures tickets with orphaned/missing status configs are counted as open
             var closedStatusNames = await _db
                 .TicketStatusConfigs.AsNoTracking()
                 .Where(s => s.StatusType == TicketStatusType.CLOSED)
@@ -70,11 +66,11 @@ public class GetTeamReport
                 .ToListAsync(cancellationToken);
 
             var totalTickets = tickets.Count;
-            var openTickets = tickets.Count(t => openStatusNames.Contains(t.Status));
+            var openTickets = tickets.Count(t => !closedStatusNames.Contains(t.Status));
             var resolvedTickets = tickets.Count(t => t.ResolvedAt.HasValue);
             var closedTickets = tickets.Count(t => closedStatusNames.Contains(t.Status));
             var unassignedTickets = tickets.Count(t =>
-                t.AssigneeId == null && openStatusNames.Contains(t.Status)
+                t.AssigneeId == null && !closedStatusNames.Contains(t.Status)
             );
 
             var slaBreachedCount = tickets.Count(t => t.SlaStatus == SlaStatus.BREACHED);

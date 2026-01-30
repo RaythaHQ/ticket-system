@@ -36,10 +36,12 @@ public class GetUserDashboardMetrics
 
             // NOTE: DbContext is not thread-safe, so queries must be sequential
 
-            // Get open-type status developer names for filtering
-            var openStatusNames = await _db
+            // Get closed-type status developer names for filtering
+            // Use negative matching (NOT closed) to be consistent with custom view filters
+            // This ensures tickets with orphaned/missing status configs are counted as open
+            var closedStatusNames = await _db
                 .TicketStatusConfigs.AsNoTracking()
-                .Where(s => s.StatusType == TicketStatusType.OPEN)
+                .Where(s => s.StatusType == TicketStatusType.CLOSED)
                 .Select(s => s.DeveloperName)
                 .ToListAsync(cancellationToken);
 
@@ -49,7 +51,7 @@ public class GetUserDashboardMetrics
                 .CountAsync(
                     t =>
                         t.AssigneeId == userIdGuid
-                        && openStatusNames.Contains(t.Status),
+                        && !closedStatusNames.Contains(t.Status),
                     cancellationToken
                 );
 
@@ -151,9 +153,9 @@ public class GetUserDashboardMetrics
                     {
                         t.Id,
                         t.Name,
-                        OpenTickets = t.Tickets.Count(x => openStatusNames.Contains(x.Status)),
+                        OpenTickets = t.Tickets.Count(x => !closedStatusNames.Contains(x.Status)),
                         UnassignedTickets = t.Tickets.Count(x =>
-                            x.AssigneeId == null && openStatusNames.Contains(x.Status)
+                            x.AssigneeId == null && !closedStatusNames.Contains(x.Status)
                         ),
                     })
                     .ToListAsync(cancellationToken);
