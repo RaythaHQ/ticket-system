@@ -40,6 +40,9 @@ public interface IAppDbContext
     public DbSet<ExportJob> ExportJobs { get; }
     public DbSet<ImportJob> ImportJobs { get; }
 
+    // Wiki entities
+    public DbSet<WikiArticle> WikiArticles { get; }
+
     // Ticket configuration entities
     public DbSet<TicketPriorityConfig> TicketPriorityConfigs { get; }
     public DbSet<TicketStatusConfig> TicketStatusConfigs { get; }

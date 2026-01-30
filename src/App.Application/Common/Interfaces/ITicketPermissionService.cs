@@ -31,6 +31,11 @@ public interface ITicketPermissionService
     bool CanManageSystemSettings();
 
     /// <summary>
+    /// Returns true if the current user can create/edit/delete wiki articles.
+    /// </summary>
+    bool CanEditWikiArticles();
+
+    /// <summary>
     /// Returns true if the current user can edit a specific ticket.
     /// User can edit if they have CanManageTickets permission, are assigned to the ticket, or are a member of the ticket's team.
     /// </summary>
@@ -64,6 +69,11 @@ public interface ITicketPermissionService
     /// Throws ForbiddenAccessException if user cannot manage system settings.
     /// </summary>
     void RequireCanManageSystemSettings();
+
+    /// <summary>
+    /// Throws ForbiddenAccessException if user cannot edit wiki articles.
+    /// </summary>
+    void RequireCanEditWikiArticles();
 
     /// <summary>
     /// Throws ForbiddenAccessException if user cannot edit the specified ticket.

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 
 namespace App.Domain.Entities;
 
@@ -91,6 +91,8 @@ public enum SystemPermissions
     AccessReports = 128,
     ManageSystemViews = 256,
     ImportExportTickets = 512,
+    // Wiki permissions
+    EditWikiArticles = 1024,
 }
 
 public class BuiltInSystemPermission : ValueObject
@@ -106,6 +108,8 @@ public class BuiltInSystemPermission : ValueObject
     public const string ACCESS_REPORTS_PERMISSION = "access_reports";
     public const string MANAGE_SYSTEM_VIEWS_PERMISSION = "manage_system_views";
     public const string IMPORT_EXPORT_TICKETS_PERMISSION = "import_export_tickets";
+    // Wiki permissions
+    public const string EDIT_WIKI_ARTICLES_PERMISSION = "edit_wiki_articles";
 
     static BuiltInSystemPermission() { }
 
@@ -159,6 +163,9 @@ public class BuiltInSystemPermission : ValueObject
             permissions.Add(ManageSystemViews);
         if (permission.HasFlag(SystemPermissions.ImportExportTickets))
             permissions.Add(ImportExportTickets);
+        // Wiki permissions
+        if (permission.HasFlag(SystemPermissions.EditWikiArticles))
+            permissions.Add(EditWikiArticles);
         return permissions;
     }
 
@@ -210,6 +217,10 @@ public class BuiltInSystemPermission : ValueObject
     public static BuiltInSystemPermission ImportExportTickets =>
         new("Import / Export Tickets", IMPORT_EXPORT_TICKETS_PERMISSION, SystemPermissions.ImportExportTickets);
 
+    // Wiki permissions
+    public static BuiltInSystemPermission EditWikiArticles =>
+        new("Edit Wiki Articles", EDIT_WIKI_ARTICLES_PERMISSION, SystemPermissions.EditWikiArticles);
+
     public string Label { get; private set; } = string.Empty;
     public string DeveloperName { get; private set; } = string.Empty;
     public SystemPermissions Permission { get; private set; } = SystemPermissions.None;
@@ -244,6 +255,8 @@ public class BuiltInSystemPermission : ValueObject
             yield return AccessReports;
             yield return ManageSystemViews;
             yield return ImportExportTickets;
+            // Wiki permissions
+            yield return EditWikiArticles;
         }
     }
 
@@ -260,7 +273,8 @@ public class BuiltInSystemPermission : ValueObject
                 | ManageTickets.Permission
                 | AccessReports.Permission
                 | ManageSystemViews.Permission
-                | ImportExportTickets.Permission;
+                | ImportExportTickets.Permission
+                | EditWikiArticles.Permission;
         }
     }
 

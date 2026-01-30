@@ -32,6 +32,9 @@ public class ManageSystemViewsRequirement : IAuthorizationRequirement { }
 
 public class ImportExportTicketsRequirement : IAuthorizationRequirement { }
 
+// Wiki requirements
+public class EditWikiArticlesRequirement : IAuthorizationRequirement { }
+
 public class AppAdminAuthorizationHandler : IAuthorizationHandler
 {
     private readonly IHttpContextAccessor _httpContextAccessor = null;
@@ -172,6 +175,18 @@ public class AppAdminAuthorizationHandler : IAuthorizationHandler
                 if (
                     systemPermissionsClaims.Contains(
                         BuiltInSystemPermission.IMPORT_EXPORT_TICKETS_PERMISSION
+                    )
+                )
+                {
+                    context.Succeed(requirement);
+                }
+            }
+            // Wiki permissions
+            else if (requirement is EditWikiArticlesRequirement)
+            {
+                if (
+                    systemPermissionsClaims.Contains(
+                        BuiltInSystemPermission.EDIT_WIKI_ARTICLES_PERMISSION
                     )
                 )
                 {

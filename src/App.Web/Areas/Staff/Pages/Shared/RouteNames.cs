@@ -78,4 +78,15 @@ public static class RouteNames
     {
         public const string Index = "/Notifications/Index";
     }
+
+    /// <summary>
+    /// Route constants for wiki pages.
+    /// </summary>
+    public static class Wiki
+    {
+        public const string Index = "/Wiki/Index";
+        public const string Article = "/Wiki/Article";
+        public const string Create = "/Wiki/Create";
+        public const string Edit = "/Wiki/Edit";
+    }
 }

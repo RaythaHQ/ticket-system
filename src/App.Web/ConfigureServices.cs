@@ -123,6 +123,11 @@ public static class ConfigureServices
                 BuiltInSystemPermission.IMPORT_EXPORT_TICKETS_PERMISSION,
                 policy => policy.Requirements.Add(new ImportExportTicketsRequirement())
             );
+            // Wiki permissions
+            options.AddPolicy(
+                BuiltInSystemPermission.EDIT_WIKI_ARTICLES_PERMISSION,
+                policy => policy.Requirements.Add(new EditWikiArticlesRequirement())
+            );
 
             options.AddPolicy(
                 AppApiAuthorizationHandler.POLICY_PREFIX + RaythaClaimTypes.IsAdmin,

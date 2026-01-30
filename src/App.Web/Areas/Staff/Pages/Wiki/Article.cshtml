@@ -1,0 +1,168 @@
+@page "/staff/wiki/{slug}"
+@model App.Web.Areas.Staff.Pages.Wiki.Article
+@using App.Web.Areas.Staff.Pages.Shared
+
+@{
+    ViewData["Title"] = Model.WikiArticle.Title;
+    ViewData["ActiveMenu"] = "Wiki";
+}
+
+<div class="row">
+    <div class="col-lg-9">
+        <!-- Article Header -->
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item">
+                            <a asp-page="@RouteNames.Wiki.Index" class="text-decoration-none">Wiki</a>
+                        </li>
+                        @if (!string.IsNullOrEmpty(Model.WikiArticle.Category))
+                        {
+                            <li class="breadcrumb-item">
+                                <a asp-page="@RouteNames.Wiki.Index" asp-route-category="@Model.WikiArticle.Category" class="text-decoration-none">
+                                    @Model.WikiArticle.Category
+                                </a>
+                            </li>
+                        }
+                        <li class="breadcrumb-item active" aria-current="page">@Model.WikiArticle.Title</li>
+                    </ol>
+                </nav>
+                <h1 class="h2 mb-0">
+                    @if (Model.WikiArticle.IsPinned)
+                    {
+                        <i class="bi bi-pin-fill text-warning me-2" title="Pinned"></i>
+                    }
+                    @Model.WikiArticle.Title
+                </h1>
+                @if (!Model.WikiArticle.IsPublished)
+                {
+                    <span class="badge bg-warning text-dark mt-2">Draft - Not visible to staff without edit permission</span>
+                }
+            </div>
+            @if (Model.CanEdit)
+            {
+                <a asp-page="@RouteNames.Wiki.Edit" asp-route-id="@Model.WikiArticle.Id" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                </a>
+            }
+        </div>
+
+        <!-- Article Content -->
+        <div class="staff-card">
+            <div class="staff-card-body">
+                <div class="wiki-content">
+                    @Html.Raw(Model.WikiArticle.Content)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+        <div class="staff-card">
+            <div class="staff-card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-2"></i>Article Info</h6>
+            </div>
+            <div class="staff-card-body">
+                <dl class="mb-0">
+                    @if (!string.IsNullOrEmpty(Model.WikiArticle.Category))
+                    {
+                        <dt class="text-muted small">Category</dt>
+                        <dd class="mb-3">
+                            <a asp-page="@RouteNames.Wiki.Index" asp-route-category="@Model.WikiArticle.Category" class="text-decoration-none">
+                                <i class="bi bi-folder me-1"></i>@Model.WikiArticle.Category
+                            </a>
+                        </dd>
+                    }
+                    <dt class="text-muted small">Created</dt>
+                    <dd class="mb-3">
+                        @Model.WikiArticle.CreationTime.ToString("MMMM dd, yyyy")
+                        @if (!string.IsNullOrEmpty(Model.WikiArticle.CreatorName))
+                        {
+                            <br /><span class="text-muted small">by @Model.WikiArticle.CreatorName</span>
+                        }
+                    </dd>
+                    @if (Model.WikiArticle.LastModificationTime.HasValue)
+                    {
+                        <dt class="text-muted small">Last Updated</dt>
+                        <dd class="mb-3">
+                            @Model.WikiArticle.LastModificationTime.Value.ToString("MMMM dd, yyyy")
+                            @if (!string.IsNullOrEmpty(Model.WikiArticle.LastModifierName))
+                            {
+                                <br /><span class="text-muted small">by @Model.WikiArticle.LastModifierName</span>
+                            }
+                        </dd>
+                    }
+                    <dt class="text-muted small">Views</dt>
+                    <dd class="mb-0">
+                        <i class="bi bi-eye me-1"></i>@Model.WikiArticle.ViewCount
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <a asp-page="@RouteNames.Wiki.Index" class="btn btn-outline-secondary w-100">
+                <i class="bi bi-arrow-left me-1"></i>Back to Wiki
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .wiki-content {
+        line-height: 1.7;
+    }
+    .wiki-content h1, .wiki-content h2, .wiki-content h3, 
+    .wiki-content h4, .wiki-content h5, .wiki-content h6 {
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+    .wiki-content p {
+        margin-bottom: 1rem;
+    }
+    .wiki-content ul, .wiki-content ol {
+        margin-bottom: 1rem;
+        padding-left: 1.5rem;
+    }
+    .wiki-content pre {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 0.375rem;
+        overflow-x: auto;
+    }
+    .wiki-content code {
+        background: #f8f9fa;
+        padding: 0.125rem 0.25rem;
+        border-radius: 0.25rem;
+        font-size: 0.875em;
+    }
+    .wiki-content pre code {
+        background: transparent;
+        padding: 0;
+    }
+    .wiki-content blockquote {
+        border-left: 4px solid var(--staff-primary);
+        padding-left: 1rem;
+        margin-left: 0;
+        color: #6c757d;
+    }
+    .wiki-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.375rem;
+    }
+    .wiki-content table {
+        width: 100%;
+        margin-bottom: 1rem;
+        border-collapse: collapse;
+    }
+    .wiki-content th, .wiki-content td {
+        padding: 0.5rem;
+        border: 1px solid #dee2e6;
+    }
+    .wiki-content th {
+        background: #f8f9fa;
+    }
+</style>

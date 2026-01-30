@@ -1,0 +1,145 @@
+@page "/staff/wiki"
+@model App.Web.Areas.Staff.Pages.Wiki.Index
+@using App.Web.Areas.Staff.Pages.Shared
+
+@{
+    ViewData["Title"] = "Wiki";
+    ViewData["ActiveMenu"] = "Wiki";
+}
+
+<div class="staff-page-heading mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-journal-text me-2"></i>Wiki
+    </h1>
+    @if (Model.CanEdit)
+    {
+        <a asp-area="Staff" asp-page="@RouteNames.Wiki.Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>New Article
+        </a>
+    }
+</div>
+
+<div class="row">
+    <!-- Sidebar with categories -->
+    <div class="col-md-3">
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h6 class="mb-0"><i class="bi bi-folder me-2"></i>Categories</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                <a asp-page="@RouteNames.Wiki.Index"
+                    class="list-group-item list-group-item-action @(string.IsNullOrEmpty(Model.SelectedCategory) && string.IsNullOrEmpty(Model.SearchQuery) ? "active" : "")">
+                    <i class="bi bi-collection me-2"></i>All Articles
+                    <span class="badge bg-secondary float-end">@Model.TotalArticleCount</span>
+                </a>
+                @foreach (var category in Model.Categories)
+                {
+                    <a asp-page="@RouteNames.Wiki.Index" asp-route-category="@category.Name"
+                        class="list-group-item list-group-item-action @(Model.SelectedCategory == category.Name ? "active" : "")">
+                        <i class="bi bi-folder2 me-2"></i>@category.Name
+                        <span class="badge bg-secondary float-end">@category.ArticleCount</span>
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Search -->
+        <div class="staff-card">
+            <div class="staff-card-header">
+                <h6 class="mb-0"><i class="bi bi-search me-2"></i>Search</h6>
+            </div>
+            <div class="staff-card-body">
+                <form method="get">
+                    <input type="hidden" name="category" value="@Model.SelectedCategory" />
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="Search articles..."
+                            value="@Model.SearchQuery" />
+                        <button class="btn btn-outline-secondary" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Articles list -->
+    <div class="col-md-9">
+        @if (!string.IsNullOrEmpty(Model.SearchQuery))
+        {
+            <div class="mb-3">
+                <span class="text-muted">Search results for: <strong>@Model.SearchQuery</strong></span>
+                <a asp-page="@RouteNames.Wiki.Index" asp-route-category="@Model.SelectedCategory" class="btn btn-sm btn-link">Clear</a>
+            </div>
+        }
+
+        @if (!Model.Articles.Any())
+        {
+            <div class="staff-card">
+                <div class="staff-card-body text-center py-5 text-muted">
+                    <i class="bi bi-journal-x" style="font-size: 3rem; opacity: 0.5;"></i>
+                    <p class="mt-3 mb-2 fw-medium">No articles found.</p>
+                    @if (Model.CanEdit)
+                    {
+                        <a asp-page="@RouteNames.Wiki.Create" class="btn btn-primary btn-sm mt-2">
+                            <i class="bi bi-plus me-1"></i>Create the first article
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var article in Model.Articles)
+            {
+                <div class="staff-card mb-3">
+                    <div class="staff-card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-1">
+                                    @if (article.IsPinned)
+                                    {
+                                        <i class="bi bi-pin-fill text-warning me-1" title="Pinned"></i>
+                                    }
+                                    @if (!article.IsPublished)
+                                    {
+                                        <span class="badge bg-warning text-dark me-2">Draft</span>
+                                    }
+                                    <a asp-page="@RouteNames.Wiki.Article" asp-route-slug="@article.Slug"
+                                        class="text-decoration-none" style="color: var(--staff-primary);">
+                                        @article.Title
+                                    </a>
+                                </h5>
+                                <p class="text-muted mb-2 small">@article.Excerpt</p>
+                                <div class="d-flex gap-3 text-muted small">
+                                    @if (!string.IsNullOrEmpty(article.Category))
+                                    {
+                                        <span>
+                                            <i class="bi bi-folder me-1"></i>@article.Category
+                                        </span>
+                                    }
+                                    <span>
+                                        <i class="bi bi-calendar me-1"></i>
+                                        @(article.LastModificationTime?.ToString("MMM dd, yyyy") ?? article.CreationTime.ToString("MMM dd, yyyy"))
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-eye me-1"></i>@article.ViewCount views
+                                    </span>
+                                </div>
+                            </div>
+                            @if (Model.CanEdit)
+                            {
+                                <div class="ms-3">
+                                    <a asp-page="@RouteNames.Wiki.Edit" asp-route-id="@article.Id"
+                                        class="btn btn-sm btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

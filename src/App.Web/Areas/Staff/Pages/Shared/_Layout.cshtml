@@ -57,6 +57,11 @@
                     <span>My Notifications</span>
                     <span class="notification-badge" id="notification-badge" style="@(unreadCount > 0 ? "" : "display: none;")">@badgeDisplay</span>
                 </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Wiki.Index"
+                    class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Wiki" ? "active" : "")">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Wiki</span>
+                </a>
                 <div class="staff-nav-item">
                     <span
                         class="staff-nav-link has-submenu expanded @(ViewData["ActiveMenu"]?.ToString() == "Tickets" ? "active" : "")"

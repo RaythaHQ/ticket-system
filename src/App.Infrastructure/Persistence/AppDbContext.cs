@@ -64,6 +64,9 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     public DbSet<ExportJob> ExportJobs => Set<ExportJob>();
     public DbSet<ImportJob> ImportJobs => Set<ImportJob>();
 
+    // Wiki entities
+    public DbSet<WikiArticle> WikiArticles => Set<WikiArticle>();
+
     // Ticket configuration entities
     public DbSet<TicketPriorityConfig> TicketPriorityConfigs => Set<TicketPriorityConfig>();
     public DbSet<TicketStatusConfig> TicketStatusConfigs => Set<TicketStatusConfig>();

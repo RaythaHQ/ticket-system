@@ -69,6 +69,16 @@ public class TicketPermissionService : ITicketPermissionService
             ) ?? false;
     }
 
+    public bool CanEditWikiArticles()
+    {
+        if (!_currentUser.IsAuthenticated)
+            return false;
+
+        return _currentUser.SystemPermissions?.Contains(
+                BuiltInSystemPermission.EDIT_WIKI_ARTICLES_PERMISSION
+            ) ?? false;
+    }
+
     public void RequireCanManageTickets()
     {
         if (!CanManageTickets())
@@ -100,6 +110,14 @@ public class TicketPermissionService : ITicketPermissionService
         if (!CanManageSystemSettings())
             throw new ForbiddenAccessException(
                 "You do not have permission to manage system settings."
+            );
+    }
+
+    public void RequireCanEditWikiArticles()
+    {
+        if (!CanEditWikiArticles())
+            throw new ForbiddenAccessException(
+                "You do not have permission to edit wiki articles."
             );
     }
 
