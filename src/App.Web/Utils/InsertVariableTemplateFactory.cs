@@ -126,6 +126,8 @@ public class InsertVariableTemplateFactory
         new(BuiltInEmailTemplate.TicketClosedEmail, "Target", new TicketClosed_RenderModel());
     public static InsertVariableTemplateFactory TicketReopenedEmail =>
         new(BuiltInEmailTemplate.TicketReopenedEmail, "Target", new TicketReopened_RenderModel());
+    public static InsertVariableTemplateFactory TicketUnsnoozedEmail =>
+        new(BuiltInEmailTemplate.TicketUnsnoozedEmail, "Target", new TicketUnsnoozed_RenderModel());
     public static InsertVariableTemplateFactory SlaApproachingEmail =>
         new(BuiltInEmailTemplate.SlaApproachingEmail, "Target", new SlaApproaching_RenderModel());
     public static InsertVariableTemplateFactory SlaBreachedEmail =>
@@ -158,6 +160,7 @@ public class InsertVariableTemplateFactory
             yield return TicketStatusChangedEmail;
             yield return TicketClosedEmail;
             yield return TicketReopenedEmail;
+            yield return TicketUnsnoozedEmail;
             yield return SlaApproachingEmail;
             yield return SlaBreachedEmail;
 
