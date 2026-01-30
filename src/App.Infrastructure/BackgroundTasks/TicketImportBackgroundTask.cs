@@ -643,6 +643,7 @@ public class TicketImportBackgroundTask : TicketImportJob
                 ticketId,
                 lookups,
                 importJob.IsDryRun,
+                importJob.SlaMode,
                 cancellationToken
             );
         }
@@ -690,6 +691,7 @@ public class TicketImportBackgroundTask : TicketImportJob
                     ticketId,
                     lookups,
                     importJob.IsDryRun,
+                    importJob.SlaMode,
                     cancellationToken
                 );
             }
@@ -703,6 +705,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         long? specifiedId,
         ReferenceLookups lookups,
         bool isDryRun,
+        ImportSlaMode? slaMode,
         CancellationToken cancellationToken
     )
     {
@@ -880,9 +883,68 @@ public class TicketImportBackgroundTask : TicketImportJob
             var freshDb = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
             freshDb.Tickets.Add(ticket);
             await freshDb.SaveChangesAsync(cancellationToken);
+
+            // Apply SLA rules if requested
+            if (slaMode != null && slaMode != ImportSlaMode.DoNotApply)
+            {
+                await ApplySlaRulesAsync(scope, ticket, slaMode, cancellationToken);
+            }
         }
 
         return ImportRowResult.Inserted();
+    }
+
+    /// <summary>
+    /// Applies SLA rules to an imported ticket based on the selected SLA mode.
+    /// </summary>
+    private async Task ApplySlaRulesAsync(
+        IServiceScope scope,
+        Ticket ticket,
+        ImportSlaMode slaMode,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var freshDb = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
+            var slaService = scope.ServiceProvider.GetRequiredService<ISlaService>();
+
+            // Re-fetch the ticket to get a tracked entity
+            var trackedTicket = await freshDb.Tickets.FindAsync(
+                new object[] { ticket.Id },
+                cancellationToken
+            );
+
+            if (trackedTicket == null)
+                return;
+
+            // For "from_current_time" mode, temporarily override CreationTime for SLA calculation
+            var originalCreationTime = trackedTicket.CreationTime;
+            if (slaMode == ImportSlaMode.FromCurrentTime)
+            {
+                trackedTicket.CreationTime = DateTime.UtcNow;
+            }
+
+            // Evaluate and assign SLA rules
+            await slaService.EvaluateAndAssignSlaAsync(trackedTicket, cancellationToken);
+
+            // Restore original CreationTime if we changed it
+            if (slaMode == ImportSlaMode.FromCurrentTime)
+            {
+                trackedTicket.CreationTime = originalCreationTime;
+            }
+
+            await freshDb.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // Log but don't fail the import if SLA assignment fails
+            _logger.LogWarning(
+                ex,
+                "TicketImportBackgroundTask: Failed to apply SLA rules for ticket {TicketId}",
+                ticket.Id
+            );
+        }
     }
 
     private async Task<ImportRowResult> UpdateTicketAsync(

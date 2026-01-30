@@ -30,6 +30,12 @@ public class CreateImportJob
         public bool IsDryRun { get; init; }
 
         /// <summary>
+        /// How SLA rules should be applied during ticket import.
+        /// Only applicable when EntityType is "tickets".
+        /// </summary>
+        public string? SlaMode { get; init; }
+
+        /// <summary>
         /// The ID of the uploaded CSV file.
         /// </summary>
         public ShortGuid SourceMediaItemId { get; init; }
@@ -91,6 +97,15 @@ public class CreateImportJob
                     }
                 )
                 .WithMessage("Source file not found.");
+
+            RuleFor(x => x.SlaMode)
+                .Must(sm =>
+                    string.IsNullOrEmpty(sm)
+                    || ImportSlaMode.SupportedTypes.Any(t => t.DeveloperName == sm.ToLower())
+                )
+                .WithMessage(
+                    "Invalid SLA mode. Must be 'do_not_apply', 'from_created_at', or 'from_current_time'."
+                );
         }
     }
 
@@ -127,6 +142,9 @@ public class CreateImportJob
                 EntityType = ImportEntityType.From(request.EntityType),
                 Mode = ImportMode.From(request.Mode),
                 IsDryRun = request.IsDryRun,
+                SlaMode = !string.IsNullOrEmpty(request.SlaMode)
+                    ? ImportSlaMode.From(request.SlaMode)
+                    : null,
                 SourceMediaItemId = request.SourceMediaItemId.Guid,
                 Status = ImportJobStatus.Queued,
                 ProgressStage = "Queued",

@@ -14,6 +14,12 @@ public class ImportJob : BaseAuditableEntity
     public ImportMode Mode { get; set; } = ImportMode.Upsert;
     public bool IsDryRun { get; set; }
 
+    /// <summary>
+    /// How SLA rules should be applied during ticket import.
+    /// Only applicable when EntityType is Tickets.
+    /// </summary>
+    public ImportSlaMode? SlaMode { get; set; }
+
     // Source file
     public Guid SourceMediaItemId { get; set; }
     public virtual MediaItem? SourceMediaItem { get; set; }

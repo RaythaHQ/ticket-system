@@ -42,6 +42,24 @@
                         <span class="text-danger">@Model.ErrorMessageFor("Form.Mode")</span>
                     </div>
 
+                    <div class="mb-3" id="sla-mode-section" style="display: none;">
+                        <label asp-for="Form.SlaMode" class="form-label fw-bold">SLA Rules</label>
+                        <div class="form-text text-muted mb-2">
+                            Choose how SLA rules should be applied to imported tickets.
+                        </div>
+                        @foreach (var option in Model.SlaModeOptions)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="Form.SlaMode"
+                                    id="sla-@option.Value" value="@option.Value"
+                                    checked="@(option.Value == Model.Form.SlaMode)">
+                                <label class="form-check-label" for="sla-@option.Value">
+                                    @option.Text
+                                </label>
+                            </div>
+                        }
+                    </div>
+
                     <div class="mb-3">
                         <div class="form-check">
                             <input asp-for="Form.IsDryRun" class="form-check-input" type="checkbox">
@@ -291,11 +309,13 @@
             const entityTypeSelect = document.querySelector('[name="Form.EntityType"]');
             const contactsSection = document.getElementById('contacts-columns');
             const ticketsSection = document.getElementById('tickets-columns');
+            const slaModeSection = document.getElementById('sla-mode-section');
 
             function updateVisibility() {
                 const value = entityTypeSelect.value;
                 contactsSection.style.display = value === 'contacts' ? 'block' : 'none';
                 ticketsSection.style.display = value === 'tickets' ? 'block' : 'none';
+                slaModeSection.style.display = value === 'tickets' ? 'block' : 'none';
             }
 
             entityTypeSelect.addEventListener('change', updateVisibility);

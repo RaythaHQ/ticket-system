@@ -12,6 +12,7 @@ using App.Web.Areas.Shared.Models;
 using CSharpVitamins;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace App.Web.Areas.Admin.Pages.Import;
 
@@ -23,6 +24,7 @@ public class Index : BaseAdminPageModel
 
     public List<string> ValidStatuses { get; set; } = new();
     public List<string> ValidPriorities { get; set; } = new();
+    public List<SelectListItem> SlaModeOptions { get; set; } = new();
 
     public async Task<IActionResult> OnGet(CancellationToken cancellationToken)
     {
@@ -126,6 +128,7 @@ public class Index : BaseAdminPageModel
                     EntityType = Form.EntityType,
                     Mode = Form.Mode,
                     IsDryRun = Form.IsDryRun,
+                    SlaMode = Form.EntityType == ImportEntityType.TICKETS ? Form.SlaMode : null,
                     SourceMediaItemId = idForKey,
                 },
                 cancellationToken
@@ -169,6 +172,16 @@ public class Index : BaseAdminPageModel
             cancellationToken
         );
         ValidPriorities = prioritiesResponse.Result.Items.Select(p => p.DeveloperName).ToList();
+
+        // SLA mode options for ticket imports
+        SlaModeOptions = ImportSlaMode
+            .SupportedTypes.Select(m => new SelectListItem
+            {
+                Value = m.DeveloperName,
+                Text = m.Label,
+                Selected = m.DeveloperName == ImportSlaMode.DO_NOT_APPLY,
+            })
+            .ToList();
     }
 
     public class FormModel
@@ -183,5 +196,8 @@ public class Index : BaseAdminPageModel
 
         [Display(Name = "Dry Run (Validate Only)")]
         public bool IsDryRun { get; set; } = false;
+
+        [Display(Name = "SLA Rules")]
+        public string SlaMode { get; set; } = ImportSlaMode.DO_NOT_APPLY;
     }
 }

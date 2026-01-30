@@ -24,6 +24,15 @@ public class ImportJobConfiguration : IEntityTypeConfiguration<ImportJob>
             .HasMaxLength(50)
             .HasConversion(v => v.DeveloperName, v => Domain.ValueObjects.ImportMode.From(v));
 
+        // SlaMode stored as string (optional, only for ticket imports)
+        builder
+            .Property(e => e.SlaMode)
+            .HasMaxLength(50)
+            .HasConversion(
+                v => v == null ? null : v.DeveloperName,
+                v => v == null ? null : Domain.ValueObjects.ImportSlaMode.From(v)
+            );
+
         // Status stored as string
         builder
             .Property(e => e.Status)
