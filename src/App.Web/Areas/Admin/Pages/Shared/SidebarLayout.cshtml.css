@@ -1,48 +1,175 @@
-﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
+/* ===== Sidebar Layout Scoped Styles ===== */
 
-a.navbar-brand {
-  white-space: normal;
-  text-align: center;
-  word-break: break-all;
+/* Sidebar base styling */
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    width: 260px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    transition: all 0.3s ease;
 }
 
-a {
-  color: #0077cc;
+.sidebar-inner {
+    min-height: 100vh;
+    padding-bottom: 2rem;
 }
 
-.btn-primary {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+/* Logo/Brand area */
+.sidebar .nav-link.d-flex.align-items-center {
+    padding: 1rem 0.875rem;
+    margin-bottom: 0.5rem;
 }
 
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+/* Navigation items */
+.sidebar .nav-item {
+    position: relative;
 }
 
-.border-top {
-  border-top: 1px solid #e5e5e5;
-}
-.border-bottom {
-  border-bottom: 1px solid #e5e5e5;
+/* Submenu items with smooth animation */
+.sidebar .multi-level {
+    transition: all 0.25s ease-in-out;
 }
 
-.box-shadow {
-  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+.sidebar .multi-level .nav {
+    padding: 0.25rem 0;
 }
 
-button.accept-policy {
-  font-size: 1rem;
-  line-height: inherit;
+.sidebar .multi-level .nav-item {
+    margin: 0.125rem 0;
 }
 
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  white-space: nowrap;
-  line-height: 60px;
+.sidebar .multi-level .nav-link {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.875rem 0.5rem 2.75rem;
+    opacity: 0.9;
+}
+
+.sidebar .multi-level .nav-link:hover {
+    opacity: 1;
+}
+
+/* Active state indicator */
+.sidebar .nav-item.active > .nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    background-color: #ffffff;
+    border-radius: 0 2px 2px 0;
+}
+
+/* Icon sizing */
+.sidebar .icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.sidebar .icon-xs {
+    width: 1rem;
+    height: 1rem;
+}
+
+.sidebar .icon-sm {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+/* Sidebar text */
+.sidebar-text {
+    font-size: 0.9375rem;
+    letter-spacing: 0.01em;
+}
+
+/* Link arrow animation */
+.sidebar .link-arrow {
+    transition: transform 0.2s ease;
+}
+
+.sidebar [aria-expanded="true"] .link-arrow {
+    transform: rotate(90deg);
+}
+
+/* Hover effects */
+.sidebar .nav-link::after {
+    content: '';
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    width: 6px;
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.sidebar .nav-link:hover::after {
+    transform: translateY(-50%) scale(1);
+}
+
+/* User profile section */
+.sidebar .nav-item:last-child .nav-link {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+}
+
+/* Main content area */
+.content {
+    margin-left: 260px;
+    padding: 0 1.5rem;
+    min-height: 100vh;
+    transition: margin-left 0.3s ease;
+}
+
+/* Breadcrumbs positioning */
+.content breadcrumbs {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+    .sidebar {
+        margin-left: -260px;
+    }
+    
+    .sidebar.show {
+        margin-left: 0;
+    }
+    
+    .content {
+        margin-left: 0;
+        padding: 0 1rem;
+    }
+}
+
+/* Scrollbar styling for sidebar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Tooltip for collapsed state (future enhancement) */
+.sidebar .nav-link[data-bs-toggle="tooltip"] {
+    position: relative;
 }
