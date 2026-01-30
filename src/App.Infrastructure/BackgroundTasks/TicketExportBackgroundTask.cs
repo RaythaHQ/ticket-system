@@ -245,6 +245,7 @@ public class TicketExportBackgroundTask : TicketExportJob
         }
 
         // Apply sorting (use keyset pagination approach for consistency)
+        // For priority and status, sort by config SortOrder instead of alphabetically
         var sortField = payload.SortField?.ToLower() ?? "id";
         var sortDesc = payload.SortDirection?.ToLower() == "desc";
 
@@ -256,12 +257,42 @@ public class TicketExportBackgroundTask : TicketExportJob
             "title" => sortDesc
                 ? query.OrderByDescending(t => t.Title).ThenBy(t => t.Id)
                 : query.OrderBy(t => t.Title).ThenBy(t => t.Id),
+            // Status: sort by config SortOrder (workflow order) instead of alphabetically
             "status" => sortDesc
-                ? query.OrderByDescending(t => t.Status).ThenBy(t => t.Id)
-                : query.OrderBy(t => t.Status).ThenBy(t => t.Id),
+                ? query
+                    .OrderByDescending(t =>
+                        db.TicketStatusConfigs
+                            .Where(s => s.DeveloperName == t.Status)
+                            .Select(s => s.SortOrder)
+                            .FirstOrDefault()
+                    )
+                    .ThenBy(t => t.Id)
+                : query
+                    .OrderBy(t =>
+                        db.TicketStatusConfigs
+                            .Where(s => s.DeveloperName == t.Status)
+                            .Select(s => s.SortOrder)
+                            .FirstOrDefault()
+                    )
+                    .ThenBy(t => t.Id),
+            // Priority: sort by config SortOrder (highest priority = lowest SortOrder) instead of alphabetically
             "priority" => sortDesc
-                ? query.OrderByDescending(t => t.Priority).ThenBy(t => t.Id)
-                : query.OrderBy(t => t.Priority).ThenBy(t => t.Id),
+                ? query
+                    .OrderByDescending(t =>
+                        db.TicketPriorityConfigs
+                            .Where(p => p.DeveloperName == t.Priority)
+                            .Select(p => p.SortOrder)
+                            .FirstOrDefault()
+                    )
+                    .ThenBy(t => t.Id)
+                : query
+                    .OrderBy(t =>
+                        db.TicketPriorityConfigs
+                            .Where(p => p.DeveloperName == t.Priority)
+                            .Select(p => p.SortOrder)
+                            .FirstOrDefault()
+                    )
+                    .ThenBy(t => t.Id),
             "lastmodificationtime" => sortDesc
                 ? query.OrderByDescending(t => t.LastModificationTime).ThenBy(t => t.Id)
                 : query.OrderBy(t => t.LastModificationTime).ThenBy(t => t.Id),

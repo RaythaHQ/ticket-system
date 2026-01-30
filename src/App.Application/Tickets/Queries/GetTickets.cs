@@ -284,13 +284,48 @@ public class GetTickets
             }
             else
             {
-                var items = query
+                // Check if sorting by priority or status - these need config-based sorting
+                // to respect the SortOrder defined in the configuration tables
+                var sortByLower = request.SortBy?.ToLower();
+                if (sortByLower == "priority" || sortByLower == "status")
+                {
+                    // Build sort levels from the SortBy parameter
+                    var sortLevels = new List<Domain.Entities.ViewSortLevel>
+                    {
+                        new()
+                        {
+                            Order = 0,
+                            Field = sortByLower,
+                            // Priority: desc = highest priority first (lowest SortOrder)
+                            // Status: asc = workflow order (lowest SortOrder first)
+                            Direction = sortByLower == "priority" ? "asc" : "asc",
+                        },
+                        new()
+                        {
+                            Order = 1,
+                            Field = "creationtime",
+                            Direction = "desc",
+                        },
+                    };
+
+                    query = filterBuilder.ApplySorting(query, sortLevels);
+                    var items = query
+                        .ApplyPaginationInputWithoutSorting(request)
+                        .Select(TicketListItemDto.GetProjection())
+                        .ToArray();
+
+                    return new QueryResponseDto<ListResultDto<TicketListItemDto>>(
+                        new ListResultDto<TicketListItemDto>(items, total)
+                    );
+                }
+
+                var items2 = query
                     .ApplyPaginationInput(request)
                     .Select(TicketListItemDto.GetProjection())
                     .ToArray();
 
                 return new QueryResponseDto<ListResultDto<TicketListItemDto>>(
-                    new ListResultDto<TicketListItemDto>(items, total)
+                    new ListResultDto<TicketListItemDto>(items2, total)
                 );
             }
         }
