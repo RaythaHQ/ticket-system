@@ -67,6 +67,15 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         // Soft delete filter
         builder.HasQueryFilter(t => !t.IsDeleted);
 
+        // Snooze fields
+        builder.Property(t => t.SnoozedReason).HasMaxLength(500);
+
+        builder
+            .HasOne(t => t.SnoozedBy)
+            .WithMany()
+            .HasForeignKey(t => t.SnoozedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Indexes
         builder.HasIndex(t => t.Status);
         builder.HasIndex(t => t.Priority);
@@ -75,5 +84,10 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
         builder.HasIndex(t => t.ContactId);
         builder.HasIndex(t => t.SlaDueAt);
         builder.HasIndex(t => t.CreationTime);
+
+        // Partial index for snooze background job - only index non-null values
+        builder
+            .HasIndex(t => t.SnoozedUntil)
+            .HasFilter("\"SnoozedUntil\" IS NOT NULL");
     }
 }

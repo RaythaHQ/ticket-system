@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using App.Application.Common.Utils;
 using App.Application.Contacts;
 using App.Application.Contacts.Queries;
 using App.Application.Tickets;
@@ -42,6 +43,10 @@ public class Details : BaseStaffPageModel
 
     [BindProperty]
     public int ExtensionHours { get; set; }
+
+    // Snooze feature
+    [BindProperty]
+    public SnoozeViewModel SnoozeForm { get; set; } = new();
 
     /// <summary>
     /// Back to list URL - preserved across navigation and form submissions.
@@ -452,6 +457,89 @@ public class Details : BaseStaffPageModel
     {
         [Required]
         public string Body { get; set; } = string.Empty;
+    }
+
+    public record SnoozeViewModel
+    {
+        public DateTime? SnoozeUntil { get; set; }
+        public string? Reason { get; set; }
+    }
+
+    public async Task<IActionResult> OnPostSnooze(long id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (!SnoozeForm.SnoozeUntil.HasValue)
+            {
+                SetErrorMessage("Please select a date and time to snooze until.");
+                return RedirectToPage(
+                    RouteNames.Tickets.Details,
+                    new { id, backToListUrl = BackToListUrl }
+                );
+            }
+
+            // Convert from organization timezone to UTC for storage/validation
+            var snoozeUntilUtc = SnoozeForm.SnoozeUntil.Value.TimeZoneToUtc(CurrentOrganization.TimeZone);
+            
+            var command = new SnoozeTicket.Command
+            {
+                TicketId = id,
+                SnoozeUntil = snoozeUntilUtc,
+                Reason = SnoozeForm.Reason,
+            };
+
+            var response = await Mediator.Send(command, cancellationToken);
+
+            if (response.Success)
+            {
+                SetSuccessMessage(
+                    $"Ticket snoozed until {CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(response.Result.SnoozedUntil)}."
+                );
+            }
+            else
+            {
+                SetErrorMessage(response.GetErrors());
+            }
+        }
+        catch (Application.Common.Exceptions.BusinessException ex)
+        {
+            SetErrorMessage(ex.Message);
+        }
+        catch (Application.Common.Exceptions.ForbiddenAccessException ex)
+        {
+            SetErrorMessage(ex.Message);
+        }
+
+        return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl = BackToListUrl });
+    }
+
+    public async Task<IActionResult> OnPostUnsnooze(long id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new UnsnoozeTicket.Command { TicketId = id };
+
+            var response = await Mediator.Send(command, cancellationToken);
+
+            if (response.Success)
+            {
+                SetSuccessMessage("Ticket unsnoozed.");
+            }
+            else
+            {
+                SetErrorMessage(response.GetErrors());
+            }
+        }
+        catch (Application.Common.Exceptions.BusinessException ex)
+        {
+            SetErrorMessage(ex.Message);
+        }
+        catch (Application.Common.Exceptions.NotFoundException)
+        {
+            SetErrorMessage("Ticket not found or not snoozed.");
+        }
+
+        return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl = BackToListUrl });
     }
 }
 

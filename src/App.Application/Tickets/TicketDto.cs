@@ -48,6 +48,26 @@ public record TicketDto : BaseNumericAuditableEntityDto
     /// </summary>
     public int SlaExtensionCount { get; init; }
 
+    // Snooze fields
+    public bool IsSnoozed { get; init; }
+    public DateTime? SnoozedUntil { get; init; }
+    public DateTime? SnoozedAt { get; init; }
+    public ShortGuid? SnoozedById { get; init; }
+    public string? SnoozedByName { get; init; }
+    public string? SnoozedReason { get; init; }
+    public bool IsRecentlyUnsnoozed { get; init; }
+    public DateTime? UnsnoozedAt { get; init; }
+
+    /// <summary>
+    /// Whether this ticket can be snoozed (has individual assignee, not closed).
+    /// </summary>
+    public bool CanSnooze { get; init; }
+
+    /// <summary>
+    /// If CanSnooze is false, explains why.
+    /// </summary>
+    public string? CannotSnoozeReason { get; init; }
+
     public static TicketDto MapFrom(Ticket ticket)
     {
         return new TicketDto
@@ -85,6 +105,37 @@ public record TicketDto : BaseNumericAuditableEntityDto
             CreatorUserId = ticket.CreatorUserId,
             LastModifierUserId = ticket.LastModifierUserId,
             LastModificationTime = ticket.LastModificationTime,
+            // Snooze fields
+            IsSnoozed = ticket.IsSnoozed,
+            SnoozedUntil = ticket.SnoozedUntil,
+            SnoozedAt = ticket.SnoozedAt,
+            SnoozedById = ticket.SnoozedById,
+            SnoozedByName = ticket.SnoozedBy?.FullName,
+            SnoozedReason = ticket.SnoozedReason,
+            IsRecentlyUnsnoozed = ticket.IsRecentlyUnsnoozed,
+            UnsnoozedAt = ticket.UnsnoozedAt,
+            CanSnooze = CanTicketBeSnozzed(ticket, out var reason),
+            CannotSnoozeReason = reason,
         };
+    }
+
+    private static bool CanTicketBeSnozzed(Ticket ticket, out string? reason)
+    {
+        // Must have individual assignee
+        if (ticket.AssigneeId == null)
+        {
+            reason = "Ticket must be assigned to an individual before snoozing.";
+            return false;
+        }
+
+        // Cannot snooze closed/resolved tickets
+        if (ticket.ClosedAt != null)
+        {
+            reason = "Cannot snooze a closed ticket.";
+            return false;
+        }
+
+        reason = null;
+        return true;
     }
 }

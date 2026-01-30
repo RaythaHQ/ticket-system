@@ -172,6 +172,14 @@ public static class FilterAttributes
                 Type = "boolean",
                 Operators = OperatorDefinitions.BooleanOperators,
             },
+            new()
+            {
+                Field = "IsSnoozed",
+                Label = "Is Snoozed",
+                Type = "boolean",
+                Operators = OperatorDefinitions.BooleanOperators,
+                IsSortable = false,
+            },
             // Contact Fields
             new()
             {

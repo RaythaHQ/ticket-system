@@ -83,4 +83,6 @@ public class CurrentOrganization : ICurrentOrganization
 
     public string PathBase => _configuration.PathBase;
     public string RedirectWebsite => _configuration.RedirectWebsite;
+
+    public bool PauseSlaOnSnooze => OrganizationSettings?.PauseSlaOnSnooze ?? false;
 }

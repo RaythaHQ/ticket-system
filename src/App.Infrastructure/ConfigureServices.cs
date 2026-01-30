@@ -59,6 +59,7 @@ public static class ConfigureServices
         >();
         services.AddSingleton<ISecurityConfiguration, SecurityConfiguration>();
         services.AddScoped<IEmailerConfiguration, EmailerConfiguration>();
+        services.AddSingleton<ISnoozeConfiguration, SnoozeConfiguration>();
 
         services.AddScoped<IEmailer, Emailer>();
         services.AddTransient<IBackgroundTaskDb, BackgroundTaskDb>();
@@ -96,6 +97,9 @@ public static class ConfigureServices
 
         // SLA evaluation background job
         services.AddSingleton<IHostedService, SlaEvaluationJob>();
+
+        // Snooze evaluation background job
+        services.AddSingleton<IHostedService, SnoozeEvaluationJob>();
 
         // Ticket export background task
         services.AddScoped<

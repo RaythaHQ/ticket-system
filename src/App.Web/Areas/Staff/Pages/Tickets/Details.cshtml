@@ -33,6 +33,18 @@
             {
                 <span class="staff-badge staff-badge-secondary">@Model.Ticket.Category</span>
             }
+            @if (Model.Ticket.IsSnoozed)
+            {
+                <span class="staff-badge staff-badge-warning" title="Snoozed until @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.SnoozedUntil)">
+                    <i class="bi bi-clock-history me-1"></i>Snoozed
+                </span>
+            }
+            else if (Model.Ticket.IsRecentlyUnsnoozed)
+            {
+                <span class="staff-badge staff-badge-info" title="Unsnoozed @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.UnsnoozedAt)">
+                    <i class="bi bi-alarm me-1"></i>Recently Unsnoozed
+                </span>
+            }
         </div>
         <!-- Live presence indicator - shows who else is viewing this ticket -->
         <div id="ticket-presence-container" class="mt-2" style="display: none;"></div>
@@ -59,6 +71,22 @@
         }
         @if (Model.CanEditTicket)
         {
+            <!-- Snooze/Unsnooze Button -->
+            @if (Model.Ticket.IsSnoozed)
+            {
+                <form method="post" asp-page-handler="Unsnooze" asp-route-id="@Model.Ticket.Id" class="d-inline">
+                    <input type="hidden" asp-for="BackToListUrl" />
+                    <button type="submit" class="btn btn-outline-warning" title="Unsnooze this ticket now">
+                        <i class="bi bi-alarm me-2"></i>Unsnooze
+                    </button>
+                </form>
+            }
+            else if (Model.Ticket.CanSnooze)
+            {
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#snoozeModal" title="Temporarily hide this ticket">
+                    <i class="bi bi-clock-history me-2"></i>Snooze
+                </button>
+            }
             <a asp-page="@RouteNames.Tickets.Edit" asp-route-id="@Model.Ticket.Id" asp-route-backToListUrl="@Model.BackToListUrl" class="btn btn-outline-primary">
                 <i class="bi bi-pencil me-2"></i>Edit
             </a>
@@ -278,6 +306,34 @@
             </div>
         }
 
+        <!-- Snooze Info (when snoozed) -->
+        @if (Model.Ticket.IsSnoozed)
+        {
+            <div class="staff-card mb-4" style="border-color: var(--staff-warning); background-color: rgba(245, 158, 11, 0.05);">
+                <div class="staff-card-header" style="background-color: rgba(245, 158, 11, 0.1);">
+                    <h5><i class="bi bi-clock-history me-2"></i>Snoozed</h5>
+                </div>
+                <div class="staff-card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-5 text-muted fw-medium">Until</dt>
+                        <dd class="col-7 fw-medium">@CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.SnoozedUntil)</dd>
+
+                        <dt class="col-5 text-muted fw-medium">Snoozed by</dt>
+                        <dd class="col-7">@(Model.Ticket.SnoozedByName ?? "—")</dd>
+
+                        <dt class="col-5 text-muted fw-medium">Snoozed at</dt>
+                        <dd class="col-7 small">@CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Ticket.SnoozedAt)</dd>
+
+                        @if (!string.IsNullOrEmpty(Model.Ticket.SnoozedReason))
+                        {
+                            <dt class="col-5 text-muted fw-medium">Reason</dt>
+                            <dd class="col-7">@Model.Ticket.SnoozedReason</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+        }
+
         <!-- Ticket Details -->
         <div class="staff-card mb-4">
             <div class="staff-card-header">
@@ -391,6 +447,12 @@
                                 <span class="staff-badge @GetSlaBadgeClass(Model.Ticket.SlaStatus)">
                                     @Model.Ticket.SlaStatusLabel
                                 </span>
+                                @if (Model.Ticket.IsSnoozed && CurrentOrganization.PauseSlaOnSnooze)
+                                {
+                                    <span class="staff-badge staff-badge-info ms-1" title="SLA timer is paused while ticket is snoozed">
+                                        <i class="bi bi-pause-circle me-1"></i>Paused
+                                    </span>
+                                }
                             </dd>
                         </dl>
                     }
@@ -1133,4 +1195,10 @@
             hoursInput.addEventListener('change', updatePreview);
         });
     </script>
+}
+
+<!-- Snooze Modal -->
+@if (Model.CanEditTicket && Model.Ticket.CanSnooze && !Model.Ticket.IsSnoozed)
+{
+    <partial name="_SnoozeModal" model="Model.Ticket" />
 }

@@ -72,6 +72,34 @@ public class Ticket : BaseNumericFullAuditableEntity
     /// </summary>
     public int SlaExtensionCount { get; set; } = 0;
 
+    // Snooze fields
+    /// <summary>
+    /// When the ticket should automatically unsnooze. Null if not snoozed.
+    /// Stored as UTC.
+    /// </summary>
+    public DateTime? SnoozedUntil { get; set; }
+
+    /// <summary>
+    /// When the snooze was initiated. Stored as UTC.
+    /// </summary>
+    public DateTime? SnoozedAt { get; set; }
+
+    /// <summary>
+    /// User who snoozed the ticket.
+    /// </summary>
+    public Guid? SnoozedById { get; set; }
+    public virtual User? SnoozedBy { get; set; }
+
+    /// <summary>
+    /// Optional note explaining why the ticket was snoozed.
+    /// </summary>
+    public string? SnoozedReason { get; set; }
+
+    /// <summary>
+    /// When the ticket was last unsnoozed. Used for "recently unsnoozed" indicator.
+    /// </summary>
+    public DateTime? UnsnoozedAt { get; set; }
+
     // Collections
     public virtual ICollection<TicketChangeLogEntry> ChangeLogEntries { get; set; } =
         new List<TicketChangeLogEntry>();
@@ -104,4 +132,18 @@ public class Ticket : BaseNumericFullAuditableEntity
     [NotMapped]
     public SlaStatus? SlaStatusValue =>
         string.IsNullOrEmpty(SlaStatus) ? null : ValueObjects.SlaStatus.From(SlaStatus);
+
+    /// <summary>
+    /// Returns true if the ticket is currently snoozed (has a future unsnooze time).
+    /// </summary>
+    [NotMapped]
+    public bool IsSnoozed => SnoozedUntil != null && SnoozedUntil > DateTime.UtcNow;
+
+    /// <summary>
+    /// Returns true if the ticket was unsnoozed within the last 30 minutes.
+    /// Used for visual indicator in UI.
+    /// </summary>
+    [NotMapped]
+    public bool IsRecentlyUnsnoozed =>
+        UnsnoozedAt != null && DateTime.UtcNow - UnsnoozedAt.Value < TimeSpan.FromMinutes(30);
 }

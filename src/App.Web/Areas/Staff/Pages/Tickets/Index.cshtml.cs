@@ -123,6 +123,8 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         string? createdById = null,
         string? viewId = null,
         string? builtInView = null,
+        string? snoozeFilter = null,
+        bool showSnoozed = false,
         CancellationToken cancellationToken = default
     )
     {
@@ -146,6 +148,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 "team-tickets" => "TeamTickets",
                 "following" => "Following",
                 "overdue" => "Overdue",
+                "snoozed" => "Snoozed",
                 "all" or null or "" => "AllTickets",
                 _ => null,
             };
@@ -331,8 +334,13 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         }
         else if (!string.IsNullOrEmpty(builtInView))
         {
-            // Apply built-in view conditions
-            var conditions = await GetBuiltInViewConditionsAsync(builtInView, cancellationToken);
+            // Apply built-in view conditions with snooze filter overrides
+            var conditions = await GetBuiltInViewConditionsAsync(
+                builtInView,
+                snoozeFilter,
+                showSnoozed,
+                cancellationToken
+            );
             if (conditions != null)
             {
                 query = query with { ViewConditions = conditions };
@@ -386,6 +394,12 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             ContactName = p.ContactName ?? "-",
             ContactId = p.ContactId,
             CommentCount = p.CommentCount,
+            IsSnoozed = p.IsSnoozed,
+            SnoozedUntil = p.SnoozedUntil,
+            SnoozedUntilFormatted = p.SnoozedUntil.HasValue
+                ? CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(p.SnoozedUntil.Value)
+                : "",
+            IsRecentlyUnsnoozed = p.IsRecentlyUnsnoozed,
             SlaDueAt = p.SlaDueAt.HasValue
                 ? CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
                     p.SlaDueAt.Value
@@ -518,10 +532,10 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             );
         }
 
-        // Handle built-in view conditions
+        // Handle built-in view conditions (export doesn't use snooze filter overrides)
         if (!string.IsNullOrEmpty(builtInView))
         {
-            var conditions = await GetBuiltInViewConditionsAsync(builtInView, cancellationToken);
+            var conditions = await GetBuiltInViewConditionsAsync(builtInView, null, false, cancellationToken);
             if (conditions != null)
             {
                 foreach (var filter in conditions.Filters)
@@ -593,156 +607,142 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         }
     }
 
+    /// <summary>
+    /// Handles POST to unsnooze a ticket directly from the list.
+    /// </summary>
+    public async Task<IActionResult> OnPostUnsnoozeAsync(
+        long ticketId,
+        string? viewId = null,
+        string? builtInView = null,
+        string? search = null,
+        string? sortBy = null,
+        int? pageNumber = null,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var response = await Mediator.Send(
+            new Application.Tickets.Commands.UnsnoozeTicket.Command { TicketId = ticketId },
+            cancellationToken
+        );
+
+        if (response.Success)
+        {
+            SetSuccessMessage($"Ticket #{ticketId} has been unsnoozed.");
+        }
+        else
+        {
+            SetErrorMessage(response.GetErrors());
+        }
+
+        return RedirectToPage(
+            RouteNames.Tickets.Index,
+            new { viewId, builtInView, search, sortBy, pageNumber }
+        );
+    }
+
     private async Task<ViewConditions?> GetBuiltInViewConditionsAsync(
         string key,
+        string? snoozeFilter,
+        bool showSnoozed, // kept for backward compatibility but no longer used
         CancellationToken cancellationToken
     )
     {
         var currentUserId = CurrentUser.UserId?.Guid;
 
-        // Get closed status developer names for filtering
-        var closedStatusNames = AvailableStatuses
-            .Where(s => s.IsClosedType)
-            .Select(s => s.DeveloperName)
-            .ToList();
+        // Calculate effective snooze filter based on view type and explicit filter
+        // Defaults: "all" -> show all, "snoozed" -> only snoozed, others -> exclude snoozed
+        var effectiveSnoozeFilter = !string.IsNullOrEmpty(snoozeFilter)
+            ? snoozeFilter
+            : key switch
+            {
+                "all" => "", // Show all by default
+                "snoozed" => "snoozed", // Only snoozed by default
+                "closed" or "recently-closed" => "", // No snooze filter for closed (they can't be snoozed)
+                _ => "not-snoozed", // Exclude snoozed by default for all other views
+            };
 
-        ViewConditions? result = key switch
+        // Helper for non-snoozed filter condition (use is_false operator)
+        var notSnoozedCondition = new ViewFilterCondition
         {
-            "all" => null,
-            "unassigned" => new ViewConditions
+            Field = "IsSnoozed",
+            Operator = "is_false",
+        };
+
+        // Helper for snoozed-only filter condition (use is_true operator)
+        var snoozedOnlyCondition = new ViewFilterCondition
+        {
+            Field = "IsSnoozed",
+            Operator = "is_true",
+        };
+
+        // Build base conditions for each view (without snooze filters)
+        List<ViewFilterCondition>? baseFilters = key switch
+        {
+            "all" => new List<ViewFilterCondition>(),
+            "snoozed" => new List<ViewFilterCondition>(),
+            "unassigned" => new List<ViewFilterCondition>
             {
-                Logic = "AND",
-                Filters = new List<ViewFilterCondition>
-                {
-                    new() { Field = "AssigneeId", Operator = "isnull" },
-                    new() { Field = "OwningTeamId", Operator = "isnull" },
-                    new()
-                    {
-                        Field = "StatusType",
-                        Operator = "equals",
-                        Value = TicketStatusType.OPEN,
-                    },
-                },
+                new() { Field = "AssigneeId", Operator = "isnull" },
+                new() { Field = "OwningTeamId", Operator = "isnull" },
+                new() { Field = "StatusType", Operator = "equals", Value = TicketStatusType.OPEN },
             },
-            "my-tickets" => currentUserId.HasValue
-                ? new ViewConditions
-                {
-                    Logic = "AND",
-                    Filters = new List<ViewFilterCondition>
-                    {
-                        new()
-                        {
-                            Field = "AssigneeId",
-                            Operator = "equals",
-                            Value = new ShortGuid(currentUserId.Value).ToString(),
-                        },
-                        new()
-                        {
-                            Field = "StatusType",
-                            Operator = "equals",
-                            Value = TicketStatusType.OPEN,
-                        },
-                    },
-                }
-                : null,
-            "my-opened" or "created-by-me" => currentUserId.HasValue
-                ? new ViewConditions
-                {
-                    Logic = "AND",
-                    Filters = new List<ViewFilterCondition>
-                    {
-                        new()
-                        {
-                            Field = "CreatedByStaffId",
-                            Operator = "equals",
-                            Value = new ShortGuid(currentUserId.Value).ToString(),
-                        },
-                        new()
-                        {
-                            Field = "StatusType",
-                            Operator = "equals",
-                            Value = TicketStatusType.OPEN,
-                        },
-                    },
-                }
-                : null,
-            // team-tickets is handled via TeamTickets flag in the query, but still filter by open status
-            "team-tickets" => new ViewConditions
+            "my-tickets" when currentUserId.HasValue => new List<ViewFilterCondition>
             {
-                Logic = "AND",
-                Filters = new List<ViewFilterCondition>
-                {
-                    new()
-                    {
-                        Field = "StatusType",
-                        Operator = "equals",
-                        Value = TicketStatusType.OPEN,
-                    },
-                },
+                new() { Field = "AssigneeId", Operator = "equals", Value = new ShortGuid(currentUserId.Value).ToString() },
+                new() { Field = "StatusType", Operator = "equals", Value = TicketStatusType.OPEN },
             },
-            // following is handled via Following flag in the query, but still filter by open status
-            "following" => new ViewConditions
+            "my-opened" or "created-by-me" when currentUserId.HasValue => new List<ViewFilterCondition>
             {
-                Logic = "AND",
-                Filters = new List<ViewFilterCondition>
-                {
-                    new()
-                    {
-                        Field = "StatusType",
-                        Operator = "equals",
-                        Value = TicketStatusType.OPEN,
-                    },
-                },
+                new() { Field = "CreatedByStaffId", Operator = "equals", Value = new ShortGuid(currentUserId.Value).ToString() },
+                new() { Field = "StatusType", Operator = "equals", Value = TicketStatusType.OPEN },
             },
-            "overdue" => new ViewConditions
+            "team-tickets" => new List<ViewFilterCondition>
             {
-                Logic = "AND",
-                Filters = new List<ViewFilterCondition>
-                {
-                    new()
-                    {
-                        Field = "StatusType",
-                        Operator = "equals",
-                        Value = TicketStatusType.OPEN,
-                    },
-                    new()
-                    {
-                        Field = "SlaStatus",
-                        Operator = "equals",
-                        Value = SlaStatus.BREACHED,
-                    },
-                },
+                new() { Field = "StatusType", Operator = "equals", Value = TicketStatusType.OPEN },
             },
-            "open" => new ViewConditions
+            "following" => new List<ViewFilterCondition>
             {
-                Logic = "AND",
-                Filters = new List<ViewFilterCondition>
-                {
-                    new()
-                    {
-                        Field = "StatusType",
-                        Operator = "equals",
-                        Value = TicketStatusType.OPEN,
-                    },
-                },
+                new() { Field = "StatusType", Operator = "equals", Value = TicketStatusType.OPEN },
             },
-            "closed" or "recently-closed" => new ViewConditions
+            "overdue" => new List<ViewFilterCondition>
             {
-                Logic = "AND",
-                Filters = new List<ViewFilterCondition>
-                {
-                    new()
-                    {
-                        Field = "StatusType",
-                        Operator = "equals",
-                        Value = TicketStatusType.CLOSED,
-                    },
-                },
+                new() { Field = "StatusType", Operator = "equals", Value = TicketStatusType.OPEN },
+                new() { Field = "SlaStatus", Operator = "equals", Value = SlaStatus.BREACHED },
+            },
+            "open" => new List<ViewFilterCondition>
+            {
+                new() { Field = "StatusType", Operator = "equals", Value = TicketStatusType.OPEN },
+            },
+            "closed" or "recently-closed" => new List<ViewFilterCondition>
+            {
+                new() { Field = "StatusType", Operator = "equals", Value = TicketStatusType.CLOSED },
             },
             _ => null,
         };
 
-        return result;
+        if (baseFilters == null)
+            return null;
+
+        // Apply snooze filter based on effective value
+        if (effectiveSnoozeFilter == "snoozed")
+        {
+            baseFilters.Add(snoozedOnlyCondition);
+        }
+        else if (effectiveSnoozeFilter == "not-snoozed")
+        {
+            baseFilters.Add(notSnoozedCondition);
+        }
+        // else: empty string means show all (no snooze filter)
+
+        // Return null if no filters (for "all" view with no snooze filter)
+        if (baseFilters.Count == 0)
+            return null;
+
+        return new ViewConditions
+        {
+            Logic = "AND",
+            Filters = baseFilters,
+        };
     }
 
     private string? MapSortByToOrderBy(string sortBy)
@@ -800,6 +800,12 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
         public long? ContactId { get; init; }
 
         public int CommentCount { get; init; }
+
+        // Snooze fields
+        public bool IsSnoozed { get; init; }
+        public DateTime? SnoozedUntil { get; init; }
+        public string SnoozedUntilFormatted { get; init; } = string.Empty;
+        public bool IsRecentlyUnsnoozed { get; init; }
 
         [Display(Name = "SLA Due")]
         public string SlaDueAt { get; init; } = string.Empty;
@@ -875,6 +881,8 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                     ),
                 "Tags" => string.IsNullOrEmpty(Tags) ? "—" : Tags,
                 "CreatedByName" => string.IsNullOrEmpty(CreatedByName) ? "—" : CreatedByName,
+                "IsSnoozed" => IsSnoozed ? "Yes" : "No",
+                "SnoozedUntil" => string.IsNullOrEmpty(SnoozedUntilFormatted) ? "—" : SnoozedUntilFormatted,
                 _ => "—",
             };
     }

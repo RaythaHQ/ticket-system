@@ -56,6 +56,7 @@ public static class NotificationType
     public const string SlaApproaching = "sla_approaching";
     public const string SlaBreach = "sla_breach";
     public const string TicketReopened = "ticket_reopened";
+    public const string TicketUnsnoozed = "ticket_unsnoozed";
     public const string Info = "info";
     public const string Success = "success";
     public const string Warning = "warning";

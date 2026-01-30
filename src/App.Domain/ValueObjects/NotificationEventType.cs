@@ -9,6 +9,7 @@ public class NotificationEventType : ValueObject
     public const string TICKET_REOPENED = "ticket_reopened";
     public const string SLA_APPROACHING = "sla_approaching";
     public const string SLA_BREACHED = "sla_breached";
+    public const string TICKET_UNSNOOZED = "ticket_unsnoozed";
 
     static NotificationEventType() { }
 
@@ -41,6 +42,7 @@ public class NotificationEventType : ValueObject
     public static NotificationEventType SlaApproaching =>
         new("SLA Approaching Breach", SLA_APPROACHING);
     public static NotificationEventType SlaBreached => new("SLA Breached", SLA_BREACHED);
+    public static NotificationEventType TicketUnsnoozed => new("Ticket Unsnoozed", TICKET_UNSNOOZED);
 
     public string Label { get; set; } = string.Empty;
     public string DeveloperName { get; set; } = string.Empty;
@@ -71,6 +73,7 @@ public class NotificationEventType : ValueObject
             yield return TicketReopened;
             yield return SlaApproaching;
             yield return SlaBreached;
+            yield return TicketUnsnoozed;
         }
     }
 

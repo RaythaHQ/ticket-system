@@ -1,4 +1,4 @@
-﻿namespace App.Domain.Entities;
+namespace App.Domain.Entities;
 
 public class EmailTemplate : BaseAuditableEntity
 {
@@ -143,6 +143,12 @@ public class BuiltInEmailTemplate : ValueObject
             "email_ticket_reopened",
             true
         );
+    public static BuiltInEmailTemplate TicketUnsnoozedEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] Ticket #{{ Target.TicketId }} has been unsnoozed",
+            "email_ticket_unsnoozed",
+            true
+        );
 
     public string DefaultSubject { get; private set; } = string.Empty;
     public string DeveloperName { get; private set; } = string.Empty;
@@ -200,6 +206,7 @@ public class BuiltInEmailTemplate : ValueObject
             yield return TicketStatusChangedEmail;
             yield return TicketClosedEmail;
             yield return TicketReopenedEmail;
+            yield return TicketUnsnoozedEmail;
             yield return SlaApproachingEmail;
             yield return SlaBreachedEmail;
         }

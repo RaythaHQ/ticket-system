@@ -110,6 +110,17 @@ public class ChangeTicketStatus
                 }
                 ticket.ClosedAt = DateTime.UtcNow;
                 ticket.ClosedByStaffId = _currentUser.UserIdAsGuid;
+
+                // Cancel any active snooze (closed tickets cannot be snoozed)
+                // Note: No unsnooze notification is sent when ticket is closed (per spec)
+                if (ticket.SnoozedUntil != null)
+                {
+                    ticket.SnoozedUntil = null;
+                    ticket.SnoozedAt = null;
+                    ticket.SnoozedById = null;
+                    ticket.SnoozedReason = null;
+                    // Don't set UnsnoozedAt - ticket was closed, not unsnoozed
+                }
             }
             else if (oldStatusConfig?.IsClosedType == true && newStatusConfig?.IsOpenType == true)
             {

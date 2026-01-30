@@ -72,6 +72,17 @@
                             <div class="invalid-feedback">@Model.ErrorMessageFor("SmtpDefaultFromAddress")</div>
                         </div>
                     </div>
+                    <hr />
+                    <h5>Ticketing settings</h5>
+                    <div class="col-lg-12">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" asp-for="Form.PauseSlaOnSnooze">
+                                <label class="form-check-label" asp-for="Form.PauseSlaOnSnooze">Pause SLA timers when tickets are snoozed</label>
+                            </div>
+                            <small class="text-muted">When enabled, SLA due times are extended by the snooze duration when a ticket is unsnoozed.</small>
+                        </div>
+                    </div>
                     <button type="submit" class="btn btn-success mt-4">Save changes</button>
                 </form>
             </div>

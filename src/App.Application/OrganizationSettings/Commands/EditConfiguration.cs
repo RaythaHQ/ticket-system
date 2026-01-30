@@ -1,4 +1,4 @@
-﻿using CSharpVitamins;
+using CSharpVitamins;
 using FluentValidation;
 using Mediator;
 using App.Application.Common.Interfaces;
@@ -17,6 +17,11 @@ public class EditConfiguration
         public string DateFormat { get; init; } = null!;
         public string SmtpDefaultFromAddress { get; init; } = null!;
         public string SmtpDefaultFromName { get; init; } = null!;
+
+        /// <summary>
+        /// When true, SLA due times are paused while a ticket is snoozed.
+        /// </summary>
+        public bool PauseSlaOnSnooze { get; init; } = false;
     }
 
     public class Validator : AbstractValidator<Command>
@@ -60,6 +65,7 @@ public class EditConfiguration
             entity.DateFormat = request.DateFormat;
             entity.SmtpDefaultFromAddress = request.SmtpDefaultFromAddress;
             entity.SmtpDefaultFromName = request.SmtpDefaultFromName;
+            entity.PauseSlaOnSnooze = request.PauseSlaOnSnooze;
 
             await _db.SaveChangesAsync(cancellationToken);
 

@@ -504,6 +504,19 @@ public class TicketImportBackgroundTask : TicketImportJob
             .TicketPriorityConfigs.AsNoTracking()
             .ToListAsync(cancellationToken);
 
+        // Get the default status (SortOrder = 1, or first active open status)
+        var defaultStatus = statuses
+            .Where(s => s.IsActive && !s.IsClosedType)
+            .OrderBy(s => s.SortOrder)
+            .FirstOrDefault();
+
+        // Get the default priority (IsDefault = true, or first active priority)
+        var defaultPriority = priorities
+            .Where(p => p.IsActive)
+            .OrderByDescending(p => p.IsDefault)
+            .ThenBy(p => p.SortOrder)
+            .FirstOrDefault();
+
         return new ReferenceLookups
         {
             TeamsById = teams.ToDictionary(t => t.Id),
@@ -527,6 +540,8 @@ public class TicketImportBackgroundTask : TicketImportJob
             ValidPriorities = priorities
                 .Select(p => p.DeveloperName.ToLowerInvariant())
                 .ToHashSet(StringComparer.OrdinalIgnoreCase),
+            DefaultStatusDeveloperName = defaultStatus?.DeveloperName ?? TicketStatus.OPEN,
+            DefaultPriorityDeveloperName = defaultPriority?.DeveloperName ?? TicketPriority.NORMAL,
         };
     }
 
@@ -725,8 +740,8 @@ public class TicketImportBackgroundTask : TicketImportJob
             Id = ticketId,
             Title = GetValue(row, ColumnNames.Title) ?? string.Empty,
             Description = GetNullableValue(row, ColumnNames.Description),
-            Status = TicketStatus.OPEN,
-            Priority = TicketPriority.NORMAL,
+            Status = lookups.DefaultStatusDeveloperName,
+            Priority = lookups.DefaultPriorityDeveloperName,
             Category = GetNullableValue(row, ColumnNames.Category),
         };
 
@@ -1468,6 +1483,8 @@ public class TicketImportBackgroundTask : TicketImportJob
         public Dictionary<string, Contact> ContactsByEmail { get; init; } = new();
         public HashSet<string> ValidStatuses { get; init; } = new();
         public HashSet<string> ValidPriorities { get; init; } = new();
+        public string DefaultStatusDeveloperName { get; init; } = TicketStatus.OPEN;
+        public string DefaultPriorityDeveloperName { get; init; } = TicketPriority.NORMAL;
     }
 
     private record ResolveResult<T>

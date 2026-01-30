@@ -242,6 +242,37 @@ public class UpdateTicket
                 };
                 ticket.AssigneeId = effectiveAssigneeId;
                 ticket.AssignedAt = effectiveAssigneeId.HasValue ? DateTime.UtcNow : null;
+
+                // Auto-unsnooze if ticket is snoozed and new assignee is null (constraint: snoozed tickets must have individual assignee)
+                if (!effectiveAssigneeId.HasValue && ticket.SnoozedUntil != null)
+                {
+                    var snoozeDuration =
+                        ticket.SnoozedAt != null
+                            ? DateTime.UtcNow - ticket.SnoozedAt.Value
+                            : TimeSpan.Zero;
+
+                    ticket.SnoozedUntil = null;
+                    ticket.SnoozedAt = null;
+                    ticket.SnoozedById = null;
+                    ticket.SnoozedReason = null;
+                    ticket.UnsnoozedAt = DateTime.UtcNow;
+
+                    changes["SnoozedUntil"] = new
+                    {
+                        OldValue = "Snoozed",
+                        NewValue = (string?)null,
+                    };
+
+                    // Raise unsnooze event for notifications
+                    ticket.AddDomainEvent(
+                        new TicketUnsnoozedEvent(
+                            ticket,
+                            unsnoozedById: _currentUser.UserIdAsGuid,
+                            wasAutoUnsnooze: true, // This is an automatic unsnooze due to unassignment
+                            snoozeDuration: snoozeDuration
+                        )
+                    );
+                }
             }
 
             if (ticket.ContactId != request.ContactId)

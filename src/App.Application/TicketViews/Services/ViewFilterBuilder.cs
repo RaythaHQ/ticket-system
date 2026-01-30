@@ -187,6 +187,7 @@ public class ViewFilterBuilder
             "hascontact" => BuildBooleanExpression(param, filter, t => t.ContactId != null),
             "hasattachments" => BuildBooleanExpression(param, filter, t => t.Attachments.Any()),
             "hascomments" => BuildBooleanExpression(param, filter, t => t.Comments.Any()),
+            "issnoozed" => BuildIsSnoozedExpression(param, filter),
 
             // Contact fields
             "contact.firstname" => BuildContactStringExpression(param, c => c.FirstName, filter),
@@ -863,12 +864,57 @@ public class ViewFilterBuilder
         Expression<Func<Ticket, bool>> selector
     )
     {
-        var field = Expression.Invoke(selector, param);
+        // Replace the selector's parameter with our param to properly compose the expression tree
+        // This ensures EF Core can translate the expression to SQL correctly
+        var selectorBody = selector.Body;
+        var selectorParam = selector.Parameters[0];
+        
+        // Use ParameterReplacer to substitute the selector's parameter with our shared param
+        var replacer = new ParameterReplacer(selectorParam, param);
+        var field = replacer.Visit(selectorBody);
 
         return filter.Operator switch
         {
             IS_TRUE => field,
             IS_FALSE => Expression.Not(field),
+            _ => null,
+        };
+    }
+
+    /// <summary>
+    /// Build IsSnoozed expression manually for proper SQL translation.
+    /// IsSnoozed = SnoozedUntil IS NOT NULL AND SnoozedUntil > UTC_NOW
+    /// </summary>
+    private Expression? BuildIsSnoozedExpression(
+        ParameterExpression param,
+        ViewFilterCondition filter
+    )
+    {
+        // Build: t.SnoozedUntil != null && t.SnoozedUntil > DateTime.UtcNow
+        var snoozedUntilProp = Expression.Property(param, nameof(Ticket.SnoozedUntil));
+        
+        // t.SnoozedUntil != null
+        var notNullCheck = Expression.NotEqual(
+            snoozedUntilProp,
+            Expression.Constant(null, typeof(DateTime?))
+        );
+        
+        // Access the Value property of the nullable DateTime for comparison
+        var snoozedUntilValue = Expression.Property(snoozedUntilProp, "Value");
+        
+        // DateTime.UtcNow - use a method call expression for proper SQL translation
+        var utcNowExpr = Expression.Property(null, typeof(DateTime), nameof(DateTime.UtcNow));
+        
+        // t.SnoozedUntil.Value > DateTime.UtcNow
+        var greaterThanNow = Expression.GreaterThan(snoozedUntilValue, utcNowExpr);
+        
+        // Combine: t.SnoozedUntil != null && t.SnoozedUntil.Value > DateTime.UtcNow
+        var isSnoozedExpr = Expression.AndAlso(notNullCheck, greaterThanNow);
+
+        return filter.Operator switch
+        {
+            IS_TRUE => isSnoozedExpr,
+            IS_FALSE => Expression.Not(isSnoozedExpr),
             _ => null,
         };
     }

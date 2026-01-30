@@ -68,6 +68,18 @@ public static class ColumnRegistry
             Label = "Description",
             IsSearchable = true,
         },
+        new()
+        {
+            Field = "IsSnoozed",
+            Label = "Snoozed",
+            IsSearchable = false,
+        },
+        new()
+        {
+            Field = "SnoozedUntil",
+            Label = "Snoozed Until",
+            IsSearchable = false,
+        },
     };
 
     /// <summary>

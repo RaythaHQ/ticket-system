@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using CSharpVitamins;
 using App.Application.Common.Utils;
 
@@ -17,6 +17,11 @@ public record OrganizationSettingsDto
     public int? SmtpPort { get; init; }
     public string SmtpUsername { get; init; } = string.Empty;
     public string SmtpPassword { get; init; } = string.Empty;
+
+    /// <summary>
+    /// When true, SLA due times are paused while a ticket is snoozed.
+    /// </summary>
+    public bool PauseSlaOnSnooze { get; init; } = false;
 
     public static Expression<
         Func<Domain.Entities.OrganizationSettings, OrganizationSettingsDto>
@@ -43,6 +48,7 @@ public record OrganizationSettingsDto
             SmtpPort = entity.SmtpPort,
             SmtpPassword = entity.SmtpPassword,
             SmtpUsername = entity.SmtpUsername,
+            PauseSlaOnSnooze = entity.PauseSlaOnSnooze,
         };
     }
 }

@@ -1,4 +1,4 @@
-﻿using CSharpVitamins;
+using CSharpVitamins;
 using App.Application.AuthenticationSchemes;
 using App.Application.Common.Utils;
 
@@ -21,4 +21,9 @@ public interface ICurrentOrganization
 
     OrganizationTimeZoneConverter TimeZoneConverter { get; }
     IEnumerable<AuthenticationSchemeDto> AuthenticationSchemes { get; }
+
+    /// <summary>
+    /// When true, SLA due times are paused while a ticket is snoozed.
+    /// </summary>
+    bool PauseSlaOnSnooze { get; }
 }

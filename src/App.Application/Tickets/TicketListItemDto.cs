@@ -35,6 +35,11 @@ public record TicketListItemDto : BaseNumericEntityDto
     public DateTime? ClosedAt { get; init; }
     public string? CreatedByStaffName { get; init; }
 
+    // Snooze fields
+    public bool IsSnoozed { get; init; }
+    public DateTime? SnoozedUntil { get; init; }
+    public bool IsRecentlyUnsnoozed { get; init; }
+
     /// <summary>
     /// Gets an Expression-based projection for EF Core translation.
     /// This allows CommentCount to be calculated as a SQL subquery instead of loading all comments.
@@ -81,6 +86,12 @@ public record TicketListItemDto : BaseNumericEntityDto
                 ticket.CreatedByStaff != null
                     ? ticket.CreatedByStaff.FirstName + " " + ticket.CreatedByStaff.LastName
                     : null,
+            // Snooze fields - computed at runtime since IsSnoozed depends on DateTime.UtcNow
+            IsSnoozed = ticket.SnoozedUntil != null && ticket.SnoozedUntil > DateTime.UtcNow,
+            SnoozedUntil = ticket.SnoozedUntil,
+            IsRecentlyUnsnoozed =
+                ticket.UnsnoozedAt != null
+                && DateTime.UtcNow - ticket.UnsnoozedAt.Value < TimeSpan.FromMinutes(30),
         };
     }
 
@@ -116,6 +127,10 @@ public record TicketListItemDto : BaseNumericEntityDto
             LastModificationTime = ticket.LastModificationTime,
             ClosedAt = ticket.ClosedAt,
             CreatedByStaffName = ticket.CreatedByStaff?.FullName,
+            // Snooze fields
+            IsSnoozed = ticket.IsSnoozed,
+            SnoozedUntil = ticket.SnoozedUntil,
+            IsRecentlyUnsnoozed = ticket.IsRecentlyUnsnoozed,
         };
     }
 }

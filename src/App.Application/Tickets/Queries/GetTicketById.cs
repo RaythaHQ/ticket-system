@@ -34,6 +34,7 @@ public class GetTicketById
                 .Include(t => t.CreatedByStaff)
                 .Include(t => t.Contact)
                 .Include(t => t.SlaRule)
+                .Include(t => t.SnoozedBy)
                 .FirstOrDefaultAsync(t => t.Id == request.Id, cancellationToken);
 
             if (ticket == null)

@@ -70,6 +70,7 @@ public class Index : BaseAdminPageModel
             TimeZone = response.Result.TimeZone,
             SmtpDefaultFromAddress = response.Result.SmtpDefaultFromAddress,
             SmtpDefaultFromName = response.Result.SmtpDefaultFromName,
+            PauseSlaOnSnooze = response.Result.PauseSlaOnSnooze,
         };
         return Page();
     }
@@ -84,6 +85,7 @@ public class Index : BaseAdminPageModel
             WebsiteUrl = Form.WebsiteUrl,
             SmtpDefaultFromAddress = Form.SmtpDefaultFromAddress,
             SmtpDefaultFromName = Form.SmtpDefaultFromName,
+            PauseSlaOnSnooze = Form.PauseSlaOnSnooze,
         };
         var response = await Mediator.Send(input);
 
@@ -122,5 +124,8 @@ public class Index : BaseAdminPageModel
 
         [Display(Name = "Default reply-to name")]
         public string SmtpDefaultFromName { get; set; }
+
+        [Display(Name = "Pause SLA on snooze")]
+        public bool PauseSlaOnSnooze { get; set; }
     }
 }

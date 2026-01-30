@@ -1,0 +1,189 @@
+@model App.Application.Tickets.TicketDto
+@using App.Application.Common.Utils
+@inject App.Application.Common.Interfaces.ICurrentOrganization CurrentOrganization
+@inject App.Application.Common.Interfaces.ISnoozeConfiguration SnoozeConfiguration
+
+@{
+    var backToListUrl = ViewData["BackToListUrl"]?.ToString();
+    var now = DateTime.UtcNow;
+    var timeZoneString = CurrentOrganization.TimeZone;
+    var orgNow = now.UtcToTimeZone(timeZoneString);
+
+    // Calculate preset times in organization timezone
+    // Later Today: Today at 4:30 PM (if it's before 4:30 PM) or +2 hours
+    var laterTodayLocal = orgNow.Hour < 16
+        ? orgNow.Date.AddHours(16).AddMinutes(30)
+        : orgNow.AddHours(2);
+    var laterTodayUtc = laterTodayLocal.TimeZoneToUtc(timeZoneString);
+
+    // Tomorrow: 9:00 AM tomorrow
+    var tomorrowLocal = orgNow.Date.AddDays(1).AddHours(9);
+    var tomorrowUtc = tomorrowLocal.TimeZoneToUtc(timeZoneString);
+
+    // In 3 Days: 9:00 AM in 3 days
+    var in3DaysLocal = orgNow.Date.AddDays(3).AddHours(9);
+    var in3DaysUtc = in3DaysLocal.TimeZoneToUtc(timeZoneString);
+
+    // Next Week: 9:00 AM next Monday
+    var daysUntilMonday = ((int)DayOfWeek.Monday - (int)orgNow.DayOfWeek + 7) % 7;
+    if (daysUntilMonday == 0) daysUntilMonday = 7; // If today is Monday, go to next Monday
+    var nextWeekLocal = orgNow.Date.AddDays(daysUntilMonday).AddHours(9);
+    var nextWeekUtc = nextWeekLocal.TimeZoneToUtc(timeZoneString);
+    
+    var maxSnoozeDate = now.AddDays(SnoozeConfiguration.MaxDurationDays);
+    var maxSnoozeDateLocal = maxSnoozeDate.UtcToTimeZone(timeZoneString);
+    var minSnoozeLocal = orgNow.AddMinutes(5);
+    
+    // Get timezone display name
+    var tzInfo = DateTimeExtensions.GetTimeZoneInfo(timeZoneString);
+    var tzDisplayName = tzInfo.DisplayName;
+}
+
+<!-- Snooze Modal -->
+<div class="modal fade" id="snoozeModal" tabindex="-1" aria-labelledby="snoozeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="snoozeModalLabel">
+                    <i class="bi bi-clock-history me-2"></i>Snooze Ticket
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" asp-page-handler="Snooze" asp-route-id="@Model.Id">
+                <input type="hidden" name="BackToListUrl" value="@backToListUrl" />
+                <div class="modal-body">
+                    @if (!Model.CanSnooze)
+                    {
+                        <div class="alert alert-warning mb-3">
+                            <i class="bi bi-exclamation-triangle me-2"></i>@Model.CannotSnoozeReason
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-3">
+                            Snoozing will temporarily hide this ticket from your active queue until the specified time.
+                        </p>
+
+                        <!-- Quick Presets -->
+                        <div class="mb-4">
+                            <label class="form-label fw-medium">Quick Presets</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                @if (laterTodayUtc > now && laterTodayUtc <= maxSnoozeDate)
+                                {
+                                    <button type="button" class="btn btn-outline-primary snooze-preset" 
+                                            data-snooze-utc="@laterTodayUtc.ToString("o")"
+                                            data-snooze-local="@laterTodayLocal.ToString("yyyy-MM-ddTHH:mm")">
+                                        <i class="bi bi-sun me-1"></i>Later Today
+                                        <small class="d-block text-muted">@laterTodayLocal.ToString("h:mm tt")</small>
+                                    </button>
+                                }
+                                @if (tomorrowUtc <= maxSnoozeDate)
+                                {
+                                    <button type="button" class="btn btn-outline-primary snooze-preset"
+                                            data-snooze-utc="@tomorrowUtc.ToString("o")"
+                                            data-snooze-local="@tomorrowLocal.ToString("yyyy-MM-ddTHH:mm")">
+                                        <i class="bi bi-sunrise me-1"></i>Tomorrow
+                                        <small class="d-block text-muted">@tomorrowLocal.ToString("MMM d") 9:00 AM</small>
+                                    </button>
+                                }
+                                @if (in3DaysUtc <= maxSnoozeDate)
+                                {
+                                    <button type="button" class="btn btn-outline-primary snooze-preset"
+                                            data-snooze-utc="@in3DaysUtc.ToString("o")"
+                                            data-snooze-local="@in3DaysLocal.ToString("yyyy-MM-ddTHH:mm")">
+                                        <i class="bi bi-calendar3 me-1"></i>In 3 Days
+                                        <small class="d-block text-muted">@in3DaysLocal.ToString("MMM d") 9:00 AM</small>
+                                    </button>
+                                }
+                                @if (nextWeekUtc <= maxSnoozeDate)
+                                {
+                                    <button type="button" class="btn btn-outline-primary snooze-preset"
+                                            data-snooze-utc="@nextWeekUtc.ToString("o")"
+                                            data-snooze-local="@nextWeekLocal.ToString("yyyy-MM-ddTHH:mm")">
+                                        <i class="bi bi-calendar-week me-1"></i>Next Week
+                                        <small class="d-block text-muted">@nextWeekLocal.ToString("MMM d") 9:00 AM</small>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <!-- Custom Date/Time -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">Or pick a custom date/time</label>
+                            <input type="datetime-local" 
+                                   name="SnoozeForm.SnoozeUntil" 
+                                   id="snooze-datetime-input"
+                                   class="form-control"
+                                   min="@minSnoozeLocal.ToString("yyyy-MM-ddTHH:mm")"
+                                   max="@maxSnoozeDateLocal.ToString("yyyy-MM-ddTHH:mm")" />
+                            <small class="text-muted">
+                                Times shown in @tzDisplayName. Maximum snooze: @SnoozeConfiguration.MaxDurationDays days.
+                            </small>
+                        </div>
+
+                        <!-- Reason (Optional) -->
+                        <div class="mb-3">
+                            <label for="snooze-reason" class="form-label fw-medium">Reason (optional)</label>
+                            <input type="text" 
+                                   name="SnoozeForm.Reason" 
+                                   id="snooze-reason"
+                                   class="form-control" 
+                                   maxlength="500"
+                                   placeholder="e.g., Waiting for customer callback" />
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    @if (Model.CanSnooze)
+                    {
+                        <button type="submit" class="btn btn-primary" id="snooze-submit-btn" disabled>
+                            <i class="bi bi-clock-history me-2"></i>Snooze
+                        </button>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('snoozeModal');
+    if (!modal) return;
+
+    const datetimeInput = document.getElementById('snooze-datetime-input');
+    const submitBtn = document.getElementById('snooze-submit-btn');
+    const presetButtons = document.querySelectorAll('.snooze-preset');
+
+    // Enable submit button when datetime is selected
+    if (datetimeInput) {
+        datetimeInput.addEventListener('change', function() {
+            if (submitBtn) {
+                submitBtn.disabled = !this.value;
+            }
+        });
+    }
+
+    // Handle preset button clicks
+    presetButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const localTime = this.dataset.snoozeLocal;
+            
+            if (datetimeInput && localTime) {
+                datetimeInput.value = localTime;
+                
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                }
+            }
+            
+            // Highlight selected preset
+            presetButtons.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+});
+</script>
