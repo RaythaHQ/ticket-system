@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using App.Application.Common.Exceptions;
+using App.Application.Common.Security;
+using App.Application.Common.Utils;
 using App.Application.Login.Commands;
 using App.Domain.Entities;
 
@@ -71,6 +74,43 @@ public class AppApiAuthorizationHandler : IAuthorizationHandler
         {
             systemPermissions.AddRange(role.SystemPermissions);
         }
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Result.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Result.EmailAddress),
+            new Claim(ClaimTypes.GivenName, user.Result.FirstName),
+            new Claim(ClaimTypes.Surname, user.Result.LastName),
+            new Claim(
+                RaythaClaimTypes.LastModificationTime,
+                user.Result.LastModificationTime?.ToString() ?? string.Empty
+            ),
+            new Claim(RaythaClaimTypes.IsAdmin, user.Result.IsAdmin.ToString()),
+            new Claim(RaythaClaimTypes.SsoId, user.Result.SsoId.IfNullOrEmpty(string.Empty)),
+            new Claim(
+                RaythaClaimTypes.AuthenticationScheme,
+                user.Result.AuthenticationScheme.IfNullOrEmpty(string.Empty)
+            ),
+        };
+
+        foreach (var role in user.Result.Roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role.DeveloperName.ToString()));
+        }
+
+        foreach (var systemPermission in systemPermissions.Distinct())
+        {
+            claims.Add(new Claim(RaythaClaimTypes.SystemPermissions, systemPermission));
+        }
+
+        foreach (var userGroup in user.Result.UserGroups)
+        {
+            claims.Add(new Claim(RaythaClaimTypes.UserGroups, userGroup.DeveloperName));
+        }
+
+        var identity = new ClaimsIdentity(claims, "ApiKey");
+        var principal = new ClaimsPrincipal(identity);
+        _httpContextAccessor.HttpContext.User = principal;
 
         foreach (var requirement in pendingRequirements)
         {
