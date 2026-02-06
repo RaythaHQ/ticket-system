@@ -8,6 +8,7 @@ using App.Web.Areas.Admin.Pages.Shared.Models;
 using App.Web.Areas.Shared.Models;
 using CSharpVitamins;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Net.Http.Headers;
 
 namespace App.Web.Areas.Admin.Pages.Reports;
 
@@ -117,6 +118,47 @@ public class Index : BaseAdminPageModel
             .ToList();
 
         return Page();
+    }
+
+    public async Task<IActionResult> OnGetExportCsv(CancellationToken cancellationToken)
+    {
+        if (!_permissionService.CanAccessReports())
+            return Forbid();
+
+        StartDate ??= DateTime.UtcNow.AddDays(-30);
+        EndDate ??= DateTime.UtcNow;
+
+        var startDateUtc = StartDate.HasValue
+            ? DateTime.SpecifyKind(StartDate.Value, DateTimeKind.Utc)
+            : (DateTime?)null;
+        var endDateUtc = EndDate.HasValue
+            ? DateTime.SpecifyKind(EndDate.Value, DateTimeKind.Utc)
+            : (DateTime?)null;
+
+        var response = await Mediator.Send(
+            new GetOrganizationReport.Query { StartDate = startDateUtc, EndDate = endDateUtc },
+            cancellationToken
+        );
+
+        var report = response.Result;
+        var csv = new CsvWriterUtility();
+
+        foreach (var team in report.TeamBreakdown)
+        {
+            csv.AddRow(new Dictionary<string, string>
+            {
+                ["Team"] = team.TeamName,
+                ["Created"] = team.TicketsCreated.ToString(),
+                ["Closed"] = team.TicketsClosed.ToString(),
+                ["Open"] = team.OpenTickets.ToString(),
+                ["SLA Compliance (%)"] = $"{team.SlaComplianceRate:F1}",
+            });
+        }
+
+        var bytes = csv.ExportToBytes();
+        var fileName = $"team-breakdown-{DateTime.UtcNow:yyyy-MM-dd}.csv";
+
+        return File(bytes, "text/csv", fileName);
     }
 
     public record TeamSelectItem
