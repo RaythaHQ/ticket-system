@@ -14,7 +14,7 @@ namespace App.Application.Tickets.EventHandlers;
 /// <summary>
 /// Sends email and in-app notification when a comment is added to a ticket.
 /// Notifies:
-/// - Ticket assignee and creator (respects their notification preferences)
+/// - Ticket assignee (respects their notification preferences)
 /// - Ticket followers (bypasses notification preferences)
 /// - Mentioned users and team members (bypasses notification preferences)
 /// All notifications are deduplicated and the commenter is never notified.
@@ -78,12 +78,10 @@ public class TicketCommentAddedEventHandler_SendNotification
 
             // === COLLECT RECIPIENTS ===
 
-            // 1. Standard recipients (assignee, creator) - respect preferences
+            // 1. Standard recipients (assignee) - respect preferences
             var standardRecipients = new HashSet<Guid>();
             if (ticket.AssigneeId.HasValue && ticket.AssigneeId.Value != commenterId)
                 standardRecipients.Add(ticket.AssigneeId.Value);
-            if (ticket.CreatedByStaffId.HasValue && ticket.CreatedByStaffId.Value != commenterId)
-                standardRecipients.Add(ticket.CreatedByStaffId.Value);
 
             // 2. Forced recipients (followers, mentions) - bypass preferences
             var forcedRecipients = new HashSet<Guid>();
