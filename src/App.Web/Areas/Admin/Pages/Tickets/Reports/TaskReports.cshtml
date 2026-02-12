@@ -1,0 +1,509 @@
+@page "/admin/tickets/reports/tasks"
+@model App.Web.Areas.Admin.Pages.Reports.TaskReports
+@using App.Web.Areas.Admin.Pages.Shared
+
+@{
+    Layout = "SidebarLayout";
+    ViewData["Title"] = "Task Reports";
+    ViewData["ActiveMenu"] = "TaskReports";
+    ViewData["ExpandTasksMenu"] = true;
+}
+
+<div>
+    <partial name="_Partials/PageHeading" model='"Task Reports"' />
+
+    <!-- Date Range Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="text-muted me-2 align-self-center">Quick select:</span>
+                <a href="?preset=today"
+                   class="btn @(Model.ActivePreset == "today" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-calendar-day me-1"></i>Today
+                </a>
+                <a href="?preset=week"
+                   class="btn @(Model.ActivePreset == "week" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-calendar-week me-1"></i>This Week
+                </a>
+                <a href="?preset=month"
+                   class="btn @(Model.ActivePreset == "month" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-calendar-range me-1"></i>This Month
+                </a>
+            </div>
+            <hr class="my-3">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label text-muted small mb-1">Start Date</label>
+                    <input type="date" name="startDate" class="form-control"
+                           value="@Model.StartDate?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted small mb-1">End Date</label>
+                    <input type="date" name="endDate" class="form-control"
+                           value="@Model.EndDate?.ToString("yyyy-MM-dd")" />
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel me-1"></i> Apply Filter
+                    </button>
+                </div>
+                <div class="col-md-3 text-end align-self-center">
+                    <span class="text-muted small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        @Model.Report.PeriodStart.ToString("MMM dd, yyyy") &mdash; @Model.Report.PeriodEnd.ToString("MMM dd, yyyy")
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Period Statistics -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <small class="text-muted text-uppercase fw-semibold">Period Statistics</small>
+        </div>
+    </div>
+    <div class="row mb-4 g-3">
+        <div class="col-6 col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-primary mb-1">@Model.Report.TasksCreated</h3>
+                    <p class="text-muted mb-0 small">Created</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-success mb-1">@Model.Report.TasksCompleted</h3>
+                    <p class="text-muted mb-0 small">Completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-warning mb-1">@Model.Report.TasksReopened</h3>
+                    <p class="text-muted mb-0 small">Reopened</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current State -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <small class="text-muted text-uppercase fw-semibold">Current State</small>
+        </div>
+    </div>
+    <div class="row mb-4 g-3">
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-info mb-1">@Model.Report.CurrentOpenTasks</h3>
+                    <p class="text-muted mb-0 small">Open Now</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-danger mb-1">@Model.Report.OverdueTasks</h3>
+                    <p class="text-muted mb-0 small">Overdue</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-secondary mb-1">@Model.Report.BlockedTasks</h3>
+                    <p class="text-muted mb-0 small">Blocked</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    @{
+                        var totalForRate = Model.Report.TasksCreated + Model.Report.TasksCompleted;
+                        var completionRate = totalForRate > 0
+                            ? Math.Round((double)Model.Report.TasksCompleted / totalForRate * 100, 1)
+                            : 0;
+                    }
+                    <h3 class="@(completionRate >= 70 ? "text-success" : completionRate >= 40 ? "text-warning" : "text-danger") mb-1">
+                        @($"{completionRate:F1}%")
+                    </h3>
+                    <p class="text-muted mb-0 small">Completion Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0">Daily Task Activity</h6>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="dailyTasksChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0">Task Status Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Breakdown -->
+    <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-people me-2"></i>Team Breakdown</h6>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Report.TeamBreakdown.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Team</th>
+                                <th class="text-center">Members</th>
+                                <th class="text-center">Created</th>
+                                <th class="text-center">Completed</th>
+                                <th class="text-center">Open Now</th>
+                                <th class="text-center">Overdue</th>
+                                <th class="text-center">Completion Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var team in Model.Report.TeamBreakdown)
+                            {
+                                var teamTotal = team.TasksCreated + team.TasksCompleted;
+                                var teamRate = teamTotal > 0
+                                    ? Math.Round((double)team.TasksCompleted / teamTotal * 100, 1)
+                                    : 0;
+                                <tr>
+                                    <td class="fw-medium">
+                                        @if (team.TeamName == "Unassigned")
+                                        {
+                                            <span class="text-muted"><i class="bi bi-person-slash me-1"></i>@team.TeamName</span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-people-fill me-1 text-primary"></i>@team.TeamName
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (team.TeamName != "Unassigned")
+                                        {
+                                            @team.MemberCount
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">&mdash;</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">@team.TasksCreated</td>
+                                    <td class="text-center text-success fw-medium">@team.TasksCompleted</td>
+                                    <td class="text-center">
+                                        @if (team.CurrentOpen > 0)
+                                        {
+                                            <span class="badge bg-info">@team.CurrentOpen</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">0</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (team.CurrentOverdue > 0)
+                                        {
+                                            <span class="badge bg-danger">@team.CurrentOverdue</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">0</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge @(teamRate >= 70 ? "bg-success" : teamRate >= 40 ? "bg-warning text-dark" : "bg-secondary")">
+                                            @($"{teamRate:F1}%")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        @if (Model.Report.TeamBreakdown.Count > 1)
+                        {
+                            <tfoot class="table-light">
+                                <tr class="fw-bold">
+                                    <td>Total</td>
+                                    <td class="text-center">@Model.Report.TeamBreakdown.Where(t => t.TeamName != "Unassigned").Sum(t => t.MemberCount)</td>
+                                    <td class="text-center">@Model.Report.TeamBreakdown.Sum(t => t.TasksCreated)</td>
+                                    <td class="text-center text-success">@Model.Report.TeamBreakdown.Sum(t => t.TasksCompleted)</td>
+                                    <td class="text-center">@Model.Report.TeamBreakdown.Sum(t => t.CurrentOpen)</td>
+                                    <td class="text-center">@Model.Report.TeamBreakdown.Sum(t => t.CurrentOverdue)</td>
+                                    <td class="text-center">
+                                        @{
+                                            var totalTeamCreated = Model.Report.TeamBreakdown.Sum(t => t.TasksCreated);
+                                            var totalTeamCompleted = Model.Report.TeamBreakdown.Sum(t => t.TasksCompleted);
+                                            var totalTeamAll = totalTeamCreated + totalTeamCompleted;
+                                            var totalTeamRate = totalTeamAll > 0
+                                                ? Math.Round((double)totalTeamCompleted / totalTeamAll * 100, 1)
+                                                : 0;
+                                        }
+                                        <span class="badge bg-primary">@($"{totalTeamRate:F1}%")</span>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No team data available for this period.
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Individual Breakdown -->
+    <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-person me-2"></i>Individual Breakdown</h6>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Report.IndividualBreakdown.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Person</th>
+                                <th>Team</th>
+                                <th class="text-center">Assigned</th>
+                                <th class="text-center">Completed</th>
+                                <th class="text-center">Open Now</th>
+                                <th class="text-center">Overdue</th>
+                                <th class="text-center">Completion Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var person in Model.Report.IndividualBreakdown)
+                            {
+                                <tr>
+                                    <td class="fw-medium">
+                                        @if (person.UserName == "Unassigned")
+                                        {
+                                            <span class="text-muted"><i class="bi bi-person-slash me-1"></i>@person.UserName</span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-person-fill me-1 text-primary"></i>@person.UserName
+                                        }
+                                    </td>
+                                    <td class="text-muted small">@(person.TeamName ?? "—")</td>
+                                    <td class="text-center">@person.TasksCreated</td>
+                                    <td class="text-center text-success fw-medium">@person.TasksCompleted</td>
+                                    <td class="text-center">
+                                        @if (person.CurrentOpen > 0)
+                                        {
+                                            <span class="badge bg-info">@person.CurrentOpen</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">0</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (person.CurrentOverdue > 0)
+                                        {
+                                            <span class="badge bg-danger">@person.CurrentOverdue</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">0</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex align-items-center justify-content-center gap-2">
+                                            <div class="progress flex-grow-1" style="height: 6px; max-width: 60px;">
+                                                <div class="progress-bar @(person.CompletionRate >= 70 ? "bg-success" : person.CompletionRate >= 40 ? "bg-warning" : "bg-secondary")"
+                                                     role="progressbar"
+                                                     style="width: @person.CompletionRate%"
+                                                     aria-valuenow="@person.CompletionRate"
+                                                     aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <span class="badge @(person.CompletionRate >= 70 ? "bg-success" : person.CompletionRate >= 40 ? "bg-warning text-dark" : "bg-secondary")">
+                                                @($"{person.CompletionRate:F1}%")
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                        @if (Model.Report.IndividualBreakdown.Count > 1)
+                        {
+                            <tfoot class="table-light">
+                                <tr class="fw-bold">
+                                    <td>Total</td>
+                                    <td></td>
+                                    <td class="text-center">@Model.Report.IndividualBreakdown.Sum(p => p.TasksCreated)</td>
+                                    <td class="text-center text-success">@Model.Report.IndividualBreakdown.Sum(p => p.TasksCompleted)</td>
+                                    <td class="text-center">@Model.Report.IndividualBreakdown.Sum(p => p.CurrentOpen)</td>
+                                    <td class="text-center">@Model.Report.IndividualBreakdown.Sum(p => p.CurrentOverdue)</td>
+                                    <td class="text-center">
+                                        @{
+                                            var totalIndAssigned = Model.Report.IndividualBreakdown.Sum(p => p.TasksCreated);
+                                            var totalIndCompleted = Model.Report.IndividualBreakdown.Sum(p => p.TasksCompleted);
+                                            var totalIndAll = totalIndAssigned + totalIndCompleted;
+                                            var totalIndRate = totalIndAll > 0
+                                                ? Math.Round((double)totalIndCompleted / totalIndAll * 100, 1)
+                                                : 0;
+                                        }
+                                        <span class="badge bg-primary">@($"{totalIndRate:F1}%")</span>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                    No individual data available for this period.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Pre-format dates server-side to avoid Invalid Date issues
+            const dailyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                Model.Report.DailyBreakdown.Select(d => new {
+                    date = d.Date.ToString("MMM dd"),
+                    created = d.TasksCreated,
+                    completed = d.TasksCompleted
+                })
+            ));
+
+            // Daily Activity Chart
+            new Chart(document.getElementById('dailyTasksChart'), {
+                type: 'bar',
+                data: {
+                    labels: dailyData.map(d => d.date),
+                    datasets: [
+                        {
+                            label: 'Created',
+                            data: dailyData.map(d => d.created),
+                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        },
+                        {
+                            label: 'Completed',
+                            data: dailyData.map(d => d.completed),
+                            backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                            borderColor: 'rgba(25, 135, 84, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 13 },
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, precision: 0 },
+                            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                        }
+                    }
+                }
+            });
+
+            // Status Doughnut Chart
+            new Chart(document.getElementById('statusChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Open', 'Overdue', 'Blocked'],
+                    datasets: [{
+                        data: [
+                            @(Model.Report.CurrentOpenTasks - Model.Report.OverdueTasks - Model.Report.BlockedTasks),
+                            @Model.Report.OverdueTasks,
+                            @Model.Report.BlockedTasks
+                        ],
+                        backgroundColor: ['#3b82f6', '#ef4444', '#6b7280'],
+                        borderWidth: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 16
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            cornerRadius: 8
+                        }
+                    },
+                    cutout: '60%',
+                }
+            });
+        });
+    </script>
+}

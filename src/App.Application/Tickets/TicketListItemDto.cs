@@ -35,6 +35,10 @@ public record TicketListItemDto : BaseNumericEntityDto
     public DateTime? ClosedAt { get; init; }
     public string? CreatedByStaffName { get; init; }
 
+    // Task counts
+    public int CompletedTaskCount { get; init; }
+    public int TotalTaskCount { get; init; }
+
     // Snooze fields
     public bool IsSnoozed { get; init; }
     public DateTime? SnoozedUntil { get; init; }
@@ -73,6 +77,8 @@ public record TicketListItemDto : BaseNumericEntityDto
                     : null,
             ContactId = ticket.ContactId,
             CommentCount = ticket.Comments.Count, // Translated to SQL COUNT subquery
+            TotalTaskCount = ticket.Tasks.Count, // Query filter excludes soft-deleted tasks
+            CompletedTaskCount = ticket.Tasks.Count(t => t.Status == Domain.ValueObjects.TicketTaskStatus.CLOSED),
             SlaDueAt = ticket.SlaDueAt,
             SlaStatus = ticket.SlaStatus,
             SlaStatusLabel =
@@ -120,6 +126,8 @@ public record TicketListItemDto : BaseNumericEntityDto
             ContactName = ticket.Contact?.FullName,
             ContactId = ticket.ContactId,
             CommentCount = ticket.Comments?.Count ?? 0,
+            TotalTaskCount = ticket.Tasks?.Count(t => !t.IsDeleted) ?? 0,
+            CompletedTaskCount = ticket.Tasks?.Count(t => !t.IsDeleted && t.Status == Domain.ValueObjects.TicketTaskStatus.CLOSED) ?? 0,
             SlaDueAt = ticket.SlaDueAt,
             SlaStatus = ticket.SlaStatus,
             SlaStatusLabel = ticket.SlaStatusValue?.Label,

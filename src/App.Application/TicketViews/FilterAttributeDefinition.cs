@@ -180,6 +180,23 @@ public static class FilterAttributes
                 Operators = OperatorDefinitions.BooleanOperators,
                 IsSortable = false,
             },
+            // Task-related
+            new()
+            {
+                Field = "HasTasks",
+                Label = "Has Any Tasks",
+                Type = "boolean",
+                Operators = OperatorDefinitions.BooleanOperators,
+                IsSortable = false,
+            },
+            new()
+            {
+                Field = "HasIncompleteTasks",
+                Label = "Has Incomplete Tasks",
+                Type = "boolean",
+                Operators = OperatorDefinitions.BooleanOperators,
+                IsSortable = false,
+            },
             // Contact Fields
             new()
             {

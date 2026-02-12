@@ -84,4 +84,14 @@ public static class ActivityEventType
     public const string CommentAdded = "comment_added";
     public const string ContactCreated = "contact_created";
     public const string ContactUpdated = "contact_updated";
+
+    // Task activity types
+    public const string TaskCreated = "task_created";
+    public const string TaskAssigned = "task_assigned";
+    public const string TaskDueDateChanged = "task_due_date_changed";
+    public const string TaskDependencyChanged = "task_dependency_changed";
+    public const string TaskUnblocked = "task_unblocked";
+    public const string TaskCompleted = "task_completed";
+    public const string TaskReopened = "task_reopened";
+    public const string TaskDeleted = "task_deleted";
 }

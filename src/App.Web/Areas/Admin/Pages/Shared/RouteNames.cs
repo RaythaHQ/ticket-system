@@ -395,12 +395,23 @@ public static class RouteNames
     }
 
     /// <summary>
+    /// Route constants for task template management pages.
+    /// </summary>
+    public static class TaskTemplates
+    {
+        public const string Index = "/Tickets/TaskTemplates/Index";
+        public const string Create = "/Tickets/TaskTemplates/Create";
+        public const string Edit = "/Tickets/TaskTemplates/Edit";
+    }
+
+    /// <summary>
     /// Route constants for report pages.
     /// </summary>
     public static class Reports
     {
         public const string Index = "/Tickets/Reports/Index";
         public const string TeamReport = "/Tickets/Reports/TeamReport";
+        public const string TaskReports = "/Tickets/Reports/TaskReports";
     }
 
     /// <summary>

@@ -74,6 +74,46 @@
             icon: 'bi-person-gear',
             class: 'contact-updated',
             label: 'contact updated'
+        },
+        'task_created': {
+            icon: 'bi-plus-square',
+            class: 'task-created',
+            label: 'task created'
+        },
+        'task_completed': {
+            icon: 'bi-check2-square',
+            class: 'task-completed',
+            label: 'task completed'
+        },
+        'task_reopened': {
+            icon: 'bi-arrow-counterclockwise',
+            class: 'task-reopened',
+            label: 'task reopened'
+        },
+        'task_assigned': {
+            icon: 'bi-person-check',
+            class: 'task-assigned',
+            label: 'task assigned'
+        },
+        'task_deleted': {
+            icon: 'bi-trash',
+            class: 'task-deleted',
+            label: 'task deleted'
+        },
+        'task_due_date_changed': {
+            icon: 'bi-calendar-event',
+            class: 'task-updated',
+            label: 'task due date changed'
+        },
+        'task_dependency_changed': {
+            icon: 'bi-link-45deg',
+            class: 'task-updated',
+            label: 'task dependency changed'
+        },
+        'task_unblocked': {
+            icon: 'bi-unlock',
+            class: 'task-unblocked',
+            label: 'task unblocked'
         }
     };
 

@@ -150,6 +150,26 @@ public class BuiltInEmailTemplate : ValueObject
             true
         );
 
+    // Task notification templates
+    public static BuiltInEmailTemplate TaskAssignedUserEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] Task assigned to you on ticket #{{ Target.TicketId }}",
+            "email_task_assigned_user",
+            true
+        );
+    public static BuiltInEmailTemplate TaskAssignedTeamEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] Task assigned to {{ Target.TeamName }} on ticket #{{ Target.TicketId }}",
+            "email_task_assigned_team",
+            true
+        );
+    public static BuiltInEmailTemplate TaskCompletedEmail =>
+        new(
+            "[{{ CurrentOrganization.OrganizationName }}] Task completed on ticket #{{ Target.TicketId }}",
+            "email_task_completed",
+            true
+        );
+
     public string DefaultSubject { get; private set; } = string.Empty;
     public string DeveloperName { get; private set; } = string.Empty;
     public bool SafeToCc { get; private set; } = false;
@@ -209,6 +229,11 @@ public class BuiltInEmailTemplate : ValueObject
             yield return TicketUnsnoozedEmail;
             yield return SlaApproachingEmail;
             yield return SlaBreachedEmail;
+
+            // Task notification templates
+            yield return TaskAssignedUserEmail;
+            yield return TaskAssignedTeamEmail;
+            yield return TaskCompletedEmail;
         }
     }
 

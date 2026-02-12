@@ -1,0 +1,542 @@
+@page "/staff/tasks"
+@using App.Application.TicketTasks
+@using App.Domain.ValueObjects
+@using App.Web.Areas.Staff.Pages.Shared
+@model App.Web.Areas.Staff.Pages.Tasks.Index
+
+@{
+    ViewData["Title"] = "Tasks";
+    var viewLabels = new Dictionary<string, string>
+    {
+        { "my-tasks", "My Tasks" },
+        { "team-tasks", "Team Tasks" },
+        { "unassigned", "Unassigned" },
+        { "created-by-me", "Created by Me" },
+        { "overdue", "Overdue" },
+        { "all", "All Tasks" },
+    };
+    var currentViewLabel = viewLabels.GetValueOrDefault(Model.CurrentView, "Tasks");
+}
+
+@Html.AntiForgeryToken()
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0" style="font-weight: 700;">
+        <i class="bi bi-check2-square me-2" style="color: var(--staff-primary);"></i>@currentViewLabel
+        <span class="badge rounded-pill ms-2" style="background: #e2e8f0; color: #475569; font-size: 0.5em; vertical-align: middle;">
+            @Model.ListView.TotalCount
+        </span>
+    </h1>
+    @if (Model.CanExport)
+    {
+        <form method="post" asp-page-handler="Export" class="d-inline">
+            <input type="hidden" name="view" value="@Model.CurrentView" />
+            <input type="hidden" name="search" value="@Model.ListView.Search" />
+            <input type="hidden" name="sortBy" value="@Model.CurrentSortBy" />
+            <input type="hidden" name="statusFilter" value="@(Model.ExcludeClosed ? "open" : "all")" />
+            <button type="submit" class="btn btn-outline-secondary">
+                <i class="bi bi-download me-2"></i>Export CSV
+            </button>
+        </form>
+    }
+</div>
+
+<!-- Filter Bar -->
+<div class="staff-card mb-4">
+    <div class="staff-card-body py-3">
+        <form method="get" class="row g-3 align-items-end">
+            <input type="hidden" name="view" value="@Model.CurrentView" />
+            <input type="hidden" name="sortBy" value="@Model.CurrentSortBy" />
+
+            <!-- Search -->
+            <div class="col-lg-4 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" name="search" class="form-control border-start-0 ps-0"
+                           placeholder="Search tasks, tickets..."
+                           value="@ViewContext.HttpContext.Request.Query["search"]" />
+                </div>
+            </div>
+
+            <!-- Status filter -->
+            <div class="col-lg-2 col-md-3">
+                <select name="statusFilter" class="form-select" onchange="this.form.submit()">
+                    <option value="open" selected="@(Model.ExcludeClosed)">Open Tasks</option>
+                    <option value="all" selected="@(!Model.ExcludeClosed)">All Tasks</option>
+                </select>
+            </div>
+
+            <!-- Assignee filter -->
+            <div class="col-lg-3 col-md-3">
+                <select name="assigneeId" class="form-select"
+                        data-searchable-select
+                        data-placeholder="All Assignees"
+                        data-search-placeholder="Search assignees...">
+                    <option value="">All Assignees</option>
+                    @foreach (var assignee in Model.AvailableAssignees)
+                    {
+                        <option value="@assignee.Value"
+                                selected="@(ViewContext.HttpContext.Request.Query["assigneeId"] == assignee.Value)">
+                            @assignee.DisplayText
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel me-1"></i>Filter
+                </button>
+                @if (!string.IsNullOrEmpty(ViewContext.HttpContext.Request.Query["search"])
+                     || ViewContext.HttpContext.Request.Query.ContainsKey("assigneeId")
+                     || ViewContext.HttpContext.Request.Query["statusFilter"] == "all")
+                {
+                    <a asp-page="@RouteNames.Tasks.Index" asp-route-view="@Model.CurrentView" class="btn btn-outline-secondary ms-1">
+                        <i class="bi bi-x-lg me-1"></i>Clear
+                    </a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Sort Pills -->
+<div class="staff-card mb-4">
+    <div class="staff-card-body py-3">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <span class="text-muted fw-semibold small">Sort By:</span>
+            <div class="staff-quick-views">
+                @{
+                    var sortOptions = new[] {
+                        ("default", "Default"),
+                        ("newest", "Newest"),
+                        ("oldest", "Oldest"),
+                        ("due-date", "Due Date"),
+                        ("assignee", "Assignee"),
+                        ("ticket", "Ticket"),
+                        ("title", "Title"),
+                    };
+                }
+                @foreach (var (val, label) in sortOptions)
+                {
+                    <a asp-page="@RouteNames.Tasks.Index"
+                       asp-route-view="@Model.CurrentView"
+                       asp-route-sortBy="@val"
+                       asp-route-search="@ViewContext.HttpContext.Request.Query["search"]"
+                       asp-route-statusFilter="@ViewContext.HttpContext.Request.Query["statusFilter"]"
+                       asp-route-assigneeId="@ViewContext.HttpContext.Request.Query["assigneeId"]"
+                       class="staff-quick-view-btn @(Model.CurrentSortBy == val ? "active" : "")">
+                        @label
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task List -->
+<div class="staff-card">
+    @if (!Model.ListView.Items.Any())
+    {
+        <div class="staff-card-body text-center py-5">
+            <div style="font-size: 3rem; opacity: 0.15; margin-bottom: 0.5rem;">
+                @if (Model.CurrentView == "overdue") { <i class="bi bi-exclamation-triangle-fill"></i> }
+                else if (Model.CurrentView == "unassigned") { <i class="bi bi-person-dash"></i> }
+                else { <i class="bi bi-check-circle"></i> }
+            </div>
+            <p class="text-muted mb-1 fw-medium">No tasks here</p>
+            <p class="text-muted small mb-0">
+                @if (Model.CurrentView == "my-tasks") { <text>You're all caught up! Tasks assigned to you will appear here.</text> }
+                else if (Model.CurrentView == "overdue") { <text>No overdue tasks. Nice work!</text> }
+                else { <text>No tasks match the current filters.</text> }
+            </p>
+        </div>
+    }
+    else
+    {
+        <!-- Column Headers -->
+        <div class="d-flex align-items-center px-4 py-2 border-bottom" style="background: #f8fafc; font-size: 0.7rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">
+            <div style="width: 36px;"></div>
+            <div class="flex-grow-1">Task</div>
+            <div style="width: 200px;" class="text-end">Assignee</div>
+            <div style="width: 120px;" class="text-end">Due Date</div>
+            <div style="width: 80px;" class="text-end">Actions</div>
+        </div>
+
+        @foreach (var task in Model.ListView.Items)
+        {
+            var isClosed = task.Status == TicketTaskStatus.CLOSED;
+            var isBlocked = task.IsBlocked;
+
+            <div class="tpl-item @(isBlocked ? "tpl-item--blocked" : "") @(isClosed ? "tpl-item--done" : "")"
+                 data-task-id="@task.Id" data-status="@task.Status">
+                <div class="d-flex align-items-center px-4 py-3 gap-3">
+                    <!-- Complete/Status -->
+                    <div style="width: 24px; flex-shrink: 0;">
+                        @if (isBlocked)
+                        {
+                            <span class="tpl-status--blocked" title="Blocked by: @task.DependsOnTaskTitle">
+                                <i class="bi bi-lock-fill"></i>
+                            </span>
+                        }
+                        else if (isClosed)
+                        {
+                            <button class="tpl-complete-btn tpl-complete-btn--done" title="Reopen task"
+                                    data-task-id="@task.Id" data-action="reopen">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="tpl-complete-btn" title="Mark as complete"
+                                    data-task-id="@task.Id" data-action="complete">
+                                <i class="bi bi-circle"></i>
+                            </button>
+                        }
+                    </div>
+
+                    <!-- Title + ticket info -->
+                    <div class="flex-grow-1 min-width-0">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="fw-medium @(isClosed ? "text-decoration-line-through text-muted" : "") @(isBlocked ? "text-muted" : "")"
+                                  style="font-size: 0.875rem;">
+                                @task.Title
+                            </span>
+                            @if (isBlocked && task.DependsOnTaskTitle != null)
+                            {
+                                <span class="tpl-badge tpl-badge--blocked"><i class="bi bi-lock"></i> @task.DependsOnTaskTitle</span>
+                            }
+                            @if (task.IsOverdue && !isClosed)
+                            {
+                                <span class="tpl-badge tpl-badge--overdue"><i class="bi bi-exclamation-triangle-fill"></i> Overdue</span>
+                            }
+                        </div>
+                        <div class="d-flex align-items-center gap-3 mt-1 flex-wrap">
+                            <a asp-area="Staff" asp-page="@RouteNames.Tickets.Details" asp-route-id="@task.TicketId"
+                               class="text-decoration-none small" style="color: var(--staff-primary);">
+                                <i class="bi bi-ticket-detailed"></i> #@task.TicketId — @task.TicketTitle
+                            </a>
+                            @if (task.TicketPriorityLabel != null)
+                            {
+                                var priBadge = task.TicketPriority switch {
+                                    "urgent" => "tpl-badge--priority-urgent",
+                                    "high" => "tpl-badge--priority-high",
+                                    _ => "tpl-badge--priority-normal"
+                                };
+                                <span class="tpl-badge @priBadge">@task.TicketPriorityLabel</span>
+                            }
+                            @if (task.TicketAssigneeName != null)
+                            {
+                                <span class="text-muted small"><i class="bi bi-person"></i> @task.TicketAssigneeName</span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Assignee -->
+                    <div style="width: 200px; flex-shrink: 0;" class="text-end">
+                        <button class="task-inline-btn task-inline-assign-btn" data-task-id="@task.Id" title="Change assignee">
+                            @if (task.AssigneeName != null)
+                            {
+                                <span class="tpl-badge tpl-badge--assignee"><i class="bi bi-person-fill"></i> @task.AssigneeName</span>
+                            }
+                            else if (task.OwningTeamName != null)
+                            {
+                                <span class="tpl-badge tpl-badge--assignee"><i class="bi bi-people-fill"></i> @task.OwningTeamName</span>
+                            }
+                            else
+                            {
+                                <span class="tpl-badge" style="background: #f1f5f9; color: #94a3b8;"><i class="bi bi-person-plus"></i> Unassigned</span>
+                            }
+                        </button>
+                    </div>
+
+                    <!-- Due Date -->
+                    <div style="width: 120px; flex-shrink: 0;" class="text-end">
+                        <button class="task-inline-btn task-inline-due-btn" data-task-id="@task.Id" title="Change due date">
+                            @if (task.DueAt.HasValue)
+                            {
+                                <span class="tpl-badge @(task.IsOverdue && !isClosed ? "tpl-badge--overdue" : "tpl-badge--due")">
+                                    <i class="bi bi-calendar-event"></i> @task.DueAt.Value.ToString("MMM d")
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="tpl-badge" style="background: #f1f5f9; color: #94a3b8;"><i class="bi bi-calendar-plus"></i> None</span>
+                            }
+                        </button>
+                    </div>
+
+                    <!-- Actions -->
+                    <div style="width: 80px; flex-shrink: 0;" class="text-end">
+                        @if (!isClosed && !isBlocked)
+                        {
+                            <button class="btn btn-sm btn-outline-success task-complete-action" data-task-id="@task.Id" title="Complete">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Pagination -->
+        @if (Model.ListView.TotalCount > 0)
+        {
+            <nav class="d-flex justify-content-between align-items-center py-3 px-4 border-top">
+                <p class="mb-0 text-muted small">
+                    @Model.ListView.TotalCount @(Model.ListView.TotalCount == 1 ? "result" : "results")
+                </p>
+                @if (Model.ListView.TotalPages > 1)
+                {
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @Model.ListView.PreviousDisabledCss">
+                            <a class="page-link" asp-page="@RouteNames.Tasks.Index"
+                               asp-route-view="@Model.CurrentView"
+                               asp-route-search="@ViewContext.HttpContext.Request.Query["search"]"
+                               asp-route-sortBy="@Model.CurrentSortBy"
+                               asp-route-statusFilter="@ViewContext.HttpContext.Request.Query["statusFilter"]"
+                               asp-route-pageNumber="@(Model.ListView.PageNumber - 1)">
+                                <i class="bi bi-chevron-double-left"></i>
+                            </a>
+                        </li>
+                        @for (var i = Model.ListView.FirstVisiblePageNumber; i <= Model.ListView.LastVisiblePageNumber; i++)
+                        {
+                            <li class="page-item @(i == Model.ListView.PageNumber ? "active" : "")">
+                                <a class="page-link" asp-page="@RouteNames.Tasks.Index"
+                                   asp-route-view="@Model.CurrentView"
+                                   asp-route-search="@ViewContext.HttpContext.Request.Query["search"]"
+                                   asp-route-sortBy="@Model.CurrentSortBy"
+                                   asp-route-statusFilter="@ViewContext.HttpContext.Request.Query["statusFilter"]"
+                                   asp-route-pageNumber="@i">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @Model.ListView.NextDisabledCss">
+                            <a class="page-link" asp-page="@RouteNames.Tasks.Index"
+                               asp-route-view="@Model.CurrentView"
+                               asp-route-search="@ViewContext.HttpContext.Request.Query["search"]"
+                               asp-route-sortBy="@Model.CurrentSortBy"
+                               asp-route-statusFilter="@ViewContext.HttpContext.Request.Query["statusFilter"]"
+                               asp-route-pageNumber="@(Model.ListView.PageNumber + 1)">
+                                <i class="bi bi-chevron-double-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                }
+            </nav>
+        }
+    }
+</div>
+
+<!-- Hidden assignee options for inline editing pickers -->
+<div id="task-all-assignee-options" style="display:none;">
+    @foreach (var assignee in Model.AllAssigneeOptions)
+    {
+        <span data-value="@assignee.Value" data-text="@assignee.DisplayText"></span>
+    }
+</div>
+
+<style>
+    .tpl-item { border-bottom: 1px solid #f1f5f9; transition: background-color 0.12s ease; }
+    .tpl-item:last-child { border-bottom: none; }
+    .tpl-item:hover { background-color: #f8fafc; }
+    .tpl-item--blocked { background-color: #fffbeb; }
+    .tpl-item--blocked:hover { background-color: #fef3c7; }
+    .tpl-item--done { background-color: #f0fdf4; }
+    .tpl-item--done:hover { background-color: #dcfce7; }
+    .tpl-complete-btn { background: none; border: none; padding: 0; cursor: pointer; font-size: 1.25rem; color: #cbd5e1; line-height: 1; transition: all 0.15s ease; }
+    .tpl-complete-btn:hover { color: #22c55e; transform: scale(1.15); }
+    .tpl-complete-btn--done { color: #22c55e; }
+    .tpl-complete-btn--done:hover { color: #dc2626; }
+    .tpl-status--blocked { color: #f59e0b; font-size: 1.1rem; }
+    .tpl-badge { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 100px; white-space: nowrap; font-weight: 500; }
+    .tpl-badge--blocked { background: #fef3c7; color: #92400e; }
+    .tpl-badge--overdue { background: #fef2f2; color: #dc2626; }
+    .tpl-badge--due { background: #f1f5f9; color: #64748b; }
+    .tpl-badge--assignee { background: #eff6ff; color: #1d4ed8; }
+    .task-inline-btn { background: none; border: 1px solid transparent; padding: 2px 4px; border-radius: 6px; cursor: pointer; transition: all 0.12s ease; }
+    .task-inline-btn:hover { border-color: #e2e8f0; background: #f8fafc; }
+    .task-complete-action { font-size: 0.75rem; padding: 0.2rem 0.5rem; }
+    .tpl-badge--priority-urgent { background: #fef2f2; color: #dc2626; font-weight: 600; }
+    .tpl-badge--priority-high { background: #fff7ed; color: #ea580c; font-weight: 600; }
+    .tpl-badge--priority-normal { background: #f1f5f9; color: #64748b; }
+
+    /* Inline picker popover (shared with ticket detail tasks) */
+    .task-page-picker { position: absolute; z-index: 1060; background: white; border: 1px solid #e2e8f0; border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); padding: 0.5rem; min-width: 260px; }
+    .task-page-picker-header { font-size: 0.7rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.25rem 0.5rem; }
+    .task-page-picker-option { display: flex; align-items: center; gap: 0.5rem; padding: 0.375rem 0.5rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; color: #334155; transition: background 0.1s ease; }
+    .task-page-picker-option:hover { background: #f1f5f9; }
+    .task-page-picker-option--danger { color: #dc2626; }
+    .task-page-picker-option--danger:hover { background: #fef2f2; }
+    .task-page-picker-divider { height: 1px; background: #f1f5f9; margin: 0.25rem 0; }
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+            async function postAction(handler, body) {
+                const resp = await fetch(`?handler=${handler}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                    body: JSON.stringify(body)
+                });
+                return resp.json();
+            }
+
+            function closeAllPickers() {
+                document.querySelectorAll('.task-page-picker').forEach(el => el.remove());
+            }
+
+            // Complete / Reopen buttons (both circle icons and action buttons)
+            document.querySelectorAll('.tpl-complete-btn, .task-complete-action').forEach(btn => {
+                btn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    const taskId = this.dataset.taskId;
+                    const action = this.dataset.action || 'complete';
+                    this.disabled = true;
+                    this.style.opacity = '0.5';
+                    const handler = action === 'reopen' ? 'ReopenTask' : 'CompleteTask';
+                    const data = await postAction(handler, { taskId });
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        this.disabled = false;
+                        this.style.opacity = '';
+                        alert(data.error || 'Failed to update task.');
+                    }
+                });
+            });
+
+            // Load assignee options from hidden container (Team/Individual format)
+            function getAllAssigneeOptions() {
+                const container = document.getElementById('task-all-assignee-options');
+                if (!container) return [];
+                return Array.from(container.querySelectorAll('span[data-value]')).map(el => ({
+                    value: el.dataset.value,
+                    text: el.dataset.text
+                }));
+            }
+
+            // Inline assignee editing
+            document.querySelectorAll('.task-inline-assign-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const taskId = this.dataset.taskId;
+                    closeAllPickers();
+
+                    const options = getAllAssigneeOptions();
+
+                    const picker = document.createElement('div');
+                    picker.className = 'task-page-picker';
+                    let html = '<div class="task-page-picker-header">Assign to</div>';
+                    html += '<input type="text" class="form-control form-control-sm mb-2" placeholder="Search assignees..." autofocus style="font-size:0.8rem;" />';
+                    html += '<div class="task-page-picker-divider"></div>';
+                    html += '<div style="max-height:250px;overflow-y:auto;">';
+                    options.forEach(opt => {
+                        const icon = opt.value === 'unassigned' ? 'bi-x-circle'
+                            : (opt.value.includes(':assignee:') ? 'bi-person-fill' : 'bi-people-fill');
+                        const cls = opt.value === 'unassigned' ? 'task-page-picker-option--danger' : '';
+                        html += `<div class="task-page-picker-option ${cls}" data-value="${opt.value}"><i class="bi ${icon}"></i> ${opt.text}</div>`;
+                    });
+                    html += '</div>';
+                    picker.innerHTML = html;
+
+                    document.body.appendChild(picker);
+                    const rect = this.getBoundingClientRect();
+                    picker.style.position = 'fixed';
+                    picker.style.top = (rect.bottom + 4) + 'px';
+                    picker.style.right = (window.innerWidth - rect.right) + 'px';
+
+                    // Search filtering
+                    const searchInput = picker.querySelector('input');
+                    const allOpts = picker.querySelectorAll('.task-page-picker-option');
+                    searchInput.addEventListener('input', () => {
+                        const q = searchInput.value.toLowerCase();
+                        allOpts.forEach(o => {
+                            o.style.display = o.textContent.toLowerCase().includes(q) ? '' : 'none';
+                        });
+                    });
+                    searchInput.focus();
+
+                    picker.querySelectorAll('.task-page-picker-option').forEach(opt => {
+                        opt.addEventListener('click', async () => {
+                            picker.remove();
+                            const val = opt.dataset.value;
+                            const body = { taskId };
+                            if (val === 'unassigned') {
+                                body.clearAssignee = true;
+                            } else if (val.startsWith('team:')) {
+                                const parts = val.split(':');
+                                body.owningTeamId = parts[1];
+                                if (parts.length === 4 && parts[2] === 'assignee') {
+                                    body.assigneeId = parts[3];
+                                } else {
+                                    body.clearAssignee = true;
+                                }
+                            }
+                            await postAction('UpdateTask', body);
+                            window.location.reload();
+                        });
+                    });
+
+                    setTimeout(() => {
+                        document.addEventListener('click', function h(ev) {
+                            if (!picker.contains(ev.target)) { picker.remove(); document.removeEventListener('click', h, true); }
+                        }, true);
+                    }, 10);
+                });
+            });
+
+            // Inline due date editing
+            document.querySelectorAll('.task-inline-due-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const taskId = this.dataset.taskId;
+                    closeAllPickers();
+
+                    const picker = document.createElement('div');
+                    picker.className = 'task-page-picker';
+                    picker.style.minWidth = '220px';
+                    picker.innerHTML = `
+                        <div class="task-page-picker-header">Due date</div>
+                        <input type="datetime-local" class="form-control form-control-sm mb-2" />
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-primary flex-grow-1 due-save"><i class="bi bi-check2 me-1"></i>Set</button>
+                            <button class="btn btn-sm btn-outline-danger due-clear" title="Clear"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                    `;
+
+                    document.body.appendChild(picker);
+                    const rect = this.getBoundingClientRect();
+                    picker.style.position = 'fixed';
+                    picker.style.top = (rect.bottom + 4) + 'px';
+                    picker.style.right = (window.innerWidth - rect.right) + 'px';
+
+                    const input = picker.querySelector('input');
+                    input.focus();
+
+                    picker.querySelector('.due-save').addEventListener('click', async () => {
+                        if (!input.value) return;
+                        picker.remove();
+                        await postAction('UpdateTask', { taskId, dueAt: new Date(input.value).toISOString() });
+                        window.location.reload();
+                    });
+                    picker.querySelector('.due-clear').addEventListener('click', async () => {
+                        picker.remove();
+                        await postAction('UpdateTask', { taskId, clearDueAt: true });
+                        window.location.reload();
+                    });
+
+                    setTimeout(() => {
+                        document.addEventListener('click', function h(ev) {
+                            if (!picker.contains(ev.target)) { picker.remove(); document.removeEventListener('click', h, true); }
+                        }, true);
+                    }, 10);
+                });
+            });
+        });
+    </script>
+}

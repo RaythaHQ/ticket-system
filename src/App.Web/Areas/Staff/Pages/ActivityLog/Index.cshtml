@@ -77,6 +77,7 @@
             </div>
             <div class="staff-card-body">
                 <div class="activity-legend">
+                    <small class="text-muted text-uppercase fw-semibold mb-1">Tickets</small>
                     <div class="legend-item">
                         <span class="activity-icon ticket-created"><i class="bi bi-plus-circle"></i></span>
                         <span>Ticket Created</span>
@@ -100,6 +101,36 @@
                     <div class="legend-item">
                         <span class="activity-icon ticket-reopened"><i class="bi bi-arrow-counterclockwise"></i></span>
                         <span>Ticket Reopened</span>
+                    </div>
+
+                    <small class="text-muted text-uppercase fw-semibold mt-2 mb-1">Tasks</small>
+                    <div class="legend-item">
+                        <span class="activity-icon task-created"><i class="bi bi-plus-square"></i></span>
+                        <span>Task Created</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="activity-icon task-completed"><i class="bi bi-check2-square"></i></span>
+                        <span>Task Completed</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="activity-icon task-reopened"><i class="bi bi-arrow-counterclockwise"></i></span>
+                        <span>Task Reopened</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="activity-icon task-assigned"><i class="bi bi-person-check"></i></span>
+                        <span>Task Assigned</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="activity-icon task-updated"><i class="bi bi-calendar-event"></i></span>
+                        <span>Task Due Date Changed</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="activity-icon task-unblocked"><i class="bi bi-unlock"></i></span>
+                        <span>Task Unblocked</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="activity-icon task-deleted"><i class="bi bi-trash"></i></span>
+                        <span>Task Deleted</span>
                     </div>
                 </div>
             </div>
@@ -197,6 +228,41 @@
     .activity-icon.ticket-reopened {
         background-color: rgba(253, 126, 20, 0.1);
         color: #fd7e14;
+    }
+
+    .activity-icon.task-created {
+        background-color: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+
+    .activity-icon.task-completed {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+
+    .activity-icon.task-reopened {
+        background-color: rgba(253, 126, 20, 0.1);
+        color: #fd7e14;
+    }
+
+    .activity-icon.task-assigned {
+        background-color: rgba(111, 66, 193, 0.1);
+        color: #6f42c1;
+    }
+
+    .activity-icon.task-deleted {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    .activity-icon.task-updated {
+        background-color: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+    }
+
+    .activity-icon.task-unblocked {
+        background-color: rgba(32, 201, 151, 0.1);
+        color: #20c997;
     }
 
     .activity-content {

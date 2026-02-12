@@ -2,6 +2,7 @@ using System.Text.Json;
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using App.Application.TicketTasks.Commands;
 using App.Domain.Entities;
 using App.Domain.Events;
 using App.Domain.ValueObjects;
@@ -17,6 +18,21 @@ public class ChangeTicketStatus
     {
         public long Id { get; init; }
         public string NewStatus { get; init; } = null!;
+
+        /// <summary>
+        /// When true, force-close all incomplete tasks before changing status to closed.
+        /// </summary>
+        public bool ForceCloseTasks { get; init; }
+    }
+
+    /// <summary>
+    /// Response indicating that the status change requires confirmation because there are incomplete tasks.
+    /// </summary>
+    public record NeedsTaskConfirmationResponse
+    {
+        public bool NeedsTaskConfirmation { get; init; } = true;
+        public int IncompleteTaskCount { get; init; }
+        public string Message { get; init; } = string.Empty;
     }
 
     public class Validator : AbstractValidator<Command>
@@ -47,18 +63,21 @@ public class ChangeTicketStatus
         private readonly ICurrentUser _currentUser;
         private readonly ITicketPermissionService _permissionService;
         private readonly ITicketConfigService _configService;
+        private readonly IMediator _mediator;
 
         public Handler(
             IAppDbContext db,
             ICurrentUser currentUser,
             ITicketPermissionService permissionService,
-            ITicketConfigService configService
+            ITicketConfigService configService,
+            IMediator mediator
         )
         {
             _db = db;
             _currentUser = currentUser;
             _permissionService = permissionService;
             _configService = configService;
+            _mediator = mediator;
         }
 
         public async ValueTask<CommandResponseDto<long>> Handle(
@@ -88,8 +107,6 @@ public class ChangeTicketStatus
                 return new CommandResponseDto<long>(ticket.Id);
             }
 
-            ticket.Status = newStatusLower;
-
             // Get status configs to determine status types
             var newStatusConfig = await _configService.GetStatusByDeveloperNameAsync(
                 newStatusLower,
@@ -99,6 +116,32 @@ public class ChangeTicketStatus
                 oldStatus,
                 cancellationToken
             );
+
+            // Task closure gate: when moving to a closed status, check for incomplete tasks
+            if (newStatusConfig?.IsClosedType == true)
+            {
+                var incompleteTaskCount = await _db.TicketTasks
+                    .Where(t => t.TicketId == request.Id && t.Status != TicketTaskStatus.CLOSED)
+                    .CountAsync(cancellationToken);
+
+                if (incompleteTaskCount > 0 && !request.ForceCloseTasks)
+                {
+                    // Return a validation error with the special NeedsTaskConfirmation info
+                    return new CommandResponseDto<long>(
+                        "ForceCloseTasks",
+                        $"NEEDS_TASK_CONFIRMATION:{incompleteTaskCount}");
+                }
+
+                if (incompleteTaskCount > 0 && request.ForceCloseTasks)
+                {
+                    // Bulk-close all incomplete tasks
+                    await _mediator.Send(
+                        new BulkCloseTicketTasks.Command { TicketId = request.Id },
+                        cancellationToken);
+                }
+            }
+
+            ticket.Status = newStatusLower;
 
             // Handle resolved/closed timestamps based on status type
             if (newStatusConfig?.IsClosedType == true)

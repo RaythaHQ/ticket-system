@@ -7,6 +7,10 @@ using App.Application.Contacts.Queries;
 using App.Application.Tickets;
 using App.Application.Tickets.Commands;
 using App.Application.Tickets.Queries;
+using App.Application.TicketConfig.Queries;
+using App.Application.TicketTasks;
+using App.Application.TicketTasks.Commands;
+using App.Application.TicketTasks.Queries;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
 using CSharpVitamins;
@@ -43,6 +47,12 @@ public class Details : BaseStaffPageModel
 
     [BindProperty]
     public int ExtensionHours { get; set; }
+
+    // Tasks feature
+    public IEnumerable<TicketTaskDto> Tasks { get; set; } = Enumerable.Empty<TicketTaskDto>();
+    public List<TaskTemplateListItemDto> TaskTemplates { get; set; } = new();
+    public List<AssigneeSelectOptionDto> TaskAvailableAssignees { get; set; } = new();
+    public bool IsTicketClosed { get; set; }
 
     // Snooze feature
     [BindProperty]
@@ -93,6 +103,31 @@ public class Details : BaseStaffPageModel
             cancellationToken
         );
         Followers = followersResponse.Result;
+
+        var tasksResponse = await Mediator.Send(
+            new GetTasksByTicketId.Query { TicketId = id },
+            cancellationToken
+        );
+        Tasks = tasksResponse.Result;
+
+        var templatesResponse = await Mediator.Send(
+            new GetTaskTemplates.Query { ActiveOnly = true },
+            cancellationToken
+        );
+        TaskTemplates = templatesResponse.Result.Items.ToList();
+
+        var taskAssigneeResponse = await Mediator.Send(
+            new GetAssigneeSelectOptions.Query
+            {
+                CanManageTickets = true,
+                CurrentUserId = CurrentUser.UserId?.Guid,
+            },
+            cancellationToken
+        );
+        TaskAvailableAssignees = taskAssigneeResponse.Result.ToList();
+
+        // Determine if the ticket is closed (by checking ClosedAt timestamp)
+        IsTicketClosed = Ticket.ClosedAt.HasValue;
 
         // Load full contact details if contact is assigned (depends on ticket result)
         if (Ticket.ContactId.HasValue)
@@ -541,6 +576,106 @@ public class Details : BaseStaffPageModel
 
         return RedirectToPage(RouteNames.Tickets.Details, new { id, backToListUrl = BackToListUrl });
     }
+
+    // ──── Task Handlers ────
+
+    public async Task<IActionResult> OnPostCreateTask(long id, [FromBody] CreateTaskRequest request, CancellationToken cancellationToken)
+    {
+        var command = new CreateTicketTask.Command { TicketId = id, Title = request.Title };
+        var response = await Mediator.Send(command, cancellationToken);
+        return new JsonResult(new { success = response.Success, result = response.Result, error = response.Error });
+    }
+
+    public async Task<IActionResult> OnPostUpdateTask(long id, [FromBody] UpdateTaskRequest request, CancellationToken cancellationToken)
+    {
+        var command = new UpdateTicketTask.Command
+        {
+            TaskId = request.TaskId,
+            Title = request.Title,
+            AssigneeId = request.AssigneeId,
+            OwningTeamId = request.OwningTeamId,
+            DueAt = request.DueAt,
+            DependsOnTaskId = request.DependsOnTaskId,
+            ClearAssignee = request.ClearAssignee,
+            ClearDueAt = request.ClearDueAt,
+            ClearDependency = request.ClearDependency,
+        };
+        var response = await Mediator.Send(command, cancellationToken);
+        return new JsonResult(new { success = response.Success, result = response.Result, error = response.Error });
+    }
+
+    public async Task<IActionResult> OnPostCompleteTask(long id, [FromBody] TaskIdRequest request, CancellationToken cancellationToken)
+    {
+        var command = new CompleteTicketTask.Command { TaskId = request.TaskId };
+        var response = await Mediator.Send(command, cancellationToken);
+        return new JsonResult(new { success = response.Success, result = response.Result, error = response.Error });
+    }
+
+    public async Task<IActionResult> OnPostReopenTask(long id, [FromBody] TaskIdRequest request, CancellationToken cancellationToken)
+    {
+        var command = new ReopenTicketTask.Command { TaskId = request.TaskId };
+        var response = await Mediator.Send(command, cancellationToken);
+        return new JsonResult(new { success = response.Success, result = response.Result, error = response.Error });
+    }
+
+    public async Task<IActionResult> OnPostDeleteTask(long id, [FromBody] TaskIdRequest request, CancellationToken cancellationToken)
+    {
+        var command = new DeleteTicketTask.Command { TaskId = request.TaskId };
+        var response = await Mediator.Send(command, cancellationToken);
+        return new JsonResult(new { success = response.Success, result = response.Result, error = response.Error });
+    }
+
+    public async Task<IActionResult> OnPostReorderTasks(long id, [FromBody] ReorderTasksRequest request, CancellationToken cancellationToken)
+    {
+        var command = new ReorderTicketTasks.Command { TicketId = id, OrderedIds = request.OrderedIds };
+        var response = await Mediator.Send(command, cancellationToken);
+        return new JsonResult(new { success = response.Success, error = response.Error });
+    }
+
+    public async Task<IActionResult> OnPostApplyTaskTemplate(long id, [FromBody] ApplyTemplateRequest request, CancellationToken cancellationToken)
+    {
+        var command = new ApplyTaskTemplate.Command
+        {
+            TicketId = id,
+            TemplateId = request.TemplateId,
+        };
+        var response = await Mediator.Send(command, cancellationToken);
+        if (response.Success)
+        {
+            return new JsonResult(new { success = true, tasks = response.Result });
+        }
+        return new JsonResult(new { success = false, error = response.Error });
+    }
+
+    // ──── Task Request Models ────
+
+    public record CreateTaskRequest { public string Title { get; init; } = string.Empty; }
+    public record UpdateTaskRequest
+    {
+        public ShortGuid TaskId { get; init; }
+        public string? Title { get; init; }
+        public ShortGuid? AssigneeId { get; init; }
+        public ShortGuid? OwningTeamId { get; init; }
+        public DateTime? DueAt { get; init; }
+        public ShortGuid? DependsOnTaskId { get; init; }
+        public bool ClearAssignee { get; init; }
+        public bool ClearDueAt { get; init; }
+        public bool ClearDependency { get; init; }
+    }
+    public record TaskIdRequest { public ShortGuid TaskId { get; init; } }
+    public record ReorderTasksRequest { public List<ShortGuid> OrderedIds { get; init; } = new(); }
+    public record ApplyTemplateRequest { public ShortGuid TemplateId { get; init; } }
+}
+
+/// <summary>
+/// View model for the tasks section partial.
+/// </summary>
+public class TasksSectionModel
+{
+    public IEnumerable<TicketTaskDto> Tasks { get; set; } = Enumerable.Empty<TicketTaskDto>();
+    public List<TaskTemplateListItemDto> Templates { get; set; } = new();
+    public List<AssigneeSelectOptionDto> AvailableAssignees { get; set; } = new();
+    public bool IsTicketClosed { get; set; }
 }
 
 /// <summary>

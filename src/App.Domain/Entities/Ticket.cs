@@ -107,6 +107,7 @@ public class Ticket : BaseNumericFullAuditableEntity
     public virtual ICollection<TicketAttachment> Attachments { get; set; } =
         new List<TicketAttachment>();
     public virtual ICollection<TicketFollower> Followers { get; set; } = new List<TicketFollower>();
+    public virtual ICollection<TicketTask> Tasks { get; set; } = new List<TicketTask>();
 
     /// <summary>
     /// Gets the ticket status as a value object.

@@ -583,9 +583,7 @@ public record TicketAttachmentBase64Request
     public string? ContentType { get; init; }
     public string? DisplayName { get; init; }
     public string? Description { get; init; }
-}
-
-public record AddTicketAttachmentResponse
+}public record AddTicketAttachmentResponse
 {
     public string AttachmentId { get; init; } = null!;
     public string MediaItemId { get; init; } = null!;
@@ -594,4 +592,3 @@ public record AddTicketAttachmentResponse
     public int SizeBytes { get; init; }
     public string ObjectKey { get; init; } = null!;
 }
-

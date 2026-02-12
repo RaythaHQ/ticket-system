@@ -189,6 +189,14 @@ public class ViewFilterBuilder
             "hascomments" => BuildBooleanExpression(param, filter, t => t.Comments.Any()),
             "issnoozed" => BuildIsSnoozedExpression(param, filter),
 
+            // Task-related boolean fields
+            "hastasks" => BuildBooleanExpression(param, filter, t => t.Tasks.Any()),
+            "hasincompletetasks" => BuildBooleanExpression(
+                param,
+                filter,
+                t => t.Tasks.Any(task => task.Status == TicketTaskStatus.OPEN)
+            ),
+
             // Contact fields
             "contact.firstname" => BuildContactStringExpression(param, c => c.FirstName, filter),
             "contact.lastname" => BuildContactStringExpression(param, c => c.LastName, filter),

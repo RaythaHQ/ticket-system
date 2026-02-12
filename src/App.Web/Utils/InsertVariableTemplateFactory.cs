@@ -5,6 +5,7 @@ using App.Application.Common.Interfaces;
 using App.Application.Common.Models.RenderModels;
 using App.Application.Login;
 using App.Application.Tickets.RenderModels;
+using App.Application.TicketTasks.RenderModels;
 using App.Application.Users;
 using App.Domain.Entities;
 using App.Domain.Exceptions;
@@ -133,6 +134,14 @@ public class InsertVariableTemplateFactory
     public static InsertVariableTemplateFactory SlaBreachedEmail =>
         new(BuiltInEmailTemplate.SlaBreachedEmail, "Target", new SlaBreach_RenderModel());
 
+    // Task notification templates
+    public static InsertVariableTemplateFactory TaskAssignedUserEmail =>
+        new(BuiltInEmailTemplate.TaskAssignedUserEmail, "Target", new TaskAssignedUser_RenderModel());
+    public static InsertVariableTemplateFactory TaskAssignedTeamEmail =>
+        new(BuiltInEmailTemplate.TaskAssignedTeamEmail, "Target", new TaskAssignedTeam_RenderModel());
+    public static InsertVariableTemplateFactory TaskCompletedEmail =>
+        new(BuiltInEmailTemplate.TaskCompletedEmail, "Target", new TaskCompleted_RenderModel());
+
     public string DeveloperName { get; private set; } = string.Empty;
     public string VariableCategoryName { get; private set; } = string.Empty;
     public IInsertTemplateVariable TemplateInfo { get; private set; } = null;
@@ -163,6 +172,11 @@ public class InsertVariableTemplateFactory
             yield return TicketUnsnoozedEmail;
             yield return SlaApproachingEmail;
             yield return SlaBreachedEmail;
+
+            // Task notification templates
+            yield return TaskAssignedUserEmail;
+            yield return TaskAssignedTeamEmail;
+            yield return TaskCompletedEmail;
 
             yield return CurrentOrganization;
             yield return CurrentUser;

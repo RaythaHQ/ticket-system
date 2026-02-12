@@ -107,6 +107,12 @@ public static class ConfigureServices
             TicketExportBackgroundTask
         >();
 
+        // Task export background task
+        services.AddScoped<
+            App.Application.Exports.Commands.TaskExportJob,
+            TaskExportBackgroundTask
+        >();
+
         // Import background tasks
         services.AddScoped<
             App.Application.Imports.Commands.ContactImportJob,

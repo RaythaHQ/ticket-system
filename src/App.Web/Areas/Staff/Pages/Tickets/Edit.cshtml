@@ -637,8 +637,10 @@
                             @foreach (var status in closedStatuses)
                             {
                                 <form method="post" asp-page-handler="ChangeStatus" asp-route-id="@Model.Form.Id"
-                                    asp-route-status="@status.DeveloperName" class="mb-0">
+                                    asp-route-status="@status.DeveloperName" class="mb-0 close-status-form"
+                                    data-status="@status.DeveloperName">
                                     <input type="hidden" asp-for="BackToListUrl" />
+                                    <input type="hidden" name="forceCloseTasks" value="false" class="force-close-input" />
                                     <button type="submit" class="quick-action-btn">
                                         <span class="action-dot bg-@status.ColorName"></span>
                                         <span class="action-label">@status.Label</span>
@@ -647,6 +649,19 @@
                             }
                         </div>
                     }
+
+                    <!-- Task closure confirmation (hidden until needed) -->
+                    <div id="task-closure-gate" class="alert alert-warning mt-3" style="display: none;">
+                        <p id="task-closure-message" class="mb-2 fw-medium"></p>
+                        <div class="d-flex gap-2">
+                            <button id="task-closure-confirm" class="btn btn-sm btn-warning">
+                                <i class="bi bi-check2-all me-1"></i>Mark Complete &amp; Close
+                            </button>
+                            <button id="task-closure-cancel" class="btn btn-sm btn-outline-secondary">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         }
@@ -682,6 +697,66 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // ── Task closure gate ──
+            const closeForms = document.querySelectorAll('.close-status-form');
+            const closureGate = document.getElementById('task-closure-gate');
+            const closureMessage = document.getElementById('task-closure-message');
+            const closureConfirm = document.getElementById('task-closure-confirm');
+            const closureCancel = document.getElementById('task-closure-cancel');
+            let pendingCloseForm = null;
+
+            closeForms.forEach(form => {
+                form.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const formData = new FormData(form);
+
+                    try {
+                        const resp = await fetch(form.action, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'RequestVerificationToken': formData.get('__RequestVerificationToken') || ''
+                            },
+                            body: formData
+                        });
+
+                        const contentType = resp.headers.get('content-type') || '';
+                        if (contentType.includes('application/json')) {
+                            const data = await resp.json();
+                            if (data.needsTaskConfirmation) {
+                                pendingCloseForm = form;
+                                closureMessage.textContent = data.message;
+                                closureGate.style.display = '';
+                                return;
+                            }
+                        }
+
+                        // Not JSON or no confirmation needed — just submit normally
+                        form.querySelector('.force-close-input').value = 'false';
+                        form.removeEventListener('submit', arguments.callee);
+                        form.submit();
+                    } catch {
+                        form.submit();
+                    }
+                });
+            });
+
+            if (closureConfirm) {
+                closureConfirm.addEventListener('click', function () {
+                    if (pendingCloseForm) {
+                        pendingCloseForm.querySelector('.force-close-input').value = 'true';
+                        pendingCloseForm.submit();
+                    }
+                });
+            }
+
+            if (closureCancel) {
+                closureCancel.addEventListener('click', function () {
+                    closureGate.style.display = 'none';
+                    pendingCloseForm = null;
+                });
+            }
+
             // Assignee dropdown handling
             const assigneeDropdown = document.getElementById('assignee-dropdown');
             const owningTeamIdInput = document.getElementById('owning-team-id');

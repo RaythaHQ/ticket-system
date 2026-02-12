@@ -1082,6 +1082,106 @@ namespace App.Infrastructure.Migrations
                     b.ToTable("SlaRules");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.TaskTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("DeleterUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.ToTable("TaskTemplates");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.TaskTemplateItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("DeleterUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DependsOnItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TaskTemplateId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("DependsOnItemId");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.HasIndex("TaskTemplateId");
+
+                    b.ToTable("TaskTemplateItems");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.Team", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1614,6 +1714,95 @@ namespace App.Infrastructure.Migrations
                     b.HasIndex("StatusType");
 
                     b.ToTable("TicketStatusConfigs");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.TicketTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssigneeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ClosedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("DeleterUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DependsOnTaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DueAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("OwningTeamId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<long>("TicketId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssigneeId");
+
+                    b.HasIndex("ClosedByStaffId");
+
+                    b.HasIndex("CreatedByStaffId");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("DependsOnTaskId");
+
+                    b.HasIndex("DueAt")
+                        .HasFilter("\"DueAt\" IS NOT NULL");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.HasIndex("OwningTeamId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TicketId");
+
+                    b.ToTable("TicketTasks");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.TicketView", b =>
@@ -2496,6 +2685,51 @@ namespace App.Infrastructure.Migrations
                     b.Navigation("LastModifierUser");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.TaskTemplate", b =>
+                {
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("LastModifierUser");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.TaskTemplateItem", b =>
+                {
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.TaskTemplateItem", "DependsOnItem")
+                        .WithMany()
+                        .HasForeignKey("DependsOnItemId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.HasOne("App.Domain.Entities.TaskTemplate", "TaskTemplate")
+                        .WithMany("Items")
+                        .HasForeignKey("TaskTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("DependsOnItem");
+
+                    b.Navigation("LastModifierUser");
+
+                    b.Navigation("TaskTemplate");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.Team", b =>
                 {
                     b.HasOne("App.Domain.Entities.User", "CreatorUser")
@@ -2755,6 +2989,64 @@ namespace App.Infrastructure.Migrations
                     b.Navigation("LastModifierUser");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.TicketTask", b =>
+                {
+                    b.HasOne("App.Domain.Entities.User", "Assignee")
+                        .WithMany()
+                        .HasForeignKey("AssigneeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("App.Domain.Entities.User", "ClosedByStaff")
+                        .WithMany()
+                        .HasForeignKey("ClosedByStaffId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("App.Domain.Entities.User", "CreatedByStaff")
+                        .WithMany()
+                        .HasForeignKey("CreatedByStaffId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.TicketTask", "DependsOnTask")
+                        .WithMany("DependentTasks")
+                        .HasForeignKey("DependsOnTaskId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.HasOne("App.Domain.Entities.Team", "OwningTeam")
+                        .WithMany()
+                        .HasForeignKey("OwningTeamId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("App.Domain.Entities.Ticket", "Ticket")
+                        .WithMany("Tasks")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Assignee");
+
+                    b.Navigation("ClosedByStaff");
+
+                    b.Navigation("CreatedByStaff");
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("DependsOnTask");
+
+                    b.Navigation("LastModifierUser");
+
+                    b.Navigation("OwningTeam");
+
+                    b.Navigation("Ticket");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.TicketView", b =>
                 {
                     b.HasOne("App.Domain.Entities.User", "CreatorUser")
@@ -2947,6 +3239,11 @@ namespace App.Infrastructure.Migrations
                     b.Navigation("Revisions");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.TaskTemplate", b =>
+                {
+                    b.Navigation("Items");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.Team", b =>
                 {
                     b.Navigation("Memberships");
@@ -2963,6 +3260,13 @@ namespace App.Infrastructure.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("Followers");
+
+                    b.Navigation("Tasks");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.TicketTask", b =>
+                {
+                    b.Navigation("DependentTasks");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.User", b =>

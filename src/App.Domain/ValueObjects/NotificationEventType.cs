@@ -10,6 +10,9 @@ public class NotificationEventType : ValueObject
     public const string SLA_APPROACHING = "sla_approaching";
     public const string SLA_BREACHED = "sla_breached";
     public const string TICKET_UNSNOOZED = "ticket_unsnoozed";
+    public const string TASK_ASSIGNED_USER = "task_assigned_user";
+    public const string TASK_ASSIGNED_TEAM = "task_assigned_team";
+    public const string TASK_COMPLETED = "task_completed";
 
     static NotificationEventType() { }
 
@@ -43,6 +46,9 @@ public class NotificationEventType : ValueObject
         new("SLA Approaching Breach", SLA_APPROACHING);
     public static NotificationEventType SlaBreached => new("SLA Breached", SLA_BREACHED);
     public static NotificationEventType TicketUnsnoozed => new("Ticket Unsnoozed", TICKET_UNSNOOZED);
+    public static NotificationEventType TaskAssignedUser => new("Task Assigned to User", TASK_ASSIGNED_USER);
+    public static NotificationEventType TaskAssignedTeam => new("Task Assigned to Team", TASK_ASSIGNED_TEAM);
+    public static NotificationEventType TaskCompleted => new("Task Completed", TASK_COMPLETED);
 
     public string Label { get; set; } = string.Empty;
     public string DeveloperName { get; set; } = string.Empty;
@@ -74,6 +80,9 @@ public class NotificationEventType : ValueObject
             yield return SlaApproaching;
             yield return SlaBreached;
             yield return TicketUnsnoozed;
+            yield return TaskAssignedUser;
+            yield return TaskAssignedTeam;
+            yield return TaskCompleted;
         }
     }
 

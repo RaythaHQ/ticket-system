@@ -181,10 +181,16 @@ public class Edit : BaseStaffPageModel
     public async Task<IActionResult> OnPostChangeStatus(
         long id,
         string status,
-        CancellationToken cancellationToken
+        bool forceCloseTasks = false,
+        CancellationToken cancellationToken = default
     )
     {
-        var command = new ChangeTicketStatus.Command { Id = id, NewStatus = status };
+        var command = new ChangeTicketStatus.Command
+        {
+            Id = id,
+            NewStatus = status,
+            ForceCloseTasks = forceCloseTasks,
+        };
         var response = await Mediator.Send(command, cancellationToken);
 
         if (response.Success)
@@ -197,10 +203,44 @@ public class Edit : BaseStaffPageModel
             var statusConfig = statusesResponse.Result.Items.FirstOrDefault(s =>
                 s.DeveloperName == status
             );
-            SetSuccessMessage($"Status changed to {statusConfig?.Label ?? status}.");
+            var msg = forceCloseTasks
+                ? $"All incomplete tasks marked complete. Status changed to {statusConfig?.Label ?? status}."
+                : $"Status changed to {statusConfig?.Label ?? status}.";
+            SetSuccessMessage(msg);
         }
         else
         {
+            // Check for the special task confirmation signal
+            var errors = response.GetErrors().ToList();
+            var confirmError = errors.FirstOrDefault(e =>
+                e.ErrorMessage.StartsWith("NEEDS_TASK_CONFIRMATION:"));
+
+            if (confirmError != null)
+            {
+                var countStr = confirmError.ErrorMessage.Replace("NEEDS_TASK_CONFIRMATION:", "");
+                if (int.TryParse(countStr, out var incompleteCount))
+                {
+                    // Return JSON response for AJAX requests
+                    if (Request.Headers.Accept.ToString().Contains("application/json")
+                        || Request.Headers.XRequestedWith == "XMLHttpRequest")
+                    {
+                        return new JsonResult(new
+                        {
+                            success = false,
+                            needsTaskConfirmation = true,
+                            incompleteTaskCount = incompleteCount,
+                            message = $"There are {incompleteCount} tasks on this ticket that are not complete. Would you like to mark all tasks as complete and close the ticket?",
+                        });
+                    }
+
+                    // For regular form posts, show message and redirect
+                    SetErrorMessage(
+                        $"There are {incompleteCount} incomplete tasks on this ticket. " +
+                        "Please complete all tasks or use the force close option.");
+                    return RedirectToPage(RouteNames.Tickets.Edit, new { id, backToListUrl = BackToListUrl });
+                }
+            }
+
             SetErrorMessage(response.GetErrors());
         }
 

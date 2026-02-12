@@ -394,6 +394,8 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
             ContactName = p.ContactName ?? "-",
             ContactId = p.ContactId,
             CommentCount = p.CommentCount,
+            CompletedTaskCount = p.CompletedTaskCount,
+            TotalTaskCount = p.TotalTaskCount,
             IsSnoozed = p.IsSnoozed,
             SnoozedUntil = p.SnoozedUntil,
             SnoozedUntilFormatted = p.SnoozedUntil.HasValue
@@ -801,6 +803,10 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
 
         public int CommentCount { get; init; }
 
+        // Task counts
+        public int CompletedTaskCount { get; init; }
+        public int TotalTaskCount { get; init; }
+
         // Snooze fields
         public bool IsSnoozed { get; init; }
         public DateTime? SnoozedUntil { get; init; }
@@ -883,6 +889,7 @@ public class Index : BaseStaffPageModel, IHasListView<Index.TicketListItemViewMo
                 "CreatedByName" => string.IsNullOrEmpty(CreatedByName) ? "—" : CreatedByName,
                 "IsSnoozed" => IsSnoozed ? "Yes" : "No",
                 "SnoozedUntil" => string.IsNullOrEmpty(SnoozedUntilFormatted) ? "—" : SnoozedUntilFormatted,
+                "Tasks" => TotalTaskCount > 0 ? $"{CompletedTaskCount} / {TotalTaskCount}" : "—",
                 _ => "—",
             };
     }

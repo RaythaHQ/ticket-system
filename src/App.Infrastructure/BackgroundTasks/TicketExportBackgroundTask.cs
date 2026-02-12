@@ -203,6 +203,7 @@ public class TicketExportBackgroundTask : TicketExportJob
             .Include(t => t.Assignee)
             .Include(t => t.OwningTeam)
             .Include(t => t.CreatedByStaff)
+            .Include(t => t.Tasks)
             .AsNoTracking()
             .Where(t => t.CreationTime <= cutoffTime);
 
@@ -406,6 +407,10 @@ public class TicketExportBackgroundTask : TicketExportJob
             "closedat" => ticket.ClosedAt?.ToString("O") ?? "",
             // Tags
             "tags" => ticket.Tags != null ? string.Join(", ", ticket.Tags) : "",
+            // Tasks
+            "tasks" => ticket.Tasks != null && ticket.Tasks.Any(t => !t.IsDeleted)
+                ? $"{ticket.Tasks.Count(t => !t.IsDeleted && t.Status == Domain.ValueObjects.TicketTaskStatus.CLOSED)} / {ticket.Tasks.Count(t => !t.IsDeleted)}"
+                : "",
             _ => "",
         };
     }

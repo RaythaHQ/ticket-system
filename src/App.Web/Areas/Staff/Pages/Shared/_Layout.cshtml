@@ -62,15 +62,21 @@
                     <i class="bi bi-journal-text"></i>
                     <span>Wiki</span>
                 </a>
+                @{
+                    var isTasksSection = ViewData["ActiveMenu"]?.ToString() == "Tasks";
+                    var isTicketsActive = ViewData["ActiveMenu"]?.ToString() == "Tickets";
+                    // Tickets expanded by default, unless Tasks is the active section
+                    var ticketsExpanded = !isTasksSection;
+                }
                 <div class="staff-nav-item">
                     <span
-                        class="staff-nav-link has-submenu expanded @(ViewData["ActiveMenu"]?.ToString() == "Tickets" ? "active" : "")"
+                        class="staff-nav-link has-submenu @(ticketsExpanded ? "expanded" : "") @(isTicketsActive ? "active" : "")"
                         onclick="toggleSubmenu(event, 'tickets-submenu')">
                         <i class="bi bi-ticket-detailed"></i>
                         <span>Tickets</span>
                         <i class="bi bi-chevron-right submenu-arrow"></i>
                     </span>
-                    <div class="staff-submenu expanded" id="tickets-submenu">
+                    <div class="staff-submenu @(ticketsExpanded ? "expanded" : "")" id="tickets-submenu">
                         <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="unassigned"
                             class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Unassigned" ? "active" : "")">
                             Unassigned
@@ -118,6 +124,41 @@
                                 </a>
                             }
                         }
+                    </div>
+                </div>
+                <div class="staff-nav-item">
+                    <span
+                        class="staff-nav-link has-submenu @(isTasksSection ? "expanded active" : "")"
+                        onclick="toggleSubmenu(event, 'tasks-submenu')">
+                        <i class="bi bi-check2-square"></i>
+                        <span>Tasks</span>
+                        <i class="bi bi-chevron-right submenu-arrow"></i>
+                    </span>
+                    <div class="staff-submenu @(isTasksSection ? "expanded" : "")" id="tasks-submenu">
+                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="my-tasks"
+                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "my-tasks" ? "active" : "")">
+                            My Tasks
+                        </a>
+                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="team-tasks"
+                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "team-tasks" ? "active" : "")">
+                            Team Tasks
+                        </a>
+                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="unassigned"
+                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "unassigned" ? "active" : "")">
+                            Unassigned
+                        </a>
+                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="created-by-me"
+                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "created-by-me" ? "active" : "")">
+                            Created by Me
+                        </a>
+                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="overdue"
+                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "overdue" ? "active" : "")">
+                            Overdue
+                        </a>
+                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="all"
+                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "all" ? "active" : "")">
+                            All Tasks
+                        </a>
                     </div>
                 </div>
             </div>
@@ -259,6 +300,9 @@
             }
         });
 
+        // Accordion submenu IDs — expanding one collapses the others
+        const accordionSubmenus = ['tickets-submenu', 'tasks-submenu'];
+
         function toggleSubmenu(event, submenuId) {
             event.preventDefault();
             event.stopPropagation();
@@ -269,6 +313,17 @@
                 submenu.classList.remove('expanded');
                 link.classList.remove('expanded');
             } else {
+                // Collapse other accordion submenus first
+                accordionSubmenus.forEach(function (otherId) {
+                    if (otherId !== submenuId) {
+                        const otherSubmenu = document.getElementById(otherId);
+                        if (otherSubmenu && otherSubmenu.classList.contains('expanded')) {
+                            otherSubmenu.classList.remove('expanded');
+                            const otherLink = otherSubmenu.previousElementSibling;
+                            if (otherLink) otherLink.classList.remove('expanded');
+                        }
+                    }
+                });
                 submenu.classList.add('expanded');
                 link.classList.add('expanded');
             }

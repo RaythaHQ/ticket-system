@@ -80,6 +80,15 @@ public static class RouteNames
     }
 
     /// <summary>
+    /// Route constants for task management pages.
+    /// </summary>
+    public static class Tasks
+    {
+        public const string Index = "/Tasks/Index";
+        public const string Reports = "/Tasks/Reports";
+    }
+
+    /// <summary>
     /// Route constants for wiki pages.
     /// </summary>
     public static class Wiki

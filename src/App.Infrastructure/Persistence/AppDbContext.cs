@@ -78,6 +78,11 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     // Notification entities
     public DbSet<Notification> Notifications => Set<Notification>();
 
+    // Ticket task entities
+    public DbSet<TicketTask> TicketTasks => Set<TicketTask>();
+    public DbSet<TaskTemplate> TaskTemplates => Set<TaskTemplate>();
+    public DbSet<TaskTemplateItem> TaskTemplateItems => Set<TaskTemplateItem>();
+
     public DbContext DbContext => this;
 
     protected override void OnModelCreating(ModelBuilder builder)

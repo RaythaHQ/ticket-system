@@ -61,4 +61,9 @@ public static class NotificationType
     public const string Success = "success";
     public const string Warning = "warning";
     public const string Error = "error";
+
+    // Task notification types
+    public const string TaskAssignedUser = "task_assigned_user";
+    public const string TaskAssignedTeam = "task_assigned_team";
+    public const string TaskCompleted = "task_completed";
 }

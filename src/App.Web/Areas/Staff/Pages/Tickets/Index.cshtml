@@ -387,6 +387,26 @@
                                         @ticket.SlaStatusLabel
                                     </span>
                                 }
+                                else if (col.Field == "Tasks")
+                                {
+                                    @if (ticket.TotalTaskCount > 0)
+                                    {
+                                        var taskPct = (int)Math.Round(100.0 * ticket.CompletedTaskCount / ticket.TotalTaskCount);
+                                        var taskColor = ticket.CompletedTaskCount == ticket.TotalTaskCount ? "#198754"
+                                            : ticket.CompletedTaskCount > 0 ? "#ffc107"
+                                            : "#6c757d";
+                                        <span class="d-inline-flex align-items-center gap-1" title="@ticket.CompletedTaskCount of @ticket.TotalTaskCount tasks complete">
+                                            <span class="task-progress-bar" style="display:inline-block;width:40px;height:6px;background:#e9ecef;border-radius:3px;overflow:hidden;">
+                                                <span style="display:block;height:100%;width:@(taskPct)%;background:@taskColor;border-radius:3px;"></span>
+                                            </span>
+                                            <span class="small text-muted">@ticket.CompletedTaskCount / @ticket.TotalTaskCount</span>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                }
                                 else
                                 {
                                     @ticket.GetColumnValue(col.Field)

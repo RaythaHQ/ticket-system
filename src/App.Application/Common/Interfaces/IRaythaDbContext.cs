@@ -54,6 +54,11 @@ public interface IAppDbContext
     // Notification entities
     public DbSet<Notification> Notifications { get; }
 
+    // Ticket task entities
+    public DbSet<TicketTask> TicketTasks { get; }
+    public DbSet<TaskTemplate> TaskTemplates { get; }
+    public DbSet<TaskTemplateItem> TaskTemplateItems { get; }
+
     public DbContext DbContext { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
