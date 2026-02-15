@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="~/admin/lib/bootstrap-icons/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/admin/css/volt.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/admin/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/searchable-select.css" asp-append-version="true" />
     <link rel="icon" type="image/x-icon" href="~/favicon.ico">
 
     @RenderSection("headstyles", false)
@@ -55,6 +56,9 @@
         import { initNavigation } from '/admin/js/core/nav.js';
         initNavigation();
     </script>
+
+    <!-- Searchable Select Component -->
+    <script src="~/js/searchable-select.js" asp-append-version="true"></script>
 
     <!-- SignalR for real-time notifications -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>

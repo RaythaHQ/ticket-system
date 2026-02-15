@@ -1,0 +1,517 @@
+@page "/staff/scheduler/create"
+@model App.Web.Areas.Staff.Pages.Scheduler.CreateModel
+@using App.Web.Areas.Staff.Pages.Shared.Models
+@using App.Domain.ValueObjects
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Create Appointment";
+    ViewData["ActiveMenu"] = "AllAppointments";
+
+    var back = new BackLinkOptions
+    {
+        Page = RouteNames.Scheduler.AllAppointments,
+        Text = "Back to All Appointments"
+    };
+
+    // Build JSON data for JavaScript type/staff filtering
+    var typeData = Model.AppointmentTypes.Select(t => new
+    {
+        id = t.Id.ToString(),
+        name = t.Name,
+        mode = t.Mode,
+        defaultDuration = t.DefaultDurationMinutes,
+        eligibleStaff = t.EligibleStaff.Select(e => e.StaffMemberId.ToString()).ToArray()
+    });
+    var staffData = Model.StaffMembers.Select(s => new
+    {
+        id = s.Id.ToString(),
+        name = s.FullName,
+        defaultMeetingLink = s.DefaultMeetingLink
+    });
+}
+
+<partial name="_Partials/PageHeading" model='"Create Appointment"' />
+
+<div class="row">
+    <div class="col-xl-8 col-lg-10">
+        <div class="staff-card">
+            <div class="staff-card-body">
+                @(await Html.PartialAsync("_Partials/BackToList", back))
+
+                <form method="post" class="mt-4" id="create-appointment-form">
+
+                    <!-- ===== Contact Search Section ===== -->
+                    <div class="mb-5">
+                        <div class="d-flex align-items-center mb-3">
+                            <h5 class="mb-0 me-2">Contact</h5>
+                            <span class="badge bg-primary">Required</span>
+                        </div>
+
+                        <div id="contact-search-section" class="position-relative">
+                            <div class="input-group input-group-lg mb-3">
+                                <span class="input-group-text">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" id="contact-search" class="form-control"
+                                    placeholder="Search by Contact ID, Name, Email, or Phone Number..."
+                                    autocomplete="off" />
+                                <button type="button" class="btn btn-outline-secondary" id="clear-contact-btn"
+                                    style="display: none;">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+
+                            <!-- Search Results Dropdown -->
+                            <div id="contact-search-results" class="list-group position-absolute w-100"
+                                style="z-index: 1000; max-height: 300px; overflow-y: auto; display: none; top: 100%; margin-top: -0.5rem;">
+                            </div>
+
+                            <!-- Contact Card (shown when contact is selected) -->
+                            <div id="contact-card" class="card border-success mb-3" style="display: none;">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="card-title mb-2">
+                                                <i class="bi bi-person-circle me-2"></i>
+                                                <span id="contact-name"></span>
+                                                <span class="badge bg-secondary ms-2" id="contact-id-badge"></span>
+                                            </h6>
+                                            <div class="row g-2 small">
+                                                <div class="col-12" id="contact-email-row" style="display: none;">
+                                                    <i class="bi bi-envelope me-2 text-muted"></i>
+                                                    <span id="contact-email"></span>
+                                                </div>
+                                                <div class="col-12" id="contact-phone-row" style="display: none;">
+                                                    <i class="bi bi-telephone me-2 text-muted"></i>
+                                                    <span id="contact-phone"></span>
+                                                </div>
+                                                <div class="col-12" id="contact-org-row" style="display: none;">
+                                                    <i class="bi bi-building me-2 text-muted"></i>
+                                                    <span id="contact-org"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            id="change-contact-btn">
+                                            <i class="bi bi-pencil me-1"></i>Change
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <input type="hidden" asp-for="Form.ContactId" id="contact-id-input" />
+                            <span asp-validation-for="Form.ContactId" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- ===== Per-Appointment Contact Details ===== -->
+                    <div id="appointment-contact-fields" style="display: none;">
+                        <div class="d-flex align-items-center mb-3">
+                            <h5 class="mb-0 me-2">Appointment Contact Info</h5>
+                            <span class="badge bg-secondary">Pre-populated from contact</span>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            These fields are pre-filled from the contact record. Override any values for this specific appointment if needed.
+                        </p>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label asp-for="Form.ContactFirstName" class="form-label">
+                                    First Name <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Form.ContactFirstName" class="form-control" id="appt-contact-first-name"
+                                    placeholder="First name" />
+                                <span asp-validation-for="Form.ContactFirstName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Form.ContactLastName" class="form-label">Last Name</label>
+                                <input asp-for="Form.ContactLastName" class="form-control" id="appt-contact-last-name"
+                                    placeholder="Last name" />
+                                <span asp-validation-for="Form.ContactLastName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Form.ContactEmail" class="form-label">Email</label>
+                                <input asp-for="Form.ContactEmail" type="email" class="form-control" id="appt-contact-email"
+                                    placeholder="email@example.com" />
+                                <span asp-validation-for="Form.ContactEmail" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Form.ContactPhone" class="form-label">Phone</label>
+                                <input asp-for="Form.ContactPhone" type="tel" class="form-control" id="appt-contact-phone"
+                                    placeholder="(555) 123-4567" />
+                                <span asp-validation-for="Form.ContactPhone" class="text-danger small"></span>
+                            </div>
+                            <div class="col-12">
+                                <label asp-for="Form.ContactAddress" class="form-label">Address</label>
+                                <input asp-for="Form.ContactAddress" class="form-control" id="appt-contact-address"
+                                    placeholder="Full address" />
+                                <span asp-validation-for="Form.ContactAddress" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+                    </div>
+
+                    <!-- ===== Appointment Details ===== -->
+                    <div class="d-flex align-items-center mb-3">
+                        <h5 class="mb-0 me-2">Appointment Details</h5>
+                    </div>
+
+                    <!-- Appointment Type -->
+                    <div class="mb-4">
+                        <label asp-for="Form.AppointmentTypeId" class="form-label">
+                            Appointment Type <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="Form.AppointmentTypeId" class="form-select" id="appointmentTypeSelect">
+                            <option value="">— Select Type —</option>
+                            @foreach (var type in Model.AppointmentTypes)
+                            {
+                                <option value="@type.Id"
+                                        data-mode="@type.Mode"
+                                        data-default-duration="@(type.DefaultDurationMinutes ?? Model.DefaultDurationMinutes)">
+                                    @type.Name (@type.ModeLabel)
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="Form.AppointmentTypeId" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Mode Selector (shown for "either" types) -->
+                    <div class="mb-4" id="modeSelector" style="display: none;">
+                        <label class="form-label">Mode <span class="text-danger">*</span></label>
+                        <div class="d-flex gap-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="Form.Mode"
+                                       id="modeVirtual" value="virtual" />
+                                <label class="form-check-label" for="modeVirtual">
+                                    <i class="bi bi-camera-video me-1"></i>Virtual
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="Form.Mode"
+                                       id="modeInPerson" value="in_person" />
+                                <label class="form-check-label" for="modeInPerson">
+                                    <i class="bi bi-geo-alt me-1"></i>In-Person
+                                </label>
+                            </div>
+                        </div>
+                        <span asp-validation-for="Form.Mode" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Hidden mode field for non-either types -->
+                    <input type="hidden" name="Form.Mode" id="modeHidden" value="@Model.Form.Mode" />
+
+                    <!-- Meeting Link (shown for virtual mode) -->
+                    <div class="mb-4" id="meetingLinkGroup" style="display: none;">
+                        <label asp-for="Form.MeetingLink" class="form-label">
+                            Meeting Link
+                        </label>
+                        <input asp-for="Form.MeetingLink" type="url" class="form-control" id="meetingLinkInput"
+                               placeholder="https://zoom.us/j/..." />
+                        <span asp-validation-for="Form.MeetingLink" class="text-danger small"></span>
+                        <small class="text-muted d-block mt-1" id="meetingLinkHint">
+                            Leave blank to use the staff member's default meeting link.
+                        </small>
+                    </div>
+
+                    <!-- Assigned Staff Member -->
+                    <div class="mb-4">
+                        <label asp-for="Form.AssignedStaffMemberId" class="form-label">
+                            Assigned Staff Member <span class="text-danger">*</span>
+                        </label>
+                        <select asp-for="Form.AssignedStaffMemberId" class="form-select" id="staffSelect">
+                            <option value="">— Select Staff Member —</option>
+                            @foreach (var staff in Model.StaffMembers)
+                            {
+                                <option value="@staff.Id">@staff.FullName</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Form.AssignedStaffMemberId" class="text-danger small"></span>
+                        <small class="text-muted d-block mt-1" id="staffDefaultLinkHint" style="display: none;">
+                            <i class="bi bi-camera-video me-1"></i>
+                            Default meeting link: <a href="#" id="staffDefaultLinkValue" target="_blank" rel="noopener noreferrer"></a>
+                        </small>
+                    </div>
+
+                    <!-- Date/Time & Duration -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Form.ScheduledStartTime" class="form-label">
+                                Scheduled Date &amp; Time <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Form.ScheduledStartTime" type="datetime-local"
+                                   class="form-control" />
+                            <span asp-validation-for="Form.ScheduledStartTime" class="text-danger small"></span>
+                            <small class="text-muted d-block mt-1">Time in organization timezone.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.DurationMinutes" class="form-label">
+                                Duration (minutes) <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Form.DurationMinutes" type="number" class="form-control"
+                                   min="1" max="480" id="durationInput" />
+                            <span asp-validation-for="Form.DurationMinutes" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-4">
+                        <label asp-for="Form.Notes" class="form-label">Notes</label>
+                        <textarea asp-for="Form.Notes" class="form-control" rows="3"
+                                  placeholder="Optional notes for this appointment..."></textarea>
+                        <span asp-validation-for="Form.Notes" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Coverage Zone Override (shown for in-person) -->
+                    <div class="mb-4" id="coverageZoneGroup" style="display: none;">
+                        <label asp-for="Form.CoverageZoneOverrideReason" class="form-label">
+                            Coverage Zone Override Reason
+                        </label>
+                        <textarea asp-for="Form.CoverageZoneOverrideReason" class="form-control" rows="2"
+                                  placeholder="Required if contact is outside the staff member's coverage zone..."></textarea>
+                        <span asp-validation-for="Form.CoverageZoneOverrideReason" class="text-danger small"></span>
+                        <small class="text-muted d-block mt-1">Only required if the contact is outside the assigned staff member's coverage zone.</small>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg me-2"></i>Create Appointment
+                        </button>
+                        <a asp-page="@RouteNames.Scheduler.AllAppointments" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        #contact-search-results {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        #contact-search-results .list-group-item { border-left: none; border-right: none; }
+        #contact-search-results .list-group-item:first-child { border-top: none; }
+        #contact-search-results .list-group-item:last-child { border-bottom: none; }
+        #contact-search-results .list-group-item:hover { background-color: #f8f9fa; }
+        #contact-card { border-width: 2px; }
+    </style>
+
+    <script>
+        // Appointment type and staff data for client-side filtering
+        var schedulerTypeData = @Html.Raw(JsonSerializer.Serialize(typeData));
+        var schedulerStaffData = @Html.Raw(JsonSerializer.Serialize(staffData));
+        var defaultDurationMinutes = @Model.DefaultDurationMinutes;
+    </script>
+    <script src="~/js/scheduler-create.js"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // ===== Contact search functionality =====
+        var contactSearch = document.getElementById('contact-search');
+        var contactSearchResults = document.getElementById('contact-search-results');
+        var contactCard = document.getElementById('contact-card');
+        var contactIdInput = document.getElementById('contact-id-input');
+        var clearContactBtn = document.getElementById('clear-contact-btn');
+        var changeContactBtn = document.getElementById('change-contact-btn');
+        var contactSearchSection = document.getElementById('contact-search-section');
+        var appointmentContactFields = document.getElementById('appointment-contact-fields');
+
+        var searchTimeout;
+
+        // Initialize with pre-populated contact if available
+        @if (Model.Form.ContactId > 0)
+        {
+            <text>
+            loadContactById(@Model.Form.ContactId);
+            </text>
+        }
+
+        // Contact search with debounce
+        contactSearch.addEventListener('input', function () {
+            var searchTerm = this.value.trim();
+            clearTimeout(searchTimeout);
+            if (searchTerm.length < 2) {
+                contactSearchResults.style.display = 'none';
+                return;
+            }
+            searchTimeout = setTimeout(function () {
+                searchContacts(searchTerm);
+            }, 300);
+        });
+
+        clearContactBtn.addEventListener('click', function () { resetContactSection(); });
+        changeContactBtn.addEventListener('click', function () {
+            resetContactSection();
+            contactSearch.focus();
+        });
+
+        function resetContactSection() {
+            contactSearch.value = '';
+            contactSearchResults.style.display = 'none';
+            contactCard.style.display = 'none';
+            contactIdInput.value = '';
+            clearContactBtn.style.display = 'none';
+            appointmentContactFields.style.display = 'none';
+            // Clear per-appointment fields
+            document.getElementById('appt-contact-first-name').value = '';
+            document.getElementById('appt-contact-last-name').value = '';
+            document.getElementById('appt-contact-email').value = '';
+            document.getElementById('appt-contact-phone').value = '';
+            document.getElementById('appt-contact-address').value = '';
+        }
+
+        function searchContacts(searchTerm) {
+            fetch('?handler=SearchContact&searchTerm=' + encodeURIComponent(searchTerm))
+                .then(function (r) { return r.json(); })
+                .then(function (data) { displaySearchResults(data.results); })
+                .catch(function (err) { console.error('Error searching contacts:', err); });
+        }
+
+        function displaySearchResults(results) {
+            contactSearchResults.innerHTML = '';
+            if (results.length === 0) {
+                contactSearchResults.innerHTML =
+                    '<div class="list-group-item"><div class="text-muted text-center py-2">' +
+                    '<i class="bi bi-exclamation-circle me-2"></i>No contacts found.</div></div>';
+            } else {
+                results.forEach(function (contact) {
+                    var item = document.createElement('a');
+                    item.href = '#';
+                    item.className = 'list-group-item list-group-item-action';
+                    item.innerHTML =
+                        '<div class="d-flex justify-content-between align-items-center"><div>' +
+                        '<strong>' + escapeHtml(contact.name) + '</strong>' +
+                        '<span class="badge bg-secondary ms-2">ID: ' + contact.id + '</span>' +
+                        (contact.email ? '<div class="small text-muted"><i class="bi bi-envelope me-1"></i>' + escapeHtml(contact.email) + '</div>' : '') +
+                        (contact.phone ? '<div class="small text-muted"><i class="bi bi-telephone me-1"></i>' + escapeHtml(contact.phone) + '</div>' : '') +
+                        '</div><i class="bi bi-chevron-right"></i></div>';
+                    item.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        selectContact(contact.id);
+                    });
+                    contactSearchResults.appendChild(item);
+                });
+            }
+            contactSearchResults.style.display = 'block';
+        }
+
+        function selectContact(contactId) {
+            contactSearchResults.style.display = 'none';
+            loadContactById(contactId);
+        }
+
+        function loadContactById(contactId) {
+            fetch('?handler=ContactById&id=' + contactId)
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    if (data.success) {
+                        displayContactCard(data.contact);
+                    }
+                })
+                .catch(function (err) { console.error('Error loading contact:', err); });
+        }
+
+        function displayContactCard(contact) {
+            contactIdInput.value = contact.id;
+            document.getElementById('contact-name').textContent = contact.name;
+            document.getElementById('contact-id-badge').textContent = 'ID: ' + contact.id;
+
+            if (contact.email) {
+                document.getElementById('contact-email').textContent = contact.email;
+                document.getElementById('contact-email-row').style.display = 'block';
+            } else {
+                document.getElementById('contact-email-row').style.display = 'none';
+            }
+
+            if (contact.primaryPhone) {
+                document.getElementById('contact-phone').textContent = contact.primaryPhone;
+                document.getElementById('contact-phone-row').style.display = 'block';
+            } else {
+                document.getElementById('contact-phone-row').style.display = 'none';
+            }
+
+            if (contact.organizationAccount) {
+                document.getElementById('contact-org').textContent = contact.organizationAccount;
+                document.getElementById('contact-org-row').style.display = 'block';
+            } else {
+                document.getElementById('contact-org-row').style.display = 'none';
+            }
+
+            contactCard.style.display = 'block';
+            clearContactBtn.style.display = 'block';
+            contactSearch.value = '';
+
+            // Pre-populate per-appointment contact fields from contact record
+            document.getElementById('appt-contact-first-name').value = contact.firstName || '';
+            document.getElementById('appt-contact-last-name').value = contact.lastName || '';
+            document.getElementById('appt-contact-email').value = contact.email || '';
+            document.getElementById('appt-contact-phone').value = contact.primaryPhone || '';
+            document.getElementById('appt-contact-address').value = contact.address || '';
+            appointmentContactFields.style.display = 'block';
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Close search results when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!contactSearchSection.contains(e.target)) {
+                contactSearchResults.style.display = 'none';
+            }
+        });
+
+        // ===== Staff default meeting link hint =====
+        var staffSelect = document.getElementById('staffSelect');
+        var staffDefaultLinkHint = document.getElementById('staffDefaultLinkHint');
+        var staffDefaultLinkValue = document.getElementById('staffDefaultLinkValue');
+        var meetingLinkInput = document.getElementById('meetingLinkInput');
+
+        function updateStaffDefaultLinkHint() {
+            var staffId = staffSelect.value;
+            if (!staffId) {
+                staffDefaultLinkHint.style.display = 'none';
+                return;
+            }
+            var staff = null;
+            for (var i = 0; i < schedulerStaffData.length; i++) {
+                if (schedulerStaffData[i].id === staffId) {
+                    staff = schedulerStaffData[i];
+                    break;
+                }
+            }
+            if (staff && staff.defaultMeetingLink) {
+                staffDefaultLinkValue.textContent = staff.defaultMeetingLink;
+                staffDefaultLinkValue.href = staff.defaultMeetingLink;
+                staffDefaultLinkHint.style.display = 'block';
+                meetingLinkInput.placeholder = staff.defaultMeetingLink;
+            } else {
+                staffDefaultLinkHint.style.display = 'none';
+                meetingLinkInput.placeholder = 'https://zoom.us/j/...';
+            }
+        }
+
+        staffSelect.addEventListener('change', updateStaffDefaultLinkHint);
+        updateStaffDefaultLinkHint();
+
+        // Form validation
+        document.getElementById('create-appointment-form').addEventListener('submit', function (e) {
+            var contactId = contactIdInput.value;
+            if (!contactId) {
+                e.preventDefault();
+                alert('Please select a contact.');
+                contactSearch.focus();
+                return false;
+            }
+        });
+    });
+    </script>
+}

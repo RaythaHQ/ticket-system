@@ -15,7 +15,8 @@ namespace App.Application.Tickets.EventHandlers;
 /// Sends email and in-app notification when an SLA is approaching breach.
 /// </summary>
 public class SlaApproachingEventHandler_SendNotification
-    : BaseTicketNotificationHandler, INotificationHandler<SlaApproachingBreachEvent>
+    : BaseTicketNotificationHandler,
+        INotificationHandler<SlaApproachingBreachEvent>
 {
     public SlaApproachingEventHandler_SendNotification(
         IAppDbContext db,
@@ -29,11 +30,16 @@ public class SlaApproachingEventHandler_SendNotification
         ILogger<SlaApproachingEventHandler_SendNotification> logger
     )
         : base(
-            db, emailerService, renderEngineService, relativeUrlBuilder,
-            currentOrganization, notificationPreferenceService, inAppNotificationService,
-            notificationSuppressionService, logger
-        )
-    { }
+            db,
+            emailerService,
+            renderEngineService,
+            relativeUrlBuilder,
+            currentOrganization,
+            notificationPreferenceService,
+            inAppNotificationService,
+            notificationSuppressionService,
+            logger
+        ) { }
 
     public async ValueTask Handle(
         SlaApproachingBreachEvent notification,

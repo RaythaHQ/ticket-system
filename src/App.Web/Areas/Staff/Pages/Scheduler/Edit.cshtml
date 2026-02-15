@@ -1,0 +1,157 @@
+@page "/staff/scheduler/{id:long}/edit"
+@model App.Web.Areas.Staff.Pages.Scheduler.EditModel
+@inject App.Application.Common.Interfaces.ICurrentOrganization CurrentOrganization
+@using App.Web.Areas.Staff.Pages.Shared.Models
+@using App.Domain.ValueObjects
+
+@{
+    ViewData["Title"] = $"Edit {Model.Appointment.Code}";
+    ViewData["ActiveMenu"] = "AllAppointments";
+
+    var back = new BackLinkOptions
+    {
+        Page = RouteNames.Scheduler.Details,
+        Text = $"Back to {Model.Appointment.Code}",
+        RouteValues = new Microsoft.AspNetCore.Routing.RouteValueDictionary { { "id", Model.Appointment.Id } }
+    };
+
+    var isVirtual = Model.Appointment.Mode == AppointmentMode.VIRTUAL;
+}
+
+<partial name="_Partials/PageHeading" model='$"Edit {Model.Appointment.Code}"' />
+
+<div class="row">
+    <div class="col-xl-7 col-lg-8">
+        <div class="staff-card">
+            <div class="staff-card-body">
+                @(await Html.PartialAsync("_Partials/BackToList", back))
+
+                <!-- Appointment Summary (read-only) -->
+                <div class="bg-light rounded p-3 mb-4 mt-4">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Contact</small>
+                            <span class="fw-medium">@Model.Appointment.ContactName</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Type</small>
+                            <span class="fw-medium">@Model.Appointment.AppointmentTypeName</span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Staff</small>
+                            <span class="fw-medium">@Model.Appointment.AssignedStaffName</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Date &amp; Time</small>
+                            <span class="fw-medium">
+                                @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(Model.Appointment.ScheduledStartTime)
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Mode</small>
+                            <span class="fw-medium">@Model.Appointment.ModeLabel</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <small class="text-muted d-block">Status</small>
+                            <span class="staff-badge badge @GetStatusBadgeClass(Model.Appointment.Status)">
+                                @Model.Appointment.StatusLabel
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post">
+                    <input type="hidden" asp-for="Form.AppointmentId" />
+
+                    <!-- Per-Appointment Contact Info -->
+                    <h6 class="fw-semibold text-muted small text-uppercase mb-3">
+                        <i class="bi bi-person me-1"></i>Appointment Contact Info
+                    </h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="Form.ContactFirstName" class="form-label">
+                                First Name <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Form.ContactFirstName" class="form-control" placeholder="First name" />
+                            <span asp-validation-for="Form.ContactFirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.ContactLastName" class="form-label">Last Name</label>
+                            <input asp-for="Form.ContactLastName" class="form-control" placeholder="Last name" />
+                            <span asp-validation-for="Form.ContactLastName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.ContactEmail" class="form-label">Email</label>
+                            <input asp-for="Form.ContactEmail" type="email" class="form-control" placeholder="email@example.com" />
+                            <span asp-validation-for="Form.ContactEmail" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Form.ContactPhone" class="form-label">Phone</label>
+                            <input asp-for="Form.ContactPhone" type="tel" class="form-control" placeholder="(555) 123-4567" />
+                            <span asp-validation-for="Form.ContactPhone" class="text-danger small"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Form.ContactAddress" class="form-label">Address</label>
+                            <input asp-for="Form.ContactAddress" class="form-control" placeholder="Full address" />
+                            <span asp-validation-for="Form.ContactAddress" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <!-- Notes -->
+                    <div class="mb-4">
+                        <label asp-for="Form.Notes" class="form-label">Notes</label>
+                        <textarea asp-for="Form.Notes" class="form-control" rows="4"
+                                  placeholder="Notes for this appointment..."></textarea>
+                        <span asp-validation-for="Form.Notes" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Meeting Link (only for virtual appointments) -->
+                    @if (isVirtual)
+                    {
+                        <div class="mb-4">
+                            <label asp-for="Form.MeetingLink" class="form-label">
+                                Meeting Link <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Form.MeetingLink" type="url" class="form-control"
+                                   placeholder="https://zoom.us/j/..." />
+                            <span asp-validation-for="Form.MeetingLink" class="text-danger small"></span>
+                            <small class="text-muted d-block mt-1">Required for virtual appointments.</small>
+                        </div>
+                    }
+
+                    <hr class="my-4" />
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-lg me-2"></i>Save Changes
+                        </button>
+                        <a asp-page="@RouteNames.Scheduler.Details" asp-route-id="@Model.Appointment.Id"
+                           class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            AppointmentStatus.SCHEDULED => "bg-primary",
+            AppointmentStatus.CONFIRMED => "bg-info",
+            AppointmentStatus.IN_PROGRESS => "bg-warning text-dark",
+            AppointmentStatus.COMPLETED => "bg-success",
+            AppointmentStatus.CANCELLED => "bg-secondary",
+            AppointmentStatus.NO_SHOW => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

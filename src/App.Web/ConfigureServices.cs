@@ -128,6 +128,11 @@ public static class ConfigureServices
                 BuiltInSystemPermission.EDIT_WIKI_ARTICLES_PERMISSION,
                 policy => policy.Requirements.Add(new EditWikiArticlesRequirement())
             );
+            // Scheduler permissions
+            options.AddPolicy(
+                BuiltInSystemPermission.MANAGE_SCHEDULER_SYSTEM_PERMISSION,
+                policy => policy.Requirements.Add(new ManageSchedulerSystemRequirement())
+            );
 
             options.AddPolicy(
                 AppApiAuthorizationHandler.POLICY_PREFIX + AppClaimTypes.IsAdmin,
@@ -197,6 +202,10 @@ public static class ConfigureServices
             options.AddDocumentTransformer<ApiKeySecuritySchemeTransformer>();
         });
         services.AddRazorPages();
+
+        // Scheduler staff access filter
+        services.AddScoped<App.Web.Filters.SchedulerStaffAccessFilter>();
+
         return services;
     }
 

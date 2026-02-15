@@ -1,0 +1,109 @@
+@page "/admin/scheduler/staff/{id}/edit"
+@model App.Web.Areas.Admin.Pages.Scheduler.Staff.Edit
+
+@{
+    var pageTitle = "Edit Staff Member";
+    Layout = "SidebarLayout";
+    ViewData["Title"] = pageTitle;
+    ViewData["ActiveMenu"] = "SchedulerStaff";
+    ViewData["ExpandSchedulerMenu"] = true;
+
+    BackLinkOptions back = new BackLinkOptions
+    {
+        Page = RouteNames.Scheduler.Staff.Index
+    };
+
+    string[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+}
+
+<div>
+    <div class="row mb-4">
+        <partial name="_Partials/PageHeading" model='ViewData["Title"]' />
+        <div class="col-xxl-7 col-xl-8 col-lg-9 col-md-12">
+            <div class="card border-0 shadow mb-4">
+                <div class="card-body">
+                    @(await Html.PartialAsync("_Partials/BackToList", back))
+                    <form asp-page="@RouteNames.Scheduler.Staff.Edit" asp-route-id="@Model.Form.Id" method="post"
+                        class="py-4" novalidate>
+                        <input type="hidden" asp-for="Form.Id" />
+
+                        <h5 class="mb-3">Settings</h5>
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                    asp-for="Form.CanManageOthersCalendars">
+                                <label class="form-check-label" asp-for="Form.CanManageOthersCalendars">
+                                    Can manage other staff calendars
+                                </label>
+                                <div class="form-text">When enabled, this staff member can create, edit, and cancel
+                                    appointments on behalf of other staff members.</div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <h5 class="mb-3">Default Meeting Link</h5>
+                        <div class="mb-4">
+                            <label class="form-label" asp-for="Form.DefaultMeetingLink"></label>
+                            <input type="url" class="form-control" asp-for="Form.DefaultMeetingLink"
+                                placeholder="https://zoom.us/j/..." />
+                            <div class="form-text">
+                                Default meeting link for virtual appointments. When creating a virtual appointment
+                                for this staff member, this link will be used if no specific link is provided.
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <h5 class="mb-3">Personal Availability</h5>
+                        <p class="text-muted mb-3">Set working hours for each day. Leave blank to use organization
+                            defaults.</p>
+
+                        <div class="table-responsive mb-4">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 140px;">Day</th>
+                                        <th>Start Time</th>
+                                        <th>End Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var day in days)
+                                    {
+                                        <tr>
+                                            <td class="align-middle fw-medium">@day</td>
+                                            <td>
+                                                <input type="time" class="form-control form-control-sm"
+                                                    name="Form.@(day)Start"
+                                                    value="@(typeof(App.Web.Areas.Admin.Pages.Scheduler.Staff.Edit.EditStaffViewModel).GetProperty($"{day}Start")?.GetValue(Model.Form))" />
+                                            </td>
+                                            <td>
+                                                <input type="time" class="form-control form-control-sm"
+                                                    name="Form.@(day)End"
+                                                    value="@(typeof(App.Web.Areas.Admin.Pages.Scheduler.Staff.Edit.EditStaffViewModel).GetProperty($"{day}End")?.GetValue(Model.Form))" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <h5 class="mb-3">Coverage Zones</h5>
+                        <div class="mb-4">
+                            <label class="form-label" asp-for="Form.CoverageZones"></label>
+                            <textarea class="form-control" asp-for="Form.CoverageZones" rows="6"
+                                placeholder="Enter one zipcode per line&#10;e.g.&#10;10001&#10;10002&#10;10003"></textarea>
+                            <div class="form-text">Enter one zipcode per line. Leave blank to use organization
+                                defaults.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success mt-2">Save changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

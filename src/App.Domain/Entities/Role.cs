@@ -93,6 +93,8 @@ public enum SystemPermissions
     ImportExportTickets = 512,
     // Wiki permissions
     EditWikiArticles = 1024,
+    // Scheduler permissions
+    ManageSchedulerSystem = 2048,
 }
 
 public class BuiltInSystemPermission : ValueObject
@@ -110,6 +112,8 @@ public class BuiltInSystemPermission : ValueObject
     public const string IMPORT_EXPORT_TICKETS_PERMISSION = "import_export_tickets";
     // Wiki permissions
     public const string EDIT_WIKI_ARTICLES_PERMISSION = "edit_wiki_articles";
+    // Scheduler permissions
+    public const string MANAGE_SCHEDULER_SYSTEM_PERMISSION = "manage_scheduler_system";
 
     static BuiltInSystemPermission() { }
 
@@ -166,6 +170,9 @@ public class BuiltInSystemPermission : ValueObject
         // Wiki permissions
         if (permission.HasFlag(SystemPermissions.EditWikiArticles))
             permissions.Add(EditWikiArticles);
+        // Scheduler permissions
+        if (permission.HasFlag(SystemPermissions.ManageSchedulerSystem))
+            permissions.Add(ManageSchedulerSystem);
         return permissions;
     }
 
@@ -221,6 +228,10 @@ public class BuiltInSystemPermission : ValueObject
     public static BuiltInSystemPermission EditWikiArticles =>
         new("Edit Wiki Articles", EDIT_WIKI_ARTICLES_PERMISSION, SystemPermissions.EditWikiArticles);
 
+    // Scheduler permissions
+    public static BuiltInSystemPermission ManageSchedulerSystem =>
+        new("Manage Scheduler System", MANAGE_SCHEDULER_SYSTEM_PERMISSION, SystemPermissions.ManageSchedulerSystem);
+
     public string Label { get; private set; } = string.Empty;
     public string DeveloperName { get; private set; } = string.Empty;
     public SystemPermissions Permission { get; private set; } = SystemPermissions.None;
@@ -257,6 +268,8 @@ public class BuiltInSystemPermission : ValueObject
             yield return ImportExportTickets;
             // Wiki permissions
             yield return EditWikiArticles;
+            // Scheduler permissions
+            yield return ManageSchedulerSystem;
         }
     }
 
@@ -274,7 +287,8 @@ public class BuiltInSystemPermission : ValueObject
                 | AccessReports.Permission
                 | ManageSystemViews.Permission
                 | ImportExportTickets.Permission
-                | EditWikiArticles.Permission;
+                | EditWikiArticles.Permission
+                | ManageSchedulerSystem.Permission;
         }
     }
 

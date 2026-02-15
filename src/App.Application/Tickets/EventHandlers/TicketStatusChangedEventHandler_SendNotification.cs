@@ -19,7 +19,8 @@ namespace App.Application.Tickets.EventHandlers;
 /// All notifications are deduplicated and the user who made the change is never notified.
 /// </summary>
 public class TicketStatusChangedEventHandler_SendNotification
-    : BaseTicketNotificationHandler, INotificationHandler<TicketStatusChangedEvent>
+    : BaseTicketNotificationHandler,
+        INotificationHandler<TicketStatusChangedEvent>
 {
     public TicketStatusChangedEventHandler_SendNotification(
         IAppDbContext db,
@@ -33,11 +34,16 @@ public class TicketStatusChangedEventHandler_SendNotification
         ILogger<TicketStatusChangedEventHandler_SendNotification> logger
     )
         : base(
-            db, emailerService, renderEngineService, relativeUrlBuilder,
-            currentOrganization, notificationPreferenceService, inAppNotificationService,
-            notificationSuppressionService, logger
-        )
-    { }
+            db,
+            emailerService,
+            renderEngineService,
+            relativeUrlBuilder,
+            currentOrganization,
+            notificationPreferenceService,
+            inAppNotificationService,
+            notificationSuppressionService,
+            logger
+        ) { }
 
     public async ValueTask Handle(
         TicketStatusChangedEvent notification,

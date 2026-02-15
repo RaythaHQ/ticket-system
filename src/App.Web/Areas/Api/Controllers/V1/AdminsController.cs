@@ -1,12 +1,12 @@
-using CSharpVitamins;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Admins;
 using App.Application.Admins.Commands;
 using App.Application.Admins.Queries;
 using App.Application.Common.Models;
 using App.Domain.Entities;
 using App.Web.Authentication;
+using CSharpVitamins;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Api.Controllers.V1;
 
@@ -80,4 +80,3 @@ public record UpdateCustomAttributesRequest
     public string? CustomAttribute4 { get; init; }
     public string? CustomAttribute5 { get; init; }
 }
-

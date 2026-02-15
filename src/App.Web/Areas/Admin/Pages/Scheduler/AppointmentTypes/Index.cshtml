@@ -1,0 +1,142 @@
+@page "/admin/scheduler/appointment-types"
+@model App.Web.Areas.Admin.Pages.Scheduler.AppointmentTypes.Index
+@using App.Web.Areas.Shared.Models
+
+@{
+    var pageTitle = "Appointment Types";
+    Layout = "SidebarLayout";
+    ViewData["Title"] = pageTitle;
+    ViewData["ActiveMenu"] = "SchedulerAppointmentTypes";
+    ViewData["ExpandSchedulerMenu"] = true;
+}
+
+<div>
+    <partial name="_Partials/PageHeading" model="pageTitle" />
+
+    @(await Html.PartialAsync("_Partials/TableCreateAndSearchBar", new BaseTableCreateAndSearchBarViewModel
+    {
+        Pagination = Model.ListView,
+        EntityName = "appointment type",
+        CreateActionName = RouteNames.Scheduler.AppointmentTypes.Create
+    }))
+
+    <div class="raytha-data-card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-end mb-3">
+                <form method="get" class="d-inline-flex align-items-center gap-2">
+                    <input type="hidden" name="search" value="@Model.ListView.Search" />
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="includeInactive" value="true"
+                            @(Model.IncludeInactive ? "checked" : "") id="includeInactive"
+                            onchange="this.form.submit()">
+                        <label class="form-check-label text-muted" for="includeInactive">
+                            Include inactive
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
+                        <tr>
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "Name",
+                                IsFirst = true,
+                                DisplayName = ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Scheduler.AppointmentTypes.Index.AppointmentTypeListItemViewModel>(p => p.Name)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "ModeLabel",
+                                DisplayName = ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Scheduler.AppointmentTypes.Index.AppointmentTypeListItemViewModel>(p => p.ModeLabel)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "DefaultDurationMinutes",
+                                DisplayName = ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Scheduler.AppointmentTypes.Index.AppointmentTypeListItemViewModel>(p => p.DefaultDurationMinutes)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "EligibleStaffCount",
+                                DisplayName = ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Scheduler.AppointmentTypes.Index.AppointmentTypeListItemViewModel>(p => p.EligibleStaffCount)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "IsActive",
+                                DisplayName = ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Scheduler.AppointmentTypes.Index.AppointmentTypeListItemViewModel>(p => p.IsActive)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "CreationTime",
+                                DisplayName = ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Scheduler.AppointmentTypes.Index.AppointmentTypeListItemViewModel>(p => p.CreationTime)
+                            }))
+                            <th class="border-0 rounded-end text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.ListView.Items.Any())
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center py-4 text-muted">
+                                    <i class="bi bi-calendar-event fs-1 d-block mb-2"></i>
+                                    No appointment types found
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var type in Model.ListView.Items)
+                        {
+                            <tr class="@(!type.IsActive ? "table-secondary" : "")">
+                                <td>
+                                    <a asp-page="@RouteNames.Scheduler.AppointmentTypes.Edit" asp-route-id="@type.Id"
+                                        class="fw-semibold">
+                                        @type.Name
+                                    </a>
+                                </td>
+                                <td>
+                                    @if (type.ModeLabel == "Virtual")
+                                    {
+                                        <span class="badge bg-info text-dark">@type.ModeLabel</span>
+                                    }
+                                    else if (type.ModeLabel == "In-Person")
+                                    {
+                                        <span class="badge bg-warning text-dark">@type.ModeLabel</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">@type.ModeLabel</span>
+                                    }
+                                </td>
+                                <td>@type.DefaultDurationMinutes</td>
+                                <td>@type.EligibleStaffCount</td>
+                                <td>
+                                    @if (type.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td>@type.CreationTime</td>
+                                <td class="text-end">
+                                    <a asp-page="@RouteNames.Scheduler.AppointmentTypes.Edit" asp-route-id="@type.Id"
+                                        class="btn btn-outline-secondary btn-sm">
+                                        Edit
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <partial name="_Partials/TablePagination" model="@Model.ListView" />
+            </div>
+        </div>
+    </div>
+</div>

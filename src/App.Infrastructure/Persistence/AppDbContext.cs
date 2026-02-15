@@ -83,6 +83,15 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     public DbSet<TaskTemplate> TaskTemplates => Set<TaskTemplate>();
     public DbSet<TaskTemplateItem> TaskTemplateItems => Set<TaskTemplateItem>();
 
+    // Scheduler entities
+    public DbSet<SchedulerStaffMember> SchedulerStaffMembers => Set<SchedulerStaffMember>();
+    public DbSet<AppointmentType> AppointmentTypes => Set<AppointmentType>();
+    public DbSet<AppointmentTypeStaffEligibility> AppointmentTypeStaffEligibilities => Set<AppointmentTypeStaffEligibility>();
+    public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<AppointmentHistory> AppointmentHistories => Set<AppointmentHistory>();
+    public DbSet<SchedulerConfiguration> SchedulerConfigurations => Set<SchedulerConfiguration>();
+    public DbSet<SchedulerEmailTemplate> SchedulerEmailTemplates => Set<SchedulerEmailTemplate>();
+
     public DbContext DbContext => this;
 
     protected override void OnModelCreating(ModelBuilder builder)

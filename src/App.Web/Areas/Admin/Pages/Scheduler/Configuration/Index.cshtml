@@ -1,0 +1,137 @@
+@page "/admin/scheduler/configuration"
+@model App.Web.Areas.Admin.Pages.Scheduler.Configuration.Index
+
+@{
+    var pageTitle = "Scheduler Configuration";
+    Layout = "SidebarLayout";
+    ViewData["Title"] = pageTitle;
+    ViewData["ActiveMenu"] = "SchedulerConfiguration";
+    ViewData["ExpandSchedulerMenu"] = true;
+
+    string[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
+}
+
+<div>
+    <partial name="_Partials/PageHeading" model="pageTitle" />
+
+    <div class="row mb-4">
+        <div class="col-xxl-8 col-xl-9 col-lg-10 col-md-12">
+            <form method="post" novalidate>
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Available Hours</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-3">Set the default business hours for each day. Staff members can
+                            override these with personal availability.</p>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 140px;">Day</th>
+                                        <th>Start Time</th>
+                                        <th>End Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var day in days)
+                                    {
+                                        <tr>
+                                            <td class="align-middle fw-medium">@day</td>
+                                            <td>
+                                                <input type="time" class="form-control form-control-sm"
+                                                    name="Form.@(day)Start"
+                                                    value="@(typeof(App.Web.Areas.Admin.Pages.Scheduler.Configuration.Index.ConfigurationViewModel).GetProperty($"{day}Start")?.GetValue(Model.Form))" />
+                                            </td>
+                                            <td>
+                                                <input type="time" class="form-control form-control-sm"
+                                                    name="Form.@(day)End"
+                                                    value="@(typeof(App.Web.Areas.Admin.Pages.Scheduler.Configuration.Index.ConfigurationViewModel).GetProperty($"{day}End")?.GetValue(Model.Form))" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Appointment Defaults</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Form.DefaultDurationMinutes"></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" asp-for="Form.DefaultDurationMinutes"
+                                        min="1" max="480" />
+                                    <span class="input-group-text">min</span>
+                                </div>
+                                <div class="form-text">Default length of each appointment.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Form.DefaultBufferTimeMinutes"></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" asp-for="Form.DefaultBufferTimeMinutes"
+                                        min="0" max="120" />
+                                    <span class="input-group-text">min</span>
+                                </div>
+                                <div class="form-text">Buffer time between consecutive appointments.</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Form.DefaultBookingHorizonDays"></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" asp-for="Form.DefaultBookingHorizonDays"
+                                        min="1" max="365" />
+                                    <span class="input-group-text">days</span>
+                                </div>
+                                <div class="form-text">How far in the future appointments can be booked.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Form.MinCancellationNoticeHours"></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control"
+                                        asp-for="Form.MinCancellationNoticeHours" min="0" max="168" />
+                                    <span class="input-group-text">hours</span>
+                                </div>
+                                <div class="form-text">Minimum notice required to cancel an appointment.</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Form.ReminderLeadTimeMinutes"></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" asp-for="Form.ReminderLeadTimeMinutes"
+                                        min="1" max="10080" />
+                                    <span class="input-group-text">min</span>
+                                </div>
+                                <div class="form-text">How long before the appointment to send a reminder.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Default Coverage Zones</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label" asp-for="Form.DefaultCoverageZones"></label>
+                            <textarea class="form-control" asp-for="Form.DefaultCoverageZones" rows="6"
+                                placeholder="Enter one zipcode per line&#10;e.g.&#10;10001&#10;10002&#10;10003"></textarea>
+                            <div class="form-text">Default coverage zones used when staff members have no personal
+                                zones configured.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success">Save Configuration</button>
+            </form>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,170 @@
+@page "/admin/scheduler/staff"
+@model App.Web.Areas.Admin.Pages.Scheduler.Staff.Index
+@using App.Web.Areas.Shared.Models
+
+@{
+    var pageTitle = "Scheduler Staff";
+    Layout = "SidebarLayout";
+    ViewData["Title"] = pageTitle;
+    ViewData["ActiveMenu"] = "SchedulerStaff";
+    ViewData["ExpandSchedulerMenu"] = true;
+}
+
+<div>
+    <partial name="_Partials/PageHeading" model="pageTitle" />
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Add Staff Member</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.AvailableAdmins.Any())
+            {
+                <form method="post" asp-page-handler="AddStaff" class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small mb-1">Select a user</label>
+                        <select asp-for="SelectedUserId" class="form-select"
+                            data-searchable-select
+                            data-placeholder="Search for a user..."
+                            data-search-placeholder="Type to search users...">
+                            <option value="">-- Select a user --</option>
+                            @foreach (var admin in Model.AvailableAdmins)
+                            {
+                                <option value="@admin.UserId" data-subtext="@admin.Email">
+                                    @admin.FullName (@admin.Email)
+                                </option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-plus-lg me-1"></i> Add
+                        </button>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    All active admins are already scheduler staff members.
+                </p>
+            }
+        </div>
+    </div>
+
+    <nav class="navbar navbar-expand-lg navbar-light raytha-view-nav">
+        <div class="container-fluid mx-2">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                </ul>
+                <form class="d-flex" asp-page="@Model.ListView.PageName" method="get">
+                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search"
+                        name="search" value="@Model.ListView.Search">
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="raytha-data-card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-centered table-nowrap mb-0 rounded">
+                    <thead class="thead-light">
+                        <tr>
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "FullName",
+                                IsFirst = true,
+                                DisplayName = ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Scheduler.Staff.Index.StaffListItemViewModel>(p => p.FullName)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "Email",
+                                DisplayName = ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Scheduler.Staff.Index.StaffListItemViewModel>(p => p.Email)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "CanManageOthersCalendars",
+                                DisplayName = ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Scheduler.Staff.Index.StaffListItemViewModel>(p => p.CanManageOthersCalendars)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "CoverageZonesCount",
+                                DisplayName = ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Scheduler.Staff.Index.StaffListItemViewModel>(p => p.CoverageZonesCount)
+                            }))
+                            @(await Html.PartialAsync("_Partials/TableColumnHeader", new BaseTableColumnHeaderViewModel()
+                            {
+                                Pagination = Model.ListView,
+                                PropertyName = "CreationTime",
+                                DisplayName = ViewModelExtensions.GetDisplayName<App.Web.Areas.Admin.Pages.Scheduler.Staff.Index.StaffListItemViewModel>(p => p.CreationTime)
+                            }))
+                            <th class="border-0 rounded-end text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.ListView.Items.Any())
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    <i class="bi bi-people fs-1 d-block mb-2"></i>
+                                    No scheduler staff members found
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var staff in Model.ListView.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="@RouteNames.Scheduler.Staff.Edit" asp-route-id="@staff.Id"
+                                        class="fw-semibold">
+                                        @staff.FullName
+                                    </a>
+                                </td>
+                                <td>@staff.Email</td>
+                                <td>
+                                    @if (staff.CanManageOthersCalendars == "Yes")
+                                    {
+                                        <span class="badge bg-success">Yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">No</span>
+                                    }
+                                </td>
+                                <td>@staff.CoverageZonesCount</td>
+                                <td>@staff.CreationTime</td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm">
+                                        <a asp-page="@RouteNames.Scheduler.Staff.Edit" asp-route-id="@staff.Id"
+                                            class="btn btn-outline-secondary">
+                                            Edit
+                                        </a>
+                                        <form method="post" asp-page-handler="RemoveStaff" class="d-inline"
+                                            onsubmit="return confirm('Are you sure you want to remove this staff member from the scheduler?');">
+                                            <input type="hidden" name="staffId" value="@staff.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                Remove
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <partial name="_Partials/TablePagination" model="@Model.ListView" />
+            </div>
+        </div>
+    </div>
+</div>

@@ -35,6 +35,9 @@ public class ImportExportTicketsRequirement : IAuthorizationRequirement { }
 // Wiki requirements
 public class EditWikiArticlesRequirement : IAuthorizationRequirement { }
 
+// Scheduler requirements
+public class ManageSchedulerSystemRequirement : IAuthorizationRequirement { }
+
 public class AppAdminAuthorizationHandler : IAuthorizationHandler
 {
     private readonly IHttpContextAccessor _httpContextAccessor = null;
@@ -187,6 +190,18 @@ public class AppAdminAuthorizationHandler : IAuthorizationHandler
                 if (
                     systemPermissionsClaims.Contains(
                         BuiltInSystemPermission.EDIT_WIKI_ARTICLES_PERMISSION
+                    )
+                )
+                {
+                    context.Succeed(requirement);
+                }
+            }
+            // Scheduler permissions
+            else if (requirement is ManageSchedulerSystemRequirement)
+            {
+                if (
+                    systemPermissionsClaims.Contains(
+                        BuiltInSystemPermission.MANAGE_SCHEDULER_SYSTEM_PERMISSION
                     )
                 )
                 {

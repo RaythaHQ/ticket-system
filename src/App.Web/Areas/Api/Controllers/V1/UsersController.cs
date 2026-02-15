@@ -1,12 +1,12 @@
-using CSharpVitamins;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Models;
 using App.Application.Users;
 using App.Application.Users.Commands;
 using App.Application.Users.Queries;
 using App.Domain.Entities;
 using App.Web.Authentication;
+using CSharpVitamins;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Api.Controllers.V1;
 
@@ -43,7 +43,11 @@ public class UsersController : BaseController
         {
             return BadRequest(new { error = response.Error });
         }
-        return CreatedAtAction(nameof(GetUserById), new { userId = response.Result }, response.Result);
+        return CreatedAtAction(
+            nameof(GetUserById),
+            new { userId = response.Result },
+            response.Result
+        );
     }
 
     [HttpPut("{userId}", Name = "EditUser")]

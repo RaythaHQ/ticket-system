@@ -1,0 +1,45 @@
+@{
+    Layout = "/Areas/Staff/Pages/Shared/_StaffBaseLayout.cshtml";
+}
+
+@RenderBody()
+
+@section Sidebar {
+    <div class="staff-nav-section">
+        <div class="staff-nav-section-title">Scheduler</div>
+        <a asp-area="Staff" asp-page="@RouteNames.Scheduler.Index"
+            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "MySchedule" ? "active" : "")">
+            <i class="bi bi-calendar-check"></i>
+            <span>My Schedule</span>
+        </a>
+        <a asp-area="Staff" asp-page="@RouteNames.Scheduler.AllAppointments"
+            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "AllAppointments" ? "active" : "")">
+            <i class="bi bi-calendar3"></i>
+            <span>All Appointments</span>
+        </a>
+    </div>
+
+    <div class="staff-nav-section">
+        <div class="staff-nav-section-title">Manage</div>
+        <a asp-area="Staff" asp-page="@RouteNames.Contacts.Index"
+            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Contacts" ? "active" : "")">
+            <i class="bi bi-people"></i>
+            <span>Contacts</span>
+        </a>
+        <a asp-area="Staff" asp-page="@RouteNames.ActivityLog.Index"
+            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "ActivityLog" ? "active" : "")">
+            <i class="bi bi-activity"></i>
+            <span>Activity Log</span>
+        </a>
+    </div>
+}
+
+@if (IsSectionDefined("headstyles"))
+{
+    @section headstyles { @RenderSection("headstyles", required: false) }
+}
+
+@if (IsSectionDefined("Scripts"))
+{
+    @section Scripts { @await RenderSectionAsync("Scripts", required: false) }
+}

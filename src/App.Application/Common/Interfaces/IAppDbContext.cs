@@ -59,6 +59,15 @@ public interface IAppDbContext
     public DbSet<TaskTemplate> TaskTemplates { get; }
     public DbSet<TaskTemplateItem> TaskTemplateItems { get; }
 
+    // Scheduler entities
+    public DbSet<SchedulerStaffMember> SchedulerStaffMembers { get; }
+    public DbSet<AppointmentType> AppointmentTypes { get; }
+    public DbSet<AppointmentTypeStaffEligibility> AppointmentTypeStaffEligibilities { get; }
+    public DbSet<Appointment> Appointments { get; }
+    public DbSet<AppointmentHistory> AppointmentHistories { get; }
+    public DbSet<SchedulerConfiguration> SchedulerConfigurations { get; }
+    public DbSet<SchedulerEmailTemplate> SchedulerEmailTemplates { get; }
+
     public DbContext DbContext { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);

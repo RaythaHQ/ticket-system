@@ -23,6 +23,7 @@ public class Contact : BaseNumericFullAuditableEntity
     public string? Email { get; set; }
     public string? PhoneNumbersJson { get; set; } // E.164 normalized, stored as JSON array
     public string? Address { get; set; }
+    public string? Zipcode { get; set; }
     public string? OrganizationAccount { get; set; }
     public string? DmeIdentifiersJson { get; set; } // JSON object for DME-specific IDs
 
@@ -46,6 +47,7 @@ public class Contact : BaseNumericFullAuditableEntity
 
     // Collections
     public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
+    public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public virtual ICollection<ContactChangeLogEntry> ChangeLogEntries { get; set; } = new List<ContactChangeLogEntry>();
     public virtual ICollection<ContactComment> Comments { get; set; } = new List<ContactComment>();
     public virtual ICollection<ContactAttachment> Attachments { get; set; } = new List<ContactAttachment>();

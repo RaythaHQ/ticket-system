@@ -1,0 +1,211 @@
+@inject App.Application.Common.Interfaces.ICurrentUser CurrentUser
+@inject App.Application.Common.Interfaces.ICurrentOrganization CurrentOrganization
+@inject App.Application.Common.Interfaces.ISchedulerPermissionService SchedulerPermissionService
+@using App.Web.Areas.Admin.Pages.Shared
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Staff Portal</title>
+    <link rel="stylesheet" href="~/admin/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/admin/lib/bootstrap-icons/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/admin/css/volt.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/admin/css/site.css" asp-append-version="true" />
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/staff-layout.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/searchable-select.css" asp-append-version="true" />
+
+    @RenderSection("headstyles", false)
+</head>
+
+<body data-active-menu="@ViewData["ActiveMenu"]">
+    @{
+        var requestPath = Context.Request.Path.Value?.ToLower() ?? "";
+        var isSchedulerArea = requestPath.StartsWith("/staff/scheduler");
+        var isSchedulerStaff = await SchedulerPermissionService.IsSchedulerStaffAsync();
+    }
+
+    <!-- Sidebar -->
+    <aside class="staff-sidebar">
+        <div class="staff-sidebar-brand">
+            <div class="brand-icon">
+                <i class="bi bi-headset"></i>
+            </div>
+            <div>
+                <h5>Nova Ticket System</h5>
+                <small>Staff Portal</small>
+            </div>
+        </div>
+
+        <nav class="staff-nav">
+            @RenderSection("Sidebar", required: true)
+        </nav>
+
+        <div class="staff-user-section">
+            @if (CurrentUser.IsAdmin)
+            {
+                <a href="/admin" class="staff-admin-link">
+                    <i class="bi bi-gear"></i>
+                    <span>Admin Portal</span>
+                </a>
+            }
+            <div class="staff-user-dropdown">
+                <button type="button" class="staff-user-dropdown-toggle" onclick="toggleUserDropdown(event)">
+                    <div class="staff-user-avatar">
+                        @(CurrentUser.FullName?.FirstOrDefault().ToString().ToUpper() ?? "U")
+                    </div>
+                    <div class="staff-user-details">
+                        <div class="staff-user-name">@CurrentUser.FullName</div>
+                        <div class="staff-user-role">Staff Member</div>
+                    </div>
+                    <i class="bi bi-chevron-up ms-auto" id="user-dropdown-icon"></i>
+                </button>
+                <div class="staff-user-dropdown-menu" id="user-dropdown-menu">
+                    <a asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Profile.Index"
+                        class="staff-user-dropdown-item">
+                        <i class="bi bi-person me-2"></i> Profile
+                    </a>
+                    @if (CurrentOrganization.EmailAndPasswordIsEnabledForAdmins)
+                    {
+                        <a asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Profile.ChangePassword"
+                            class="staff-user-dropdown-item">
+                            <i class="bi bi-key me-2"></i> Change Password
+                        </a>
+                    }
+                    <a asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Login.Logout"
+                        class="staff-user-dropdown-item">
+                        <i class="bi bi-box-arrow-right me-2"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="staff-main">
+        @if (CurrentUser.IsImpersonating)
+        {
+            <div class="impersonation-hellobar">
+                <div class="impersonation-hellobar-content">
+                    <i class="bi bi-eye-fill"></i>
+                    <span>
+                        <strong>Impersonation Active:</strong>
+                        You (@CurrentUser.OriginalUserFullName) are viewing as <strong>@CurrentUser.FullName</strong>
+                    </span>
+                    @if (CurrentUser.ImpersonationStartedAt.HasValue)
+                    {
+                        <span class="impersonation-time">
+                            Started: @CurrentUser.ImpersonationStartedAt.Value.ToString("HH:mm:ss") UTC
+                        </span>
+                    }
+                </div>
+                <form method="post" asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Login.EndImpersonation" class="d-inline">
+                    <button type="submit" class="impersonation-end-btn" onclick="return confirm('End impersonation and return to your account?');">
+                        <i class="bi bi-box-arrow-right"></i>
+                        End Impersonation
+                    </button>
+                </form>
+            </div>
+        }
+        <header class="staff-topbar">
+            <div class="staff-topbar-left">
+                <span class="staff-topbar-breadcrumb">
+                    <a asp-area="Staff" asp-page="@RouteNames.Dashboard.Index"
+                       class="@(isSchedulerArea ? "" : "active-section")">Tickets</a>
+                    @if (isSchedulerStaff)
+                    {
+                        <span class="mx-2">|</span>
+                        <a asp-area="Staff" asp-page="@RouteNames.Scheduler.Index"
+                           class="@(isSchedulerArea ? "active-section" : "")">Scheduler</a>
+                    }
+                    @if (ViewData["Title"] != null && ViewData["Title"].ToString() != "Dashboard" && ViewData["Title"].ToString() != "My Schedule")
+                    {
+                        <span class="mx-2">/</span>
+                        <span>@ViewData["Title"]</span>
+                    }
+                </span>
+            </div>
+        </header>
+
+        <main class="staff-content">
+            <alert />
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/admin/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/admin/lib/sortablejs/Sortable.min.js"></script>
+    <script>
+        function toggleUserDropdown(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('user-dropdown-menu');
+            const icon = document.getElementById('user-dropdown-icon');
+            const isOpen = menu.classList.contains('show');
+
+            if (isOpen) {
+                menu.classList.remove('show');
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-up');
+            } else {
+                menu.classList.add('show');
+                icon.classList.remove('bi-chevron-up');
+                icon.classList.add('bi-chevron-down');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (event) {
+            const menu = document.getElementById('user-dropdown-menu');
+            const toggle = event.target.closest('.staff-user-dropdown-toggle');
+            if (!toggle && menu.classList.contains('show')) {
+                menu.classList.remove('show');
+                const icon = document.getElementById('user-dropdown-icon');
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-up');
+            }
+        });
+
+        // Accordion submenu IDs — expanding one collapses the others
+        const accordionSubmenus = ['tickets-submenu', 'tasks-submenu'];
+
+        function toggleSubmenu(event, submenuId) {
+            event.preventDefault();
+            event.stopPropagation();
+            const submenu = document.getElementById(submenuId);
+            const link = event.currentTarget;
+
+            if (submenu.classList.contains('expanded')) {
+                submenu.classList.remove('expanded');
+                link.classList.remove('expanded');
+            } else {
+                // Collapse other accordion submenus first
+                accordionSubmenus.forEach(function (otherId) {
+                    if (otherId !== submenuId) {
+                        const otherSubmenu = document.getElementById(otherId);
+                        if (otherSubmenu && otherSubmenu.classList.contains('expanded')) {
+                            otherSubmenu.classList.remove('expanded');
+                            const otherLink = otherSubmenu.previousElementSibling;
+                            if (otherLink) otherLink.classList.remove('expanded');
+                        }
+                    }
+                });
+                submenu.classList.add('expanded');
+                link.classList.add('expanded');
+            }
+        }
+    </script>
+
+    <!-- Searchable Select Component -->
+    <script src="~/js/searchable-select.js" asp-append-version="true"></script>
+
+    <!-- SignalR for real-time notifications -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script src="~/js/notifications.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+
+</html>

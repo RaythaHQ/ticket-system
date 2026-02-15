@@ -244,7 +244,9 @@ public class SlaService : ISlaService
         var targetDate = localNow.Date.AddDays(1);
 
         // Skip weekends
-        while (targetDate.DayOfWeek == DayOfWeek.Saturday || targetDate.DayOfWeek == DayOfWeek.Sunday)
+        while (
+            targetDate.DayOfWeek == DayOfWeek.Saturday || targetDate.DayOfWeek == DayOfWeek.Sunday
+        )
         {
             targetDate = targetDate.AddDays(1);
         }

@@ -18,7 +18,8 @@ namespace App.Application.Tickets.EventHandlers;
 /// All notifications are deduplicated and the user who reopened is never notified.
 /// </summary>
 public class TicketReopenedEventHandler_SendNotification
-    : BaseTicketNotificationHandler, INotificationHandler<TicketReopenedEvent>
+    : BaseTicketNotificationHandler,
+        INotificationHandler<TicketReopenedEvent>
 {
     public TicketReopenedEventHandler_SendNotification(
         IAppDbContext db,
@@ -32,11 +33,16 @@ public class TicketReopenedEventHandler_SendNotification
         ILogger<TicketReopenedEventHandler_SendNotification> logger
     )
         : base(
-            db, emailerService, renderEngineService, relativeUrlBuilder,
-            currentOrganization, notificationPreferenceService, inAppNotificationService,
-            notificationSuppressionService, logger
-        )
-    { }
+            db,
+            emailerService,
+            renderEngineService,
+            relativeUrlBuilder,
+            currentOrganization,
+            notificationPreferenceService,
+            inAppNotificationService,
+            notificationSuppressionService,
+            logger
+        ) { }
 
     public async ValueTask Handle(
         TicketReopenedEvent notification,

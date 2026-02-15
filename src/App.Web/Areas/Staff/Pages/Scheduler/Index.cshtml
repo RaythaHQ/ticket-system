@@ -1,0 +1,142 @@
+@page "/staff/scheduler"
+@model App.Web.Areas.Staff.Pages.Scheduler.IndexModel
+@inject App.Application.Common.Interfaces.ICurrentOrganization CurrentOrganization
+@using App.Domain.ValueObjects
+
+@{
+    ViewData["Title"] = "My Schedule";
+    ViewData["ActiveMenu"] = "MySchedule";
+}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <h1 class="h3 mb-0">My Schedule</h1>
+    <a asp-page="@RouteNames.Scheduler.Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>New Appointment
+    </a>
+</div>
+
+<!-- Date Navigation -->
+<div class="staff-card mb-4">
+    <div class="staff-card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <a asp-page="@RouteNames.Scheduler.Index" asp-route-date="@Model.PreviousDateParam"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-chevron-left me-1"></i>Previous Day
+            </a>
+            <div class="text-center">
+                <h5 class="mb-0 fw-semibold">@Model.SelectedDateDisplay</h5>
+                @if (Model.SelectedDate.Date == DateTime.UtcNow.Date)
+                {
+                    <span class="badge bg-primary mt-1">Today</span>
+                }
+            </div>
+            <a asp-page="@RouteNames.Scheduler.Index" asp-route-date="@Model.NextDateParam"
+               class="btn btn-outline-secondary">
+                Next Day<i class="bi bi-chevron-right ms-1"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Appointments Timeline -->
+<div class="staff-card mb-4">
+    <div class="staff-card-header">
+        <h5 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Appointments (@Model.Schedule.Appointments.Count)</h5>
+    </div>
+    @if (!Model.Schedule.Appointments.Any())
+    {
+        <div class="staff-card-body text-center py-5">
+            <i class="bi bi-calendar-check display-4 text-muted d-block mb-3"></i>
+            <h5 class="text-muted">No appointments scheduled</h5>
+            <p class="text-muted mb-3">You have no appointments for this day.</p>
+            <a asp-page="@RouteNames.Scheduler.Create" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i>Schedule an Appointment
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="list-group list-group-flush">
+            @foreach (var appointment in Model.Schedule.Appointments)
+            {
+                var startTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(appointment.ScheduledStartTime);
+                var endTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(appointment.ScheduledStartTime.AddMinutes(appointment.DurationMinutes));
+                var statusBadgeClass = GetStatusBadgeClass(appointment.Status);
+
+                <a asp-page="@RouteNames.Scheduler.Details" asp-route-id="@appointment.Id"
+                   class="list-group-item list-group-item-action py-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="d-flex gap-3">
+                            <!-- Time Column -->
+                            <div class="text-center" style="min-width: 80px;">
+                                <div class="fw-bold" style="color: var(--staff-primary); font-size: 0.95rem;">
+                                    @appointment.ScheduledStartTime.ToString("h:mm tt")
+                                </div>
+                                <small class="text-muted">@appointment.DurationMinutes min</small>
+                            </div>
+                            <!-- Details Column -->
+                            <div>
+                                <div class="fw-semibold">@appointment.ContactName</div>
+                                <div class="text-muted small">
+                                    <span class="me-2">@appointment.Code</span>
+                                    <span class="me-2">@appointment.AppointmentTypeName</span>
+                                    <span>
+                                        @if (appointment.Mode == AppointmentMode.VIRTUAL)
+                                        {
+                                            <i class="bi bi-camera-video me-1"></i>@("Virtual")
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-geo-alt me-1"></i>@("In-Person")
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="staff-badge badge @statusBadgeClass">@appointment.StatusLabel</span>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+<!-- Available Slots -->
+@if (Model.Schedule.AvailableSlots.Any())
+{
+    <div class="staff-card">
+        <div class="staff-card-header">
+            <h5 class="mb-0"><i class="bi bi-clock me-2"></i>Available Slots (@Model.Schedule.AvailableSlots.Count)</h5>
+        </div>
+        <div class="staff-card-body">
+            <div class="row g-2">
+                @foreach (var slot in Model.Schedule.AvailableSlots)
+                {
+                    <div class="col-auto">
+                        <span class="badge bg-light text-dark border py-2 px-3">
+                            <i class="bi bi-clock me-1"></i>
+                            @slot.StartTimeUtc.ToString("h:mm tt") &ndash; @slot.EndTimeUtc.ToString("h:mm tt")
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            AppointmentStatus.SCHEDULED => "bg-primary",
+            AppointmentStatus.CONFIRMED => "bg-info",
+            AppointmentStatus.IN_PROGRESS => "bg-warning text-dark",
+            AppointmentStatus.COMPLETED => "bg-success",
+            AppointmentStatus.CANCELLED => "bg-secondary",
+            AppointmentStatus.NO_SHOW => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

@@ -53,6 +53,264 @@ namespace App.Infrastructure.Migrations
                     b.ToTable("ApiKeys");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.Appointment", b =>
+                {
+                    b.Property<long>("Id")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("AppointmentTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AssignedStaffMemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CancellationNoticeOverrideReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("CancellationReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("ContactAddress")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("ContactEmail")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ContactFirstName")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<long>("ContactId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ContactLastName")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("CoverageZoneOverrideReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<Guid>("CreatedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("DeleterUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletionTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MeetingLink")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ReminderSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ScheduledStartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppointmentTypeId");
+
+                    b.HasIndex("AssignedStaffMemberId");
+
+                    b.HasIndex("ContactId");
+
+                    b.HasIndex("CreatedByStaffId");
+
+                    b.HasIndex("CreationTime");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.HasIndex("ScheduledStartTime");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("ReminderSentAt", "Status", "ScheduledStartTime")
+                        .HasFilter("\"ReminderSentAt\" IS NULL AND \"Status\" IN ('scheduled','confirmed')");
+
+                    b.ToTable("Appointments");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.AppointmentHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("AppointmentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("ChangeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("ChangedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OverrideReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppointmentId");
+
+                    b.HasIndex("ChangedByUserId");
+
+                    b.HasIndex("Timestamp");
+
+                    b.ToTable("AppointmentHistories");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.AppointmentType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("BookingHorizonDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("BufferTimeMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("DefaultDurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Mode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.HasIndex("SortOrder");
+
+                    b.ToTable("AppointmentTypes");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.AppointmentTypeStaffEligibility", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AppointmentTypeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SchedulerStaffMemberId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.HasIndex("SchedulerStaffMemberId");
+
+                    b.HasIndex("AppointmentTypeId", "SchedulerStaffMemberId")
+                        .IsUnique();
+
+                    b.ToTable("AppointmentTypeStaffEligibilities");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -266,6 +524,9 @@ namespace App.Infrastructure.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.Property<string>("PhoneNumbersJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Zipcode")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -1013,6 +1274,157 @@ namespace App.Infrastructure.Migrations
                     b.HasIndex("LastModifierUserId");
 
                     b.ToTable("Roles");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.SchedulerConfiguration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AvailableHoursJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DefaultBookingHorizonDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DefaultBufferTimeMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DefaultCoverageZonesJson")
+                        .HasColumnType("text");
+
+                    b.Property<int>("DefaultDurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("MinCancellationNoticeHours")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ReminderLeadTimeMinutes")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.ToTable("SchedulerConfigurations");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.SchedulerEmailTemplate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Subject")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("TemplateType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.HasIndex("TemplateType", "Channel")
+                        .IsUnique();
+
+                    b.ToTable("SchedulerEmailTemplates");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.SchedulerStaffMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AvailabilityJson")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("CanManageOthersCalendars")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("CoverageZonesJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DefaultMeetingLink")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastModifierUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorUserId");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("LastModifierUserId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("SchedulerStaffMembers");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.SlaRule", b =>
@@ -2350,6 +2762,118 @@ namespace App.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.Appointment", b =>
+                {
+                    b.HasOne("App.Domain.Entities.AppointmentType", "AppointmentType")
+                        .WithMany("Appointments")
+                        .HasForeignKey("AppointmentTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.SchedulerStaffMember", "AssignedStaffMember")
+                        .WithMany("Appointments")
+                        .HasForeignKey("AssignedStaffMemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.Contact", "Contact")
+                        .WithMany("Appointments")
+                        .HasForeignKey("ContactId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.User", "CreatedByStaff")
+                        .WithMany()
+                        .HasForeignKey("CreatedByStaffId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.Navigation("AppointmentType");
+
+                    b.Navigation("AssignedStaffMember");
+
+                    b.Navigation("Contact");
+
+                    b.Navigation("CreatedByStaff");
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("LastModifierUser");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.AppointmentHistory", b =>
+                {
+                    b.HasOne("App.Domain.Entities.Appointment", "Appointment")
+                        .WithMany("History")
+                        .HasForeignKey("AppointmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.User", "ChangedByUser")
+                        .WithMany()
+                        .HasForeignKey("ChangedByUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Appointment");
+
+                    b.Navigation("ChangedByUser");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.AppointmentType", b =>
+                {
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("LastModifierUser");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.AppointmentTypeStaffEligibility", b =>
+                {
+                    b.HasOne("App.Domain.Entities.AppointmentType", "AppointmentType")
+                        .WithMany("EligibleStaff")
+                        .HasForeignKey("AppointmentTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.HasOne("App.Domain.Entities.SchedulerStaffMember", "SchedulerStaffMember")
+                        .WithMany("EligibleAppointmentTypes")
+                        .HasForeignKey("SchedulerStaffMemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppointmentType");
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("LastModifierUser");
+
+                    b.Navigation("SchedulerStaffMember");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.AuthenticationScheme", b =>
                 {
                     b.HasOne("App.Domain.Entities.User", "CreatorUser")
@@ -2668,6 +3192,59 @@ namespace App.Infrastructure.Migrations
                     b.Navigation("CreatorUser");
 
                     b.Navigation("LastModifierUser");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.SchedulerConfiguration", b =>
+                {
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("LastModifierUser");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.SchedulerEmailTemplate", b =>
+                {
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("LastModifierUser");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.SchedulerStaffMember", b =>
+                {
+                    b.HasOne("App.Domain.Entities.User", "CreatorUser")
+                        .WithMany()
+                        .HasForeignKey("CreatorUserId");
+
+                    b.HasOne("App.Domain.Entities.User", "LastModifierUser")
+                        .WithMany()
+                        .HasForeignKey("LastModifierUserId");
+
+                    b.HasOne("App.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatorUser");
+
+                    b.Navigation("LastModifierUser");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.SlaRule", b =>
@@ -3223,8 +3800,22 @@ namespace App.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.Appointment", b =>
+                {
+                    b.Navigation("History");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.AppointmentType", b =>
+                {
+                    b.Navigation("Appointments");
+
+                    b.Navigation("EligibleStaff");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.Contact", b =>
                 {
+                    b.Navigation("Appointments");
+
                     b.Navigation("Attachments");
 
                     b.Navigation("ChangeLogEntries");
@@ -3237,6 +3828,13 @@ namespace App.Infrastructure.Migrations
             modelBuilder.Entity("App.Domain.Entities.EmailTemplate", b =>
                 {
                     b.Navigation("Revisions");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.SchedulerStaffMember", b =>
+                {
+                    b.Navigation("Appointments");
+
+                    b.Navigation("EligibleAppointmentTypes");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.TaskTemplate", b =>

@@ -1,12 +1,12 @@
-using CSharpVitamins;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Models;
 using App.Application.UserGroups;
 using App.Application.UserGroups.Commands;
 using App.Application.UserGroups.Queries;
 using App.Domain.Entities;
 using App.Web.Authentication;
+using CSharpVitamins;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Api.Controllers.V1;
 

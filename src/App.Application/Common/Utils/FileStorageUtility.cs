@@ -31,14 +31,18 @@ public static class FileStorageUtility
 
     /// <summary>1 MB in bytes (decimal: 1,000,000).</summary>
     private const long BytesPerMegabyte = 1_000_000;
+
     /// <summary>1 GB in bytes (decimal: 1,000,000,000).</summary>
     private const long BytesPerGigabyte = 1_000_000_000;
 
     public const string DEFAULT_LOCAL_DIRECTORY = "user-uploads";
+
     /// <summary>Default maximum file size (20 MB).</summary>
     public const long DEFAULT_MAX_FILE_SIZE = 20 * BytesPerMegabyte;
+
     /// <summary>Default maximum total disk space (1 GB).</summary>
     public const long DEFAULT_MAX_TOTAL_DISK_SPACE = 1 * BytesPerGigabyte;
+
     /// <summary>Default maximum total database storage size (1 GB).</summary>
     public const long DEFAULT_MAX_TOTAL_DB_SIZE = 1 * BytesPerGigabyte;
     public const string DEFAULT_ALLOWED_MIMETYPES =

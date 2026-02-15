@@ -1,0 +1,309 @@
+@page "/admin/scheduler/reports"
+@model App.Web.Areas.Admin.Pages.Scheduler.Reports.Index
+
+@{
+    var pageTitle = "Scheduler Reports";
+    Layout = "SidebarLayout";
+    ViewData["Title"] = pageTitle;
+    ViewData["ActiveMenu"] = "SchedulerReports";
+    ViewData["ExpandSchedulerMenu"] = true;
+}
+
+<div>
+    <partial name="_Partials/PageHeading" model="pageTitle" />
+
+    <!-- Date Range Filter -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <!-- Quick Date Presets -->
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="text-muted me-2 align-self-center">Quick select:</span>
+                <a href="?preset=today"
+                   class="btn @(Model.ActivePreset == "today" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-calendar-day me-1"></i>Today
+                </a>
+                <a href="?preset=week"
+                   class="btn @(Model.ActivePreset == "week" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-calendar-week me-1"></i>This Week
+                </a>
+                <a href="?preset=month"
+                   class="btn @(Model.ActivePreset == "month" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-calendar-month me-1"></i>This Month
+                </a>
+                <a href="?preset=quarter"
+                   class="btn @(Model.ActivePreset == "quarter" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-calendar3 me-1"></i>This Quarter
+                </a>
+                <a href="?preset=year"
+                   class="btn @(Model.ActivePreset == "year" ? "btn-primary" : "btn-outline-primary") btn-sm">
+                    <i class="bi bi-calendar-range me-1"></i>This Year
+                </a>
+            </div>
+
+            <hr class="my-3">
+
+            <!-- Custom Date Range -->
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label text-muted small mb-1">Start Date</label>
+                    <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                        class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted small mb-1">End Date</label>
+                    <input type="date" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                        class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel me-1"></i> Apply Filter
+                    </button>
+                </div>
+                <div class="col-md-3 text-end align-self-center">
+                    <span class="text-muted small">
+                        <i class="bi bi-info-circle me-1"></i>
+                        @Model.PeriodLabel
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Status Breakdown Cards -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <small class="text-muted text-uppercase fw-semibold">Appointment Statistics</small>
+        </div>
+    </div>
+    <div class="row mb-4 g-3">
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="mb-1">@Model.TotalAppointments</h3>
+                    <p class="text-muted mb-0 small">Total Appointments</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-primary mb-1">@Model.ScheduledCount</h3>
+                    <p class="text-muted mb-0 small">Scheduled / Confirmed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-success mb-1">@Model.CompletedCount</h3>
+                    <p class="text-muted mb-0 small">Completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-danger mb-1">@Model.CancelledCount</h3>
+                    <p class="text-muted mb-0 small">Cancelled</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rate Metrics -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <small class="text-muted text-uppercase fw-semibold">Performance Metrics</small>
+        </div>
+    </div>
+    <div class="row mb-4 g-3">
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="text-warning mb-1">@Model.NoShowCount</h3>
+                    <p class="text-muted mb-0 small">No Shows</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="@(Model.Report.NoShowRate < 10 ? "text-success" : Model.Report.NoShowRate < 25 ? "text-warning" : "text-danger") mb-1">
+                        @($"{Model.Report.NoShowRate:F1}%")
+                    </h3>
+                    <p class="text-muted mb-0 small">No-Show Rate</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="@(Model.Report.CancellationRate < 15 ? "text-success" : Model.Report.CancellationRate < 30 ? "text-warning" : "text-danger") mb-1">
+                        @($"{Model.Report.CancellationRate:F1}%")
+                    </h3>
+                    <p class="text-muted mb-0 small">Cancellation Rate</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body py-3">
+                    <h3 class="mb-1">@($"{Model.Report.AverageAppointmentDurationMinutes:F0}") min</h3>
+                    <p class="text-muted mb-0 small">Avg Duration</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Utilization Table -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Staff Utilization</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Staff Member</th>
+                            <th class="text-center">Appointments</th>
+                            <th class="text-center">Utilization Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Report.StaffUtilization.Any())
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center py-4 text-muted">
+                                    <i class="bi bi-people fs-1 d-block mb-2"></i>
+                                    No staff utilization data available
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var staff in Model.Report.StaffUtilization.OrderByDescending(s => s.AppointmentCount))
+                        {
+                            <tr>
+                                <td class="fw-medium">@staff.StaffName</td>
+                                <td class="text-center">
+                                    @if (staff.AppointmentCount > 0)
+                                    {
+                                        <span class="badge bg-primary">@staff.AppointmentCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">0</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex align-items-center justify-content-center gap-2">
+                                        <div class="progress" style="width: 100px; height: 8px;">
+                                            <div class="progress-bar @(staff.UtilizationRate >= 80 ? "bg-success" : staff.UtilizationRate >= 50 ? "bg-primary" : "bg-warning")"
+                                                role="progressbar"
+                                                style="width: @staff.UtilizationRate%"
+                                                aria-valuenow="@staff.UtilizationRate" aria-valuemin="0"
+                                                aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">@staff.UtilizationRate.ToString("F1")%</small>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Appointment Volume Chart -->
+    @if (Model.Report.AppointmentVolumeByDate.Any())
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Daily Appointment Volume</h5>
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;">
+                    <canvas id="dailyAppointmentsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (Model.Report.AppointmentVolumeByDate.Any())
+{
+    @section Scripts {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const ctx = document.getElementById('dailyAppointmentsChart').getContext('2d');
+
+                const dailyData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                    Model.Report.AppointmentVolumeByDate.Select(d => new {
+                        date = d.Date.ToString("MMM dd"),
+                        count = d.Count
+                    })
+                ));
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: dailyData.map(d => d.date),
+                        datasets: [
+                            {
+                                label: 'Appointments',
+                                data: dailyData.map(d => d.count),
+                                backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                                borderColor: 'rgba(13, 110, 253, 1)',
+                                borderWidth: 1,
+                                borderRadius: 4,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index'
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                padding: 12,
+                                titleFont: { size: 14 },
+                                bodyFont: { size: 13 },
+                                cornerRadius: 8
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1,
+                                    precision: 0
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        </script>
+    }
+}

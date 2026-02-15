@@ -435,4 +435,39 @@ public static class RouteNames
         public const string Logs = "/Webhooks/Logs";
         public const string LogDetails = "/Webhooks/LogDetails";
     }
+
+    /// <summary>
+    /// Route constants for scheduler admin management pages.
+    /// </summary>
+    public static class Scheduler
+    {
+        public static class Staff
+        {
+            public const string Index = "/Scheduler/Staff/Index";
+            public const string Edit = "/Scheduler/Staff/Edit";
+        }
+
+        public static class AppointmentTypes
+        {
+            public const string Index = "/Scheduler/AppointmentTypes/Index";
+            public const string Create = "/Scheduler/AppointmentTypes/Create";
+            public const string Edit = "/Scheduler/AppointmentTypes/Edit";
+        }
+
+        public static class Configuration
+        {
+            public const string Index = "/Scheduler/Configuration/Index";
+        }
+
+        public static class EmailTemplates
+        {
+            public const string Index = "/Scheduler/EmailTemplates/Index";
+            public const string Edit = "/Scheduler/EmailTemplates/Edit";
+        }
+
+        public static class Reports
+        {
+            public const string Index = "/Scheduler/Reports/Index";
+        }
+    }
 }

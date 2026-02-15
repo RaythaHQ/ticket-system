@@ -98,4 +98,16 @@ public static class RouteNames
         public const string Create = "/Wiki/Create";
         public const string Edit = "/Wiki/Edit";
     }
+
+    /// <summary>
+    /// Route constants for scheduler pages.
+    /// </summary>
+    public static class Scheduler
+    {
+        public const string Index = "/Scheduler/Index";
+        public const string AllAppointments = "/Scheduler/AllAppointments";
+        public const string Create = "/Scheduler/Create";
+        public const string Details = "/Scheduler/Details";
+        public const string Edit = "/Scheduler/Edit";
+    }
 }

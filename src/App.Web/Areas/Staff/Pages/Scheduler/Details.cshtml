@@ -1,0 +1,482 @@
+@page "/staff/scheduler/{id:long}"
+@model App.Web.Areas.Staff.Pages.Scheduler.DetailsModel
+@inject App.Application.Common.Interfaces.ICurrentOrganization CurrentOrganization
+@using App.Web.Areas.Staff.Pages.Shared.Models
+@using App.Domain.ValueObjects
+
+@{
+    ViewData["Title"] = $"Appointment {Model.Appointment.Code}";
+    ViewData["ActiveMenu"] = "AllAppointments";
+
+    var appointment = Model.Appointment;
+    var statusBadgeClass = GetStatusBadgeClass(appointment.Status);
+    var isActive = appointment.Status == AppointmentStatus.SCHEDULED
+                || appointment.Status == AppointmentStatus.CONFIRMED
+                || appointment.Status == AppointmentStatus.IN_PROGRESS;
+    var allowedTransitions = appointment.AllowedStatusTransitions;
+
+    var back = new BackLinkOptions
+    {
+        Page = RouteNames.Scheduler.AllAppointments,
+        Text = "Back to All Appointments"
+    };
+}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+    <div>
+        @(await Html.PartialAsync("_Partials/BackToList", back))
+        <h1 class="h3 mb-2" style="font-weight: 700;">
+            <span style="color: var(--staff-primary);">@appointment.Code</span>
+            <span class="staff-badge badge @statusBadgeClass ms-2" style="font-size: 0.65em; vertical-align: middle;">
+                @appointment.StatusLabel
+            </span>
+        </h1>
+        <p class="text-muted mb-0">
+            @appointment.AppointmentTypeName &middot; @appointment.ModeLabel
+        </p>
+    </div>
+    @if (isActive)
+    {
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-page="@RouteNames.Scheduler.Edit" asp-route-id="@appointment.Id"
+               class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-1"></i>Edit
+            </a>
+        </div>
+    }
+</div>
+
+<div class="row">
+    <!-- Main Content -->
+    <div class="col-lg-8">
+        <!-- Appointment Details Card -->
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-calendar-event me-2"></i>Appointment Details</h5>
+            </div>
+            <div class="staff-card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4 text-muted fw-medium">Code</dt>
+                    <dd class="col-sm-8 fw-semibold">@appointment.Code</dd>
+
+                    <dt class="col-sm-4 text-muted fw-medium">Type</dt>
+                    <dd class="col-sm-8">@appointment.AppointmentTypeName</dd>
+
+                    <dt class="col-sm-4 text-muted fw-medium">Mode</dt>
+                    <dd class="col-sm-8">
+                        @if (appointment.Mode == AppointmentMode.VIRTUAL)
+                        {
+                            <i class="bi bi-camera-video me-1"></i>@appointment.ModeLabel
+                        }
+                        else
+                        {
+                            <i class="bi bi-geo-alt me-1"></i>@appointment.ModeLabel
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted fw-medium">Status</dt>
+                    <dd class="col-sm-8">
+                        <span class="staff-badge badge @statusBadgeClass">@appointment.StatusLabel</span>
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted fw-medium">Contact Record</dt>
+                    <dd class="col-sm-8">
+                        <a asp-area="Staff" asp-page="@RouteNames.Contacts.Details"
+                           asp-route-id="@appointment.ContactId"
+                           style="color: var(--staff-primary);">
+                            @appointment.ContactName
+                        </a>
+                        <small class="text-muted ms-1">(ID: @appointment.ContactId)</small>
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted fw-medium">Appt. Contact Name</dt>
+                    <dd class="col-sm-8">
+                        @appointment.AppointmentContactFirstName @appointment.AppointmentContactLastName
+                    </dd>
+
+                    @if (!string.IsNullOrEmpty(appointment.AppointmentContactEmail))
+                    {
+                        <dt class="col-sm-4 text-muted fw-medium">Appt. Contact Email</dt>
+                        <dd class="col-sm-8">
+                            <i class="bi bi-envelope me-1 text-muted"></i>@appointment.AppointmentContactEmail
+                        </dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(appointment.AppointmentContactPhone))
+                    {
+                        <dt class="col-sm-4 text-muted fw-medium">Appt. Contact Phone</dt>
+                        <dd class="col-sm-8">
+                            <i class="bi bi-telephone me-1 text-muted"></i>@appointment.AppointmentContactPhone
+                        </dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(appointment.AppointmentContactAddress))
+                    {
+                        <dt class="col-sm-4 text-muted fw-medium">Appt. Contact Address</dt>
+                        <dd class="col-sm-8">
+                            <i class="bi bi-geo-alt me-1 text-muted"></i>@appointment.AppointmentContactAddress
+                        </dd>
+                    }
+
+                    <dt class="col-sm-4 text-muted fw-medium">Staff Member</dt>
+                    <dd class="col-sm-8">
+                        @appointment.AssignedStaffName
+                        @if (!string.IsNullOrEmpty(appointment.AssignedStaffEmail))
+                        {
+                            <br /><small class="text-muted">@appointment.AssignedStaffEmail</small>
+                        }
+                    </dd>
+
+                    @if (!string.IsNullOrEmpty(appointment.MeetingLink))
+                    {
+                        <dt class="col-sm-4 text-muted fw-medium">Meeting Link</dt>
+                        <dd class="col-sm-8">
+                            <a href="@appointment.MeetingLink" target="_blank" rel="noopener noreferrer"
+                               style="color: var(--staff-primary);">
+                                <i class="bi bi-box-arrow-up-right me-1"></i>Join Meeting
+                            </a>
+                        </dd>
+                    }
+
+                    <dt class="col-sm-4 text-muted fw-medium">Date &amp; Time</dt>
+                    <dd class="col-sm-8">
+                        @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(appointment.ScheduledStartTime)
+                    </dd>
+
+                    <dt class="col-sm-4 text-muted fw-medium">Duration</dt>
+                    <dd class="col-sm-8">@appointment.DurationMinutes minutes</dd>
+
+                    @if (!string.IsNullOrEmpty(appointment.Notes))
+                    {
+                        <dt class="col-sm-4 text-muted fw-medium">Notes</dt>
+                        <dd class="col-sm-8" style="white-space: pre-wrap;">@appointment.Notes</dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(appointment.CoverageZoneOverrideReason))
+                    {
+                        <dt class="col-sm-4 text-muted fw-medium">Coverage Override</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-warning text-dark me-1">Override</span>
+                            @appointment.CoverageZoneOverrideReason
+                        </dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(appointment.CancellationReason))
+                    {
+                        <dt class="col-sm-4 text-muted fw-medium">Cancellation Reason</dt>
+                        <dd class="col-sm-8 text-danger">@appointment.CancellationReason</dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(appointment.CancellationNoticeOverrideReason))
+                    {
+                        <dt class="col-sm-4 text-muted fw-medium">Notice Override</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-warning text-dark me-1">Override</span>
+                            @appointment.CancellationNoticeOverrideReason
+                        </dd>
+                    }
+
+                    <dt class="col-sm-4 text-muted fw-medium">Created By</dt>
+                    <dd class="col-sm-8">
+                        @appointment.CreatedByStaffName
+                        <small class="text-muted ms-1">
+                            @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(appointment.CreationTime)
+                        </small>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <!-- History Timeline -->
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-clock-history me-2"></i>History (@appointment.History.Count)</h5>
+            </div>
+            <div class="staff-card-body p-0">
+                @if (!appointment.History.Any())
+                {
+                    <p class="text-muted p-4 mb-0 fst-italic">No history recorded.</p>
+                }
+                else
+                {
+                    <div class="timeline-list">
+                        @foreach (var entry in appointment.History)
+                        {
+                            <div class="d-flex gap-3 p-3 border-bottom">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                     style="width: 32px; height: 32px; background: @GetHistoryIconBg(entry.ChangeType);">
+                                    <i class="bi @GetHistoryIcon(entry.ChangeType) small" style="color: @GetHistoryIconColor(entry.ChangeType);"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="fw-medium">@(entry.ChangedByName ?? "System")</span>
+                                            <span class="text-muted ms-1">@GetHistoryDescription(entry)</span>
+                                        </div>
+                                        <small class="text-muted flex-shrink-0 ms-3">
+                                            @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(entry.Timestamp)
+                                        </small>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(entry.OverrideReason))
+                                    {
+                                        <div class="mt-1">
+                                            <small class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>@entry.OverrideReason</small>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar: Actions -->
+    <div class="col-lg-4">
+        <!-- Status Actions -->
+        @if (isActive)
+        {
+            <div class="staff-card mb-4">
+                <div class="staff-card-header">
+                    <h5><i class="bi bi-lightning me-2"></i>Actions</h5>
+                </div>
+                <div class="staff-card-body">
+                    <div class="d-grid gap-2">
+                        @if (allowedTransitions.Contains(AppointmentStatus.CONFIRMED))
+                        {
+                            <form method="post" asp-page-handler="Confirm" asp-route-id="@appointment.Id">
+                                <button type="submit" class="btn btn-info w-100">
+                                    <i class="bi bi-check-circle me-1"></i>Confirm
+                                </button>
+                            </form>
+                        }
+
+                        @if (allowedTransitions.Contains(AppointmentStatus.IN_PROGRESS))
+                        {
+                            <form method="post" asp-page-handler="Start" asp-route-id="@appointment.Id">
+                                <button type="submit" class="btn btn-warning w-100">
+                                    <i class="bi bi-play-fill me-1"></i>Start
+                                </button>
+                            </form>
+                        }
+
+                        @if (allowedTransitions.Contains(AppointmentStatus.COMPLETED))
+                        {
+                            <form method="post" asp-page-handler="Complete" asp-route-id="@appointment.Id">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-check-lg me-1"></i>Complete
+                                </button>
+                            </form>
+                        }
+
+                        @if (allowedTransitions.Contains(AppointmentStatus.NO_SHOW))
+                        {
+                            <form method="post" asp-page-handler="NoShow" asp-route-id="@appointment.Id"
+                                  onsubmit="return confirm('Mark this appointment as No-Show?');">
+                                <button type="submit" class="btn btn-outline-danger w-100">
+                                    <i class="bi bi-person-x me-1"></i>No-Show
+                                </button>
+                            </form>
+                        }
+
+                        <!-- Reschedule Button — opens modal -->
+                        <button type="button" class="btn btn-outline-primary w-100"
+                                data-bs-toggle="modal" data-bs-target="#rescheduleModal">
+                            <i class="bi bi-calendar2-plus me-1"></i>Reschedule
+                        </button>
+
+                        <!-- Cancel Button — opens modal -->
+                        @if (allowedTransitions.Contains(AppointmentStatus.CANCELLED))
+                        {
+                            <button type="button" class="btn btn-outline-secondary w-100"
+                                    data-bs-toggle="modal" data-bs-target="#cancelModal">
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Quick Info -->
+        <div class="staff-card">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-info-circle me-2"></i>Quick Info</h5>
+            </div>
+            <div class="staff-card-body">
+                <dl class="row mb-0">
+                    <dt class="col-5 text-muted fw-medium small">Contact Zip</dt>
+                    <dd class="col-7 small">@(appointment.ContactZipcode ?? "—")</dd>
+
+                    <dt class="col-5 text-muted fw-medium small">Reminder Sent</dt>
+                    <dd class="col-7 small">
+                        @if (appointment.ReminderSentAt.HasValue)
+                        {
+                            @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(appointment.ReminderSentAt.Value)
+                        }
+                        else
+                        {
+                            <span class="text-muted">Not yet</span>
+                        }
+                    </dd>
+
+                    @if (appointment.LastModificationTime.HasValue)
+                    {
+                        <dt class="col-5 text-muted fw-medium small">Last Modified</dt>
+                        <dd class="col-7 small">
+                            @CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(appointment.LastModificationTime.Value)
+                        </dd>
+                    }
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Cancel" asp-route-id="@appointment.Id">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelModalLabel">Cancel Appointment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Cancellation Reason <span class="text-danger">*</span></label>
+                        <textarea name="CancelForm.CancellationReason" class="form-control" rows="3"
+                                  placeholder="Explain why this appointment is being cancelled..."
+                                  required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notice Override Reason</label>
+                        <textarea name="CancelForm.CancellationNoticeOverrideReason" class="form-control" rows="2"
+                                  placeholder="Required if cancelling within the minimum notice period..."></textarea>
+                        <small class="text-muted">Only needed if cancelling within the minimum notice window.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-x-circle me-1"></i>Cancel Appointment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reschedule Modal -->
+<div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Reschedule" asp-route-id="@appointment.Id">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rescheduleModalLabel">Reschedule Appointment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">New Date &amp; Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" name="RescheduleForm.NewScheduledStartTime"
+                               class="form-control" required />
+                        <small class="text-muted">Time in organization timezone.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Duration (minutes) <span class="text-danger">*</span></label>
+                        <input type="number" name="RescheduleForm.NewDurationMinutes"
+                               class="form-control" min="1" max="480"
+                               value="@appointment.DurationMinutes" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notice Override Reason</label>
+                        <textarea name="RescheduleForm.CancellationNoticeOverrideReason" class="form-control" rows="2"
+                                  placeholder="Required if rescheduling within the minimum notice period..."></textarea>
+                        <small class="text-muted">Only needed if rescheduling within the minimum notice window.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-calendar2-plus me-1"></i>Reschedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            AppointmentStatus.SCHEDULED => "bg-primary",
+            AppointmentStatus.CONFIRMED => "bg-info",
+            AppointmentStatus.IN_PROGRESS => "bg-warning text-dark",
+            AppointmentStatus.COMPLETED => "bg-success",
+            AppointmentStatus.CANCELLED => "bg-secondary",
+            AppointmentStatus.NO_SHOW => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    string GetHistoryIcon(string changeType)
+    {
+        return changeType switch
+        {
+            "created" => "bi-plus-circle-fill",
+            "status_changed" => "bi-arrow-right-circle-fill",
+            "rescheduled" => "bi-calendar2-plus",
+            "cancelled" => "bi-x-circle-fill",
+            "edited" => "bi-pencil-fill",
+            "coverage_override" => "bi-exclamation-triangle-fill",
+            "cancellation_notice_override" => "bi-exclamation-triangle-fill",
+            _ => "bi-circle-fill"
+        };
+    }
+
+    string GetHistoryIconBg(string changeType)
+    {
+        return changeType switch
+        {
+            "created" => "#e8f5e9",
+            "status_changed" => "#e3f2fd",
+            "rescheduled" => "#fff3e0",
+            "cancelled" => "#ffebee",
+            "edited" => "#f3e5f5",
+            _ => "#f1f5f9"
+        };
+    }
+
+    string GetHistoryIconColor(string changeType)
+    {
+        return changeType switch
+        {
+            "created" => "#4caf50",
+            "status_changed" => "#2196f3",
+            "rescheduled" => "#ff9800",
+            "cancelled" => "#f44336",
+            "edited" => "#9c27b0",
+            _ => "#607d8b"
+        };
+    }
+
+    string GetHistoryDescription(App.Application.Scheduler.DTOs.AppointmentHistoryItemDto entry)
+    {
+        return entry.ChangeType switch
+        {
+            "created" => entry.NewValue ?? "Created appointment",
+            "status_changed" => $"Changed status from {entry.OldValue} to {entry.NewValue}",
+            "rescheduled" => $"Rescheduled from {entry.OldValue} to {entry.NewValue}",
+            "cancelled" => $"Cancelled: {entry.OverrideReason ?? entry.NewValue}",
+            "edited" => entry.NewValue ?? "Edited appointment",
+            "coverage_override" => $"Coverage zone override: {entry.OverrideReason ?? entry.NewValue}",
+            "cancellation_notice_override" => $"Notice period override: {entry.OverrideReason ?? entry.NewValue}",
+            _ => entry.NewValue ?? entry.ChangeType
+        };
+    }
+}

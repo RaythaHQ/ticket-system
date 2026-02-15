@@ -20,7 +20,8 @@ namespace App.Application.Tickets.EventHandlers;
 /// All notifications are deduplicated and the commenter is never notified.
 /// </summary>
 public class TicketCommentAddedEventHandler_SendNotification
-    : BaseTicketNotificationHandler, INotificationHandler<TicketCommentAddedEvent>
+    : BaseTicketNotificationHandler,
+        INotificationHandler<TicketCommentAddedEvent>
 {
     public TicketCommentAddedEventHandler_SendNotification(
         IAppDbContext db,
@@ -34,11 +35,16 @@ public class TicketCommentAddedEventHandler_SendNotification
         ILogger<TicketCommentAddedEventHandler_SendNotification> logger
     )
         : base(
-            db, emailerService, renderEngineService, relativeUrlBuilder,
-            currentOrganization, notificationPreferenceService, inAppNotificationService,
-            notificationSuppressionService, logger
-        )
-    { }
+            db,
+            emailerService,
+            renderEngineService,
+            relativeUrlBuilder,
+            currentOrganization,
+            notificationPreferenceService,
+            inAppNotificationService,
+            notificationSuppressionService,
+            logger
+        ) { }
 
     public async ValueTask Handle(
         TicketCommentAddedEvent notification,
@@ -112,9 +118,7 @@ public class TicketCommentAddedEventHandler_SendNotification
                 .FirstOrDefaultAsync(u => u.Id == commenterId, cancellationToken);
 
             var truncatedBody =
-                comment.Body.Length > 100
-                    ? comment.Body.Substring(0, 100) + "..."
-                    : comment.Body;
+                comment.Body.Length > 100 ? comment.Body.Substring(0, 100) + "..." : comment.Body;
 
             // === ALWAYS RECORD TO MY NOTIFICATIONS (database) ===
             // InAppNotificationService handles the SignalR popup preference check internally
@@ -168,7 +172,11 @@ public class TicketCommentAddedEventHandler_SendNotification
 
             var users = await Db
                 .Users.AsNoTracking()
-                .Where(u => emailRecipients.Contains(u.Id) && u.IsActive && !string.IsNullOrEmpty(u.EmailAddress))
+                .Where(u =>
+                    emailRecipients.Contains(u.Id)
+                    && u.IsActive
+                    && !string.IsNullOrEmpty(u.EmailAddress)
+                )
                 .ToListAsync(cancellationToken);
 
             foreach (var user in users)

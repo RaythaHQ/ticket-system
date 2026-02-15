@@ -1,370 +1,193 @@
-@inject App.Application.Common.Interfaces.ICurrentUser CurrentUser
-@inject App.Application.Common.Interfaces.ICurrentOrganization CurrentOrganization
 @inject App.Application.TicketViews.IFavoriteViewsService FavoriteViewsService
 @inject App.Application.Common.Interfaces.IInAppNotificationService NotificationService
 @inject App.Application.Common.Interfaces.ISidebarBadgeService SidebarBadgeService
-@using App.Web.Areas.Admin.Pages.Shared
-<!DOCTYPE html>
-<html lang="en">
+@inject App.Application.Common.Interfaces.ICurrentUser CurrentUser
+@{
+    Layout = "_StaffBaseLayout";
+}
 
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Staff Portal</title>
-    <link rel="stylesheet" href="~/admin/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/admin/lib/bootstrap-icons/bootstrap-icons.min.css" />
-    <link rel="stylesheet" href="~/admin/css/volt.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/admin/css/site.css" asp-append-version="true" />
-    <link rel="icon" type="image/x-icon" href="~/favicon.ico">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="~/css/staff-layout.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/searchable-select.css" asp-append-version="true" />
+@RenderBody()
 
-    @RenderSection("headstyles", false)
-</head>
-
-<body data-active-menu="@ViewData["ActiveMenu"]">
-    <!-- Sidebar -->
-    <aside class="staff-sidebar">
-        <div class="staff-sidebar-brand">
-            <div class="brand-icon">
-                <i class="bi bi-headset"></i>
-            </div>
-            <div>
-                <h5>Nova Ticket System</h5>
-                <small>Staff Portal</small>
-            </div>
-        </div>
-
-        <nav class="staff-nav">
-            <div class="staff-nav-section">
-                <div class="staff-nav-section-title">Main</div>
-                <a asp-area="Staff" asp-page="@RouteNames.Dashboard.Index"
-                    class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Dashboard" ? "active" : "")">
-                    <i class="bi bi-grid-1x2"></i>
-                    <span>Dashboard</span>
-                </a>
-                @{
-                    var unreadCount = 0;
-                    if (CurrentUser.UserId.HasValue)
-                    {
-                        unreadCount = await NotificationService.GetUnreadCountAsync(CurrentUser.UserId.Value.Guid);
-                    }
-                    var badgeDisplay = unreadCount >= 100 ? "99+" : unreadCount.ToString();
-                }
-                <a asp-area="Staff" asp-page="@RouteNames.Notifications.Index"
-                    class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Notifications" ? "active" : "")">
-                    <i class="bi bi-bell"></i>
-                    <span>My Notifications</span>
-                    <span class="notification-badge" id="notification-badge" style="@(unreadCount > 0 ? "" : "display: none;")">@badgeDisplay</span>
-                </a>
-                <a asp-area="Staff" asp-page="@RouteNames.Wiki.Index"
-                    class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Wiki" ? "active" : "")">
-                    <i class="bi bi-journal-text"></i>
-                    <span>Wiki</span>
-                </a>
-                @{
-                    var isTasksSection = ViewData["ActiveMenu"]?.ToString() == "Tasks";
-                    var isTicketsActive = ViewData["ActiveMenu"]?.ToString() == "Tickets";
-                    // Tickets expanded by default, unless Tasks is the active section
-                    var ticketsExpanded = !isTasksSection;
-
-                    var myTicketCount = 0;
-                    var myTaskCount = 0;
-                    if (CurrentUser.UserId.HasValue)
-                    {
-                        myTicketCount = await SidebarBadgeService.GetMyTicketCountAsync(CurrentUser.UserId.Value.Guid);
-                        myTaskCount = await SidebarBadgeService.GetMyTaskCountAsync(CurrentUser.UserId.Value.Guid);
-                    }
-                    var ticketBadgeDisplay = myTicketCount >= 100 ? "99+" : myTicketCount.ToString();
-                    var taskBadgeDisplay = myTaskCount >= 100 ? "99+" : myTaskCount.ToString();
-                }
-                <div class="staff-nav-item">
-                    <span
-                        class="staff-nav-link has-submenu @(ticketsExpanded ? "expanded" : "") @(isTicketsActive ? "active" : "")"
-                        onclick="toggleSubmenu(event, 'tickets-submenu')">
-                        <i class="bi bi-ticket-detailed"></i>
-                        <span>Tickets</span>
-                        @if (myTicketCount > 0)
-                        {
-                            <span class="nav-count-badge parent-badge">@ticketBadgeDisplay</span>
-                        }
-                        <i class="bi bi-chevron-right submenu-arrow"></i>
-                    </span>
-                    <div class="staff-submenu @(ticketsExpanded ? "expanded" : "")" id="tickets-submenu">
-                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="unassigned"
-                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Unassigned" ? "active" : "")">
-                            Unassigned
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="my-tickets"
-                            class="staff-submenu-link has-count-badge @(ViewData["ActiveSubMenu"]?.ToString() == "MyTickets" ? "active" : "")">
-                            My Tickets
-                            @if (myTicketCount > 0)
-                            {
-                                <span class="nav-count-badge submenu-badge">@ticketBadgeDisplay</span>
-                            }
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="created-by-me"
-                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "CreatedByMe" ? "active" : "")">
-                            Created by Me
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="team-tickets"
-                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "TeamTickets" ? "active" : "")">
-                            Team Tickets
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="overdue"
-                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Overdue" ? "active" : "")">
-                            Overdue
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="snoozed"
-                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Snoozed" ? "active" : "")">
-                            Snoozed
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="following"
-                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Following" ? "active" : "")">
-                            Following
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="all"
-                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "AllTickets" ? "active" : "")">
-                            All Tickets
-                        </a>
-                        @{
-                            var favoriteViews = (await FavoriteViewsService.GetUserFavoriteViewsAsync()).ToList();
-                        }
-                        @if (favoriteViews.Any())
-                        {
-                            <div class="staff-submenu-divider"></div>
-                            @foreach (var fav in favoriteViews)
-                            {
-                                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@fav.ViewId"
-                                    asp-route-sortBy="view"
-                                    class="staff-submenu-link @(ViewData["ActiveViewId"]?.ToString() == fav.ViewId.ToString() ? "active" : "")">
-                                    <i class="bi bi-star-fill me-1" style="color: #ffc107; font-size: 0.7rem;"></i>@fav.Name
-                                </a>
-                            }
-                        }
-                    </div>
-                </div>
-                <div class="staff-nav-item">
-                    <span
-                        class="staff-nav-link has-submenu @(isTasksSection ? "expanded active" : "")"
-                        onclick="toggleSubmenu(event, 'tasks-submenu')">
-                        <i class="bi bi-check2-square"></i>
-                        <span>Tasks</span>
-                        @if (myTaskCount > 0)
-                        {
-                            <span class="nav-count-badge parent-badge">@taskBadgeDisplay</span>
-                        }
-                        <i class="bi bi-chevron-right submenu-arrow"></i>
-                    </span>
-                    <div class="staff-submenu @(isTasksSection ? "expanded" : "")" id="tasks-submenu">
-                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="my-tasks"
-                            class="staff-submenu-link has-count-badge @(ViewData["ActiveTaskView"]?.ToString() == "my-tasks" ? "active" : "")">
-                            My Tasks
-                            @if (myTaskCount > 0)
-                            {
-                                <span class="nav-count-badge submenu-badge">@taskBadgeDisplay</span>
-                            }
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="team-tasks"
-                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "team-tasks" ? "active" : "")">
-                            Team Tasks
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="unassigned"
-                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "unassigned" ? "active" : "")">
-                            Unassigned
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="created-by-me"
-                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "created-by-me" ? "active" : "")">
-                            Created by Me
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="overdue"
-                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "overdue" ? "active" : "")">
-                            Overdue
-                        </a>
-                        <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="all"
-                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "all" ? "active" : "")">
-                            All Tasks
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="staff-nav-section">
-                <div class="staff-nav-section-title">Manage</div>
-                <a asp-area="Staff" asp-page="@RouteNames.Views.Index"
-                    class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Views" ? "active" : "")">
-                    <i class="bi bi-layout-text-window"></i>
-                    <span>Views</span>
-                </a>
-                <a asp-area="Staff" asp-page="@RouteNames.Contacts.Index"
-                    class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Contacts" ? "active" : "")">
-                    <i class="bi bi-people"></i>
-                    <span>Contacts</span>
-                </a>
-                <a asp-area="Staff" asp-page="@RouteNames.ActivityLog.Index"
-                    class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "ActivityLog" ? "active" : "")">
-                    <i class="bi bi-activity"></i>
-                    <span>Activity Log</span>
-                </a>
-            </div>
-        </nav>
-
-        <div class="staff-user-section">
-            @if (CurrentUser.IsAdmin)
+@section Sidebar {
+    <div class="staff-nav-section">
+        <div class="staff-nav-section-title">Main</div>
+        <a asp-area="Staff" asp-page="@RouteNames.Dashboard.Index"
+            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Dashboard" ? "active" : "")">
+            <i class="bi bi-grid-1x2"></i>
+            <span>Dashboard</span>
+        </a>
+        @{
+            var unreadCount = 0;
+            if (CurrentUser.UserId.HasValue)
             {
-                <a href="/admin" class="staff-admin-link">
-                    <i class="bi bi-gear"></i>
-                    <span>Admin Portal</span>
-                </a>
+                unreadCount = await NotificationService.GetUnreadCountAsync(CurrentUser.UserId.Value.Guid);
             }
-            <div class="staff-user-dropdown">
-                <button type="button" class="staff-user-dropdown-toggle" onclick="toggleUserDropdown(event)">
-                    <div class="staff-user-avatar">
-                        @(CurrentUser.FullName?.FirstOrDefault().ToString().ToUpper() ?? "U")
-                    </div>
-                    <div class="staff-user-details">
-                        <div class="staff-user-name">@CurrentUser.FullName</div>
-                        <div class="staff-user-role">Staff Member</div>
-                    </div>
-                    <i class="bi bi-chevron-up ms-auto" id="user-dropdown-icon"></i>
-                </button>
-                <div class="staff-user-dropdown-menu" id="user-dropdown-menu">
-                    <a asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Profile.Index"
-                        class="staff-user-dropdown-item">
-                        <i class="bi bi-person me-2"></i> Profile
-                    </a>
-                    @if (CurrentOrganization.EmailAndPasswordIsEnabledForAdmins)
+            var badgeDisplay = unreadCount >= 100 ? "99+" : unreadCount.ToString();
+        }
+        <a asp-area="Staff" asp-page="@RouteNames.Notifications.Index"
+            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Notifications" ? "active" : "")">
+            <i class="bi bi-bell"></i>
+            <span>My Notifications</span>
+            <span class="notification-badge" id="notification-badge" style="@(unreadCount > 0 ? "" : "display: none;")">@badgeDisplay</span>
+        </a>
+        <a asp-area="Staff" asp-page="@RouteNames.Wiki.Index"
+            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Wiki" ? "active" : "")">
+            <i class="bi bi-journal-text"></i>
+            <span>Wiki</span>
+        </a>
+        @{
+            var isTasksSection = ViewData["ActiveMenu"]?.ToString() == "Tasks";
+            var isTicketsActive = ViewData["ActiveMenu"]?.ToString() == "Tickets";
+            // Tickets expanded by default, unless Tasks is the active section
+            var ticketsExpanded = !isTasksSection;
+
+            var myTicketCount = 0;
+            var myTaskCount = 0;
+            if (CurrentUser.UserId.HasValue)
+            {
+                myTicketCount = await SidebarBadgeService.GetMyTicketCountAsync(CurrentUser.UserId.Value.Guid);
+                myTaskCount = await SidebarBadgeService.GetMyTaskCountAsync(CurrentUser.UserId.Value.Guid);
+            }
+            var ticketBadgeDisplay = myTicketCount >= 100 ? "99+" : myTicketCount.ToString();
+            var taskBadgeDisplay = myTaskCount >= 100 ? "99+" : myTaskCount.ToString();
+        }
+        <div class="staff-nav-item">
+            <span
+                class="staff-nav-link has-submenu @(ticketsExpanded ? "expanded" : "") @(isTicketsActive ? "active" : "")"
+                onclick="toggleSubmenu(event, 'tickets-submenu')">
+                <i class="bi bi-ticket-detailed"></i>
+                <span>Tickets</span>
+                @if (myTicketCount > 0)
+                {
+                    <span class="nav-count-badge parent-badge">@ticketBadgeDisplay</span>
+                }
+                <i class="bi bi-chevron-right submenu-arrow"></i>
+            </span>
+            <div class="staff-submenu @(ticketsExpanded ? "expanded" : "")" id="tickets-submenu">
+                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="unassigned"
+                    class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Unassigned" ? "active" : "")">
+                    Unassigned
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="my-tickets"
+                    class="staff-submenu-link has-count-badge @(ViewData["ActiveSubMenu"]?.ToString() == "MyTickets" ? "active" : "")">
+                    My Tickets
+                    @if (myTicketCount > 0)
                     {
-                        <a asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Profile.ChangePassword"
-                            class="staff-user-dropdown-item">
-                            <i class="bi bi-key me-2"></i> Change Password
+                        <span class="nav-count-badge submenu-badge">@ticketBadgeDisplay</span>
+                    }
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="created-by-me"
+                    class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "CreatedByMe" ? "active" : "")">
+                    Created by Me
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="team-tickets"
+                    class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "TeamTickets" ? "active" : "")">
+                    Team Tickets
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="overdue"
+                    class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Overdue" ? "active" : "")">
+                    Overdue
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="snoozed"
+                    class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Snoozed" ? "active" : "")">
+                    Snoozed
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="following"
+                    class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "Following" ? "active" : "")">
+                    Following
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="all"
+                    class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "AllTickets" ? "active" : "")">
+                    All Tickets
+                </a>
+                @{
+                    var favoriteViews = (await FavoriteViewsService.GetUserFavoriteViewsAsync()).ToList();
+                }
+                @if (favoriteViews.Any())
+                {
+                    <div class="staff-submenu-divider"></div>
+                    @foreach (var fav in favoriteViews)
+                    {
+                        <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-viewId="@fav.ViewId"
+                            asp-route-sortBy="view"
+                            class="staff-submenu-link @(ViewData["ActiveViewId"]?.ToString() == fav.ViewId.ToString() ? "active" : "")">
+                            <i class="bi bi-star-fill me-1" style="color: #ffc107; font-size: 0.7rem;"></i>@fav.Name
                         </a>
                     }
-                    <a asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Login.Logout"
-                        class="staff-user-dropdown-item">
-                        <i class="bi bi-box-arrow-right me-2"></i> Logout
-                    </a>
-                </div>
+                }
             </div>
         </div>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="staff-main">
-        @if (CurrentUser.IsImpersonating)
-        {
-            <div class="impersonation-hellobar">
-                <div class="impersonation-hellobar-content">
-                    <i class="bi bi-eye-fill"></i>
-                    <span>
-                        <strong>Impersonation Active:</strong>
-                        You (@CurrentUser.OriginalUserFullName) are viewing as <strong>@CurrentUser.FullName</strong>
-                    </span>
-                    @if (CurrentUser.ImpersonationStartedAt.HasValue)
+        <div class="staff-nav-item">
+            <span
+                class="staff-nav-link has-submenu @(isTasksSection ? "expanded active" : "")"
+                onclick="toggleSubmenu(event, 'tasks-submenu')">
+                <i class="bi bi-check2-square"></i>
+                <span>Tasks</span>
+                @if (myTaskCount > 0)
+                {
+                    <span class="nav-count-badge parent-badge">@taskBadgeDisplay</span>
+                }
+                <i class="bi bi-chevron-right submenu-arrow"></i>
+            </span>
+            <div class="staff-submenu @(isTasksSection ? "expanded" : "")" id="tasks-submenu">
+                <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="my-tasks"
+                    class="staff-submenu-link has-count-badge @(ViewData["ActiveTaskView"]?.ToString() == "my-tasks" ? "active" : "")">
+                    My Tasks
+                    @if (myTaskCount > 0)
                     {
-                        <span class="impersonation-time">
-                            Started: @CurrentUser.ImpersonationStartedAt.Value.ToString("HH:mm:ss") UTC
-                        </span>
+                        <span class="nav-count-badge submenu-badge">@taskBadgeDisplay</span>
                     }
-                </div>
-                <form method="post" asp-area="Admin" asp-page="@App.Web.Areas.Admin.Pages.Shared.RouteNames.Login.EndImpersonation" class="d-inline">
-                    <button type="submit" class="impersonation-end-btn" onclick="return confirm('End impersonation and return to your account?');">
-                        <i class="bi bi-box-arrow-right"></i>
-                        End Impersonation
-                    </button>
-                </form>
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="team-tasks"
+                    class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "team-tasks" ? "active" : "")">
+                    Team Tasks
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="unassigned"
+                    class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "unassigned" ? "active" : "")">
+                    Unassigned
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="created-by-me"
+                    class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "created-by-me" ? "active" : "")">
+                    Created by Me
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="overdue"
+                    class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "overdue" ? "active" : "")">
+                    Overdue
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="all"
+                    class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "all" ? "active" : "")">
+                    All Tasks
+                </a>
             </div>
-        }
-        <header class="staff-topbar">
-            <div class="staff-topbar-left">
-                <span class="staff-topbar-breadcrumb">
-                    <a asp-area="Staff" asp-page="@RouteNames.Dashboard.Index">Home</a>
-                    @if (ViewData["Title"] != null && ViewData["Title"].ToString() != "Dashboard")
-                    {
-                        <span class="mx-2">/</span>
-                        <span>@ViewData["Title"]</span>
-                    }
-                </span>
-            </div>
-        </header>
-
-        <main class="staff-content">
-            <alert />
-            @RenderBody()
-        </main>
+        </div>
     </div>
 
-    <script src="~/admin/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/admin/lib/sortablejs/Sortable.min.js"></script>
-    <script>
-        function toggleUserDropdown(event) {
-            event.stopPropagation();
-            const menu = document.getElementById('user-dropdown-menu');
-            const icon = document.getElementById('user-dropdown-icon');
-            const isOpen = menu.classList.contains('show');
+    <div class="staff-nav-section">
+        <div class="staff-nav-section-title">Manage</div>
+        <a asp-area="Staff" asp-page="@RouteNames.Views.Index"
+            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Views" ? "active" : "")">
+            <i class="bi bi-layout-text-window"></i>
+            <span>Views</span>
+        </a>
+        <a asp-area="Staff" asp-page="@RouteNames.Contacts.Index"
+            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "Contacts" ? "active" : "")">
+            <i class="bi bi-people"></i>
+            <span>Contacts</span>
+        </a>
+        <a asp-area="Staff" asp-page="@RouteNames.ActivityLog.Index"
+            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "ActivityLog" ? "active" : "")">
+            <i class="bi bi-activity"></i>
+            <span>Activity Log</span>
+        </a>
+    </div>
+}
 
-            if (isOpen) {
-                menu.classList.remove('show');
-                icon.classList.remove('bi-chevron-down');
-                icon.classList.add('bi-chevron-up');
-            } else {
-                menu.classList.add('show');
-                icon.classList.remove('bi-chevron-up');
-                icon.classList.add('bi-chevron-down');
-            }
-        }
+@if (IsSectionDefined("headstyles"))
+{
+    @section headstyles { @RenderSection("headstyles", required: false) }
+}
 
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function (event) {
-            const menu = document.getElementById('user-dropdown-menu');
-            const toggle = event.target.closest('.staff-user-dropdown-toggle');
-            if (!toggle && menu.classList.contains('show')) {
-                menu.classList.remove('show');
-                const icon = document.getElementById('user-dropdown-icon');
-                icon.classList.remove('bi-chevron-down');
-                icon.classList.add('bi-chevron-up');
-            }
-        });
-
-        // Accordion submenu IDs — expanding one collapses the others
-        const accordionSubmenus = ['tickets-submenu', 'tasks-submenu'];
-
-        function toggleSubmenu(event, submenuId) {
-            event.preventDefault();
-            event.stopPropagation();
-            const submenu = document.getElementById(submenuId);
-            const link = event.currentTarget;
-
-            if (submenu.classList.contains('expanded')) {
-                submenu.classList.remove('expanded');
-                link.classList.remove('expanded');
-            } else {
-                // Collapse other accordion submenus first
-                accordionSubmenus.forEach(function (otherId) {
-                    if (otherId !== submenuId) {
-                        const otherSubmenu = document.getElementById(otherId);
-                        if (otherSubmenu && otherSubmenu.classList.contains('expanded')) {
-                            otherSubmenu.classList.remove('expanded');
-                            const otherLink = otherSubmenu.previousElementSibling;
-                            if (otherLink) otherLink.classList.remove('expanded');
-                        }
-                    }
-                });
-                submenu.classList.add('expanded');
-                link.classList.add('expanded');
-            }
-        }
-    </script>
-
-    <!-- Searchable Select Component -->
-    <script src="~/js/searchable-select.js" asp-append-version="true"></script>
-
-    <!-- SignalR for real-time notifications -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
-    <script src="~/js/notifications.js" asp-append-version="true"></script>
-
-    @await RenderSectionAsync("Scripts", required: false)
-</body>
-
-</html>
+@if (IsSectionDefined("Scripts"))
+{
+    @section Scripts { @await RenderSectionAsync("Scripts", required: false) }
+}

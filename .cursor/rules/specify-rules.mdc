@@ -11,6 +11,7 @@ Auto-generated from all feature plans. Last updated: 2025-12-13
 - C# / .NET 10 + ASP.NET Core, Entity Framework Core, MediatR, FluentValidation, SignalR (006-ticket-snooze)
 - C# / .NET (ASP.NET Core) + Mediator (source-generated MediatR), FluentValidation, EF Core, SortableJS, SignalR, DotLiquid (007-ticket-tasks)
 - PostgreSQL via EF Core (`IAppDbContext` / `AppDbContext`) (007-ticket-tasks)
+- C# / .NET 8+ (ASP.NET Core) + ASP.NET Core Razor Pages, EF Core, Mediator (CQRS), FluentValidation, Fluid (Liquid templates), Bootstrap 5, Bootstrap Icons (008-scheduler-system)
 
 - C# / .NET 8 + ASP.NET Core, Entity Framework Core, Mediator, FluentValidation, CsvHelper (new) (002-ticket-enhancements)
 
@@ -30,9 +31,9 @@ tests/
 C# / .NET 8: Follow standard conventions
 
 ## Recent Changes
+- 008-scheduler-system: Added C# / .NET 8+ (ASP.NET Core) + ASP.NET Core Razor Pages, EF Core, Mediator (CQRS), FluentValidation, Fluid (Liquid templates), Bootstrap 5, Bootstrap Icons
 - 007-ticket-tasks: Added C# / .NET (ASP.NET Core) + Mediator (source-generated MediatR), FluentValidation, EF Core, SortableJS, SignalR, DotLiquid
 - 007-ticket-tasks: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
-- 006-ticket-snooze: Added C# / .NET 10 + ASP.NET Core, Entity Framework Core, MediatR, FluentValidation, SignalR
 
 
 <!-- MANUAL ADDITIONS START -->

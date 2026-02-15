@@ -102,6 +102,59 @@
             }
         </div>
 
+        <!-- Schedulings -->
+        <div class="staff-card mb-4">
+            <div class="staff-card-header">
+                <h5><i class="bi bi-calendar-check me-2"></i>Schedulings (@(Model.Appointments?.TotalCount ?? 0))</h5>
+            </div>
+            @if (Model.Appointments == null || !Model.Appointments.Items.Any())
+            {
+                <div class="staff-card-body text-center py-5 text-muted">
+                    <i class="bi bi-calendar" style="font-size: 2rem; opacity: 0.5;"></i>
+                    <p class="mt-2 mb-0">No appointments for this contact.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table staff-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Type</th>
+                                <th>Date/Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var apt in Model.Appointments.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (Model.IsSchedulerStaff)
+                                        {
+                                            <a asp-area="Staff" asp-page="@RouteNames.Scheduler.Details" asp-route-id="@apt.Id"
+                                                asp-route-backToListUrl="@backToContactUrl"
+                                                style="color: var(--staff-primary);">
+                                                @apt.Code
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span>@apt.Code</span>
+                                        }
+                                    </td>
+                                    <td>@apt.AppointmentTypeName</td>
+                                    <td class="text-muted small">@apt.ScheduledStartTime.ToString("MMM dd, yyyy h:mm tt")</td>
+                                    <td><span class="staff-badge @GetAppointmentStatusBadgeClass(apt.Status)">@apt.StatusLabel</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+
         <!-- File Attachments -->
         <div class="staff-card mb-4">
             <div class="staff-card-header">
@@ -281,6 +334,20 @@
 </div>
 
 @functions {
+    string GetAppointmentStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "scheduled" => "staff-badge-primary",
+            "confirmed" => "staff-badge-primary",
+            "in_progress" => "staff-badge-warning",
+            "completed" => "staff-badge-success",
+            "cancelled" => "staff-badge-secondary",
+            "no_show" => "staff-badge-danger",
+            _ => "staff-badge-secondary"
+        };
+    }
+
     string GetStatusBadgeClass(string status)
     {
         try

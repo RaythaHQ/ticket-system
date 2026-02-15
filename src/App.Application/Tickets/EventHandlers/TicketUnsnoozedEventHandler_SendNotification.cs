@@ -20,7 +20,8 @@ namespace App.Application.Tickets.EventHandlers;
 /// - Skip notification entirely if ticket is closed
 /// </summary>
 public class TicketUnsnoozedEventHandler_SendNotification
-    : BaseTicketNotificationHandler, INotificationHandler<TicketUnsnoozedEvent>
+    : BaseTicketNotificationHandler,
+        INotificationHandler<TicketUnsnoozedEvent>
 {
     public TicketUnsnoozedEventHandler_SendNotification(
         IAppDbContext db,
@@ -34,11 +35,16 @@ public class TicketUnsnoozedEventHandler_SendNotification
         ILogger<TicketUnsnoozedEventHandler_SendNotification> logger
     )
         : base(
-            db, emailerService, renderEngineService, relativeUrlBuilder,
-            currentOrganization, notificationPreferenceService, inAppNotificationService,
-            notificationSuppressionService, logger
-        )
-    { }
+            db,
+            emailerService,
+            renderEngineService,
+            relativeUrlBuilder,
+            currentOrganization,
+            notificationPreferenceService,
+            inAppNotificationService,
+            notificationSuppressionService,
+            logger
+        ) { }
 
     public async ValueTask Handle(
         TicketUnsnoozedEvent notification,
@@ -57,10 +63,7 @@ public class TicketUnsnoozedEventHandler_SendNotification
             // Skip if ticket is closed (per spec: no snooze notification if closed while snoozed)
             var statusConfig = await Db
                 .TicketStatusConfigs.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    s => s.DeveloperName == ticket.Status,
-                    cancellationToken
-                );
+                .FirstOrDefaultAsync(s => s.DeveloperName == ticket.Status, cancellationToken);
 
             if (statusConfig?.IsClosedType == true)
             {

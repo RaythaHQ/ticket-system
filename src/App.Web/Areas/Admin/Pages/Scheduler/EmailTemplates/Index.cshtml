@@ -1,0 +1,101 @@
+@page "/admin/scheduler/email-templates"
+@model App.Web.Areas.Admin.Pages.Scheduler.EmailTemplates.Index
+
+@{
+    var pageTitle = "Scheduler Email Templates";
+    Layout = "SidebarLayout";
+    ViewData["Title"] = pageTitle;
+    ViewData["ActiveMenu"] = "SchedulerEmailTemplates";
+    ViewData["ExpandSchedulerMenu"] = true;
+}
+
+<div>
+    <partial name="_Partials/PageHeading" model="pageTitle" />
+
+    <p class="text-muted mb-4">
+        Manage the email templates sent to contacts for appointment confirmations, reminders, and follow-ups.
+    </p>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Template Type</th>
+                            <th>Subject</th>
+                            <th>Channel</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!Model.Templates.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="bi bi-envelope fs-1 d-block mb-2"></i>
+                                    No email templates found
+                                </td>
+                            </tr>
+                        }
+                        @foreach (var template in Model.Templates)
+                        {
+                            <tr>
+                                <td>
+                                    <span class="fw-semibold">
+                                        @FormatTemplateType(template.TemplateType)
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(template.Subject))
+                                    {
+                                        <span>@(template.Subject.Length > 60 ? template.Subject.Substring(0, 57) + "..." : template.Subject)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic">No subject set</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        <i class="bi bi-envelope me-1"></i>Email
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    @if (template.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a asp-page="@RouteNames.Scheduler.EmailTemplates.Edit"
+                                        asp-route-id="@template.Id" class="btn btn-outline-secondary btn-sm">
+                                        Edit
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string FormatTemplateType(string templateType)
+    {
+        return templateType switch
+        {
+            "confirmation" => "Appointment Confirmation",
+            "reminder" => "Appointment Reminder",
+            "post_meeting" => "Post-Meeting Follow-up",
+            _ => templateType
+        };
+    }
+}

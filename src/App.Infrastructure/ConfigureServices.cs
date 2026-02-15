@@ -3,6 +3,7 @@ using System.Data;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
 using App.Application.Common.Utils;
+using App.Application.Scheduler.Services;
 using App.Application.SlaRules.Services;
 using App.Application.Teams.Services;
 using App.Application.TicketViews;
@@ -139,6 +140,16 @@ public static class ConfigureServices
         services.AddScoped<ITicketConfigService, TicketConfigService>();
         services.AddScoped<INumericIdGenerator, NumericIdGenerator>();
         services.AddScoped<IFavoriteViewsService, FavoriteViewsService>();
+
+        // Scheduler services
+        services.AddScoped<ISchedulerPermissionService, SchedulerPermissionService>();
+        services.AddScoped<IAppointmentCodeGenerator, AppointmentCodeGenerator>();
+        services.AddScoped<ICoverageZoneValidator, CoverageZoneValidator>();
+        services.AddScoped<IAvailabilityService, AvailabilityService>();
+        services.AddScoped<ISchedulerNotificationService, SchedulerNotificationService>();
+
+        // Appointment reminder background job
+        services.AddSingleton<IHostedService, AppointmentReminderJob>();
 
         // Cached services for performance - IMemoryCache is singleton, so caching works across requests
         services.AddScoped<ICachedOrganizationService, CachedOrganizationService>();

@@ -1,0 +1,192 @@
+@page "/staff/scheduler/all-appointments"
+@model App.Web.Areas.Staff.Pages.Scheduler.AllAppointmentsModel
+@using App.Web.Areas.Shared.Models
+@using App.Domain.ValueObjects
+
+@{
+    ViewData["Title"] = "All Appointments";
+    ViewData["ActiveMenu"] = "AllAppointments";
+
+    var currentSearch = ViewContext.HttpContext.Request.Query["search"].ToString();
+    var currentStaffMemberId = ViewContext.HttpContext.Request.Query["staffMemberId"].ToString();
+    var currentAppointmentTypeId = ViewContext.HttpContext.Request.Query["appointmentTypeId"].ToString();
+    var currentStatus = ViewContext.HttpContext.Request.Query["status"].ToString();
+    var currentDateFrom = ViewContext.HttpContext.Request.Query["dateFrom"].ToString();
+    var currentDateTo = ViewContext.HttpContext.Request.Query["dateTo"].ToString();
+}
+
+<div class="staff-page-heading mb-4">
+    <h1 class="h3 mb-0">All Appointments</h1>
+    <a asp-page="@RouteNames.Scheduler.Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>New Appointment
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="staff-card mb-4">
+    <div class="staff-card-body">
+        <form method="get">
+            <div class="row g-3">
+                <!-- Search -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control border-start-0 ps-0"
+                               placeholder="Search by code or contact name..."
+                               value="@currentSearch" />
+                    </div>
+                </div>
+                <!-- Staff Filter -->
+                <div class="col-lg-2 col-md-3">
+                    <select name="staffMemberId" class="form-select">
+                        <option value="">All Staff</option>
+                        @foreach (var staff in Model.StaffMembers)
+                        {
+                            <option value="@staff.Id" selected="@(currentStaffMemberId == staff.Id.ToString())">
+                                @staff.FullName
+                            </option>
+                        }
+                    </select>
+                </div>
+                <!-- Type Filter -->
+                <div class="col-lg-2 col-md-3">
+                    <select name="appointmentTypeId" class="form-select">
+                        <option value="">All Types</option>
+                        @foreach (var type in Model.AppointmentTypes)
+                        {
+                            <option value="@type.Id" selected="@(currentAppointmentTypeId == type.Id.ToString())">
+                                @type.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <!-- Status Filter -->
+                <div class="col-lg-2 col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        @foreach (var s in AppointmentStatus.SupportedTypes)
+                        {
+                            <option value="@s.DeveloperName" selected="@(currentStatus == s.DeveloperName)">
+                                @s.Label
+                            </option>
+                        }
+                    </select>
+                </div>
+                <!-- Date From -->
+                <div class="col-lg-2 col-md-3">
+                    <input type="date" name="dateFrom" class="form-control" value="@currentDateFrom"
+                           placeholder="From date" title="From date" />
+                </div>
+                <!-- Date To -->
+                <div class="col-lg-2 col-md-3">
+                    <input type="date" name="dateTo" class="form-control" value="@currentDateTo"
+                           placeholder="To date" title="To date" />
+                </div>
+                <!-- Buttons -->
+                <div class="col-auto d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-funnel me-1"></i>Filter
+                    </button>
+                    <a asp-page="@RouteNames.Scheduler.AllAppointments" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-lg me-1"></i>Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Appointments Table -->
+<div class="staff-card">
+    <div class="table-responsive">
+        <table class="table staff-table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Contact</th>
+                    <th>Staff</th>
+                    <th>Type</th>
+                    <th>Mode</th>
+                    <th>Date &amp; Time</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.ListView.Items.Any())
+                {
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="bi bi-calendar3" style="font-size: 3rem; opacity: 0.5;"></i>
+                            <p class="mt-3 mb-0 fw-medium">No appointments found</p>
+                            <p class="small">Try adjusting your filters or create a new appointment</p>
+                        </td>
+                    </tr>
+                }
+                @foreach (var appointment in Model.ListView.Items)
+                {
+                    <tr>
+                        <td>
+                            <a asp-page="@RouteNames.Scheduler.Details" asp-route-id="@appointment.Id"
+                               class="fw-semibold text-decoration-none" style="color: var(--staff-primary);">
+                                @appointment.Code
+                            </a>
+                        </td>
+                        <td>
+                            <a asp-area="Staff" asp-page="@RouteNames.Contacts.Details" asp-route-id="@appointment.ContactId"
+                               class="text-dark text-decoration-none fw-medium">
+                                @appointment.ContactName
+                            </a>
+                        </td>
+                        <td class="text-muted">@appointment.AssignedStaffName</td>
+                        <td class="text-muted">@appointment.AppointmentTypeName</td>
+                        <td>
+                            @if (appointment.Mode == AppointmentMode.VIRTUAL)
+                            {
+                                <span class="text-muted"><i class="bi bi-camera-video me-1"></i>Virtual</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted"><i class="bi bi-geo-alt me-1"></i>In-Person</span>
+                            }
+                        </td>
+                        <td class="text-muted small">@appointment.ScheduledStartTime</td>
+                        <td>
+                            <span class="staff-badge badge @GetStatusBadgeClass(appointment.Status)">
+                                @appointment.StatusLabel
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a asp-page="@RouteNames.Scheduler.Details" asp-route-id="@appointment.Id"
+                               class="btn btn-sm btn-outline-primary">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.ListView.TotalCount > 0)
+    {
+        <partial name="_Partials/TablePagination" model="@Model.ListView" />
+    }
+</div>
+
+@functions {
+    string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            AppointmentStatus.SCHEDULED => "bg-primary",
+            AppointmentStatus.CONFIRMED => "bg-info",
+            AppointmentStatus.IN_PROGRESS => "bg-warning text-dark",
+            AppointmentStatus.COMPLETED => "bg-success",
+            AppointmentStatus.CANCELLED => "bg-secondary",
+            AppointmentStatus.NO_SHOW => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+}

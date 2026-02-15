@@ -1,7 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using App.Application.Common.Interfaces;
+using App.Application.Common.Models;
 using App.Application.Contacts;
 using App.Application.Contacts.Commands;
 using App.Application.Contacts.Queries;
+using App.Application.Scheduler.DTOs;
+using App.Application.Scheduler.Queries;
 using App.Application.Tickets;
 using App.Web.Areas.Staff.Pages.Shared;
 using App.Web.Areas.Staff.Pages.Shared.Models;
@@ -21,6 +25,8 @@ public class Details : BaseStaffPageModel
         Enumerable.Empty<ContactCommentDto>();
     public IEnumerable<ContactChangeLogEntryDto> ChangeLog { get; set; } =
         Enumerable.Empty<ContactChangeLogEntryDto>();
+    public ListResultDto<AppointmentListItemDto>? Appointments { get; set; }
+    public bool IsSchedulerStaff { get; set; }
 
     [BindProperty]
     public AddCommentViewModel CommentForm { get; set; } = new();
@@ -63,6 +69,18 @@ public class Details : BaseStaffPageModel
             cancellationToken
         );
         ChangeLog = changeLogResponse.Result;
+
+        // Load scheduler appointments for this contact
+        var appointmentsResponse = await Mediator.Send(
+            new GetContactAppointments.Query { ContactId = id },
+            cancellationToken
+        );
+        Appointments = appointmentsResponse.Result;
+
+        // Check if current user is scheduler staff
+        var schedulerPermissionService =
+            HttpContext.RequestServices.GetRequiredService<ISchedulerPermissionService>();
+        IsSchedulerStaff = await schedulerPermissionService.IsSchedulerStaffAsync(cancellationToken);
 
         // Store back URL (use parameter if provided, otherwise use property)
         BackToListUrl = backToListUrl ?? BackToListUrl;

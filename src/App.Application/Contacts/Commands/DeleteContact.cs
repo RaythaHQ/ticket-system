@@ -1,6 +1,7 @@
 using App.Application.Common.Exceptions;
 using App.Application.Common.Interfaces;
 using App.Application.Common.Models;
+using App.Domain.ValueObjects;
 using FluentValidation;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
@@ -16,9 +17,49 @@ public class DeleteContact
 
     public class Validator : AbstractValidator<Command>
     {
-        public Validator()
+        private readonly IAppDbContext _db;
+
+        public Validator(IAppDbContext db)
         {
+            _db = db;
+
             RuleFor(x => x.Id).GreaterThan(0);
+
+            // Prevent deletion of contacts with future active appointments
+            RuleFor(x => x.Id)
+                .CustomAsync(async (contactId, context, cancellationToken) =>
+                {
+                    var activeStatuses = new[]
+                    {
+                        AppointmentStatus.SCHEDULED,
+                        AppointmentStatus.CONFIRMED,
+                        AppointmentStatus.IN_PROGRESS
+                    };
+
+                    var futureActiveAppointmentIds = await _db
+                        .Appointments.AsNoTracking()
+                        .Where(a =>
+                            a.ContactId == contactId
+                            && activeStatuses.Contains(a.Status)
+                            && a.ScheduledStartTime > DateTime.UtcNow
+                        )
+                        .Select(a => a.Id)
+                        .ToListAsync(cancellationToken);
+
+                    if (futureActiveAppointmentIds.Any())
+                    {
+                        var codes = futureActiveAppointmentIds
+                            .Select(id => $"APT-{id:D4}")
+                            .ToList();
+                        var codeList = string.Join(", ", codes);
+
+                        context.AddFailure(
+                            nameof(Command.Id),
+                            $"Cannot delete contact: there are future active appointments ({codeList}). "
+                            + "Please cancel or complete those appointments first."
+                        );
+                    }
+                });
         }
     }
 

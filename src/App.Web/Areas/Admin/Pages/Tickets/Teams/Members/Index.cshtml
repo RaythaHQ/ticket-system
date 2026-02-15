@@ -18,29 +18,42 @@
     </a>
 </div>
 
-@if (Model.CanManageTeams && Model.AvailableUsers.Any())
+@if (Model.CanManageTeams)
 {
     <div class="card mb-4">
         <div class="card-header">
             <h5 class="mb-0">Add Member</h5>
         </div>
         <div class="card-body">
-            <form method="post" asp-page-handler="AddMember" asp-route-teamId="@Model.Team.Id" class="row g-3">
-                <div class="col-md-6">
-                    <select asp-for="SelectedUserId" class="form-select">
-                        <option value="">-- Select a user --</option>
-                        @foreach (var user in Model.AvailableUsers)
-                        {
-                            <option value="@user.Id">@user.Name (@user.Email)</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-plus-lg me-1"></i> Add
-                    </button>
-                </div>
-            </form>
+            @if (Model.AvailableUsers.Any())
+            {
+                <form method="post" asp-page-handler="AddMember" asp-route-teamId="@Model.Team.Id" class="row g-3">
+                    <div class="col-md-6">
+                        <select asp-for="SelectedUserId" class="form-select"
+                            data-searchable-select
+                            data-placeholder="Search for a user..."
+                            data-search-placeholder="Type to search users...">
+                            <option value="">-- Select a user --</option>
+                            @foreach (var user in Model.AvailableUsers)
+                            {
+                                <option value="@user.Id">@user.Name (@user.Email)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-plus-lg me-1"></i> Add
+                        </button>
+                    </div>
+                </form>
+            }
+            else
+            {
+                <p class="text-muted mb-0">
+                    <i class="bi bi-info-circle me-1"></i>
+                    All active admins are already members of this team.
+                </p>
+            }
         </div>
     </div>
 }
