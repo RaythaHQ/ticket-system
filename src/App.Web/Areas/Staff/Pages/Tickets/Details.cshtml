@@ -248,17 +248,17 @@
                 </div>
                 <div class="staff-card-body">
                     <h6 class="fw-semibold mb-3">@Model.Contact.Name</h6>
-                    <dl class="row mb-0">
-                        <dt class="col-4 text-muted fw-medium">Contact ID</dt>
-                        <dd class="col-8">
+                    <dl class="row mb-0" style="font-size: 0.875rem;">
+                        <dt class="col-5 text-muted fw-medium text-nowrap">Contact ID</dt>
+                        <dd class="col-7">
                             <a asp-area="Staff" asp-page="@RouteNames.Contacts.Details" asp-route-id="@Model.Contact.Id"
                                 style="color: var(--staff-primary); font-weight: 500;">
                                 #@Model.Contact.Id
                             </a>
                         </dd>
 
-                        <dt class="col-4 text-muted fw-medium">Email</dt>
-                        <dd class="col-8">
+                        <dt class="col-5 text-muted fw-medium text-nowrap">Email</dt>
+                        <dd class="col-7" style="overflow-wrap: anywhere;">
                             @if (!string.IsNullOrEmpty(Model.Contact.Email))
                             {
                                 <a href="mailto:@Model.Contact.Email" style="color: var(--staff-primary);">
@@ -271,8 +271,8 @@
                             }
                         </dd>
 
-                        <dt class="col-4 text-muted fw-medium">Phone</dt>
-                        <dd class="col-8">
+                        <dt class="col-5 text-muted fw-medium text-nowrap">Phone</dt>
+                        <dd class="col-7">
                             @if (Model.Contact.PhoneNumbers.Any())
                             {
                                 @foreach (var phone in Model.Contact.PhoneNumbers)
@@ -288,11 +288,11 @@
                             }
                         </dd>
 
-                        <dt class="col-4 text-muted fw-medium">Address</dt>
-                        <dd class="col-8" style="white-space: pre-wrap;">@(Model.Contact.Address ?? "—")</dd>
+                        <dt class="col-5 text-muted fw-medium text-nowrap">Address</dt>
+                        <dd class="col-7" style="white-space: pre-wrap;">@(Model.Contact.Address ?? "—")</dd>
 
-                        <dt class="col-4 text-muted fw-medium">Organization</dt>
-                        <dd class="col-8">@(Model.Contact.OrganizationAccount ?? "—")</dd>
+                        <dt class="col-5 text-muted fw-medium text-nowrap">Organization</dt>
+                        <dd class="col-7">@(Model.Contact.OrganizationAccount ?? "—")</dd>
                     </dl>
 
                     @if (Model.Contact.DmeIdentifiers.Any())

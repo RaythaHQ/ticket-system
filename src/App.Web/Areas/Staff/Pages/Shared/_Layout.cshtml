@@ -2,6 +2,7 @@
 @inject App.Application.Common.Interfaces.ICurrentOrganization CurrentOrganization
 @inject App.Application.TicketViews.IFavoriteViewsService FavoriteViewsService
 @inject App.Application.Common.Interfaces.IInAppNotificationService NotificationService
+@inject App.Application.Common.Interfaces.ISidebarBadgeService SidebarBadgeService
 @using App.Web.Areas.Admin.Pages.Shared
 <!DOCTYPE html>
 <html lang="en">
@@ -67,6 +68,16 @@
                     var isTicketsActive = ViewData["ActiveMenu"]?.ToString() == "Tickets";
                     // Tickets expanded by default, unless Tasks is the active section
                     var ticketsExpanded = !isTasksSection;
+
+                    var myTicketCount = 0;
+                    var myTaskCount = 0;
+                    if (CurrentUser.UserId.HasValue)
+                    {
+                        myTicketCount = await SidebarBadgeService.GetMyTicketCountAsync(CurrentUser.UserId.Value.Guid);
+                        myTaskCount = await SidebarBadgeService.GetMyTaskCountAsync(CurrentUser.UserId.Value.Guid);
+                    }
+                    var ticketBadgeDisplay = myTicketCount >= 100 ? "99+" : myTicketCount.ToString();
+                    var taskBadgeDisplay = myTaskCount >= 100 ? "99+" : myTaskCount.ToString();
                 }
                 <div class="staff-nav-item">
                     <span
@@ -74,6 +85,10 @@
                         onclick="toggleSubmenu(event, 'tickets-submenu')">
                         <i class="bi bi-ticket-detailed"></i>
                         <span>Tickets</span>
+                        @if (myTicketCount > 0)
+                        {
+                            <span class="nav-count-badge parent-badge">@ticketBadgeDisplay</span>
+                        }
                         <i class="bi bi-chevron-right submenu-arrow"></i>
                     </span>
                     <div class="staff-submenu @(ticketsExpanded ? "expanded" : "")" id="tickets-submenu">
@@ -82,8 +97,12 @@
                             Unassigned
                         </a>
                         <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="my-tickets"
-                            class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "MyTickets" ? "active" : "")">
+                            class="staff-submenu-link has-count-badge @(ViewData["ActiveSubMenu"]?.ToString() == "MyTickets" ? "active" : "")">
                             My Tickets
+                            @if (myTicketCount > 0)
+                            {
+                                <span class="nav-count-badge submenu-badge">@ticketBadgeDisplay</span>
+                            }
                         </a>
                         <a asp-area="Staff" asp-page="@RouteNames.Tickets.Index" asp-route-builtInView="created-by-me"
                             class="staff-submenu-link @(ViewData["ActiveSubMenu"]?.ToString() == "CreatedByMe" ? "active" : "")">
@@ -132,12 +151,20 @@
                         onclick="toggleSubmenu(event, 'tasks-submenu')">
                         <i class="bi bi-check2-square"></i>
                         <span>Tasks</span>
+                        @if (myTaskCount > 0)
+                        {
+                            <span class="nav-count-badge parent-badge">@taskBadgeDisplay</span>
+                        }
                         <i class="bi bi-chevron-right submenu-arrow"></i>
                     </span>
                     <div class="staff-submenu @(isTasksSection ? "expanded" : "")" id="tasks-submenu">
                         <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="my-tasks"
-                            class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "my-tasks" ? "active" : "")">
+                            class="staff-submenu-link has-count-badge @(ViewData["ActiveTaskView"]?.ToString() == "my-tasks" ? "active" : "")">
                             My Tasks
+                            @if (myTaskCount > 0)
+                            {
+                                <span class="nav-count-badge submenu-badge">@taskBadgeDisplay</span>
+                            }
                         </a>
                         <a asp-area="Staff" asp-page="@RouteNames.Tasks.Index" asp-route-view="team-tasks"
                             class="staff-submenu-link @(ViewData["ActiveTaskView"]?.ToString() == "team-tasks" ? "active" : "")">

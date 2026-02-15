@@ -321,8 +321,8 @@
                                 </td>
                                 <td class="text-end">
                                     <a asp-page="@RouteNames.Reports.TeamReport" asp-route-teamId="@team.TeamId.Value"
-                                        asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
-                                        asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                                        asp-route-startDate="@Model.StartDate?.ToString("o")"
+                                        asp-route-endDate="@Model.EndDate?.ToString("o")"
                                         class="btn btn-sm btn-outline-primary">
                                         Details
                                     </a>

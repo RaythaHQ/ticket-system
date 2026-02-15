@@ -194,6 +194,47 @@ body {
     transform: rotate(90deg);
 }
 
+/* Nav count badges for Tickets/Tasks */
+.nav-count-badge {
+    background: linear-gradient(135deg, var(--staff-primary) 0%, var(--staff-primary-dark) 100%);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    min-width: 18px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* Parent badge: show when collapsed, hide when expanded */
+.staff-nav-link.has-submenu .parent-badge {
+    display: inline-flex;
+}
+
+.staff-nav-link.has-submenu.expanded .parent-badge {
+    display: none;
+}
+
+/* Submenu badge: hidden by default (submenu itself is collapsed) */
+.staff-submenu .submenu-badge {
+    display: none;
+}
+
+.staff-submenu.expanded .submenu-badge {
+    display: inline-flex;
+}
+
+/* Submenu link with badge needs flex layout */
+.staff-submenu-link.has-count-badge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .staff-submenu {
     max-height: 0;
     overflow: hidden;

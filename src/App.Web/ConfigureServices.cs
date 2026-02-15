@@ -182,6 +182,7 @@ public static class ConfigureServices
         // SignalR for real-time notifications and activity stream
         services.AddSignalR();
         services.AddScoped<IInAppNotificationService, InAppNotificationService>();
+        services.AddScoped<ISidebarBadgeService, SidebarBadgeService>();
         services.AddScoped<IActivityStreamService, ActivityStreamService>();
 
         services.AddRouting();

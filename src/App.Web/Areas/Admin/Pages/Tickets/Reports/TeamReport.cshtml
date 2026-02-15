@@ -10,8 +10,8 @@
     <div>
         <partial name="_Partials/PageHeading" model='$"Team Report: {Model.Report.TeamName}"' />
     </div>
-    <a asp-page="@RouteNames.Reports.Index" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
-        asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" class="btn btn-outline-secondary">
+    <a asp-page="@RouteNames.Reports.Index" asp-route-startDate="@Model.StartDate?.ToString("o")"
+        asp-route-endDate="@Model.EndDate?.ToString("o")" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i> Back to Reports
     </a>
 </div>
@@ -164,7 +164,7 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Team Member Performance</h5>
-        <a href="?handler=ExportCsv&teamId=@Model.TeamId&startDate=@Model.StartDate?.ToString("yyyy-MM-dd")&endDate=@Model.EndDate?.ToString("yyyy-MM-dd")"
+        <a href="?handler=ExportCsv&teamId=@Model.TeamId&startDate=@(Uri.EscapeDataString(Model.StartDate?.ToString("o") ?? ""))&endDate=@(Uri.EscapeDataString(Model.EndDate?.ToString("o") ?? ""))"
            class="btn btn-sm btn-outline-secondary">
             <i class="bi bi-download me-1"></i> Export to CSV
         </a>

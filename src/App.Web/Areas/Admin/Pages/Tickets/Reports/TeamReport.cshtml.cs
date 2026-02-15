@@ -13,10 +13,12 @@ namespace App.Web.Areas.Admin.Pages.Reports;
 public class TeamReport : BaseAdminPageModel
 {
     private readonly ITicketPermissionService _permissionService;
+    private readonly ICurrentOrganization _currentOrganization;
 
-    public TeamReport(ITicketPermissionService permissionService)
+    public TeamReport(ITicketPermissionService permissionService, ICurrentOrganization currentOrganization)
     {
         _permissionService = permissionService;
+        _currentOrganization = currentOrganization;
     }
 
     public TeamReportDto Report { get; set; } = null!;
@@ -42,13 +44,16 @@ public class TeamReport : BaseAdminPageModel
         StartDate ??= DateTime.UtcNow.AddDays(-30);
         EndDate ??= DateTime.UtcNow;
 
-        // Ensure dates are UTC for PostgreSQL
-        var startDateUtc = StartDate.HasValue
-            ? DateTime.SpecifyKind(StartDate.Value, DateTimeKind.Utc)
-            : (DateTime?)null;
-        var endDateUtc = EndDate.HasValue
-            ? DateTime.SpecifyKind(EndDate.Value, DateTimeKind.Utc)
-            : (DateTime?)null;
+        // Convert dates to UTC properly:
+        // - If the date already has a time component (came from a full ISO 8601 link), treat as UTC
+        // - If date-only (midnight, from a date picker form), convert from org timezone to UTC
+        var timeZone = _currentOrganization.TimeZone;
+        var startDateUtc = ToUtc(StartDate, timeZone);
+        var endDateUtc = ToUtc(EndDate, timeZone);
+
+        // Store back the UTC values so links/forms use the correct dates
+        StartDate = startDateUtc;
+        EndDate = endDateUtc;
 
         // Parse TeamId - handle both ShortGuid and Guid formats
         ShortGuid teamIdShortGuid;
@@ -107,12 +112,9 @@ public class TeamReport : BaseAdminPageModel
         StartDate ??= DateTime.UtcNow.AddDays(-30);
         EndDate ??= DateTime.UtcNow;
 
-        var startDateUtc = StartDate.HasValue
-            ? DateTime.SpecifyKind(StartDate.Value, DateTimeKind.Utc)
-            : (DateTime?)null;
-        var endDateUtc = EndDate.HasValue
-            ? DateTime.SpecifyKind(EndDate.Value, DateTimeKind.Utc)
-            : (DateTime?)null;
+        var timeZoneExport = _currentOrganization.TimeZone;
+        var startDateUtc = ToUtc(StartDate, timeZoneExport);
+        var endDateUtc = ToUtc(EndDate, timeZoneExport);
 
         ShortGuid teamIdShortGuid;
         if (!ShortGuid.TryParse(TeamId, out teamIdShortGuid))
@@ -157,5 +159,25 @@ public class TeamReport : BaseAdminPageModel
         var fileName = $"{report.TeamName}-member-performance-{DateTime.UtcNow:yyyy-MM-dd}.csv";
 
         return File(bytes, "text/csv", fileName);
+    }
+
+    /// <summary>
+    /// Converts a DateTime to UTC properly.
+    /// If the value already has Kind=Utc (from a full ISO 8601 string), keeps it as-is.
+    /// If the value is Unspecified (from a date-only form input), treats it as the org timezone and converts.
+    /// </summary>
+    private static DateTime? ToUtc(DateTime? value, string timeZone)
+    {
+        if (!value.HasValue) return null;
+
+        var dt = value.Value;
+        if (dt.Kind == DateTimeKind.Utc) return dt;
+
+        // Date-only input (midnight, no time component) — treat as local timezone
+        if (dt.TimeOfDay == TimeSpan.Zero)
+            return dt.TimeZoneToUtc(timeZone);
+
+        // Otherwise just mark as UTC
+        return DateTime.SpecifyKind(dt, DateTimeKind.Utc);
     }
 }

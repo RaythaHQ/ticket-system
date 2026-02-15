@@ -222,12 +222,15 @@ class SearchableSelect {
         // Reset any previous positioning
         this.dropdown.style.top = '';
         this.dropdown.style.bottom = '';
+        this.dropdown.style.left = '';
+        this.dropdown.style.right = '';
         this.container.classList.remove('dropdown-above');
         this.trigger.style.borderRadius = '';
 
         const triggerRect = this.trigger.getBoundingClientRect();
         const dropdownHeight = this.dropdown.offsetHeight || 350; // Estimate if not yet rendered
         const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
         const spaceBelow = viewportHeight - triggerRect.bottom;
         const spaceAbove = triggerRect.top;
 
@@ -237,6 +240,13 @@ class SearchableSelect {
             this.dropdown.style.bottom = '100%';
             this.dropdown.style.top = 'auto';
             this.trigger.style.borderRadius = '0 0 0.5rem 0.5rem';
+        }
+
+        // Prevent dropdown from overflowing the right edge of the viewport
+        const dropdownRect = this.dropdown.getBoundingClientRect();
+        if (dropdownRect.right > viewportWidth - 8) {
+            const overflow = dropdownRect.right - viewportWidth + 8;
+            this.dropdown.style.left = `-${overflow}px`;
         }
     }
 

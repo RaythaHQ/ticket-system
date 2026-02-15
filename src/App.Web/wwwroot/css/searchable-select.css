@@ -73,7 +73,9 @@
     position: absolute;
     top: 100%;
     left: 0;
-    right: 0;
+    min-width: 100%;
+    width: max-content;
+    max-width: min(320px, 90vw);
     z-index: 1050;
     display: none;
     background: #fff;
@@ -239,9 +241,8 @@
 .searchable-select-option-text {
     font-weight: 500;
     color: #1e293b;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .searchable-select-option-subtext {
