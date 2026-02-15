@@ -65,6 +65,7 @@ public class SchedulerStaffMember : BaseAuditableEntity
     public virtual ICollection<AppointmentTypeStaffEligibility> EligibleAppointmentTypes { get; set; } =
         new List<AppointmentTypeStaffEligibility>();
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+    public virtual ICollection<StaffBlockOutTime> BlockOutTimes { get; set; } = new List<StaffBlockOutTime>();
 }
 
 /// <summary>

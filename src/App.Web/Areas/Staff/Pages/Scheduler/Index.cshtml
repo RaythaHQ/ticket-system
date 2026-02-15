@@ -6,137 +6,231 @@
 @{
     ViewData["Title"] = "My Schedule";
     ViewData["ActiveMenu"] = "MySchedule";
+
+    var startHour = Model.StartHour;
+    var endHour = Model.EndHour;
+    var headerHeight = 52;
+    var isWeekView = Model.ViewType == "week";
+    var columnCount = Model.DayColumns.Count;
+}
+
+@section headstyles {
+    <link rel="stylesheet" href="~/css/scheduler-calendar.css" asp-append-version="true" />
 }
 
 <!-- Header -->
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <h1 class="h3 mb-0">My Schedule</h1>
-    <a asp-page="@RouteNames.Scheduler.Create" class="btn btn-primary">
-        <i class="bi bi-plus-lg me-2"></i>New Appointment
-    </a>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#blockOutModal">
+            <i class="bi bi-slash-circle me-1"></i>Add Block Out
+        </button>
+        <a asp-page="@RouteNames.Scheduler.Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>New Appointment
+        </a>
+    </div>
 </div>
 
-<!-- Date Navigation -->
-<div class="staff-card mb-4">
-    <div class="staff-card-body">
-        <div class="d-flex justify-content-between align-items-center">
-            <a asp-page="@RouteNames.Scheduler.Index" asp-route-date="@Model.PreviousDateParam"
-               class="btn btn-outline-secondary">
-                <i class="bi bi-chevron-left me-1"></i>Previous Day
+<!-- Calendar -->
+<div class="scheduler-calendar">
+    <!-- Toolbar -->
+    <div class="scheduler-toolbar">
+        <div class="scheduler-toolbar-left">
+            <a href="?date=@Model.PreviousDateParam&viewType=@Model.ViewType" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-chevron-left"></i>
             </a>
-            <div class="text-center">
-                <h5 class="mb-0 fw-semibold">@Model.SelectedDateDisplay</h5>
-                @if (Model.SelectedDate.Date == DateTime.UtcNow.Date)
-                {
-                    <span class="badge bg-primary mt-1">Today</span>
-                }
+            <a href="?date=@Model.TodayParam&viewType=@Model.ViewType" class="btn btn-outline-primary btn-sm scheduler-today-btn">Today</a>
+            <a href="?date=@Model.NextDateParam&viewType=@Model.ViewType" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+        <div class="scheduler-date-display">@Model.SelectedDateDisplay</div>
+        <div class="scheduler-toolbar-right">
+            <div class="btn-group" role="group">
+                <a href="?date=@Model.SelectedDate.ToString("yyyy-MM-dd")&viewType=day"
+                   class="btn btn-sm @(Model.ViewType == "day" ? "btn-primary" : "btn-outline-secondary")">Day</a>
+                <a href="?date=@Model.SelectedDate.ToString("yyyy-MM-dd")&viewType=week"
+                   class="btn btn-sm @(Model.ViewType == "week" ? "btn-primary" : "btn-outline-secondary")">Week</a>
             </div>
-            <a asp-page="@RouteNames.Scheduler.Index" asp-route-date="@Model.NextDateParam"
-               class="btn btn-outline-secondary">
-                Next Day<i class="bi bi-chevron-right ms-1"></i>
-            </a>
         </div>
     </div>
-</div>
 
-<!-- Appointments Timeline -->
-<div class="staff-card mb-4">
-    <div class="staff-card-header">
-        <h5 class="mb-0"><i class="bi bi-calendar-event me-2"></i>Appointments (@Model.Schedule.Appointments.Count)</h5>
-    </div>
-    @if (!Model.Schedule.Appointments.Any())
-    {
-        <div class="staff-card-body text-center py-5">
-            <i class="bi bi-calendar-check display-4 text-muted d-block mb-3"></i>
-            <h5 class="text-muted">No appointments scheduled</h5>
-            <p class="text-muted mb-3">You have no appointments for this day.</p>
-            <a asp-page="@RouteNames.Scheduler.Create" class="btn btn-primary">
-                <i class="bi bi-plus-lg me-1"></i>Schedule an Appointment
-            </a>
-        </div>
-    }
-    else
-    {
-        <div class="list-group list-group-flush">
-            @foreach (var appointment in Model.Schedule.Appointments)
+    <!-- Calendar Grid -->
+    <div class="scheduler-grid-wrapper" data-start-hour="@startHour" data-end-hour="@endHour" data-header-height="@headerHeight"
+         style="position: relative;">
+        <div class="scheduler-now-line" style="display:none;"></div>
+        <div style="display: grid; grid-template-columns: 60px repeat(@columnCount, 1fr);">
+            <!-- Header row -->
+            <div class="scheduler-header-cell" style="background:#fafbfc; border-bottom:2px solid var(--staff-border);">&nbsp;</div>
+            @foreach (var day in Model.DayColumns)
             {
-                var startTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(appointment.ScheduledStartTime);
-                var endTime = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(appointment.ScheduledStartTime.AddMinutes(appointment.DurationMinutes));
-                var statusBadgeClass = GetStatusBadgeClass(appointment.Status);
+                var isToday = day.Date == DateTime.UtcNow.Date;
+                <div class="scheduler-header-cell @(isToday ? "is-today" : "")">
+                    <span class="header-day-name">@day.ToString("ddd")</span>
+                    <span class="header-day-number">@day.Day</span>
+                </div>
+            }
 
-                <a asp-page="@RouteNames.Scheduler.Details" asp-route-id="@appointment.Id"
-                   class="list-group-item list-group-item-action py-3">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div class="d-flex gap-3">
-                            <!-- Time Column -->
-                            <div class="text-center" style="min-width: 80px;">
-                                <div class="fw-bold" style="color: var(--staff-primary); font-size: 0.95rem;">
-                                    @appointment.ScheduledStartTime.ToString("h:mm tt")
+            <!-- Time rows -->
+            @for (var hour = startHour; hour < endHour; hour++)
+            {
+                <!-- Time gutter -->
+                <div class="scheduler-time-gutter">
+                    <div class="scheduler-time-label">@FormatHour(hour)</div>
+                </div>
+                @foreach (var day in Model.DayColumns)
+                {
+                    var dayStart = day.Date;
+                    var hourStart = dayStart.AddHours(hour);
+                    var hourEnd = hourStart.AddHours(1);
+
+                    <div class="scheduler-hour-row" style="position:relative;">
+                        @* Render appointments for this hour *@
+                        @foreach (var appt in Model.Schedule.Appointments)
+                        {
+                            if (appt.ScheduledStartTime.Date != dayStart) { continue; }
+                            var apptEnd = appt.ScheduledStartTime.AddMinutes(appt.DurationMinutes);
+                            if (appt.ScheduledStartTime >= hourEnd || apptEnd <= hourStart) { continue; }
+                            if (appt.ScheduledStartTime.Hour != hour) { continue; }
+
+                            var minuteOffset = appt.ScheduledStartTime.Minute;
+                            var topPx = minuteOffset;
+                            var heightPx = Math.Max(appt.DurationMinutes, 15);
+                            var statusClass = $"status-{appt.Status}";
+                            var tooltipHtml = $"<div class='tooltip-time'>{appt.ScheduledStartTime:h:mm tt} – {apptEnd:h:mm tt}</div>"
+                                + $"<div><strong>{appt.ContactName}</strong></div>"
+                                + $"<div class='tooltip-type'>{appt.AppointmentTypeName} · {appt.ModeLabel}</div>"
+                                + $"<div class='tooltip-type'>{appt.StatusLabel} · {appt.DurationMinutes} min</div>";
+                            var modeIcon = appt.Mode == AppointmentMode.VIRTUAL ? "bi-camera-video" : "bi-geo-alt";
+
+                            <a href="/staff/scheduler/@appt.Id"
+                               class="scheduler-appointment @statusClass"
+                               style="top: @(topPx)px; height: @(heightPx)px;"
+                               data-tooltip="@tooltipHtml">
+                                <div class="appt-time">@appt.ScheduledStartTime.ToString("h:mm tt")</div>
+                                <div class="appt-title">@appt.ContactName</div>
+                                <div class="appt-type">
+                                    <i class="bi @modeIcon appt-mode-icon"></i>
+                                    @appt.AppointmentTypeName
                                 </div>
-                                <small class="text-muted">@appointment.DurationMinutes min</small>
+                            </a>
+                        }
+                        @* Render block-out times for this hour *@
+                        @foreach (var bo in Model.Schedule.BlockOutTimes)
+                        {
+                            if (bo.StartTimeUtc.Date != dayStart && !bo.IsAllDay) { continue; }
+                            if (bo.StartTimeUtc >= hourEnd || bo.EndTimeUtc <= hourStart) { continue; }
+                            if (bo.StartTimeUtc.Hour != hour && !bo.IsAllDay) { continue; }
+
+                            var boMinuteOffset = bo.IsAllDay ? 0 : bo.StartTimeUtc.Minute;
+                            var boTopPx = boMinuteOffset;
+                            var boDurationMinutes = (int)(bo.EndTimeUtc - bo.StartTimeUtc).TotalMinutes;
+                            if (bo.IsAllDay) { boDurationMinutes = 60; }
+                            var boHeightPx = Math.Max(Math.Min(boDurationMinutes, 60 - boMinuteOffset), 10);
+
+                            <div class="scheduler-blockout" style="top: @(boTopPx)px; height: @(boHeightPx)px;" title="@bo.Title: @bo.Reason">
+                                <div class="blockout-label"><i class="bi bi-slash-circle"></i> @bo.Title</div>
                             </div>
-                            <!-- Details Column -->
-                            <div>
-                                <div class="fw-semibold">@appointment.ContactName</div>
-                                <div class="text-muted small">
-                                    <span class="me-2">@appointment.Code</span>
-                                    <span class="me-2">@appointment.AppointmentTypeName</span>
-                                    <span>
-                                        @if (appointment.Mode == AppointmentMode.VIRTUAL)
-                                        {
-                                            <i class="bi bi-camera-video me-1"></i>@("Virtual")
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-geo-alt me-1"></i>@("In-Person")
-                                        }
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <span class="staff-badge badge @statusBadgeClass">@appointment.StatusLabel</span>
+                        }
+                        <a class="scheduler-slot-clickable"
+                           asp-page="@RouteNames.Scheduler.Create"
+                           asp-route-date="@day.ToString("yyyy-MM-dd")"
+                           asp-route-hour="@hour"
+                           title="Click to create appointment"></a>
                     </div>
-                </a>
+                }
             }
         </div>
-    }
+    </div>
 </div>
 
-<!-- Available Slots -->
-@if (Model.Schedule.AvailableSlots.Any())
-{
-    <div class="staff-card">
-        <div class="staff-card-header">
-            <h5 class="mb-0"><i class="bi bi-clock me-2"></i>Available Slots (@Model.Schedule.AvailableSlots.Count)</h5>
-        </div>
-        <div class="staff-card-body">
-            <div class="row g-2">
-                @foreach (var slot in Model.Schedule.AvailableSlots)
-                {
-                    <div class="col-auto">
-                        <span class="badge bg-light text-dark border py-2 px-3">
-                            <i class="bi bi-clock me-1"></i>
-                            @slot.StartTimeUtc.ToString("h:mm tt") &ndash; @slot.EndTimeUtc.ToString("h:mm tt")
-                        </span>
-                    </div>
-                }
+<!-- Summary Cards -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="staff-card">
+            <div class="staff-card-body text-center py-3">
+                <div class="h3 mb-0 fw-bold" style="color: var(--staff-primary);">@Model.Schedule.Appointments.Count</div>
+                <small class="text-muted">Appointments</small>
             </div>
         </div>
     </div>
+    <div class="col-md-4">
+        <div class="staff-card">
+            <div class="staff-card-body text-center py-3">
+                <div class="h3 mb-0 fw-bold text-success">@Model.Schedule.AvailableSlots.Count</div>
+                <small class="text-muted">Available Slots</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="staff-card">
+            <div class="staff-card-body text-center py-3">
+                <div class="h3 mb-0 fw-bold text-secondary">@Model.Schedule.BlockOutTimes.Count</div>
+                <small class="text-muted">Block-Out Times</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Block Out Modal -->
+<div class="modal fade" id="blockOutModal" tabindex="-1" aria-labelledby="blockOutModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="CreateBlockOut">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="blockOutModalLabel"><i class="bi bi-slash-circle me-2"></i>Add Block-Out Time</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="returnDate" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="returnViewType" value="@Model.ViewType" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g., Lunch Break, PTO, Meeting" required maxlength="250" />
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="isAllDay" value="true" class="form-check-input" id="blockOutAllDay" />
+                            <label class="form-check-label" for="blockOutAllDay">All Day</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Start <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="startTime" class="form-control blockout-time-field" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">End <span class="text-danger">*</span></label>
+                            <input type="datetime-local" name="endTime" class="form-control blockout-time-field" required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <textarea name="reason" class="form-control" rows="2" placeholder="Optional reason..." maxlength="1000"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-slash-circle me-1"></i>Create Block Out
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/scheduler-calendar.js" asp-append-version="true"></script>
 }
 
 @functions {
-    string GetStatusBadgeClass(string status)
+    string FormatHour(int hour)
     {
-        return status switch
-        {
-            AppointmentStatus.SCHEDULED => "bg-primary",
-            AppointmentStatus.CONFIRMED => "bg-info",
-            AppointmentStatus.IN_PROGRESS => "bg-warning text-dark",
-            AppointmentStatus.COMPLETED => "bg-success",
-            AppointmentStatus.CANCELLED => "bg-secondary",
-            AppointmentStatus.NO_SHOW => "bg-danger",
-            _ => "bg-secondary"
-        };
+        if (hour == 0) return "12 AM";
+        if (hour < 12) return $"{hour} AM";
+        if (hour == 12) return "12 PM";
+        return $"{hour - 12} PM";
     }
 }

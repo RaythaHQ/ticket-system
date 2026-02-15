@@ -1,5 +1,13 @@
 @{
     Layout = "/Areas/Staff/Pages/Shared/_StaffBaseLayout.cshtml";
+
+    var isAppointmentsSection = ViewData["ActiveMenu"]?.ToString() == "Appointments";
+    var appointmentsExpanded = isAppointmentsSection
+        || ViewData["ActiveMenu"]?.ToString() == "MyAppointments"
+        || ViewData["ActiveMenu"]?.ToString() == "TodayAppointments"
+        || ViewData["ActiveMenu"]?.ToString() == "UpcomingAppointments"
+        || ViewData["ActiveMenu"]?.ToString() == "PastAppointments"
+        || ViewData["ActiveMenu"]?.ToString() == "AllAppointments";
 }
 
 @RenderBody()
@@ -7,16 +15,47 @@
 @section Sidebar {
     <div class="staff-nav-section">
         <div class="staff-nav-section-title">Scheduler</div>
+        <a asp-area="Staff" asp-page="@RouteNames.Scheduler.StaffSchedule"
+            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "StaffSchedule" ? "active" : "")">
+            <i class="bi bi-calendar-range"></i>
+            <span>Staff Schedule</span>
+        </a>
         <a asp-area="Staff" asp-page="@RouteNames.Scheduler.Index"
             class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "MySchedule" ? "active" : "")">
             <i class="bi bi-calendar-check"></i>
             <span>My Schedule</span>
         </a>
-        <a asp-area="Staff" asp-page="@RouteNames.Scheduler.AllAppointments"
-            class="staff-nav-link @(ViewData["ActiveMenu"]?.ToString() == "AllAppointments" ? "active" : "")">
-            <i class="bi bi-calendar3"></i>
-            <span>All Appointments</span>
-        </a>
+        <div class="staff-nav-item">
+            <span
+                class="staff-nav-link has-submenu @(appointmentsExpanded ? "expanded" : "") @(isAppointmentsSection ? "active" : "")"
+                onclick="toggleSubmenu(event, 'scheduler-appointments-submenu')">
+                <i class="bi bi-calendar3"></i>
+                <span>Appointments</span>
+                <i class="bi bi-chevron-right submenu-arrow"></i>
+            </span>
+            <div class="staff-submenu @(appointmentsExpanded ? "expanded" : "")" id="scheduler-appointments-submenu">
+                <a asp-area="Staff" asp-page="@RouteNames.Scheduler.AllAppointments" asp-route-builtInView="my-appointments"
+                    class="staff-submenu-link @(ViewData["ActiveMenu"]?.ToString() == "MyAppointments" ? "active" : "")">
+                    My Appointments
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Scheduler.AllAppointments" asp-route-builtInView="today"
+                    class="staff-submenu-link @(ViewData["ActiveMenu"]?.ToString() == "TodayAppointments" ? "active" : "")">
+                    Today
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Scheduler.AllAppointments" asp-route-builtInView="upcoming"
+                    class="staff-submenu-link @(ViewData["ActiveMenu"]?.ToString() == "UpcomingAppointments" ? "active" : "")">
+                    Upcoming
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Scheduler.AllAppointments" asp-route-builtInView="past"
+                    class="staff-submenu-link @(ViewData["ActiveMenu"]?.ToString() == "PastAppointments" ? "active" : "")">
+                    Past
+                </a>
+                <a asp-area="Staff" asp-page="@RouteNames.Scheduler.AllAppointments" asp-route-builtInView="all"
+                    class="staff-submenu-link @(ViewData["ActiveMenu"]?.ToString() == "AllAppointments" ? "active" : "")">
+                    All
+                </a>
+            </div>
+        </div>
     </div>
 
     <div class="staff-nav-section">

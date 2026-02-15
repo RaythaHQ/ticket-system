@@ -18,6 +18,11 @@ public record StaffScheduleDto
     public List<AvailableSlot> AvailableSlots { get; init; } = new();
 
     /// <summary>
+    /// Block-out times for this staff member in the requested time range.
+    /// </summary>
+    public List<BlockOutTimeDto> BlockOutTimes { get; init; } = new();
+
+    /// <summary>
     /// The date range that was queried.
     /// </summary>
     public DateTime DateFrom { get; init; }

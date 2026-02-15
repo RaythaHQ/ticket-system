@@ -161,10 +161,28 @@ public class GetMySchedule
                 availableSlots.AddRange(slots);
             }
 
+            // Get block-out times for the date range
+            var blockOutTimes = await _db
+                .StaffBlockOutTimes.AsNoTracking()
+                .Include(b => b.StaffMember)
+                    .ThenInclude(s => s.User)
+                .Where(b =>
+                    b.StaffMemberId == staffMemberGuid
+                    && b.StartTimeUtc < dateTo
+                    && b.EndTimeUtc > dateFrom
+                )
+                .OrderBy(b => b.StartTimeUtc)
+                .ToListAsync(cancellationToken);
+
+            var blockOutDtos = blockOutTimes
+                .Select(BlockOutTimeDto.MapFrom)
+                .ToList();
+
             var result = new StaffScheduleDto
             {
                 Appointments = appointmentDtos,
                 AvailableSlots = availableSlots,
+                BlockOutTimes = blockOutDtos,
                 DateFrom = dateFrom,
                 DateTo = dateTo,
             };

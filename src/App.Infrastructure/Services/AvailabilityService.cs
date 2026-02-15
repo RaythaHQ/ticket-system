@@ -114,12 +114,24 @@ public class AvailabilityService : IAvailabilityService
             .Select(a => new { a.ScheduledStartTime, a.DurationMinutes })
             .ToListAsync(cancellationToken);
 
-        // Build blocked time ranges (appointment + buffer)
+        // Get block-out times for this staff member on this day
+        var blockOutTimes = await _db
+            .StaffBlockOutTimes.AsNoTracking()
+            .Where(b =>
+                b.StaffMemberId == staffMemberId
+                && b.StartTimeUtc < dayEndUtc
+                && b.EndTimeUtc > dayStartUtc
+            )
+            .Select(b => new { b.StartTimeUtc, b.EndTimeUtc })
+            .ToListAsync(cancellationToken);
+
+        // Build blocked time ranges (appointments with buffer + block-out times)
         var blockedRanges = existingAppointments
             .Select(a => (
                 Start: a.ScheduledStartTime.AddMinutes(-bufferMinutes),
                 End: a.ScheduledStartTime.AddMinutes(a.DurationMinutes + bufferMinutes)
             ))
+            .Concat(blockOutTimes.Select(b => (Start: b.StartTimeUtc, End: b.EndTimeUtc)))
             .ToList();
 
         // Generate available slots
@@ -186,6 +198,19 @@ public class AvailabilityService : IAvailabilityService
             query = query.Where(a => a.Id != excludeAppointmentId.Value);
         }
 
-        return !await query.AnyAsync(cancellationToken);
+        var hasConflictingAppointment = await query.AnyAsync(cancellationToken);
+        if (hasConflictingAppointment)
+            return false;
+
+        // Also check block-out times
+        var hasConflictingBlockOut = await _db
+            .StaffBlockOutTimes.AsNoTracking()
+            .AnyAsync(b =>
+                b.StaffMemberId == staffMemberId
+                && b.StartTimeUtc < endTimeUtc
+                && b.EndTimeUtc > startTimeUtc,
+                cancellationToken);
+
+        return !hasConflictingBlockOut;
     }
 }

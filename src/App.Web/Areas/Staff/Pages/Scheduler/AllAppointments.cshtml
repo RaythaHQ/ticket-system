@@ -4,8 +4,7 @@
 @using App.Domain.ValueObjects
 
 @{
-    ViewData["Title"] = "All Appointments";
-    ViewData["ActiveMenu"] = "AllAppointments";
+    ViewData["Title"] = Model.ViewTitle;
 
     var currentSearch = ViewContext.HttpContext.Request.Query["search"].ToString();
     var currentStaffMemberId = ViewContext.HttpContext.Request.Query["staffMemberId"].ToString();
@@ -13,19 +12,58 @@
     var currentStatus = ViewContext.HttpContext.Request.Query["status"].ToString();
     var currentDateFrom = ViewContext.HttpContext.Request.Query["dateFrom"].ToString();
     var currentDateTo = ViewContext.HttpContext.Request.Query["dateTo"].ToString();
+    var builtInView = Model.BuiltInView;
 }
 
 <div class="staff-page-heading mb-4">
-    <h1 class="h3 mb-0">All Appointments</h1>
+    <h1 class="h3 mb-0">
+        @Model.ViewTitle
+        @if (!string.IsNullOrEmpty(builtInView) && builtInView != "all")
+        {
+            <span class="badge bg-light text-muted ms-2" style="font-size: 0.5em; vertical-align: middle;">
+                @builtInView?.Replace("-", " ")
+            </span>
+        }
+    </h1>
     <a asp-page="@RouteNames.Scheduler.Create" class="btn btn-primary">
         <i class="bi bi-plus-lg me-2"></i>New Appointment
     </a>
+</div>
+
+<!-- View Presets Bar -->
+<div class="staff-card mb-3">
+    <div class="staff-card-body py-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="text-muted fw-semibold small me-1">View:</span>
+            <a asp-page="@RouteNames.Scheduler.AllAppointments" asp-route-builtInView="my-appointments"
+               class="btn btn-sm @(builtInView == "my-appointments" ? "btn-primary" : "btn-outline-secondary")">
+                My Appointments
+            </a>
+            <a asp-page="@RouteNames.Scheduler.AllAppointments" asp-route-builtInView="today"
+               class="btn btn-sm @(builtInView == "today" ? "btn-primary" : "btn-outline-secondary")">
+                Today
+            </a>
+            <a asp-page="@RouteNames.Scheduler.AllAppointments" asp-route-builtInView="upcoming"
+               class="btn btn-sm @(builtInView == "upcoming" ? "btn-primary" : "btn-outline-secondary")">
+                Upcoming
+            </a>
+            <a asp-page="@RouteNames.Scheduler.AllAppointments" asp-route-builtInView="past"
+               class="btn btn-sm @(builtInView == "past" ? "btn-primary" : "btn-outline-secondary")">
+                Past
+            </a>
+            <a asp-page="@RouteNames.Scheduler.AllAppointments" asp-route-builtInView="all"
+               class="btn btn-sm @(builtInView == "all" || string.IsNullOrEmpty(builtInView) ? "btn-primary" : "btn-outline-secondary")">
+                All
+            </a>
+        </div>
+    </div>
 </div>
 
 <!-- Filters -->
 <div class="staff-card mb-4">
     <div class="staff-card-body">
         <form method="get">
+            <input type="hidden" name="builtInView" value="@builtInView" />
             <div class="row g-3">
                 <!-- Search -->
                 <div class="col-lg-4 col-md-6">
@@ -38,18 +76,21 @@
                                value="@currentSearch" />
                     </div>
                 </div>
-                <!-- Staff Filter -->
-                <div class="col-lg-2 col-md-3">
-                    <select name="staffMemberId" class="form-select">
-                        <option value="">All Staff</option>
-                        @foreach (var staff in Model.StaffMembers)
-                        {
-                            <option value="@staff.Id" selected="@(currentStaffMemberId == staff.Id.ToString())">
-                                @staff.FullName
-                            </option>
-                        }
-                    </select>
-                </div>
+                <!-- Staff Filter (hidden for my-appointments) -->
+                @if (builtInView != "my-appointments")
+                {
+                    <div class="col-lg-2 col-md-3">
+                        <select name="staffMemberId" class="form-select">
+                            <option value="">All Staff</option>
+                            @foreach (var staff in Model.StaffMembers)
+                            {
+                                <option value="@staff.Id" selected="@(currentStaffMemberId == staff.Id.ToString())">
+                                    @staff.FullName
+                                </option>
+                            }
+                        </select>
+                    </div>
+                }
                 <!-- Type Filter -->
                 <div class="col-lg-2 col-md-3">
                     <select name="appointmentTypeId" class="form-select">
@@ -89,7 +130,8 @@
                     <button type="submit" class="btn btn-outline-primary">
                         <i class="bi bi-funnel me-1"></i>Filter
                     </button>
-                    <a asp-page="@RouteNames.Scheduler.AllAppointments" class="btn btn-outline-secondary">
+                    <a asp-page="@RouteNames.Scheduler.AllAppointments" asp-route-builtInView="@builtInView"
+                       class="btn btn-outline-secondary">
                         <i class="bi bi-x-lg me-1"></i>Clear
                     </a>
                 </div>
@@ -110,6 +152,7 @@
                     <th>Type</th>
                     <th>Mode</th>
                     <th>Date &amp; Time</th>
+                    <th>Duration</th>
                     <th>Status</th>
                     <th class="text-end">Actions</th>
                 </tr>
@@ -118,7 +161,7 @@
                 @if (!Model.ListView.Items.Any())
                 {
                     <tr>
-                        <td colspan="8" class="text-center py-5 text-muted">
+                        <td colspan="9" class="text-center py-5 text-muted">
                             <i class="bi bi-calendar3" style="font-size: 3rem; opacity: 0.5;"></i>
                             <p class="mt-3 mb-0 fw-medium">No appointments found</p>
                             <p class="small">Try adjusting your filters or create a new appointment</p>
@@ -153,6 +196,7 @@
                             }
                         </td>
                         <td class="text-muted small">@appointment.ScheduledStartTime</td>
+                        <td class="text-muted small">@appointment.DurationMinutes min</td>
                         <td>
                             <span class="staff-badge badge @GetStatusBadgeClass(appointment.Status)">
                                 @appointment.StatusLabel

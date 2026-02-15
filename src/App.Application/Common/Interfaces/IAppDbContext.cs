@@ -67,6 +67,7 @@ public interface IAppDbContext
     public DbSet<AppointmentHistory> AppointmentHistories { get; }
     public DbSet<SchedulerConfiguration> SchedulerConfigurations { get; }
     public DbSet<SchedulerEmailTemplate> SchedulerEmailTemplates { get; }
+    public DbSet<StaffBlockOutTime> StaffBlockOutTimes { get; }
 
     public DbContext DbContext { get; }
 

@@ -91,6 +91,7 @@ public class AppDbContext : DbContext, IAppDbContext, IDataProtectionKeyContext
     public DbSet<AppointmentHistory> AppointmentHistories => Set<AppointmentHistory>();
     public DbSet<SchedulerConfiguration> SchedulerConfigurations => Set<SchedulerConfiguration>();
     public DbSet<SchedulerEmailTemplate> SchedulerEmailTemplates => Set<SchedulerEmailTemplate>();
+    public DbSet<StaffBlockOutTime> StaffBlockOutTimes => Set<StaffBlockOutTime>();
 
     public DbContext DbContext => this;
 
