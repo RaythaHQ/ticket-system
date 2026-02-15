@@ -16,18 +16,9 @@ namespace App.Application.Tickets.EventHandlers;
 /// <summary>
 /// Sends email and in-app notification when an SLA is breached.
 /// </summary>
-public class SlaBreachedEventHandler_SendNotification : INotificationHandler<SlaBreachedEvent>
+public class SlaBreachedEventHandler_SendNotification
+    : BaseTicketNotificationHandler, INotificationHandler<SlaBreachedEvent>
 {
-    private readonly IAppDbContext _db;
-    private readonly IEmailer _emailerService;
-    private readonly IRenderEngine _renderEngineService;
-    private readonly IRelativeUrlBuilder _relativeUrlBuilder;
-    private readonly ICurrentOrganization _currentOrganization;
-    private readonly INotificationPreferenceService _notificationPreferenceService;
-    private readonly IInAppNotificationService _inAppNotificationService;
-    private readonly INotificationSuppressionService _notificationSuppressionService;
-    private readonly ILogger<SlaBreachedEventHandler_SendNotification> _logger;
-
     public SlaBreachedEventHandler_SendNotification(
         IAppDbContext db,
         IEmailer emailerService,
@@ -39,37 +30,26 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
         INotificationSuppressionService notificationSuppressionService,
         ILogger<SlaBreachedEventHandler_SendNotification> logger
     )
-    {
-        _db = db;
-        _emailerService = emailerService;
-        _renderEngineService = renderEngineService;
-        _relativeUrlBuilder = relativeUrlBuilder;
-        _currentOrganization = currentOrganization;
-        _notificationPreferenceService = notificationPreferenceService;
-        _inAppNotificationService = inAppNotificationService;
-        _notificationSuppressionService = notificationSuppressionService;
-        _logger = logger;
-    }
+        : base(
+            db, emailerService, renderEngineService, relativeUrlBuilder,
+            currentOrganization, notificationPreferenceService, inAppNotificationService,
+            notificationSuppressionService, logger
+        )
+    { }
 
     public async ValueTask Handle(
         SlaBreachedEvent notification,
         CancellationToken cancellationToken
     )
     {
-        // Check if notifications should be suppressed
-        if (_notificationSuppressionService.ShouldSuppressNotifications())
-        {
-            _logger.LogDebug(
-                "Notifications suppressed for SLA breached event on ticket {TicketId}",
-                notification.Ticket.Id
-            );
+        if (ShouldSuppressNotifications(notification.Ticket.Id, "SLA breached event"))
             return;
-        }
+
         var ticket = notification.Ticket;
 
         try
         {
-            var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
+            var renderTemplate = Db.EmailTemplates.FirstOrDefault(p =>
                 p.DeveloperName == BuiltInEmailTemplate.SlaBreachedEmail.DeveloperName
             );
 
@@ -77,7 +57,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                 return;
 
             var slaRule = ticket.SlaRuleId.HasValue
-                ? await _db
+                ? await Db
                     .SlaRules.AsNoTracking()
                     .FirstOrDefaultAsync(r => r.Id == ticket.SlaRuleId.Value, cancellationToken)
                 : null;
@@ -102,7 +82,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
             User? assignee = null;
             if (ticket.AssigneeId.HasValue)
             {
-                assignee = await _db
+                assignee = await Db
                     .Users.AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == ticket.AssigneeId.Value, cancellationToken);
             }
@@ -113,34 +93,34 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                 Title = ticket.Title,
                 AssigneeName = assignee?.FullName ?? "Unassigned",
                 Priority = ticket.Priority,
-                SlaDueAt = _currentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+                SlaDueAt = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
                     ticket.SlaDueAt
                 ),
                 SlaRuleName = slaRule?.Name ?? "Unknown",
-                TicketUrl = _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                TicketUrl = RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
             };
 
             var wrappedModel = new Wrapper_RenderModel
             {
                 CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(
-                    _currentOrganization
+                    CurrentOrganization
                 ),
                 Target = renderModel,
             };
 
-            var subject = _renderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
-            var content = _renderEngineService.RenderAsHtml(renderTemplate.Content, wrappedModel);
+            var subject = RenderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
+            var content = RenderEngineService.RenderAsHtml(renderTemplate.Content, wrappedModel);
 
             // === ALWAYS RECORD TO MY NOTIFICATIONS (database) for assignee ===
             // InAppNotificationService handles the SignalR popup preference check internally
             if (ticket.AssigneeId.HasValue && (breachBehavior?.NotifyAssignee ?? true))
             {
-                await _inAppNotificationService.SendToUserAsync(
+                await InAppNotificationService.SendToUserAsync(
                     ticket.AssigneeId.Value,
                     NotificationType.SlaBreach,
                     $"SLA Breached: #{ticket.Id}",
                     $"{ticket.Title} - SLA has been breached",
-                    _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                    RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
                     ticket.Id,
                     cancellationToken
                 );
@@ -156,7 +136,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                 && (breachBehavior?.NotifyAssignee ?? true)
             )
             {
-                var emailEnabled = await _notificationPreferenceService.IsEmailEnabledAsync(
+                var emailEnabled = await NotificationPreferenceService.IsEmailEnabledAsync(
                     ticket.AssigneeId.Value,
                     NotificationEventType.SLA_BREACHED,
                     cancellationToken
@@ -171,9 +151,9 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                         Subject = subject,
                     };
 
-                    await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
+                    await EmailerService.SendEmailAsync(emailMessage, cancellationToken);
 
-                    _logger.LogInformation(
+                    Logger.LogInformation(
                         "Sent SLA breach email notification for ticket {TicketId} to assignee {Email}",
                         ticket.Id,
                         assignee.EmailAddress
@@ -199,9 +179,9 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
                         Subject = subject,
                     };
 
-                    await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
+                    await EmailerService.SendEmailAsync(emailMessage, cancellationToken);
 
-                    _logger.LogInformation(
+                    Logger.LogInformation(
                         "Sent SLA breach email notification for ticket {TicketId} to additional recipient {Email}",
                         ticket.Id,
                         email
@@ -211,7 +191,7 @@ public class SlaBreachedEventHandler_SendNotification : INotificationHandler<Sla
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send SLA breach notification");
+            Logger.LogError(ex, "Failed to send SLA breach notification");
         }
     }
 }

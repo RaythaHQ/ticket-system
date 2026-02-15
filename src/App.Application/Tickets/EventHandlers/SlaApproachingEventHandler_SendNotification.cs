@@ -15,18 +15,8 @@ namespace App.Application.Tickets.EventHandlers;
 /// Sends email and in-app notification when an SLA is approaching breach.
 /// </summary>
 public class SlaApproachingEventHandler_SendNotification
-    : INotificationHandler<SlaApproachingBreachEvent>
+    : BaseTicketNotificationHandler, INotificationHandler<SlaApproachingBreachEvent>
 {
-    private readonly IAppDbContext _db;
-    private readonly IEmailer _emailerService;
-    private readonly IRenderEngine _renderEngineService;
-    private readonly IRelativeUrlBuilder _relativeUrlBuilder;
-    private readonly ICurrentOrganization _currentOrganization;
-    private readonly INotificationPreferenceService _notificationPreferenceService;
-    private readonly IInAppNotificationService _inAppNotificationService;
-    private readonly INotificationSuppressionService _notificationSuppressionService;
-    private readonly ILogger<SlaApproachingEventHandler_SendNotification> _logger;
-
     public SlaApproachingEventHandler_SendNotification(
         IAppDbContext db,
         IEmailer emailerService,
@@ -38,32 +28,21 @@ public class SlaApproachingEventHandler_SendNotification
         INotificationSuppressionService notificationSuppressionService,
         ILogger<SlaApproachingEventHandler_SendNotification> logger
     )
-    {
-        _db = db;
-        _emailerService = emailerService;
-        _renderEngineService = renderEngineService;
-        _relativeUrlBuilder = relativeUrlBuilder;
-        _currentOrganization = currentOrganization;
-        _notificationPreferenceService = notificationPreferenceService;
-        _inAppNotificationService = inAppNotificationService;
-        _notificationSuppressionService = notificationSuppressionService;
-        _logger = logger;
-    }
+        : base(
+            db, emailerService, renderEngineService, relativeUrlBuilder,
+            currentOrganization, notificationPreferenceService, inAppNotificationService,
+            notificationSuppressionService, logger
+        )
+    { }
 
     public async ValueTask Handle(
         SlaApproachingBreachEvent notification,
         CancellationToken cancellationToken
     )
     {
-        // Check if notifications should be suppressed
-        if (_notificationSuppressionService.ShouldSuppressNotifications())
-        {
-            _logger.LogDebug(
-                "Notifications suppressed for SLA approaching event on ticket {TicketId}",
-                notification.Ticket.Id
-            );
+        if (ShouldSuppressNotifications(notification.Ticket.Id, "SLA approaching event"))
             return;
-        }
+
         var ticket = notification.Ticket;
 
         if (!ticket.AssigneeId.HasValue)
@@ -77,18 +56,18 @@ public class SlaApproachingEventHandler_SendNotification
 
             // === ALWAYS RECORD TO MY NOTIFICATIONS (database) ===
             // InAppNotificationService handles the SignalR popup preference check internally
-            await _inAppNotificationService.SendToUserAsync(
+            await InAppNotificationService.SendToUserAsync(
                 ticket.AssigneeId.Value,
                 NotificationType.SlaApproaching,
                 $"SLA Warning: #{ticket.Id}",
                 $"{ticket.Title} - {timeRemaining} remaining",
-                _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
                 ticket.Id,
                 cancellationToken
             );
 
             // === SEND EMAIL NOTIFICATION (preference-based) ===
-            var emailEnabled = await _notificationPreferenceService.IsEmailEnabledAsync(
+            var emailEnabled = await NotificationPreferenceService.IsEmailEnabledAsync(
                 ticket.AssigneeId.Value,
                 NotificationEventType.SLA_APPROACHING,
                 cancellationToken
@@ -97,14 +76,14 @@ public class SlaApproachingEventHandler_SendNotification
             if (!emailEnabled)
                 return;
 
-            var assignee = await _db
+            var assignee = await Db
                 .Users.AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Id == ticket.AssigneeId.Value, cancellationToken);
 
             if (assignee == null || string.IsNullOrEmpty(assignee.EmailAddress))
                 return;
 
-            var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
+            var renderTemplate = Db.EmailTemplates.FirstOrDefault(p =>
                 p.DeveloperName == BuiltInEmailTemplate.SlaApproachingEmail.DeveloperName
             );
 
@@ -112,7 +91,7 @@ public class SlaApproachingEventHandler_SendNotification
                 return;
 
             var slaRule = ticket.SlaRuleId.HasValue
-                ? await _db
+                ? await Db
                     .SlaRules.AsNoTracking()
                     .FirstOrDefaultAsync(r => r.Id == ticket.SlaRuleId.Value, cancellationToken)
                 : null;
@@ -123,24 +102,24 @@ public class SlaApproachingEventHandler_SendNotification
                 Title = ticket.Title,
                 AssigneeName = assignee.FullName,
                 Priority = ticket.Priority,
-                SlaDueAt = _currentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
+                SlaDueAt = CurrentOrganization.TimeZoneConverter.UtcToTimeZoneAsDateTimeFormat(
                     ticket.SlaDueAt
                 ),
                 TimeRemaining = timeRemaining,
                 SlaRuleName = slaRule?.Name ?? "Unknown",
-                TicketUrl = _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                TicketUrl = RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
             };
 
             var wrappedModel = new Wrapper_RenderModel
             {
                 CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(
-                    _currentOrganization
+                    CurrentOrganization
                 ),
                 Target = renderModel,
             };
 
-            var subject = _renderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
-            var content = _renderEngineService.RenderAsHtml(renderTemplate.Content, wrappedModel);
+            var subject = RenderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
+            var content = RenderEngineService.RenderAsHtml(renderTemplate.Content, wrappedModel);
 
             var emailMessage = new EmailMessage
             {
@@ -149,9 +128,9 @@ public class SlaApproachingEventHandler_SendNotification
                 Subject = subject,
             };
 
-            await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
+            await EmailerService.SendEmailAsync(emailMessage, cancellationToken);
 
-            _logger.LogInformation(
+            Logger.LogInformation(
                 "Sent SLA approaching email notification for ticket {TicketId} to {Email}",
                 ticket.Id,
                 assignee.EmailAddress
@@ -159,7 +138,7 @@ public class SlaApproachingEventHandler_SendNotification
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send SLA approaching notification");
+            Logger.LogError(ex, "Failed to send SLA approaching notification");
         }
     }
 

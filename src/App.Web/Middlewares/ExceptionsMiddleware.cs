@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -15,7 +15,7 @@ namespace App.Web.Middlewares;
 
 public class ExceptionsMiddleware
 {
-    public const string ERROR_DETAILS_KEY = "Raytha.ErrorDetails";
+    public const string ERROR_DETAILS_KEY = "App.ErrorDetails";
 
     public static RequestDelegate ErrorHandlerDelegate(string pathBase, IWebHostEnvironment env)
     {
@@ -59,7 +59,7 @@ public class ExceptionsMiddleware
                 }
                 else
                 {
-                    errorBytes = GetErrorMessageAsByteArray("An unknown error has occured.");
+                    errorBytes = GetErrorMessageAsByteArray("An unknown error has occurred.");
                     context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 }
 

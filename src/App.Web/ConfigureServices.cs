@@ -78,7 +78,7 @@ public static class ConfigureServices
         services.AddAuthorization(options =>
         {
             options.AddPolicy(
-                RaythaClaimTypes.IsAdmin,
+                AppClaimTypes.IsAdmin,
                 policy => policy.Requirements.Add(new IsAdminRequirement())
             );
             options.AddPolicy(
@@ -130,7 +130,7 @@ public static class ConfigureServices
             );
 
             options.AddPolicy(
-                AppApiAuthorizationHandler.POLICY_PREFIX + RaythaClaimTypes.IsAdmin,
+                AppApiAuthorizationHandler.POLICY_PREFIX + AppClaimTypes.IsAdmin,
                 policy => policy.Requirements.Add(new ApiIsAdminRequirement())
             );
             options.AddPolicy(

@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using CSharpVitamins;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +23,7 @@ public class UserGroupsController : BaseController
     {
         var response =
             await Mediator.Send(request) as QueryResponseDto<ListResultDto<UserGroupDto>>;
-        return response;
+        return Ok(response!.Result);
     }
 
     [HttpGet("{userGroupId}", Name = "GetUserGroupById")]
@@ -34,7 +33,7 @@ public class UserGroupsController : BaseController
     {
         var input = new GetUserGroupById.Query { Id = userGroupId };
         var response = await Mediator.Send(input) as QueryResponseDto<UserGroupDto>;
-        return response;
+        return Ok(response!.Result);
     }
 
     [HttpPost("", Name = "CreateUserGroup")]
@@ -45,12 +44,12 @@ public class UserGroupsController : BaseController
         var response = await Mediator.Send(request);
         if (!response.Success)
         {
-            return BadRequest(response);
+            return BadRequest(new { error = response.Error });
         }
         return CreatedAtAction(
             nameof(GetUserGroupById),
             new { userGroupId = response.Result },
-            response
+            response.Result
         );
     }
 
@@ -64,22 +63,20 @@ public class UserGroupsController : BaseController
         var response = await Mediator.Send(input);
         if (!response.Success)
         {
-            return BadRequest(response);
+            return BadRequest(new { error = response.Error });
         }
-        return response;
+        return Ok(response.Result);
     }
 
     [HttpDelete("{userGroupId}", Name = "DeleteUserGroup")]
-    public async Task<ActionResult<ICommandResponseDto<ShortGuid>>> DeleteUserGroup(
-        string userGroupId
-    )
+    public async Task<IActionResult> DeleteUserGroup(string userGroupId)
     {
         var input = new DeleteUserGroup.Command { Id = userGroupId };
         var response = await Mediator.Send(input);
         if (!response.Success)
         {
-            return BadRequest(response);
+            return BadRequest(new { error = response.Error });
         }
-        return response;
+        return NoContent();
     }
 }

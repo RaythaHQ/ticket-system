@@ -22,7 +22,7 @@ public class AdminsController : BaseController
     )
     {
         var response = await Mediator.Send(request) as QueryResponseDto<ListResultDto<AdminDto>>;
-        return response;
+        return Ok(response!.Result);
     }
 
     [HttpGet("{adminId}", Name = "GetAdminById")]
@@ -30,7 +30,7 @@ public class AdminsController : BaseController
     {
         var input = new GetAdminById.Query { Id = adminId };
         var response = await Mediator.Send(input) as QueryResponseDto<AdminDto>;
-        return response;
+        return Ok(response!.Result);
     }
 
     [HttpPut("{adminId}", Name = "EditAdmin")]
@@ -43,9 +43,9 @@ public class AdminsController : BaseController
         var response = await Mediator.Send(input);
         if (!response.Success)
         {
-            return BadRequest(response);
+            return BadRequest(new { error = response.Error });
         }
-        return response;
+        return Ok(response.Result);
     }
 
     [HttpPut("{adminId}/custom-attributes", Name = "UpdateAdminCustomAttributes")]
@@ -66,9 +66,9 @@ public class AdminsController : BaseController
         var response = await Mediator.Send(input);
         if (!response.Success)
         {
-            return BadRequest(response);
+            return BadRequest(new { error = response.Error });
         }
-        return response;
+        return Ok(response.Result);
     }
 }
 

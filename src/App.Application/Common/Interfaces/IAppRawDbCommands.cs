@@ -10,4 +10,3 @@ public interface IAppRawDbCommands
     /// </summary>
     Task ClearAuditLogsAsync(CancellationToken cancellationToken = default);
 }
-

@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 
 namespace App.Domain.ValueObjects.FieldValues;
 
@@ -20,7 +20,10 @@ public record ArrayFieldValue : BaseFieldValue
                 {
                     _value = JsonSerializer.Deserialize<string[]>(value.ToString());
                 }
-                catch { }
+                catch
+                {
+                    // Intentionally swallowed: invalid array data returns empty list
+                }
             }
         }
     }

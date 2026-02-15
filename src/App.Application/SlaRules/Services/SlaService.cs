@@ -84,7 +84,10 @@ public class SlaService : ISlaService
                     rule.BusinessHoursConfigJson
                 );
             }
-            catch { }
+            catch
+            {
+                // Intentionally swallowed: malformed JSON should use default behavior
+            }
         }
 
         if (config == null)

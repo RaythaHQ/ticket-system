@@ -82,7 +82,7 @@ public class EndImpersonation : BaseAdminPageModel
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, result.Id.ToString()),
-            new Claim(RaythaClaimTypes.LastModificationTime, result.LastModificationTime?.ToString() ?? DateTime.UtcNow.ToString()),
+            new Claim(AppClaimTypes.LastModificationTime, result.LastModificationTime?.ToString() ?? DateTime.UtcNow.ToString()),
             // No impersonation claims - this is a normal session
         };
 

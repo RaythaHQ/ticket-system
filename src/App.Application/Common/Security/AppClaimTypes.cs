@@ -1,6 +1,6 @@
-﻿namespace App.Application.Common.Security;
+namespace App.Application.Common.Security;
 
-public static class RaythaClaimTypes
+public static class AppClaimTypes
 {
     public const string LastModificationTime = "LastModificationTime";
     public const string IsAdmin = "IsAdmin";

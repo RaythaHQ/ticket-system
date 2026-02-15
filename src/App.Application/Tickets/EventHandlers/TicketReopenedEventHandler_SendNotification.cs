@@ -17,18 +17,9 @@ namespace App.Application.Tickets.EventHandlers;
 /// - Ticket followers (bypasses notification preferences)
 /// All notifications are deduplicated and the user who reopened is never notified.
 /// </summary>
-public class TicketReopenedEventHandler_SendNotification : INotificationHandler<TicketReopenedEvent>
+public class TicketReopenedEventHandler_SendNotification
+    : BaseTicketNotificationHandler, INotificationHandler<TicketReopenedEvent>
 {
-    private readonly IAppDbContext _db;
-    private readonly IEmailer _emailerService;
-    private readonly IRenderEngine _renderEngineService;
-    private readonly IRelativeUrlBuilder _relativeUrlBuilder;
-    private readonly ICurrentOrganization _currentOrganization;
-    private readonly INotificationPreferenceService _notificationPreferenceService;
-    private readonly IInAppNotificationService _inAppNotificationService;
-    private readonly INotificationSuppressionService _notificationSuppressionService;
-    private readonly ILogger<TicketReopenedEventHandler_SendNotification> _logger;
-
     public TicketReopenedEventHandler_SendNotification(
         IAppDbContext db,
         IEmailer emailerService,
@@ -40,32 +31,20 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
         INotificationSuppressionService notificationSuppressionService,
         ILogger<TicketReopenedEventHandler_SendNotification> logger
     )
-    {
-        _db = db;
-        _emailerService = emailerService;
-        _renderEngineService = renderEngineService;
-        _relativeUrlBuilder = relativeUrlBuilder;
-        _currentOrganization = currentOrganization;
-        _notificationPreferenceService = notificationPreferenceService;
-        _inAppNotificationService = inAppNotificationService;
-        _notificationSuppressionService = notificationSuppressionService;
-        _logger = logger;
-    }
+        : base(
+            db, emailerService, renderEngineService, relativeUrlBuilder,
+            currentOrganization, notificationPreferenceService, inAppNotificationService,
+            notificationSuppressionService, logger
+        )
+    { }
 
     public async ValueTask Handle(
         TicketReopenedEvent notification,
         CancellationToken cancellationToken
     )
     {
-        // Check if notifications should be suppressed
-        if (_notificationSuppressionService.ShouldSuppressNotifications())
-        {
-            _logger.LogDebug(
-                "Notifications suppressed for ticket reopened event on ticket {TicketId}",
-                notification.Ticket.Id
-            );
+        if (ShouldSuppressNotifications(notification.Ticket.Id, "ticket reopened event"))
             return;
-        }
 
         try
         {
@@ -85,7 +64,7 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
             }
 
             // 2. Forced recipients (followers) - bypass preferences
-            var followerIds = await _db
+            var followerIds = await Db
                 .TicketFollowers.AsNoTracking()
                 .Where(f =>
                     f.TicketId == ticket.Id
@@ -107,12 +86,12 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
 
             // === ALWAYS RECORD TO MY NOTIFICATIONS (database) ===
             // InAppNotificationService handles the SignalR popup preference check internally
-            await _inAppNotificationService.SendToUsersAsync(
+            await InAppNotificationService.SendToUsersAsync(
                 allRecipients,
                 NotificationType.TicketReopened,
                 $"Ticket #{ticket.Id} reopened",
                 ticket.Title,
-                _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
                 ticket.Id,
                 cancellationToken
             );
@@ -121,7 +100,7 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
 
             // Filter standard recipients by their email preferences
             var standardRecipientsFiltered = standardRecipients.Any()
-                ? await _notificationPreferenceService.FilterUsersWithEmailEnabledAsync(
+                ? await NotificationPreferenceService.FilterUsersWithEmailEnabledAsync(
                     standardRecipients,
                     NotificationEventType.TICKET_REOPENED,
                     cancellationToken
@@ -136,14 +115,14 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
             if (!emailRecipients.Any())
                 return;
 
-            var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
+            var renderTemplate = Db.EmailTemplates.FirstOrDefault(p =>
                 p.DeveloperName == BuiltInEmailTemplate.TicketReopenedEmail.DeveloperName
             );
 
             if (renderTemplate == null)
                 return;
 
-            var recipients = await _db
+            var recipients = await Db
                 .Users.AsNoTracking()
                 .Where(u => emailRecipients.Contains(u.Id) && !string.IsNullOrEmpty(u.EmailAddress))
                 .ToListAsync(cancellationToken);
@@ -157,22 +136,22 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
                     ReopenedByName = "System",
                     Status = ticket.Status,
                     RecipientName = recipient.FullName,
-                    TicketUrl = _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                    TicketUrl = RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
                 };
 
                 var wrappedModel = new Wrapper_RenderModel
                 {
                     CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(
-                        _currentOrganization
+                        CurrentOrganization
                     ),
                     Target = renderModel,
                 };
 
-                var subject = _renderEngineService.RenderAsHtml(
+                var subject = RenderEngineService.RenderAsHtml(
                     renderTemplate.Subject,
                     wrappedModel
                 );
-                var content = _renderEngineService.RenderAsHtml(
+                var content = RenderEngineService.RenderAsHtml(
                     renderTemplate.Content,
                     wrappedModel
                 );
@@ -184,9 +163,9 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
                     Subject = subject,
                 };
 
-                await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
+                await EmailerService.SendEmailAsync(emailMessage, cancellationToken);
 
-                _logger.LogInformation(
+                Logger.LogInformation(
                     "Sent ticket reopened email notification for ticket {TicketId} to {Email}",
                     ticket.Id,
                     recipient.EmailAddress
@@ -195,7 +174,7 @@ public class TicketReopenedEventHandler_SendNotification : INotificationHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send ticket reopened notification");
+            Logger.LogError(ex, "Failed to send ticket reopened notification");
         }
     }
 }

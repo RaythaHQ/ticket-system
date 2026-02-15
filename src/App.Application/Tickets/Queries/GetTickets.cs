@@ -142,7 +142,10 @@ public class GetTickets
                                 query = filterBuilder.ApplyFilters(query, conditions);
                             }
                         }
-                        catch { }
+                        catch
+                        {
+                            // Intentionally swallowed: invalid filter expressions should not crash the query
+                        }
                     }
                 }
             }

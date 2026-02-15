@@ -324,7 +324,7 @@ public class LoginWithSaml
             GetSingleAttribute(JwtRegisteredClaimNames.FamilyName)
             ?? GetSingleAttribute("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname")
             ?? GetSingleAttribute("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/family_name");
-        public string[] UserGroups => GetArrayAttribute(RaythaClaimTypes.UserGroups);
+        public string[] UserGroups => GetArrayAttribute(AppClaimTypes.UserGroups);
 
         public bool IsValid
         {

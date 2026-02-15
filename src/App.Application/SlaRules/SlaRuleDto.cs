@@ -37,7 +37,10 @@ public record SlaRuleDto : BaseAuditableEntityDto
                     rule.BusinessHoursConfigJson
                 );
             }
-            catch { }
+            catch
+            {
+                // Intentionally swallowed: malformed JSON should not prevent DTO creation
+            }
         }
 
         BreachBehavior? breachBehavior = null;
@@ -49,7 +52,10 @@ public record SlaRuleDto : BaseAuditableEntityDto
                     rule.BreachBehaviorJson
                 );
             }
-            catch { }
+            catch
+            {
+                // Intentionally swallowed: malformed JSON should not prevent DTO creation
+            }
         }
 
         return new SlaRuleDto

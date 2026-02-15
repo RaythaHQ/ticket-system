@@ -19,18 +19,9 @@ namespace App.Application.Tickets.EventHandlers;
 ///   - If a follower manually unsnoozes: notify assignee + other followers (not the actor)
 /// - Skip notification entirely if ticket is closed
 /// </summary>
-public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler<TicketUnsnoozedEvent>
+public class TicketUnsnoozedEventHandler_SendNotification
+    : BaseTicketNotificationHandler, INotificationHandler<TicketUnsnoozedEvent>
 {
-    private readonly IAppDbContext _db;
-    private readonly IEmailer _emailerService;
-    private readonly IRenderEngine _renderEngineService;
-    private readonly IRelativeUrlBuilder _relativeUrlBuilder;
-    private readonly ICurrentOrganization _currentOrganization;
-    private readonly INotificationPreferenceService _notificationPreferenceService;
-    private readonly IInAppNotificationService _inAppNotificationService;
-    private readonly INotificationSuppressionService _notificationSuppressionService;
-    private readonly ILogger<TicketUnsnoozedEventHandler_SendNotification> _logger;
-
     public TicketUnsnoozedEventHandler_SendNotification(
         IAppDbContext db,
         IEmailer emailerService,
@@ -42,32 +33,20 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
         INotificationSuppressionService notificationSuppressionService,
         ILogger<TicketUnsnoozedEventHandler_SendNotification> logger
     )
-    {
-        _db = db;
-        _emailerService = emailerService;
-        _renderEngineService = renderEngineService;
-        _relativeUrlBuilder = relativeUrlBuilder;
-        _currentOrganization = currentOrganization;
-        _notificationPreferenceService = notificationPreferenceService;
-        _inAppNotificationService = inAppNotificationService;
-        _notificationSuppressionService = notificationSuppressionService;
-        _logger = logger;
-    }
+        : base(
+            db, emailerService, renderEngineService, relativeUrlBuilder,
+            currentOrganization, notificationPreferenceService, inAppNotificationService,
+            notificationSuppressionService, logger
+        )
+    { }
 
     public async ValueTask Handle(
         TicketUnsnoozedEvent notification,
         CancellationToken cancellationToken
     )
     {
-        // Check if notifications should be suppressed
-        if (_notificationSuppressionService.ShouldSuppressNotifications())
-        {
-            _logger.LogDebug(
-                "Notifications suppressed for ticket unsnoozed event on ticket {TicketId}",
-                notification.Ticket.Id
-            );
+        if (ShouldSuppressNotifications(notification.Ticket.Id, "ticket unsnoozed event"))
             return;
-        }
 
         try
         {
@@ -76,7 +55,7 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
             var wasAutoUnsnooze = notification.WasAutoUnsnooze;
 
             // Skip if ticket is closed (per spec: no snooze notification if closed while snoozed)
-            var statusConfig = await _db
+            var statusConfig = await Db
                 .TicketStatusConfigs.AsNoTracking()
                 .FirstOrDefaultAsync(
                     s => s.DeveloperName == ticket.Status,
@@ -85,7 +64,7 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
 
             if (statusConfig?.IsClosedType == true)
             {
-                _logger.LogDebug(
+                Logger.LogDebug(
                     "Skipping unsnoozed notification for ticket {TicketId} - ticket is closed",
                     ticket.Id
                 );
@@ -107,7 +86,7 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
             }
 
             // 2. Forced recipients (followers) - bypass preferences
-            var followerQuery = _db
+            var followerQuery = Db
                 .TicketFollowers.AsNoTracking()
                 .Where(f => f.TicketId == ticket.Id);
 
@@ -130,7 +109,7 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
 
             if (!allRecipients.Any())
             {
-                _logger.LogDebug(
+                Logger.LogDebug(
                     "No recipients for unsnoozed notification on ticket {TicketId}",
                     ticket.Id
                 );
@@ -142,12 +121,12 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
                 ? $"Ticket #{ticket.Id} snooze expired"
                 : $"Ticket #{ticket.Id} unsnoozed";
 
-            await _inAppNotificationService.SendToUsersAsync(
+            await InAppNotificationService.SendToUsersAsync(
                 allRecipients,
                 NotificationType.TicketUnsnoozed,
                 unsnoozedMessage,
                 ticket.Title,
-                _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
                 ticket.Id,
                 cancellationToken
             );
@@ -156,7 +135,7 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
 
             // Filter standard recipients by their email preferences
             var standardRecipientsFiltered = standardRecipients.Any()
-                ? await _notificationPreferenceService.FilterUsersWithEmailEnabledAsync(
+                ? await NotificationPreferenceService.FilterUsersWithEmailEnabledAsync(
                     standardRecipients,
                     NotificationEventType.TICKET_UNSNOOZED,
                     cancellationToken
@@ -171,13 +150,13 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
             if (!emailRecipients.Any())
                 return;
 
-            var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
+            var renderTemplate = Db.EmailTemplates.FirstOrDefault(p =>
                 p.DeveloperName == BuiltInEmailTemplate.TicketUnsnoozedEmail.DeveloperName
             );
 
             if (renderTemplate == null)
             {
-                _logger.LogWarning(
+                Logger.LogWarning(
                     "Email template {TemplateName} not found for unsnoozed notification",
                     BuiltInEmailTemplate.TicketUnsnoozedEmail.DeveloperName
                 );
@@ -188,7 +167,7 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
             string unsnoozedByName = "System";
             if (!wasAutoUnsnooze && unsnoozedById.HasValue)
             {
-                var unsnoozedByUser = await _db
+                var unsnoozedByUser = await Db
                     .Users.AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == unsnoozedById.Value, cancellationToken);
                 unsnoozedByName = unsnoozedByUser?.FullName ?? "Unknown";
@@ -198,13 +177,13 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
             string assigneeName = "Unassigned";
             if (ticket.AssigneeId.HasValue)
             {
-                var assignee = await _db
+                var assignee = await Db
                     .Users.AsNoTracking()
                     .FirstOrDefaultAsync(u => u.Id == ticket.AssigneeId.Value, cancellationToken);
                 assigneeName = assignee?.FullName ?? "Unknown";
             }
 
-            var recipients = await _db
+            var recipients = await Db
                 .Users.AsNoTracking()
                 .Where(u => emailRecipients.Contains(u.Id) && !string.IsNullOrEmpty(u.EmailAddress))
                 .ToListAsync(cancellationToken);
@@ -220,22 +199,22 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
                     Status = ticket.Status,
                     AssigneeName = assigneeName,
                     RecipientName = recipient.FullName,
-                    TicketUrl = _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                    TicketUrl = RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
                 };
 
                 var wrappedModel = new Wrapper_RenderModel
                 {
                     CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(
-                        _currentOrganization
+                        CurrentOrganization
                     ),
                     Target = renderModel,
                 };
 
-                var subject = _renderEngineService.RenderAsHtml(
+                var subject = RenderEngineService.RenderAsHtml(
                     renderTemplate.Subject,
                     wrappedModel
                 );
-                var content = _renderEngineService.RenderAsHtml(
+                var content = RenderEngineService.RenderAsHtml(
                     renderTemplate.Content,
                     wrappedModel
                 );
@@ -247,9 +226,9 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
                     Subject = subject,
                 };
 
-                await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
+                await EmailerService.SendEmailAsync(emailMessage, cancellationToken);
 
-                _logger.LogInformation(
+                Logger.LogInformation(
                     "Sent ticket unsnoozed email notification for ticket {TicketId} to {Email}",
                     ticket.Id,
                     recipient.EmailAddress
@@ -258,7 +237,7 @@ public class TicketUnsnoozedEventHandler_SendNotification : INotificationHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send ticket unsnoozed notification");
+            Logger.LogError(ex, "Failed to send ticket unsnoozed notification");
         }
     }
 }

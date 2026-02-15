@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using App.Application.Common.Security;
@@ -7,10 +6,10 @@ using App.Web.Authentication;
 
 namespace App.Web.Areas.Api.Controllers.V1;
 
-[Authorize(Policy = AppApiAuthorizationHandler.POLICY_PREFIX + RaythaClaimTypes.IsAdmin)]
+[Authorize(Policy = AppApiAuthorizationHandler.POLICY_PREFIX + AppClaimTypes.IsAdmin)]
 public class PingController : BaseController
 {
-    [HttpGet(Name = "ping")]
+    [HttpGet(Name = "Ping")]
     public async Task<ActionResult<HealthCheckResult>> Get()
     {
         var response = await Mediator.Send(new GetOrganizationSettings.Query());

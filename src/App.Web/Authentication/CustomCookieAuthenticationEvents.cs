@@ -26,20 +26,20 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
 
         // Preserve impersonation claims (otherwise they get wiped out when we rehydrate claims below)
         var isImpersonating =
-            userPrincipal?.Claims.FirstOrDefault(p => p.Type == RaythaClaimTypes.IsImpersonating)?.Value
+            userPrincipal?.Claims.FirstOrDefault(p => p.Type == AppClaimTypes.IsImpersonating)?.Value
             is "true";
 
         var originalUserId = userPrincipal
-            ?.Claims.FirstOrDefault(p => p.Type == RaythaClaimTypes.OriginalUserId)
+            ?.Claims.FirstOrDefault(p => p.Type == AppClaimTypes.OriginalUserId)
             ?.Value;
         var originalUserEmail = userPrincipal
-            ?.Claims.FirstOrDefault(p => p.Type == RaythaClaimTypes.OriginalUserEmail)
+            ?.Claims.FirstOrDefault(p => p.Type == AppClaimTypes.OriginalUserEmail)
             ?.Value;
         var originalUserFullName = userPrincipal
-            ?.Claims.FirstOrDefault(p => p.Type == RaythaClaimTypes.OriginalUserFullName)
+            ?.Claims.FirstOrDefault(p => p.Type == AppClaimTypes.OriginalUserFullName)
             ?.Value;
         var impersonationStartedAt = userPrincipal
-            ?.Claims.FirstOrDefault(p => p.Type == RaythaClaimTypes.ImpersonationStartedAt)
+            ?.Claims.FirstOrDefault(p => p.Type == AppClaimTypes.ImpersonationStartedAt)
             ?.Value;
 
         // Look for the LastChanged claim.
@@ -73,26 +73,26 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
             new Claim(ClaimTypes.GivenName, user.Result.FirstName),
             new Claim(ClaimTypes.Surname, user.Result.LastName),
             new Claim(
-                RaythaClaimTypes.LastModificationTime,
+                AppClaimTypes.LastModificationTime,
                 user.Result.LastModificationTime.ToString()
             ),
-            new Claim(RaythaClaimTypes.IsAdmin, user.Result.IsAdmin.ToString()),
-            new Claim(RaythaClaimTypes.SsoId, user.Result.SsoId.IfNullOrEmpty(string.Empty)),
-            new Claim(RaythaClaimTypes.AuthenticationScheme, user.Result.AuthenticationScheme),
+            new Claim(AppClaimTypes.IsAdmin, user.Result.IsAdmin.ToString()),
+            new Claim(AppClaimTypes.SsoId, user.Result.SsoId.IfNullOrEmpty(string.Empty)),
+            new Claim(AppClaimTypes.AuthenticationScheme, user.Result.AuthenticationScheme),
         };
 
         // Re-add impersonation claims if this session is impersonating
         if (isImpersonating)
         {
-            claims.Add(new Claim(RaythaClaimTypes.IsImpersonating, "true"));
+            claims.Add(new Claim(AppClaimTypes.IsImpersonating, "true"));
             if (!string.IsNullOrWhiteSpace(originalUserId))
-                claims.Add(new Claim(RaythaClaimTypes.OriginalUserId, originalUserId));
+                claims.Add(new Claim(AppClaimTypes.OriginalUserId, originalUserId));
             if (!string.IsNullOrWhiteSpace(originalUserEmail))
-                claims.Add(new Claim(RaythaClaimTypes.OriginalUserEmail, originalUserEmail));
+                claims.Add(new Claim(AppClaimTypes.OriginalUserEmail, originalUserEmail));
             if (!string.IsNullOrWhiteSpace(originalUserFullName))
-                claims.Add(new Claim(RaythaClaimTypes.OriginalUserFullName, originalUserFullName));
+                claims.Add(new Claim(AppClaimTypes.OriginalUserFullName, originalUserFullName));
             if (!string.IsNullOrWhiteSpace(impersonationStartedAt))
-                claims.Add(new Claim(RaythaClaimTypes.ImpersonationStartedAt, impersonationStartedAt));
+                claims.Add(new Claim(AppClaimTypes.ImpersonationStartedAt, impersonationStartedAt));
         }
 
         var systemPermissions = new List<string>();
@@ -105,12 +105,12 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
 
         foreach (var systemPermission in systemPermissions.Distinct())
         {
-            claims.Add(new Claim(RaythaClaimTypes.SystemPermissions, systemPermission));
+            claims.Add(new Claim(AppClaimTypes.SystemPermissions, systemPermission));
         }
 
         foreach (var userGroup in user.Result.UserGroups)
         {
-            claims.Add(new Claim(RaythaClaimTypes.UserGroups, userGroup.DeveloperName));
+            claims.Add(new Claim(AppClaimTypes.UserGroups, userGroup.DeveloperName));
         }
 
         ClaimsIdentity identity = new ClaimsIdentity(

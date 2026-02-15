@@ -67,14 +67,14 @@ public class Impersonate : BaseAdminPageModel
             new Claim(ClaimTypes.GivenName, impersonatedUser.FirstName ?? string.Empty),
             new Claim(ClaimTypes.Surname, impersonatedUser.LastName ?? string.Empty),
             new Claim(ClaimTypes.Email, impersonatedUser.EmailAddress ?? string.Empty),
-            new Claim(RaythaClaimTypes.IsAdmin, impersonatedUser.IsAdmin.ToString()),
-            new Claim(RaythaClaimTypes.LastModificationTime, impersonatedUser.LastModificationTime?.ToString() ?? DateTime.UtcNow.ToString()),
+            new Claim(AppClaimTypes.IsAdmin, impersonatedUser.IsAdmin.ToString()),
+            new Claim(AppClaimTypes.LastModificationTime, impersonatedUser.LastModificationTime?.ToString() ?? DateTime.UtcNow.ToString()),
             // Impersonation-specific claims
-            new Claim(RaythaClaimTypes.IsImpersonating, "true"),
-            new Claim(RaythaClaimTypes.OriginalUserId, result.OriginalUserId.ToString()),
-            new Claim(RaythaClaimTypes.OriginalUserEmail, result.OriginalUserEmail),
-            new Claim(RaythaClaimTypes.OriginalUserFullName, result.OriginalUserFullName),
-            new Claim(RaythaClaimTypes.ImpersonationStartedAt, result.ImpersonationStartedAt.ToString("O")),
+            new Claim(AppClaimTypes.IsImpersonating, "true"),
+            new Claim(AppClaimTypes.OriginalUserId, result.OriginalUserId.ToString()),
+            new Claim(AppClaimTypes.OriginalUserEmail, result.OriginalUserEmail),
+            new Claim(AppClaimTypes.OriginalUserFullName, result.OriginalUserFullName),
+            new Claim(AppClaimTypes.ImpersonationStartedAt, result.ImpersonationStartedAt.ToString("O")),
         };
 
         // Add role claims and collect system permissions
@@ -89,7 +89,7 @@ public class Impersonate : BaseAdminPageModel
                 {
                     foreach (var permission in role.SystemPermissions)
                     {
-                        claims.Add(new Claim(RaythaClaimTypes.SystemPermissions, permission));
+                        claims.Add(new Claim(AppClaimTypes.SystemPermissions, permission));
                     }
                 }
             }

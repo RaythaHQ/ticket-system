@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace App.Web.Areas.Api.Controllers.V1;
 
-[Authorize(Policy = AppApiAuthorizationHandler.POLICY_PREFIX + RaythaClaimTypes.IsAdmin)]
+[Authorize(Policy = AppApiAuthorizationHandler.POLICY_PREFIX + AppClaimTypes.IsAdmin)]
 public class ContactsController : BaseController
 {
     /// <summary>

@@ -62,7 +62,10 @@ public record TicketViewDto : BaseAuditableEntityDto
             {
                 conditions = JsonSerializer.Deserialize<ViewConditions>(view.ConditionsJson);
             }
-            catch { }
+            catch
+            {
+                // Intentionally swallowed: invalid filter data should not prevent DTO creation
+            }
         }
 
         // Map sort levels from entity

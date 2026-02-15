@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using CSharpVitamins;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +22,7 @@ public class UsersController : BaseController
     )
     {
         var response = await Mediator.Send(request) as QueryResponseDto<ListResultDto<UserDto>>;
-        return response;
+        return Ok(response!.Result);
     }
 
     [HttpGet("{userId}", Name = "GetUserById")]
@@ -31,7 +30,7 @@ public class UsersController : BaseController
     {
         var input = new GetUserById.Query { Id = userId };
         var response = await Mediator.Send(input) as QueryResponseDto<UserDto>;
-        return response;
+        return Ok(response!.Result);
     }
 
     [HttpPost("", Name = "CreateUser")]
@@ -42,9 +41,9 @@ public class UsersController : BaseController
         var response = await Mediator.Send(request);
         if (!response.Success)
         {
-            return BadRequest(response);
+            return BadRequest(new { error = response.Error });
         }
-        return CreatedAtAction(nameof(GetUserById), new { userId = response.Result }, response);
+        return CreatedAtAction(nameof(GetUserById), new { userId = response.Result }, response.Result);
     }
 
     [HttpPut("{userId}", Name = "EditUser")]
@@ -57,27 +56,27 @@ public class UsersController : BaseController
         var response = await Mediator.Send(input);
         if (!response.Success)
         {
-            return BadRequest(response);
+            return BadRequest(new { error = response.Error });
         }
-        return response;
+        return Ok(response.Result);
     }
 
     [HttpDelete("{userId}", Name = "DeleteUser")]
-    public async Task<ActionResult<ICommandResponseDto<ShortGuid>>> DeleteUser(string userId)
+    public async Task<IActionResult> DeleteUser(string userId)
     {
         var input = new DeleteUser.Command { Id = userId };
         var response = await Mediator.Send(input);
         if (!response.Success)
         {
-            return BadRequest(response);
+            return BadRequest(new { error = response.Error });
         }
-        return response;
+        return NoContent();
     }
 
     [HttpPut("{userId}/password", Name = "ResetPassword")]
     public async Task<ActionResult<ICommandResponseDto<ShortGuid>>> ResetPassword(
         string userId,
-        [FromBody] ResetPassword_RequestModel request
+        [FromBody] ResetPasswordRequestModel request
     )
     {
         var input = new ResetPassword.Command
@@ -90,9 +89,9 @@ public class UsersController : BaseController
         var response = await Mediator.Send(input);
         if (!response.Success)
         {
-            return BadRequest(response);
+            return BadRequest(new { error = response.Error });
         }
-        return response;
+        return Ok(response.Result);
     }
 
     [HttpPut("{userId}/is-active", Name = "SetIsActive")]
@@ -105,13 +104,13 @@ public class UsersController : BaseController
         var response = await Mediator.Send(input);
         if (!response.Success)
         {
-            return BadRequest(response);
+            return BadRequest(new { error = response.Error });
         }
-        return response;
+        return Ok(response.Result);
     }
 }
 
-public record ResetPassword_RequestModel
+public record ResetPasswordRequestModel
 {
     public string NewPassword { get; init; }
     public bool SendEmail { get; init; } = true;

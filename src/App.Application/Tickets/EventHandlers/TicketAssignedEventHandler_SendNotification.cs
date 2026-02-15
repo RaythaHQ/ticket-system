@@ -14,18 +14,9 @@ namespace App.Application.Tickets.EventHandlers;
 /// <summary>
 /// Sends email and in-app notification when a ticket is assigned to an individual or team.
 /// </summary>
-public class TicketAssignedEventHandler_SendNotification : INotificationHandler<TicketAssignedEvent>
+public class TicketAssignedEventHandler_SendNotification
+    : BaseTicketNotificationHandler, INotificationHandler<TicketAssignedEvent>
 {
-    private readonly IAppDbContext _db;
-    private readonly IEmailer _emailerService;
-    private readonly IRenderEngine _renderEngineService;
-    private readonly IRelativeUrlBuilder _relativeUrlBuilderService;
-    private readonly ICurrentOrganization _currentOrganization;
-    private readonly INotificationPreferenceService _notificationPreferenceService;
-    private readonly IInAppNotificationService _inAppNotificationService;
-    private readonly INotificationSuppressionService _notificationSuppressionService;
-    private readonly ILogger<TicketAssignedEventHandler_SendNotification> _logger;
-
     public TicketAssignedEventHandler_SendNotification(
         IAppDbContext db,
         IEmailer emailerService,
@@ -37,32 +28,20 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         INotificationSuppressionService notificationSuppressionService,
         ILogger<TicketAssignedEventHandler_SendNotification> logger
     )
-    {
-        _db = db;
-        _emailerService = emailerService;
-        _renderEngineService = renderEngineService;
-        _relativeUrlBuilderService = relativeUrlBuilderService;
-        _currentOrganization = currentOrganization;
-        _notificationPreferenceService = notificationPreferenceService;
-        _inAppNotificationService = inAppNotificationService;
-        _notificationSuppressionService = notificationSuppressionService;
-        _logger = logger;
-    }
+        : base(
+            db, emailerService, renderEngineService, relativeUrlBuilderService,
+            currentOrganization, notificationPreferenceService, inAppNotificationService,
+            notificationSuppressionService, logger
+        )
+    { }
 
     public async ValueTask Handle(
         TicketAssignedEvent notification,
         CancellationToken cancellationToken
     )
     {
-        // Check if notifications should be suppressed
-        if (_notificationSuppressionService.ShouldSuppressNotifications())
-        {
-            _logger.LogDebug(
-                "Notifications suppressed for ticket assigned event on ticket {TicketId}",
-                notification.Ticket.Id
-            );
+        if (ShouldSuppressNotifications(notification.Ticket.Id, "ticket assigned event"))
             return;
-        }
 
         try
         {
@@ -99,7 +78,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send ticket assignment notification");
+            Logger.LogError(ex, "Failed to send ticket assignment notification");
         }
     }
 
@@ -116,18 +95,18 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
 
         // ALWAYS record to My Notifications (database) regardless of delivery preferences
         // The InAppNotificationService handles the preference check for the SignalR popup
-        await _inAppNotificationService.SendToUserAsync(
+        await InAppNotificationService.SendToUserAsync(
             assigneeId,
             NotificationType.TicketAssigned,
             $"Ticket #{ticket.Id} assigned to you",
             $"{ticket.Title}",
-            _relativeUrlBuilderService.StaffTicketUrl(ticket.Id),
+            RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
             ticket.Id,
             cancellationToken
         );
 
         // Check email notification preferences
-        var emailEnabled = await _notificationPreferenceService.IsEmailEnabledAsync(
+        var emailEnabled = await NotificationPreferenceService.IsEmailEnabledAsync(
             assigneeId,
             NotificationEventType.TICKET_ASSIGNED,
             cancellationToken
@@ -136,14 +115,14 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         if (!emailEnabled)
             return;
 
-        var assignee = await _db
+        var assignee = await Db
             .Users.AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == assigneeId, cancellationToken);
 
         if (assignee == null || string.IsNullOrEmpty(assignee.EmailAddress))
             return;
 
-        var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
+        var renderTemplate = Db.EmailTemplates.FirstOrDefault(p =>
             p.DeveloperName == BuiltInEmailTemplate.TicketAssignedEmail.DeveloperName
         );
 
@@ -161,19 +140,19 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
             ContactName = ticket.Contact?.FullName,
             TeamName = ticket.OwningTeam?.Name,
             SlaDueAt = ticket.SlaDueAt?.ToString("MMM dd, yyyy h:mm tt"),
-            TicketUrl = _relativeUrlBuilderService.StaffTicketUrl(ticket.Id),
+            TicketUrl = RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
         };
 
         var wrappedModel = new Wrapper_RenderModel
         {
             CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(
-                _currentOrganization
+                CurrentOrganization
             ),
             Target = renderModel,
         };
 
-        var subject = _renderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
-        var content = _renderEngineService.RenderAsHtml(renderTemplate.Content, wrappedModel);
+        var subject = RenderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
+        var content = RenderEngineService.RenderAsHtml(renderTemplate.Content, wrappedModel);
 
         var emailMessage = new EmailMessage
         {
@@ -182,9 +161,9 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
             Subject = subject,
         };
 
-        await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
+        await EmailerService.SendEmailAsync(emailMessage, cancellationToken);
 
-        _logger.LogInformation(
+        Logger.LogInformation(
             "Sent ticket assignment notification for ticket {TicketId} to {Email}",
             ticket.Id,
             assignee.EmailAddress
@@ -198,7 +177,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         CancellationToken cancellationToken
     )
     {
-        var team = await _db
+        var team = await Db
             .Teams.AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == teamId, cancellationToken);
 
@@ -206,7 +185,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
             return;
 
         // Get all team members (excluding the person who made the assignment)
-        var teamMemberIds = await _db
+        var teamMemberIds = await Db
             .TeamMemberships.AsNoTracking()
             .Where(m => m.TeamId == teamId)
             .Select(m => m.StaffAdminId)
@@ -225,19 +204,19 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
 
         // ALWAYS record to My Notifications (database) for all team members
         // The InAppNotificationService handles the preference check for the SignalR popup
-        await _inAppNotificationService.SendToUsersAsync(
+        await InAppNotificationService.SendToUsersAsync(
             recipientIds,
             NotificationType.TicketAssigned,
             $"Ticket #{ticket.Id} assigned to {team.Name}",
             $"{ticket.Title}",
-            _relativeUrlBuilderService.StaffTicketUrl(ticket.Id),
+            RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
             ticket.Id,
             cancellationToken
         );
 
         // Now handle email notifications (preference-based)
         var usersWithEmailEnabled =
-            await _notificationPreferenceService.FilterUsersWithEmailEnabledAsync(
+            await NotificationPreferenceService.FilterUsersWithEmailEnabledAsync(
                 recipientIds,
                 NotificationEventType.TICKET_ASSIGNED_TEAM,
                 cancellationToken
@@ -247,7 +226,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
             return;
 
         // Get users with email addresses
-        var teamMembers = await _db
+        var teamMembers = await Db
             .Users.AsNoTracking()
             .Where(u =>
                 usersWithEmailEnabled.Contains(u.Id) && !string.IsNullOrEmpty(u.EmailAddress)
@@ -257,7 +236,7 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
         if (!teamMembers.Any())
             return;
 
-        var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
+        var renderTemplate = Db.EmailTemplates.FirstOrDefault(p =>
             p.DeveloperName == BuiltInEmailTemplate.TicketAssignedToTeamEmail.DeveloperName
         );
 
@@ -271,19 +250,19 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
             Priority = ticket.Priority,
             TeamName = team.Name,
             AssigneeName = null, // Team assignment with no individual
-            TicketUrl = _relativeUrlBuilderService.StaffTicketUrl(ticket.Id),
+            TicketUrl = RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
         };
 
         var wrappedModel = new Wrapper_RenderModel
         {
             CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(
-                _currentOrganization
+                CurrentOrganization
             ),
             Target = renderModel,
         };
 
-        var subject = _renderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
-        var content = _renderEngineService.RenderAsHtml(renderTemplate.Content, wrappedModel);
+        var subject = RenderEngineService.RenderAsHtml(renderTemplate.Subject, wrappedModel);
+        var content = RenderEngineService.RenderAsHtml(renderTemplate.Content, wrappedModel);
 
         foreach (var member in teamMembers)
         {
@@ -294,9 +273,9 @@ public class TicketAssignedEventHandler_SendNotification : INotificationHandler<
                 Subject = subject,
             };
 
-            await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
+            await EmailerService.SendEmailAsync(emailMessage, cancellationToken);
 
-            _logger.LogInformation(
+            Logger.LogInformation(
                 "Sent team assignment notification for ticket {TicketId} to team member {Email}",
                 ticket.Id,
                 member.EmailAddress

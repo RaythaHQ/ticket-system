@@ -1,15 +1,13 @@
 using System.Globalization;
-using System.Text;
 using System.Text.Json;
 using App.Application.Common.Interfaces;
 using App.Application.Imports.Commands;
 using App.Domain.Entities;
 using App.Domain.ValueObjects;
-using CsvHelper;
-using CsvHelper.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using static App.Infrastructure.BackgroundTasks.ImportJobHelper;
 
 namespace App.Infrastructure.BackgroundTasks;
 
@@ -20,11 +18,7 @@ public class TicketImportBackgroundTask : TicketImportJob
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<TicketImportBackgroundTask> _logger;
-
-    // Constants
-    private const int MaxFileSizeBytes = 30 * 1024 * 1024; // 30 MB
-    private const int BatchSize = 100;
-    private const string NullIndicator = "[NULL]";
+    private readonly ImportJobHelper _helper;
 
     // Column header names
     public static class ColumnNames
@@ -51,6 +45,7 @@ public class TicketImportBackgroundTask : TicketImportJob
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
+        _helper = new ImportJobHelper(serviceProvider, logger, nameof(TicketImportBackgroundTask));
     }
 
     public override async Task Execute(
@@ -100,213 +95,7 @@ public class TicketImportBackgroundTask : TicketImportJob
 
             // Use a fresh DbContext to save the error status since the original context
             // may be in a bad state after the exception
-            await SaveFailureStatusAsync(importJobId, ex, cancellationToken);
-        }
-    }
-
-    private async Task SaveFailureStatusAsync(
-        Guid importJobId,
-        Exception ex,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-
-            var importJob = await db.ImportJobs.FirstOrDefaultAsync(
-                e => e.Id == importJobId,
-                cancellationToken
-            );
-
-            if (importJob != null)
-            {
-                importJob.Status = ImportJobStatus.Failed;
-                importJob.ErrorMessage = GetSafeErrorMessage(ex);
-                importJob.CompletedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-            }
-        }
-        catch (Exception saveEx)
-        {
-            _logger.LogError(
-                saveEx,
-                "TicketImportBackgroundTask: Failed to save error status for job {ImportJobId}",
-                importJobId
-            );
-        }
-    }
-
-    private async Task CompleteImportJobAsync(
-        Guid importJobId,
-        bool isDryRun,
-        int processed,
-        int inserted,
-        int updated,
-        int skipped,
-        int errors,
-        Guid? errorMediaItemId,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-
-            var importJob = await db.ImportJobs.FirstOrDefaultAsync(
-                e => e.Id == importJobId,
-                cancellationToken
-            );
-
-            if (importJob != null)
-            {
-                importJob.Status = ImportJobStatus.Completed;
-                importJob.ProgressStage = isDryRun ? "Dry run completed" : "Completed";
-                importJob.ProgressPercent = 100;
-                importJob.RowsProcessed = processed;
-                importJob.RowsInserted = inserted;
-                importJob.RowsUpdated = updated;
-                importJob.RowsSkipped = skipped;
-                importJob.RowsWithErrors = errors;
-                importJob.ErrorMediaItemId = errorMediaItemId;
-                importJob.CompletedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-
-                _logger.LogInformation(
-                    "TicketImportBackgroundTask: Import {ImportJobId} completed. Processed: {Processed}, Inserted: {Inserted}, Updated: {Updated}, Skipped: {Skipped}, Errors: {Errors}",
-                    importJob.Id,
-                    processed,
-                    inserted,
-                    updated,
-                    skipped,
-                    errors
-                );
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(
-                ex,
-                "TicketImportBackgroundTask: Failed to mark job {ImportJobId} as completed",
-                importJobId
-            );
-        }
-    }
-
-    private async Task UpdateProgressAsync(
-        Guid importJobId,
-        int processedCount,
-        int totalRows,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-
-            var importJob = await db.ImportJobs.FirstOrDefaultAsync(
-                e => e.Id == importJobId,
-                cancellationToken
-            );
-
-            if (importJob != null)
-            {
-                importJob.RowsProcessed = processedCount;
-                importJob.ProgressPercent = 20 + (int)((double)processedCount / totalRows * 60);
-                await db.SaveChangesAsync(cancellationToken);
-            }
-        }
-        catch (Exception ex)
-        {
-            // Non-fatal - just log and continue
-            _logger.LogWarning(
-                ex,
-                "TicketImportBackgroundTask: Failed to update progress for job {ImportJobId}",
-                importJobId
-            );
-        }
-    }
-
-    /// <summary>
-    /// Updates the import job stage using a fresh context (safe to call after entity is detached).
-    /// </summary>
-    private async Task UpdateStageAsync(
-        Guid importJobId,
-        string stage,
-        int percent,
-        int? totalRows = null,
-        CancellationToken cancellationToken = default
-    )
-    {
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-
-            var importJob = await db.ImportJobs.FirstOrDefaultAsync(
-                e => e.Id == importJobId,
-                cancellationToken
-            );
-
-            if (importJob != null)
-            {
-                importJob.ProgressStage = stage;
-                importJob.ProgressPercent = percent;
-                if (totalRows.HasValue)
-                {
-                    importJob.TotalRows = totalRows.Value;
-                }
-                await db.SaveChangesAsync(cancellationToken);
-            }
-        }
-        catch (Exception ex)
-        {
-            // Non-fatal - just log and continue
-            _logger.LogWarning(
-                ex,
-                "TicketImportBackgroundTask: Failed to update stage for job {ImportJobId}",
-                importJobId
-            );
-        }
-    }
-
-    /// <summary>
-    /// Saves a failure status using a fresh context (safe to call after entity is detached).
-    /// </summary>
-    private async Task SaveFailureWithMessageAsync(
-        Guid importJobId,
-        string errorMessage,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-
-            var importJob = await db.ImportJobs.FirstOrDefaultAsync(
-                e => e.Id == importJobId,
-                cancellationToken
-            );
-
-            if (importJob != null)
-            {
-                importJob.Status = ImportJobStatus.Failed;
-                importJob.ErrorMessage = errorMessage;
-                importJob.CompletedAt = DateTime.UtcNow;
-                await db.SaveChangesAsync(cancellationToken);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(
-                ex,
-                "TicketImportBackgroundTask: Failed to save failure status for job {ImportJobId}",
-                importJobId
-            );
+            await _helper.SaveFailureStatusAsync(importJobId, ex, cancellationToken);
         }
     }
 
@@ -340,15 +129,15 @@ public class TicketImportBackgroundTask : TicketImportJob
         // Download file content
         var fileBytes = await fileStorage.GetFileAsync(sourceMediaItem.ObjectKey);
 
-        if (fileBytes.Length > MaxFileSizeBytes)
+        if (fileBytes.Length > ImportJobHelper.MaxFileSizeBytes)
         {
             throw new InvalidOperationException(
-                $"File size exceeds maximum of {MaxFileSizeBytes / 1024 / 1024} MB"
+                $"File size exceeds maximum of {ImportJobHelper.MaxFileSizeBytes / 1024 / 1024} MB"
             );
         }
 
         // Parse CSV
-        await UpdateStageAsync(
+        await _helper.UpdateStageAsync(
             importJob.Id,
             "Parsing CSV",
             10,
@@ -357,17 +146,17 @@ public class TicketImportBackgroundTask : TicketImportJob
 
         // Title is only required for modes that can insert new records
         var requireTitle = importJob.Mode.DeveloperName != ImportMode.UPDATE_EXISTING_ONLY;
-        var (rows, parseErrors) = ParseCsv(fileBytes, requireTitle);
+        var (rows, parseErrors) = ImportJobHelper.ParseCsv(fileBytes, ColumnNames.Title, requireTitle);
 
         if (parseErrors.Any())
         {
             var errorMessage = $"CSV parsing failed: {string.Join("; ", parseErrors.Take(5))}";
-            await SaveFailureWithMessageAsync(importJob.Id, errorMessage, cancellationToken);
+            await _helper.SaveFailureWithMessageAsync(importJob.Id, errorMessage, cancellationToken);
             return;
         }
 
         // Update total rows count
-        await UpdateStageAsync(
+        await _helper.UpdateStageAsync(
             importJob.Id,
             "Building reference lookups",
             15,
@@ -378,7 +167,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         var lookups = await BuildLookupsAsync(db, cancellationToken);
 
         // Process rows
-        await UpdateStageAsync(
+        await _helper.UpdateStageAsync(
             importJob.Id,
             "Processing rows",
             20,
@@ -452,9 +241,9 @@ public class TicketImportBackgroundTask : TicketImportJob
             processedCount++;
 
             // Update progress every batch (entities are saved immediately in their own contexts)
-            if (processedCount % BatchSize == 0)
+            if (processedCount % ImportJobHelper.BatchSize == 0)
             {
-                await UpdateProgressAsync(
+                await _helper.UpdateProgressAsync(
                     importJob.Id,
                     processedCount,
                     rows.Count,
@@ -468,17 +257,18 @@ public class TicketImportBackgroundTask : TicketImportJob
         if (errorRows.Any())
         {
             // Update progress using fresh context
-            await UpdateProgressAsync(importJob.Id, processedCount, rows.Count, cancellationToken);
+            await _helper.UpdateProgressAsync(importJob.Id, processedCount, rows.Count, cancellationToken);
 
-            errorMediaItemId = await GenerateErrorFileAsync(
+            errorMediaItemId = await _helper.GenerateErrorFileAsync(
                 fileStorage,
                 importJob,
                 errorRows,
+                "ticket",
                 cancellationToken
             );
         }
 
-        await CompleteImportJobAsync(
+        await _helper.CompleteImportJobAsync(
             importJob.Id,
             importJob.IsDryRun,
             processedCount,
@@ -543,65 +333,6 @@ public class TicketImportBackgroundTask : TicketImportJob
             DefaultStatusDeveloperName = defaultStatus?.DeveloperName ?? TicketStatus.OPEN,
             DefaultPriorityDeveloperName = defaultPriority?.DeveloperName ?? TicketPriority.NORMAL,
         };
-    }
-
-    private (List<Dictionary<string, string>> rows, List<string> errors) ParseCsv(
-        byte[] fileBytes,
-        bool requireTitle = true
-    )
-    {
-        var rows = new List<Dictionary<string, string>>();
-        var errors = new List<string>();
-
-        try
-        {
-            using var stream = new MemoryStream(fileBytes);
-            using var reader = new StreamReader(stream, Encoding.UTF8);
-            using var csv = new CsvHelper.CsvReader(
-                reader,
-                new CsvConfiguration(CultureInfo.InvariantCulture)
-                {
-                    HasHeaderRecord = true,
-                    MissingFieldFound = null,
-                    HeaderValidated = null,
-                }
-            );
-
-            csv.Read();
-            csv.ReadHeader();
-
-            var headers = csv.HeaderRecord;
-
-            // Title is required for insert modes, but not for update-only mode
-            if (requireTitle && (headers == null || !headers.Contains(ColumnNames.Title)))
-            {
-                errors.Add($"Missing required column: {ColumnNames.Title}");
-                return (rows, errors);
-            }
-
-            // Id column is always required for update-only mode
-            if (!requireTitle && (headers == null || !headers.Contains(ColumnNames.Id)))
-            {
-                errors.Add($"Missing required column: {ColumnNames.Id} (required for update mode)");
-                return (rows, errors);
-            }
-
-            while (csv.Read())
-            {
-                var row = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var header in headers)
-                {
-                    row[header] = csv.GetField(header) ?? string.Empty;
-                }
-                rows.Add(row);
-            }
-        }
-        catch (Exception ex)
-        {
-            errors.Add($"CSV parsing error: {ex.Message}");
-        }
-
-        return (rows, errors);
     }
 
     private async Task<ImportRowResult> ProcessRowAsync(
@@ -738,18 +469,18 @@ public class TicketImportBackgroundTask : TicketImportJob
         var ticket = new Ticket
         {
             Id = ticketId,
-            Title = GetValue(row, ColumnNames.Title) ?? string.Empty,
-            Description = GetNullableValue(row, ColumnNames.Description),
+            Title = ImportJobHelper.GetValue(row, ColumnNames.Title) ?? string.Empty,
+            Description = ImportJobHelper.GetNullableValue(row, ColumnNames.Description),
             Status = lookups.DefaultStatusDeveloperName,
             Priority = lookups.DefaultPriorityDeveloperName,
-            Category = GetNullableValue(row, ColumnNames.Category),
+            Category = ImportJobHelper.GetNullableValue(row, ColumnNames.Category),
         };
 
         // Resolve status
         if (
             row.TryGetValue(ColumnNames.Status, out var statusStr)
             && !string.IsNullOrWhiteSpace(statusStr)
-            && statusStr != NullIndicator
+            && statusStr != ImportJobHelper.NullIndicator
         )
         {
             if (lookups.ValidStatuses.Contains(statusStr))
@@ -766,7 +497,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         if (
             row.TryGetValue(ColumnNames.Priority, out var priorityStr)
             && !string.IsNullOrWhiteSpace(priorityStr)
-            && priorityStr != NullIndicator
+            && priorityStr != ImportJobHelper.NullIndicator
         )
         {
             if (lookups.ValidPriorities.Contains(priorityStr))
@@ -804,7 +535,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         ticket.ContactId = contactResult.Value;
 
         // Handle tags (semicolon-separated)
-        var tagsStr = GetNullableValue(row, ColumnNames.Tags);
+        var tagsStr = ImportJobHelper.GetNullableValue(row, ColumnNames.Tags);
         if (!string.IsNullOrWhiteSpace(tagsStr))
         {
             ticket.Tags = tagsStr
@@ -818,7 +549,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         if (
             row.TryGetValue(ColumnNames.CreatedAt, out var createdAtStr)
             && !string.IsNullOrWhiteSpace(createdAtStr)
-            && createdAtStr != NullIndicator
+            && createdAtStr != ImportJobHelper.NullIndicator
         )
         {
             if (
@@ -843,7 +574,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         if (
             row.TryGetValue(ColumnNames.ResolvedAt, out var resolvedAtStr)
             && !string.IsNullOrWhiteSpace(resolvedAtStr)
-            && resolvedAtStr != NullIndicator
+            && resolvedAtStr != ImportJobHelper.NullIndicator
         )
         {
             if (
@@ -868,7 +599,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         if (
             row.TryGetValue(ColumnNames.ClosedAt, out var closedAtStr)
             && !string.IsNullOrWhiteSpace(closedAtStr)
-            && closedAtStr != NullIndicator
+            && closedAtStr != ImportJobHelper.NullIndicator
         )
         {
             if (
@@ -995,7 +726,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         // Update fields if provided
         if (row.TryGetValue(ColumnNames.Title, out var title) && !string.IsNullOrWhiteSpace(title))
         {
-            if (title != NullIndicator)
+            if (title != ImportJobHelper.NullIndicator)
             {
                 ticket.Title = title;
             }
@@ -1006,7 +737,7 @@ public class TicketImportBackgroundTask : TicketImportJob
             && !string.IsNullOrEmpty(description)
         )
         {
-            ticket.Description = description == NullIndicator ? null : description;
+            ticket.Description = description == ImportJobHelper.NullIndicator ? null : description;
         }
 
         if (
@@ -1014,7 +745,7 @@ public class TicketImportBackgroundTask : TicketImportJob
             && !string.IsNullOrEmpty(category)
         )
         {
-            ticket.Category = category == NullIndicator ? null : category;
+            ticket.Category = category == ImportJobHelper.NullIndicator ? null : category;
         }
 
         // Resolve status
@@ -1023,7 +754,7 @@ public class TicketImportBackgroundTask : TicketImportJob
             && !string.IsNullOrEmpty(statusStr)
         )
         {
-            if (statusStr == NullIndicator)
+            if (statusStr == ImportJobHelper.NullIndicator)
             {
                 // Status is required, can't be null - skip
             }
@@ -1043,7 +774,7 @@ public class TicketImportBackgroundTask : TicketImportJob
             && !string.IsNullOrEmpty(priorityStr)
         )
         {
-            if (priorityStr == NullIndicator)
+            if (priorityStr == ImportJobHelper.NullIndicator)
             {
                 // Priority is required, can't be null - skip
             }
@@ -1063,7 +794,7 @@ public class TicketImportBackgroundTask : TicketImportJob
             && !string.IsNullOrEmpty(teamStr)
         )
         {
-            if (teamStr == NullIndicator)
+            if (teamStr == ImportJobHelper.NullIndicator)
             {
                 ticket.OwningTeamId = null;
             }
@@ -1084,7 +815,7 @@ public class TicketImportBackgroundTask : TicketImportJob
             && !string.IsNullOrEmpty(assigneeStr)
         )
         {
-            if (assigneeStr == NullIndicator)
+            if (assigneeStr == ImportJobHelper.NullIndicator)
             {
                 ticket.AssigneeId = null;
             }
@@ -1105,7 +836,7 @@ public class TicketImportBackgroundTask : TicketImportJob
             && !string.IsNullOrEmpty(contactStr)
         )
         {
-            if (contactStr == NullIndicator)
+            if (contactStr == ImportJobHelper.NullIndicator)
             {
                 ticket.ContactId = null;
             }
@@ -1123,7 +854,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         // Handle tags (replace all)
         if (row.TryGetValue(ColumnNames.Tags, out var tagsStr) && !string.IsNullOrEmpty(tagsStr))
         {
-            if (tagsStr == NullIndicator)
+            if (tagsStr == ImportJobHelper.NullIndicator)
             {
                 ticket.Tags = new List<string>();
             }
@@ -1141,7 +872,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         if (
             row.TryGetValue(ColumnNames.CreatedAt, out var createdAtStr)
             && !string.IsNullOrEmpty(createdAtStr)
-            && createdAtStr != NullIndicator
+            && createdAtStr != ImportJobHelper.NullIndicator
         )
         {
             if (
@@ -1168,7 +899,7 @@ public class TicketImportBackgroundTask : TicketImportJob
             && !string.IsNullOrEmpty(resolvedAtStr)
         )
         {
-            if (resolvedAtStr == NullIndicator)
+            if (resolvedAtStr == ImportJobHelper.NullIndicator)
             {
                 ticket.ResolvedAt = null;
             }
@@ -1196,7 +927,7 @@ public class TicketImportBackgroundTask : TicketImportJob
             && !string.IsNullOrEmpty(closedAtStr)
         )
         {
-            if (closedAtStr == NullIndicator)
+            if (closedAtStr == ImportJobHelper.NullIndicator)
             {
                 ticket.ClosedAt = null;
             }
@@ -1237,7 +968,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         if (
             !row.TryGetValue(ColumnNames.OwningTeam, out var teamStr)
             || string.IsNullOrWhiteSpace(teamStr)
-            || teamStr == NullIndicator
+            || teamStr == ImportJobHelper.NullIndicator
         )
         {
             return ResolveResult<Guid?>.Success(null);
@@ -1271,7 +1002,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         if (
             !row.TryGetValue(columnName, out var userStr)
             || string.IsNullOrWhiteSpace(userStr)
-            || userStr == NullIndicator
+            || userStr == ImportJobHelper.NullIndicator
         )
         {
             return ResolveResult<Guid?>.Success(null);
@@ -1304,7 +1035,7 @@ public class TicketImportBackgroundTask : TicketImportJob
         if (
             !row.TryGetValue(ColumnNames.Contact, out var contactStr)
             || string.IsNullOrWhiteSpace(contactStr)
-            || contactStr == NullIndicator
+            || contactStr == ImportJobHelper.NullIndicator
         )
         {
             return ResolveResult<long?>.Success(null);
@@ -1327,150 +1058,6 @@ public class TicketImportBackgroundTask : TicketImportJob
         }
 
         return ResolveResult<long?>.Fail($"Contact '{contactStr}' not found");
-    }
-
-    private string? GetValue(Dictionary<string, string> row, string key)
-    {
-        if (
-            row.TryGetValue(key, out var value)
-            && !string.IsNullOrWhiteSpace(value)
-            && value != NullIndicator
-        )
-        {
-            return value;
-        }
-        return null;
-    }
-
-    private string? GetNullableValue(Dictionary<string, string> row, string key)
-    {
-        if (row.TryGetValue(key, out var value))
-        {
-            if (string.IsNullOrEmpty(value) || value == NullIndicator)
-            {
-                return null;
-            }
-            return value;
-        }
-        return null;
-    }
-
-    private async Task<Guid> GenerateErrorFileAsync(
-        IFileStorageProvider fileStorage,
-        ImportJob importJob,
-        List<ImportErrorRow> errorRows,
-        CancellationToken cancellationToken
-    )
-    {
-        using var memoryStream = new MemoryStream();
-        await using var writer = new StreamWriter(memoryStream, new UTF8Encoding(true));
-        await using var csv = new CsvWriter(
-            writer,
-            new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = true }
-        );
-
-        var headers = errorRows.First().Row.Keys.ToList();
-        headers.Add("ImportError");
-
-        foreach (var header in headers)
-        {
-            csv.WriteField(header);
-        }
-        await csv.NextRecordAsync();
-
-        foreach (var errorRow in errorRows)
-        {
-            foreach (var header in headers)
-            {
-                if (header == "ImportError")
-                {
-                    csv.WriteField(errorRow.ErrorMessage);
-                }
-                else
-                {
-                    csv.WriteField(errorRow.Row.GetValueOrDefault(header, ""));
-                }
-            }
-            await csv.NextRecordAsync();
-        }
-
-        await writer.FlushAsync(cancellationToken);
-        var csvBytes = memoryStream.ToArray();
-
-        var fileName = $"ticket-import-errors-{importJob.RequestedAt:yyyyMMdd-HHmmss}.csv";
-        var objectKey = $"imports/{importJob.Id}/errors/{fileName}";
-        var contentType = "text/csv";
-
-        await fileStorage.SaveAndGetDownloadUrlAsync(
-            csvBytes,
-            objectKey,
-            fileName,
-            contentType,
-            importJob.ExpiresAt,
-            inline: false
-        );
-
-        // Create MediaItem using fresh context
-        var mediaItem = new MediaItem
-        {
-            Id = Guid.NewGuid(),
-            FileName = fileName,
-            ContentType = contentType,
-            FileStorageProvider = fileStorage.GetName(),
-            ObjectKey = objectKey,
-            Length = csvBytes.Length,
-        };
-
-        using var scope = _serviceProvider.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<IAppDbContext>();
-        db.MediaItems.Add(mediaItem);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return mediaItem.Id;
-    }
-
-    private string GetSafeErrorMessage(Exception ex)
-    {
-        // Get the innermost exception message for database/EF errors
-        var innerMessage = ex.InnerException?.Message ?? ex.Message;
-
-        return ex switch
-        {
-            InvalidOperationException ioe => ioe.Message,
-            TimeoutException => "Import timed out. Please try with a smaller file.",
-            Microsoft.EntityFrameworkCore.DbUpdateException dbEx =>
-                $"Database error: {dbEx.InnerException?.Message ?? dbEx.Message}",
-            _ => $"Import failed: {innerMessage}",
-        };
-    }
-
-    private enum ImportAction
-    {
-        Inserted,
-        Updated,
-        Skipped,
-        Error,
-    }
-
-    private record ImportRowResult
-    {
-        public ImportAction Action { get; init; }
-        public string? ErrorMessage { get; init; }
-
-        public static ImportRowResult Inserted() => new() { Action = ImportAction.Inserted };
-
-        public static ImportRowResult Updated() => new() { Action = ImportAction.Updated };
-
-        public static ImportRowResult Skipped() => new() { Action = ImportAction.Skipped };
-
-        public static ImportRowResult Error(string message) =>
-            new() { Action = ImportAction.Error, ErrorMessage = message };
-    }
-
-    private record ImportErrorRow
-    {
-        public Dictionary<string, string> Row { get; init; } = new();
-        public string ErrorMessage { get; init; } = string.Empty;
     }
 
     private record ReferenceLookups

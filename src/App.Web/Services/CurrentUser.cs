@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Security.Claims;
 using CSharpVitamins;
@@ -59,12 +59,12 @@ public class CurrentUser : ICurrentUser
             : string.Empty;
     public string SsoId =>
         _httpContextAccessor
-            ?.HttpContext.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.SsoId)
+            ?.HttpContext.User.Claims.FirstOrDefault(c => c.Type == AppClaimTypes.SsoId)
             ?.Value;
     public string AuthenticationScheme =>
         _httpContextAccessor
             ?.HttpContext.User.Claims.FirstOrDefault(c =>
-                c.Type == RaythaClaimTypes.AuthenticationScheme
+                c.Type == AppClaimTypes.AuthenticationScheme
             )
             ?.Value;
     public string RemoteIpAddress
@@ -93,12 +93,12 @@ public class CurrentUser : ICurrentUser
     }
     public bool IsAdmin =>
         _httpContextAccessor
-            ?.HttpContext.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.IsAdmin)
+            ?.HttpContext.User.Claims.FirstOrDefault(c => c.Type == AppClaimTypes.IsAdmin)
             ?.Value != null
             ? Convert.ToBoolean(
                 _httpContextAccessor
                     ?.HttpContext.User.Claims.FirstOrDefault(c =>
-                        c.Type == RaythaClaimTypes.IsAdmin
+                        c.Type == AppClaimTypes.IsAdmin
                     )
                     ?.Value
             )
@@ -112,7 +112,7 @@ public class CurrentUser : ICurrentUser
             {
                 var lastModified = _httpContextAccessor
                     ?.HttpContext.User.Claims.FirstOrDefault(c =>
-                        c.Type == RaythaClaimTypes.LastModificationTime
+                        c.Type == AppClaimTypes.LastModificationTime
                     )
                     ?.Value;
                 if (!string.IsNullOrEmpty(lastModified))
@@ -129,12 +129,12 @@ public class CurrentUser : ICurrentUser
             .ToArray();
     public string[] UserGroups =>
         _httpContextAccessor
-            ?.HttpContext.User.Claims.Where(c => c.Type == RaythaClaimTypes.UserGroups)
+            ?.HttpContext.User.Claims.Where(c => c.Type == AppClaimTypes.UserGroups)
             .Select(p => p.Value)
             .ToArray();
     public string[] SystemPermissions =>
         _httpContextAccessor
-            ?.HttpContext.User.Claims.Where(c => c.Type == RaythaClaimTypes.SystemPermissions)
+            ?.HttpContext.User.Claims.Where(c => c.Type == AppClaimTypes.SystemPermissions)
             .Select(p => p.Value)
             .ToArray();
 
@@ -144,7 +144,7 @@ public class CurrentUser : ICurrentUser
         get
         {
             var claim = _httpContextAccessor
-                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.IsImpersonating);
+                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == AppClaimTypes.IsImpersonating);
             return claim != null && bool.TryParse(claim.Value, out var result) && result;
         }
     }
@@ -155,7 +155,7 @@ public class CurrentUser : ICurrentUser
         {
             if (!IsImpersonating) return null;
             var claim = _httpContextAccessor
-                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.OriginalUserId);
+                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == AppClaimTypes.OriginalUserId);
             return claim?.Value;
         }
     }
@@ -166,7 +166,7 @@ public class CurrentUser : ICurrentUser
         {
             if (!IsImpersonating) return null;
             return _httpContextAccessor
-                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.OriginalUserEmail)
+                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == AppClaimTypes.OriginalUserEmail)
                 ?.Value;
         }
     }
@@ -177,7 +177,7 @@ public class CurrentUser : ICurrentUser
         {
             if (!IsImpersonating) return null;
             return _httpContextAccessor
-                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.OriginalUserFullName)
+                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == AppClaimTypes.OriginalUserFullName)
                 ?.Value;
         }
     }
@@ -188,7 +188,7 @@ public class CurrentUser : ICurrentUser
         {
             if (!IsImpersonating) return null;
             var claim = _httpContextAccessor
-                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == RaythaClaimTypes.ImpersonationStartedAt);
+                ?.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == AppClaimTypes.ImpersonationStartedAt);
             if (claim != null && DateTime.TryParse(claim.Value, out var result))
                 return result;
             return null;

@@ -20,18 +20,8 @@ namespace App.Application.Tickets.EventHandlers;
 /// All notifications are deduplicated and the commenter is never notified.
 /// </summary>
 public class TicketCommentAddedEventHandler_SendNotification
-    : INotificationHandler<TicketCommentAddedEvent>
+    : BaseTicketNotificationHandler, INotificationHandler<TicketCommentAddedEvent>
 {
-    private readonly IAppDbContext _db;
-    private readonly IEmailer _emailerService;
-    private readonly IRenderEngine _renderEngineService;
-    private readonly IRelativeUrlBuilder _relativeUrlBuilder;
-    private readonly ICurrentOrganization _currentOrganization;
-    private readonly INotificationPreferenceService _notificationPreferenceService;
-    private readonly IInAppNotificationService _inAppNotificationService;
-    private readonly INotificationSuppressionService _notificationSuppressionService;
-    private readonly ILogger<TicketCommentAddedEventHandler_SendNotification> _logger;
-
     public TicketCommentAddedEventHandler_SendNotification(
         IAppDbContext db,
         IEmailer emailerService,
@@ -43,32 +33,20 @@ public class TicketCommentAddedEventHandler_SendNotification
         INotificationSuppressionService notificationSuppressionService,
         ILogger<TicketCommentAddedEventHandler_SendNotification> logger
     )
-    {
-        _db = db;
-        _emailerService = emailerService;
-        _renderEngineService = renderEngineService;
-        _relativeUrlBuilder = relativeUrlBuilder;
-        _currentOrganization = currentOrganization;
-        _notificationPreferenceService = notificationPreferenceService;
-        _inAppNotificationService = inAppNotificationService;
-        _notificationSuppressionService = notificationSuppressionService;
-        _logger = logger;
-    }
+        : base(
+            db, emailerService, renderEngineService, relativeUrlBuilder,
+            currentOrganization, notificationPreferenceService, inAppNotificationService,
+            notificationSuppressionService, logger
+        )
+    { }
 
     public async ValueTask Handle(
         TicketCommentAddedEvent notification,
         CancellationToken cancellationToken
     )
     {
-        // Check if notifications should be suppressed
-        if (_notificationSuppressionService.ShouldSuppressNotifications())
-        {
-            _logger.LogDebug(
-                "Notifications suppressed for comment added event on ticket {TicketId}",
-                notification.Ticket.Id
-            );
+        if (ShouldSuppressNotifications(notification.Ticket.Id, "comment added event"))
             return;
-        }
 
         try
         {
@@ -87,7 +65,7 @@ public class TicketCommentAddedEventHandler_SendNotification
             var forcedRecipients = new HashSet<Guid>();
 
             // Add ticket followers
-            var followerIds = await _db
+            var followerIds = await Db
                 .TicketFollowers.AsNoTracking()
                 .Where(f => f.TicketId == ticket.Id && f.StaffAdminId != commenterId)
                 .Select(f => f.StaffAdminId)
@@ -102,7 +80,7 @@ public class TicketCommentAddedEventHandler_SendNotification
             // Add members of mentioned teams
             if (notification.MentionedTeamIds.Any())
             {
-                var teamMemberIds = await _db
+                var teamMemberIds = await Db
                     .TeamMemberships.AsNoTracking()
                     .Where(m =>
                         notification.MentionedTeamIds.Contains(m.TeamId)
@@ -122,14 +100,14 @@ public class TicketCommentAddedEventHandler_SendNotification
 
             if (!allRecipients.Any())
             {
-                _logger.LogDebug(
+                Logger.LogDebug(
                     "No recipients for comment notification on ticket {TicketId}",
                     ticket.Id
                 );
                 return;
             }
 
-            var commenter = await _db
+            var commenter = await Db
                 .Users.AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Id == commenterId, cancellationToken);
 
@@ -140,17 +118,17 @@ public class TicketCommentAddedEventHandler_SendNotification
 
             // === ALWAYS RECORD TO MY NOTIFICATIONS (database) ===
             // InAppNotificationService handles the SignalR popup preference check internally
-            await _inAppNotificationService.SendToUsersAsync(
+            await InAppNotificationService.SendToUsersAsync(
                 allRecipients,
                 NotificationType.CommentAdded,
                 $"New comment on #{ticket.Id}",
                 $"{commenter?.FullName ?? "Someone"}: {truncatedBody}",
-                _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
                 ticket.Id,
                 cancellationToken
             );
 
-            _logger.LogInformation(
+            Logger.LogInformation(
                 "Recorded comment notification for ticket {TicketId} to {Count} users",
                 ticket.Id,
                 allRecipients.Count
@@ -160,7 +138,7 @@ public class TicketCommentAddedEventHandler_SendNotification
 
             // Filter standard recipients by their email preferences
             var standardRecipientsFiltered = standardRecipients.Any()
-                ? await _notificationPreferenceService.FilterUsersWithEmailEnabledAsync(
+                ? await NotificationPreferenceService.FilterUsersWithEmailEnabledAsync(
                     standardRecipients,
                     NotificationEventType.COMMENT_ADDED,
                     cancellationToken
@@ -175,20 +153,20 @@ public class TicketCommentAddedEventHandler_SendNotification
             if (!emailRecipients.Any())
                 return;
 
-            var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
+            var renderTemplate = Db.EmailTemplates.FirstOrDefault(p =>
                 p.DeveloperName == BuiltInEmailTemplate.TicketCommentAddedEmail.DeveloperName
             );
 
             if (renderTemplate == null)
             {
-                _logger.LogWarning(
+                Logger.LogWarning(
                     "Email template {TemplateName} not found for comment notification",
                     BuiltInEmailTemplate.TicketCommentAddedEmail.DeveloperName
                 );
                 return;
             }
 
-            var users = await _db
+            var users = await Db
                 .Users.AsNoTracking()
                 .Where(u => emailRecipients.Contains(u.Id) && u.IsActive && !string.IsNullOrEmpty(u.EmailAddress))
                 .ToListAsync(cancellationToken);
@@ -202,22 +180,22 @@ public class TicketCommentAddedEventHandler_SendNotification
                     CommentAuthor = commenter?.FullName ?? "Unknown",
                     CommentBody = comment.Body,
                     RecipientName = user.FullName,
-                    TicketUrl = _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                    TicketUrl = RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
                 };
 
                 var wrappedModel = new Wrapper_RenderModel
                 {
                     CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(
-                        _currentOrganization
+                        CurrentOrganization
                     ),
                     Target = renderModel,
                 };
 
-                var subject = _renderEngineService.RenderAsHtml(
+                var subject = RenderEngineService.RenderAsHtml(
                     renderTemplate.Subject,
                     wrappedModel
                 );
-                var content = _renderEngineService.RenderAsHtml(
+                var content = RenderEngineService.RenderAsHtml(
                     renderTemplate.Content,
                     wrappedModel
                 );
@@ -229,9 +207,9 @@ public class TicketCommentAddedEventHandler_SendNotification
                     Subject = subject,
                 };
 
-                await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
+                await EmailerService.SendEmailAsync(emailMessage, cancellationToken);
 
-                _logger.LogInformation(
+                Logger.LogInformation(
                     "Sent comment email notification for ticket {TicketId} to {Email}",
                     ticket.Id,
                     user.EmailAddress
@@ -240,7 +218,7 @@ public class TicketCommentAddedEventHandler_SendNotification
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send ticket comment notification");
+            Logger.LogError(ex, "Failed to send ticket comment notification");
         }
     }
 }

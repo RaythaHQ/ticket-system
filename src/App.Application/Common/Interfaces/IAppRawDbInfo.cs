@@ -1,4 +1,4 @@
-﻿namespace App.Application.Common.Interfaces;
+namespace App.Application.Common.Interfaces;
 
 /// <summary>
 /// Interface for retrieving raw database information.

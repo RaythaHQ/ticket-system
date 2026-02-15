@@ -82,13 +82,13 @@ public class AppApiAuthorizationHandler : IAuthorizationHandler
             new Claim(ClaimTypes.GivenName, user.Result.FirstName),
             new Claim(ClaimTypes.Surname, user.Result.LastName),
             new Claim(
-                RaythaClaimTypes.LastModificationTime,
+                AppClaimTypes.LastModificationTime,
                 user.Result.LastModificationTime?.ToString() ?? string.Empty
             ),
-            new Claim(RaythaClaimTypes.IsAdmin, user.Result.IsAdmin.ToString()),
-            new Claim(RaythaClaimTypes.SsoId, user.Result.SsoId.IfNullOrEmpty(string.Empty)),
+            new Claim(AppClaimTypes.IsAdmin, user.Result.IsAdmin.ToString()),
+            new Claim(AppClaimTypes.SsoId, user.Result.SsoId.IfNullOrEmpty(string.Empty)),
             new Claim(
-                RaythaClaimTypes.AuthenticationScheme,
+                AppClaimTypes.AuthenticationScheme,
                 user.Result.AuthenticationScheme.IfNullOrEmpty(string.Empty)
             ),
         };
@@ -100,12 +100,12 @@ public class AppApiAuthorizationHandler : IAuthorizationHandler
 
         foreach (var systemPermission in systemPermissions.Distinct())
         {
-            claims.Add(new Claim(RaythaClaimTypes.SystemPermissions, systemPermission));
+            claims.Add(new Claim(AppClaimTypes.SystemPermissions, systemPermission));
         }
 
         foreach (var userGroup in user.Result.UserGroups)
         {
-            claims.Add(new Claim(RaythaClaimTypes.UserGroups, userGroup.DeveloperName));
+            claims.Add(new Claim(AppClaimTypes.UserGroups, userGroup.DeveloperName));
         }
 
         var identity = new ClaimsIdentity(claims, "ApiKey");

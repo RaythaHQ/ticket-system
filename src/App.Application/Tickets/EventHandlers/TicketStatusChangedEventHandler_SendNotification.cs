@@ -19,18 +19,8 @@ namespace App.Application.Tickets.EventHandlers;
 /// All notifications are deduplicated and the user who made the change is never notified.
 /// </summary>
 public class TicketStatusChangedEventHandler_SendNotification
-    : INotificationHandler<TicketStatusChangedEvent>
+    : BaseTicketNotificationHandler, INotificationHandler<TicketStatusChangedEvent>
 {
-    private readonly IAppDbContext _db;
-    private readonly IEmailer _emailerService;
-    private readonly IRenderEngine _renderEngineService;
-    private readonly IRelativeUrlBuilder _relativeUrlBuilder;
-    private readonly ICurrentOrganization _currentOrganization;
-    private readonly INotificationPreferenceService _notificationPreferenceService;
-    private readonly IInAppNotificationService _inAppNotificationService;
-    private readonly INotificationSuppressionService _notificationSuppressionService;
-    private readonly ILogger<TicketStatusChangedEventHandler_SendNotification> _logger;
-
     public TicketStatusChangedEventHandler_SendNotification(
         IAppDbContext db,
         IEmailer emailerService,
@@ -42,32 +32,20 @@ public class TicketStatusChangedEventHandler_SendNotification
         INotificationSuppressionService notificationSuppressionService,
         ILogger<TicketStatusChangedEventHandler_SendNotification> logger
     )
-    {
-        _db = db;
-        _emailerService = emailerService;
-        _renderEngineService = renderEngineService;
-        _relativeUrlBuilder = relativeUrlBuilder;
-        _currentOrganization = currentOrganization;
-        _notificationPreferenceService = notificationPreferenceService;
-        _inAppNotificationService = inAppNotificationService;
-        _notificationSuppressionService = notificationSuppressionService;
-        _logger = logger;
-    }
+        : base(
+            db, emailerService, renderEngineService, relativeUrlBuilder,
+            currentOrganization, notificationPreferenceService, inAppNotificationService,
+            notificationSuppressionService, logger
+        )
+    { }
 
     public async ValueTask Handle(
         TicketStatusChangedEvent notification,
         CancellationToken cancellationToken
     )
     {
-        // Check if notifications should be suppressed
-        if (_notificationSuppressionService.ShouldSuppressNotifications())
-        {
-            _logger.LogDebug(
-                "Notifications suppressed for status changed event on ticket {TicketId}",
-                notification.Ticket.Id
-            );
+        if (ShouldSuppressNotifications(notification.Ticket.Id, "ticket status changed event"))
             return;
-        }
 
         try
         {
@@ -87,7 +65,7 @@ public class TicketStatusChangedEventHandler_SendNotification
             }
 
             // 2. Forced recipients (followers) - bypass preferences
-            var followerIds = await _db
+            var followerIds = await Db
                 .TicketFollowers.AsNoTracking()
                 .Where(f =>
                     f.TicketId == ticket.Id
@@ -109,12 +87,12 @@ public class TicketStatusChangedEventHandler_SendNotification
 
             // === ALWAYS RECORD TO MY NOTIFICATIONS (database) ===
             // InAppNotificationService handles the SignalR popup preference check internally
-            await _inAppNotificationService.SendToUsersAsync(
+            await InAppNotificationService.SendToUsersAsync(
                 allRecipients,
                 NotificationType.StatusChanged,
                 $"Status changed: #{ticket.Id}",
                 $"{notification.OldStatus} → {notification.NewStatus}",
-                _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
                 ticket.Id,
                 cancellationToken
             );
@@ -123,7 +101,7 @@ public class TicketStatusChangedEventHandler_SendNotification
 
             // Filter standard recipients by their email preferences
             var standardRecipientsFiltered = standardRecipients.Any()
-                ? await _notificationPreferenceService.FilterUsersWithEmailEnabledAsync(
+                ? await NotificationPreferenceService.FilterUsersWithEmailEnabledAsync(
                     standardRecipients,
                     NotificationEventType.STATUS_CHANGED,
                     cancellationToken
@@ -138,14 +116,14 @@ public class TicketStatusChangedEventHandler_SendNotification
             if (!emailRecipients.Any())
                 return;
 
-            var renderTemplate = _db.EmailTemplates.FirstOrDefault(p =>
+            var renderTemplate = Db.EmailTemplates.FirstOrDefault(p =>
                 p.DeveloperName == BuiltInEmailTemplate.TicketStatusChangedEmail.DeveloperName
             );
 
             if (renderTemplate == null)
                 return;
 
-            var recipients = await _db
+            var recipients = await Db
                 .Users.AsNoTracking()
                 .Where(u => emailRecipients.Contains(u.Id) && !string.IsNullOrEmpty(u.EmailAddress))
                 .ToListAsync(cancellationToken);
@@ -160,22 +138,22 @@ public class TicketStatusChangedEventHandler_SendNotification
                     NewStatus = notification.NewStatus,
                     ChangedBy = "System",
                     RecipientName = recipient.FullName,
-                    TicketUrl = _relativeUrlBuilder.StaffTicketUrl(ticket.Id),
+                    TicketUrl = RelativeUrlBuilder.StaffTicketUrl(ticket.Id),
                 };
 
                 var wrappedModel = new Wrapper_RenderModel
                 {
                     CurrentOrganization = CurrentOrganization_RenderModel.GetProjection(
-                        _currentOrganization
+                        CurrentOrganization
                     ),
                     Target = renderModel,
                 };
 
-                var subject = _renderEngineService.RenderAsHtml(
+                var subject = RenderEngineService.RenderAsHtml(
                     renderTemplate.Subject,
                     wrappedModel
                 );
-                var content = _renderEngineService.RenderAsHtml(
+                var content = RenderEngineService.RenderAsHtml(
                     renderTemplate.Content,
                     wrappedModel
                 );
@@ -187,9 +165,9 @@ public class TicketStatusChangedEventHandler_SendNotification
                     Subject = subject,
                 };
 
-                await _emailerService.SendEmailAsync(emailMessage, cancellationToken);
+                await EmailerService.SendEmailAsync(emailMessage, cancellationToken);
 
-                _logger.LogInformation(
+                Logger.LogInformation(
                     "Sent status change email notification for ticket {TicketId} to {Email}",
                     ticket.Id,
                     recipient.EmailAddress
@@ -198,7 +176,7 @@ public class TicketStatusChangedEventHandler_SendNotification
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to send ticket status change notification");
+            Logger.LogError(ex, "Failed to send ticket status change notification");
         }
     }
 }

@@ -11,7 +11,7 @@ using App.Web.Authentication;
 
 namespace App.Web.Areas.Api.Controllers.V1;
 
-[Authorize(Policy = AppApiAuthorizationHandler.POLICY_PREFIX + RaythaClaimTypes.IsAdmin)]
+[Authorize(Policy = AppApiAuthorizationHandler.POLICY_PREFIX + AppClaimTypes.IsAdmin)]
 [Route("app/api/v1/tickets/{ticketId:long}/tasks")]
 public class TicketTasksController : BaseController
 {

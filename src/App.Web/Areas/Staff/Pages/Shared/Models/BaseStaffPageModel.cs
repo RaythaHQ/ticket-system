@@ -12,7 +12,7 @@ namespace App.Web.Areas.Staff.Pages.Shared.Models;
 /// are handled at the individual page or command level.
 /// </summary>
 [Area("Staff")]
-[Authorize(Policy = RaythaClaimTypes.IsAdmin)]
+[Authorize(Policy = AppClaimTypes.IsAdmin)]
 public abstract class BaseStaffPageModel : BasePageModel
 {
     private ITicketPermissionService? _ticketPermissionService;
